@@ -104,11 +104,13 @@ class managed_mcrun:
         #os.system("mcstas-2.5-environment")
         
         #mcrun_path = "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/bin/mcrun"
-        
-        if self.mcrun_path[-1] == "\\" or self.mcrun_path[-1] == "/": 
-            mcrun_full_path = self.mcrun_path + "mcrun"
+        if len(self.mcrun_path) > 1:
+            if self.mcrun_path[-1] == "\\" or self.mcrun_path[-1] == "/": 
+                mcrun_full_path = self.mcrun_path + "mcrun"
+            else:
+                mcrun_full_path = self.mcrun_path + "/mcrun"
         else:
-            mcrun_full_path = self.mcrun_path + "/mcrun"
+            mcrun_full_path = self.mcrun_path + "mcrun"
         
         os.system(mcrun_full_path + " " + option_string + " " + self.custom_flags + " " + self.name_of_instrumentfile + " " + parameter_string)
         
@@ -358,51 +360,55 @@ class make_sub_plot:
         #  compare 2D
         
         #fig = plt.figure(figsize=(20,10))
-        
-        self.log = False*number_of_plots
+
+        # instead of passing this information here, it should just be a property of the data
+        self.log = [False]*number_of_plots
         if "log" in kwargs:
             if isinstance(kwargs["log"],list):
                 if not len(kwargs["log"]) == number_of_plots:
-                    raise IndexError("Length of list given for log logic does not match number of ")
+                    raise IndexError("Length of list given for log logic does not match number of data elements")
                 else:
                     self.log = kwargs["log"]
                     for element in self.log:
                         if not isinstance(element, bool):
                             if not element == 0:
                                 element = True 
-            
-        # Need to handle max orders of mag as log
-        self.orders_of_magnitude=300
-        if "max_orders_of_mag" in kwargs:
-            self.orders_of_magnitude=kwargs["max_orders_of_mag"]
-            
-        if "max_orders_of_mag_list" in kwargs:
-            self.orders_of_magnitude_list=kwargs["max_orders_of_mag_list"]
-            self.list_orders_of_mag = True
-        else: 
-            self.list_orders_of_mag = False
+            elif isinstance(kwargs["log"],bool):
+                if kwargs["log"] == True:
+                    self.log = [True]*number_of_plots
+            elif isinstance(kwargs["log"],int):
+                if kwargs["log"] == 1:
+                    self.log = [True]*number_of_plots
+            else:
+                raise NameError("log keyword Argument in make_sub_plot not understood. Needs to be int, [1/0], bool [True/False] or array of same length as data.")
+                
         
+        self.orders_of_mag=[300] * number_of_plots
+        if "max_orders_of_mag" in kwargs:
+            if isinstance(kwargs["max_orders_of_mag"],list):
+                if not len(kwargs["max_orders_of_mag"]) == number_of_plots:
+                    raise IndexError("Length of list given for max_orders_of_mag does not match number of data elements")
+                else: 
+                    self.orders_of_mag = kwargs["max_orders_of_mag"]
+            else:
+                if isinstance(kwargs["max_orders_of_mag"],float) or isinstance(kwargs["max_orders_of_mag"],int):
+                    self.orders_of_magnitude=[kwargs["max_orders_of_mag"]]*number_of_plots
+                else:
+                    raise TypeError("max_orders_of_mag need to be of type float or int")
         
         # Find reasonable grid size for the number of plots
-        dim1 = math.ceil(math.sqrt(number_of_plots))
-        dim2 = math.ceil(number_of_plots/dim1)
+        dim2 = math.ceil(math.sqrt(number_of_plots))
+        dim1 = math.ceil(number_of_plots/dim2)
           
-        fig, ax = plt.subplots(dim1,dim2,figsize=(15,8))
-        n_plot = 0
-        n_row = 0
+        fig, axs = plt.subplots(dim1,dim2,figsize=(13,7))
+        axs = np.array(axs)
+        ax = axs.reshape(-1)
+        
         index = -1
         for data in data_list:
             index = index + 1
-            if n_plot < dim1:
-                #print((n_plot,n_row))
-                ax0 = ax[n_plot,n_row]
-            else:
-                n_plot = n_plot - dim1
-                n_row = n_row + 1
-                #print((n_plot,n_row))
-                ax0 = ax[n_plot,n_row]
+            ax0 = ax[index]
               
-            n_plot = n_plot + 1
             print("Plotting data with name " + data.name)
             
             if type(data.dimension) == int:
@@ -414,16 +420,20 @@ class make_sub_plot:
                 y = data.Intensity
                 y_err = data.Error
                 
+                
                 ax0.errorbar(x, y, yerr=y_err)
                 
-                #ax0.xlim(data.limits[0],data.limits[1])
+                if self.log[index]:
+                    ax0.set_yscale("log",nonposy='clip')
+                
+                ax0.set_xlim(data.limits[0],data.limits[1])
                 
                 # Add a title
                 #ax0.title(data.title)
                 
                 # Add axis labels
-                #ax0.xlabel(data.xlabel)
-                #ax0.ylabel(data.ylabel)
+                ax0.set_xlabel(data.xlabel)
+                ax0.set_ylabel(data.ylabel)
                 
             elif  len(data.dimension) == 2:
                 
@@ -435,21 +445,19 @@ class make_sub_plot:
                 # Select to plot the intensity
                 #to_plot = np.log(Intensity)
                 
-                if self.log:
+                if self.log[index]:
                     min_value = np.min(Intensity[np.nonzero(Intensity)])
                     min_value = np.log10(min_value)
                     
-                    to_plot = np.log10(Intensity)
+                    #to_plot = np.log10(Intensity)
+                    to_plot = Intensity
                     
-                    max_value = to_plot.max()
+                    max_value = np.log10(to_plot.max())
                     
-                    if self.list_orders_of_mag:
-                        this_orders_of_mag = self.orders_of_magnitude_list[index]
-                    else:
-                        this_orders_of_mag = self.orders_of_magnitude
-                    
-                    if max_value - min_value > this_orders_of_mag:
-                        min_value = max_value - this_orders_of_mag
+                    if max_value - min_value > self.orders_of_mag[index]:
+                        min_value = max_value - self.orders_of_mag[index]
+                    min_value = 10.0 ** min_value
+                    max_value = 10.0 ** max_value
                 else:
                     to_plot = Intensity
                     min_value = to_plot.min()
@@ -481,18 +489,26 @@ class make_sub_plot:
                 
                 # Plot the data on the meshgrids
                 #im = plt.pcolormesh(x, y, to_plot, cmap=cmap, norm=norm)
-                ax0.pcolormesh(x, y, to_plot, cmap=cmap, norm=norm)
+                if self.log[index]: 
+                    im = ax0.pcolormesh(x, y, to_plot, cmap=cmap, norm=matplotlib.colors.LogNorm(vmin=min_value,vmax=max_value))
+                else:
+                    im = ax0.pcolormesh(x, y, to_plot, cmap=cmap, norm=norm)
                 
+                
+                def fmt(x, pos):
+                    a, b = '{:.2e}'.format(x).split('e')
+                    b = int(b)
+                    return r'${} \times 10^{{{}}}$'.format(a, b)
                 
                 # Add the colorbar
-                #fig.colorbar(im, ax=ax0)
+                fig.colorbar(im, ax=ax0, format=matplotlib.ticker.FuncFormatter(fmt))
                 
                 # Add a title
                 ax0.set_title(data.title)
                 
                 # Add axis labels
-                plt.xlabel(data.xlabel)
-                plt.ylabel(data.ylabel)
+                ax0.set_xlabel(data.xlabel)
+                ax0.set_ylabel(data.ylabel)
                 
             else:
                 print("Error, dimension not read correctly")

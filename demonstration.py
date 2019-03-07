@@ -81,6 +81,6 @@ instr.set_component_parameter("large_detector",{"xwidth" : 1.0, "yheight" : 1.0,
 data = instr.run_full_instrument(foldername="demonstration8",parameters={"energy":600},mpi=10,ncount=5E7)
 
 # Plot the resulting data on a logarithmic scale
-plot = McStas_class.make_plot(data,log=1,max_orders_of_mag=10)
+plot = McStasScript.make_sub_plot(data,log=1,max_orders_of_mag=[5,10,2,2])
 
 
