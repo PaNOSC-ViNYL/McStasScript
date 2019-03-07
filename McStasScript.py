@@ -4,6 +4,7 @@ from __future__ import print_function
 import datetime
 import os
 import time
+import math
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -334,6 +335,170 @@ class make_plot:
             
         plt.show()
         
+class make_sub_plot:
+    def __init__(self,*args,**kwargs):
+        data_list = args[0]
+        
+        if not isinstance(data_list,mcstas_data):
+            print("number of elements in data list = " + str(len(data_list)))
+        else:
+            # Only a single element, put it in a list for easier syntax later
+            data_list = [data_list]
+            
+        number_of_plots = len(data_list)
+        
+        # Relevant options: 
+        #  select colormap
+        #  show / hide colorbar
+        #  custom title / label
+        #  color of 1d plot
+        #  overlay several 1d
+        #  log scale (o$rders of magnitude)
+        #  compare several 1d
+        #  compare 2D
+        
+        #fig = plt.figure(figsize=(20,10))
+        
+        self.log = False*number_of_plots
+        if "log" in kwargs:
+            if isinstance(kwargs["log"],list):
+                if not len(kwargs["log"]) == number_of_plots:
+                    raise IndexError("Length of list given for log logic does not match number of ")
+                else:
+                    self.log = kwargs["log"]
+                    for element in self.log:
+                        if not isinstance(element, bool):
+                            if not element == 0:
+                                element = True 
+            
+        # Need to handle max orders of mag as log
+        self.orders_of_magnitude=300
+        if "max_orders_of_mag" in kwargs:
+            self.orders_of_magnitude=kwargs["max_orders_of_mag"]
+            
+        if "max_orders_of_mag_list" in kwargs:
+            self.orders_of_magnitude_list=kwargs["max_orders_of_mag_list"]
+            self.list_orders_of_mag = True
+        else: 
+            self.list_orders_of_mag = False
+        
+        
+        # Find reasonable grid size for the number of plots
+        dim1 = math.ceil(math.sqrt(number_of_plots))
+        dim2 = math.ceil(number_of_plots/dim1)
+          
+        fig, ax = plt.subplots(dim1,dim2,figsize=(15,8))
+        n_plot = 0
+        n_row = 0
+        index = -1
+        for data in data_list:
+            index = index + 1
+            if n_plot < dim1:
+                #print((n_plot,n_row))
+                ax0 = ax[n_plot,n_row]
+            else:
+                n_plot = n_plot - dim1
+                n_row = n_row + 1
+                #print((n_plot,n_row))
+                ax0 = ax[n_plot,n_row]
+              
+            n_plot = n_plot + 1
+            print("Plotting data with name " + data.name)
+            
+            if type(data.dimension) == int:
+                #fig = plt.figure(0)
+                #plt.subplot(dim1, dim2, n_plot)
+                
+                #print(data.T)
+                x = data.xaxis
+                y = data.Intensity
+                y_err = data.Error
+                
+                ax0.errorbar(x, y, yerr=y_err)
+                
+                #ax0.xlim(data.limits[0],data.limits[1])
+                
+                # Add a title
+                #ax0.title(data.title)
+                
+                # Add axis labels
+                #ax0.xlabel(data.xlabel)
+                #ax0.ylabel(data.ylabel)
+                
+            elif  len(data.dimension) == 2:
+                
+                # Split the data into intensity, error and ncount
+                Intensity = data.Intensity
+                Error = data.Error
+                Ncount = data.Ncount
+                
+                # Select to plot the intensity
+                #to_plot = np.log(Intensity)
+                
+                if self.log:
+                    min_value = np.min(Intensity[np.nonzero(Intensity)])
+                    min_value = np.log10(min_value)
+                    
+                    to_plot = np.log10(Intensity)
+                    
+                    max_value = to_plot.max()
+                    
+                    if self.list_orders_of_mag:
+                        this_orders_of_mag = self.orders_of_magnitude_list[index]
+                    else:
+                        this_orders_of_mag = self.orders_of_magnitude
+                    
+                    if max_value - min_value > this_orders_of_mag:
+                        min_value = max_value - this_orders_of_mag
+                else:
+                    to_plot = Intensity
+                    min_value = to_plot.min()
+                    max_value = to_plot.max()
+                
+                # Check the size of the array to be plotted 
+                #print(to_plot.shape)
+                
+                # Set the axis (might be switched?)
+                X=np.linspace(data.limits[0],data.limits[1],data.dimension[0]+1)
+                Y=np.linspace(data.limits[2],data.limits[3],data.dimension[1])
+                
+                # Create a meshgrid for both x and y
+                y, x = np.meshgrid(Y,X)
+                
+                
+                # Generate information on necessary colorrange
+                levels = MaxNLocator(nbins=150).tick_values(min_value, max_value)
+                #levels = MaxNLocator(nbins=150).tick_values(to_plot.max()-12, to_plot.max())
+                
+                # Select colormap
+                cmap = plt.get_cmap('jet')
+                norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
+                
+                # Create the figure
+                #fig, (ax0) = plt.subplots()
+                
+                #fig, ax0 = plt.subplot(dim1, dim2, n_plot)
+                
+                # Plot the data on the meshgrids
+                #im = plt.pcolormesh(x, y, to_plot, cmap=cmap, norm=norm)
+                ax0.pcolormesh(x, y, to_plot, cmap=cmap, norm=norm)
+                
+                
+                # Add the colorbar
+                #fig.colorbar(im, ax=ax0)
+                
+                # Add a title
+                ax0.set_title(data.title)
+                
+                # Add axis labels
+                plt.xlabel(data.xlabel)
+                plt.ylabel(data.ylabel)
+                
+            else:
+                print("Error, dimension not read correctly")
+         
+        plt.show()   
+        
 
 class parameter_variable:
     def __init__(self,*args,**kwargs):
@@ -427,7 +592,7 @@ class component:
         
         # If rotated is never mentioned, why print it? How does this influence McStas?
         if "ROTATED" in kwargs:
-            self.ROTATED_data = kwargs["AT"]
+            self.ROTATED_data = kwargs["ROTATED"]
         else:
             self.ROTATED_data = [0,0,0]
         # need to check if ROTATED_RELATIVE is a string

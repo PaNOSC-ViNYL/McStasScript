@@ -18,7 +18,7 @@ instr.add_component("Cu_powder","Powder_process")
 instr.set_component_parameter("Cu_powder",{"reflections" : "\"Cu.laz\""})
 
 instr.add_component("Cu","Union_make_material")
-instr.set_component_parameter("Cu",{"my_absorption" : "100*4*3.78/66.4", "process_string" : "\"Cu_incoherent,Cu_powder\""})
+instr.set_component_parameter("Cu",{"my_absorption" : "100*4*3.78/55.4", "process_string" : "\"Cu_incoherent,Cu_powder\""})
 
 # Set neutron source
 instr.add_component("source","Source_div",AT=[0,0,0])
