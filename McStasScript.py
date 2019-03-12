@@ -10,60 +10,107 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.colors import BoundaryNorm
 from matplotlib.ticker import MaxNLocator
+from openpyxl.worksheet import dimensions
+from boto.ec2.autoscale import limits
 
 try: # check whether python knows about 'basestring'
    basestring
 except NameError: # no, it doesn't (it's Python3); use 'str' instead
    basestring=str
-   
-   
+
+class mcstas_meta_data:
+    def __init__(self,*args,**kwargs):
+        self.info = {}
+    
+    def add_info(self,key,value):
+        self.info[key] = value
+        
+    def extract_info(self):
+        
+        
+        if "type" in self.info:
+            # extract dimension
+            type = self.info["type"]
+            if "array_1d" in type:
+                self.dimension = int(type[9:-2])
+            if "array_2d" in type:
+                self.dimension=[]
+                type_strings = self.info["type"].split(",")
+                temp_str = type_strings[0]
+                self.dimension.append(int(temp_str[9:]))
+                temp_str = type_strings[1]
+                self.dimension.append(int(temp_str[1:-2]))
+        else:
+            raise NameError("No type in mccode data section!")
+                
+        if "component" in self.info:
+            self.component_name = self.info["component"].rstrip()
+
+        if "filename" in self.info:
+            self.filename = self.info["filename"].rstrip()
+        else:
+            raise NameError("No filename found in mccode data section!")
+        
+        self.limits = []
+        if "xylimits" in self.info:
+            # find the four numbers 
+            temp_str = self.info["xylimits"]
+            limits_string = temp_str.split()
+            for limit in limits_string:
+                self.limits.append(float(limit))
+
+        if "xlimits" in self.info:
+            # find the four numbers 
+            temp_str = self.info["xlimits"]
+            limits_string = temp_str.split()
+            for limit in limits_string:
+                self.limits.append(float(limit))
+
+        if "xlabel" in self.info:
+            self.xlabel = self.info["xlabel"].rstrip()
+        if "ylabel" in self.info:
+            self.ylabel = self.info["ylabel"].rstrip()
+        if "title" in self.info:
+            self.title = self.info["title"].rstrip()
+    
+    def set_title(self,string):
+        self.title = string
+        
+    def set_xlabel(self,string):
+        self.xlabel = string
+        
+    def set_ylabel(self,string):
+        self.ylabel = string
+        
+    
+        
 class mcstas_data:
     def __init__(self,*args,**kwargs):
-        # Name of data set (usually filename
-        self.name = str(args[0])
+        # attatch meta data
+        self.metadata = args[0]
+        # get name from metadata
+        self.name = self.metadata.component_name
         # three basic arrays as first 
         self.Intensity = args[1]
         self.Error = args[2]
         self.Ncount = args[3]
         
-        self.dimension=[]  # size of the data, list with a number per dimension s
-        self.limits=[]     # limits on the data to be used for plotting
-        self.parameters={} # parameters used in McStas simulation
-        
-        self.xlabel=""
-        self.ylabel=""
-        self.title=""
-        
-        if "dimension" in kwargs:
-            self.dimension = kwargs["dimension"]
-        else:
-            raise NameError("ERROR: Initialization of mcstas_data done without dimension for data set named " + self.name + "!")
-        
-        if type(self.dimension) == int:
+        if type(self.metadata.dimension) == int:
             if "xaxis" in kwargs:
                 self.xaxis = kwargs["xaxis"]
             else:
                 raise NameError("ERROR: Initialization of mcstas_data done with 1d data, but without xaxis" + self.name + "!")
         
-        if "limits" in kwargs:
-            self.limits = kwargs["limits"]
-        else:
-            raise NameError("ERROR: Initialization of mcstas_data done without limits for data set named " + self.name + "!")
-        
-        if "parameters" in kwargs:
-            self.limits = kwargs["parameters"]
-            
-        
     # Methods xlabel, ylabel and title as they might not be found
-    def set_xlabel(self,*args):
-        self.xlabel = args[0]
-
-    def set_ylabel(self,*args):
-        self.ylabel = args[0]
+    def set_xlabel(self,string):
+        self.metadata.set_xlabel(string)
         
-    def set_title(self,*args):
-        self.title = args[0]
-
+    def set_ylabel(self,string):
+        self.metadata.set_ylabel(string)
+        
+    def set_title(self,string):
+        self.metadata.set_title(string)
+        
 
 class managed_mcrun:
     def __init__(self,*args,**kwargs):
@@ -117,111 +164,74 @@ class managed_mcrun:
         # Assume the script will continue when the os.system call has concluded. Is there a way to ensure this?
         # can use subprocess from spawn* if more controll is needed over the spawned process, including a timeout
         
-        time.sleep(2) # sleep 2 seconds to make sure data is written to disk before trying to open
+        time.sleep(1) # sleep 1 second to make sure data is written to disk before trying to open
          
         # find all data files in generated folder
         files_in_folder = os.listdir(self.data_folder_name)
         
+        # raise an error if mccode.sim is not available
+        if not "mccode.sim" in files_in_folder:
+            raise NameError("mccode.sim not written to output folder.")
+        
+        f = open(self.data_folder_name + "/mccode.sim","r")
+        #fl = f.readlines()
+        
+        metadata_list = []
+        in_data = False
+        
+        for lines in f:
+            # Could read other details about run
+            
+            if lines == "end data\n":
+                # current data object done, write to list
+                current_object.extract_info()
+                metadata_list.append(current_object)
+                in_data = False
+            
+            if in_data:
+                # break info into key and info
+                colon_index = lines.index(":")
+                key = lines[2:colon_index]
+                value = lines[colon_index+2:]
+                current_object.add_info(key, value)
+            
+            if lines == "begin data\n":
+                # new data object
+                current_object = mcstas_meta_data()
+                in_data = True
+                
+                
+        f.close()
+        
         # create a list for data instances to return
         results = []
         
-        # load the data into the list
-        for file in files_in_folder:
-            # Find data dimension, labels and axis
-            # Find lines with these variable names
-            
-            filename = self.data_folder_name + "/" + file
-            
-            variable_list = ["type", "title", "xlabel", "ylabel", "xlimits", "xylimits"]
-            located_variable_lines = {}
-            
-            f = open(filename,"r")
-            fl = f.readlines()
-            
-            # Need to check if this is a data file written by McStas
-            for line in fl:
-                for word in variable_list:
-                    if word in line:
-                        located_variable_lines[word]=line
-                        
-            f.close()
-             
-            if not fl[0] == "# Format: McCode with text headers\n":
-                print("Decided not to read file named " + filename)
+        for metadata in metadata_list:
+            data = np.loadtxt(self.data_folder_name + "/" + metadata.filename.rstrip())
+    
+            # split data into intensity, error and ncount
+            if type(metadata.dimension) == int:
+                xaxis = data.T[0,:]
+                Intensity = data.T[1,:]
+                Error = data.T[2,:]
+                Ncount = data.T[3,:]
+                
+            elif len(metadata.dimension) == 2:
+                xaxis = [] # assume evenly binned in 2d
+                Intensity = data.T[:,0:metadata.dimension[1]-1]
+                Error = data.T[:,metadata.dimension[1]:2*metadata.dimension[1]-1]
+                Ncount = data.T[:,2*metadata.dimension[1]:3*metadata.dimension[1]-1]
             else:
-                print("Decided to read file named " + filename)
-                #print(located_variable_lines)
-                
-                # Need to remove the variable name and end of line break
-                for key in located_variable_lines:
-                    string = located_variable_lines[key]
-                    located_variable_lines[key] = string[len(key)+4:-1]
-                
-                limits=[]
-                dimension=[]
-                type_string = located_variable_lines["type"]
-                if "1d" in type_string:
-                    # extract number of pixels
-                    dimension = int(type_string[9:-1])
-                    print(dimension) 
-                    
-                    # extract the limits of each direction
-                    temp_str = located_variable_lines["xlimits"]
-                    limits_string = temp_str.split()
-                    for limit in limits_string:
-                        limits.append(float(limit))
-                    
-                else:
-                    # extract number of pixels in each direction
-                    type_strings = type_string.split(",")
-                    temp_str = type_strings[0]
-                    dimension.append(int(temp_str[9:]))
-                    temp_str = type_strings[1]
-                    dimension.append(int(temp_str[1:-1]))
-                    
-                    # extract the limits of each direction
-                    temp_str = located_variable_lines["xylimits"]
-                    limits_string = temp_str.split()
-                    for limit in limits_string:
-                        limits.append(float(limit))    
-                
-                # Loads bulk data from file
-                # Does not seem to get the meta data
-                data = np.loadtxt(filename)
-    
-                # split data into intensity, error and ncount
-                if type(dimension) == int:
-                    xaxis = data.T[0,:] # not used in data yet
-                    Intensity = data.T[1,:]
-                    Error = data.T[2,:]
-                    Ncount = data.T[3,:]
-                    
-                elif len(dimension) == 2:
-                    xaxis = [] # assume evenly binned in 2d
-                    Intensity = data.T[:,0:dimension[1]-1]
-                    Error = data.T[:,dimension[1]:2*dimension[1]-1]
-                    Ncount = data.T[:,2*dimension[1]:3*dimension[1]-1]
-                    
-                else:
-                    # probably just not a McStas file then
-                    raise NameError("ERROR: Could not load dimensionality of data in file named " + str(file) + "!")
-                    # should probably just skip this file 
-                
-                # The data is saved as a mcstas_data object
-                result = mcstas_data(file,Intensity,Error,Ncount,xaxis=xaxis,dimension=dimension,limits=limits)
-                
-                # Set optional fields
-                if "xlabel" in located_variable_lines:
-                    result.set_xlabel(located_variable_lines["xlabel"])
-                if "ylabel" in located_variable_lines:
-                    result.set_ylabel(located_variable_lines["ylabel"])
-                if "title" in located_variable_lines:
-                    result.set_title(located_variable_lines["title"])
-                    
-                results.append(result)
-        
+                raise NameError("Dimension not read correctly in data set connected to monitor named " + metadata.component_name)    
+            
+            # The data is saved as a mcstas_data object
+            result = mcstas_data(metadata,Intensity,Error,Ncount,xaxis=xaxis)
+            
+            results.append(result)
+            
+            f.close()
+            
         return results
-    
     
 class make_plot:
     def __init__(self,*args,**kwargs):
@@ -237,23 +247,55 @@ class make_plot:
         #  compare several 1d
         #  compare 2D
         
-        self.log = False
-        if "log" in kwargs:
-            if not kwargs["log"] == 0:
-                self.log = True
-            
-        self.orders_of_magnitude=300
-        if "max_orders_of_mag" in kwargs:
-            self.orders_of_magnitude=kwargs["max_orders_of_mag"]
-        
-        if not isinstance(data_list,mcstas_data):
-            print("number of elements in data list = " + str(len(data_list)))
-        else:
+        if isinstance(data_list,mcstas_data):
             # Only a single element, put it in a list for easier syntax later
             data_list = [data_list]
+            
+        number_of_plots = len(data_list)
+        
+        self.log = [False]*number_of_plots
+        if "log" in kwargs:
+            if isinstance(kwargs["log"],list):
+                if not len(kwargs["log"]) == number_of_plots:
+                    raise IndexError("Length of list given for log logic does not match number of data elements")
+                else:
+                    self.log = kwargs["log"]
+                    for element in self.log:
+                        if not isinstance(element, bool):
+                            if not element == 0:
+                                element = True 
+            elif isinstance(kwargs["log"],bool):
+                if kwargs["log"] == True:
+                    self.log = [True]*number_of_plots
+            elif isinstance(kwargs["log"],int):
+                if kwargs["log"] == 1:
+                    self.log = [True]*number_of_plots
+            else:
+                raise NameError("log keyword Argument in make_sub_plot not understood. Needs to be int, [1/0], bool [True/False] or array of same length as data.")
+                
+        
+        self.orders_of_mag=[300] * number_of_plots
+        if "max_orders_of_mag" in kwargs:
+            if isinstance(kwargs["max_orders_of_mag"],list):
+                if not len(kwargs["max_orders_of_mag"]) == number_of_plots:
+                    raise IndexError("Length of list given for max_orders_of_mag does not match number of data elements")
+                else: 
+                    self.orders_of_mag = kwargs["max_orders_of_mag"]
+            else:
+                if isinstance(kwargs["max_orders_of_mag"],float) or isinstance(kwargs["max_orders_of_mag"],int):
+                    self.orders_of_magnitude=[kwargs["max_orders_of_mag"]]*number_of_plots
+                else:
+                    raise TypeError("max_orders_of_mag need to be of type float or int")
+        
+            
+        print("number of elements in data list = " + str(len(data_list)))
+        
+        index = -1
         for data in data_list:
-            print("Plotting data with name " + data.name)
-            if type(data.dimension) == int:
+            index = index + 1
+            
+            print("Plotting data with name " + data.metadata.component_name)
+            if type(data.metadata.dimension) == int:
                 fig = plt.figure(0)
                 
                 #print(data.T)
@@ -263,16 +305,16 @@ class make_plot:
                 
                 plt.errorbar(x, y, yerr=y_err)
                 
-                plt.xlim(data.limits[0],data.limits[1])
+                plt.xlim(data.metadata.limits[0],data.metadata.limits[1])
                 
                 # Add a title
-                plt.title(data.title)
+                plt.title(data.metadata.title)
                 
                 # Add axis labels
-                plt.xlabel(data.xlabel)
-                plt.ylabel(data.ylabel)
+                plt.xlabel(data.metadata.xlabel)
+                plt.ylabel(data.metadata.ylabel)
                 
-            elif  len(data.dimension) == 2:
+            elif  len(data.metadata.dimension) == 2:
                 
                 # Split the data into intensity, error and ncount
                 Intensity = data.Intensity
@@ -282,7 +324,7 @@ class make_plot:
                 # Select to plot the intensity
                 #to_plot = np.log(Intensity)
                 
-                if self.log:
+                if self.log[index]:
                     min_value = np.min(Intensity[np.nonzero(Intensity)])
                     min_value = np.log10(min_value)
                     
@@ -290,8 +332,8 @@ class make_plot:
                     
                     max_value = to_plot.max()
                     
-                    if max_value - min_value > self.orders_of_magnitude:
-                        min_value = max_value - self.orders_of_magnitude
+                    if max_value - min_value > self.orders_of_mag[index]:
+                        min_value = max_value - self.orders_of_mag[index]
                 else:
                     to_plot = Intensity
                     min_value = to_plot.min()
@@ -301,8 +343,8 @@ class make_plot:
                 #print(to_plot.shape)
                 
                 # Set the axis (might be switched?)
-                X=np.linspace(data.limits[0],data.limits[1],data.dimension[0]+1)
-                Y=np.linspace(data.limits[2],data.limits[3],data.dimension[1])
+                X=np.linspace(data.metadata.limits[0],data.metadata.limits[1],data.metadata.dimension[0]+1)
+                Y=np.linspace(data.metadata.limits[2],data.metadata.limits[3],data.metadata.dimension[1])
                 
                 # Create a meshgrid for both x and y
                 y, x = np.meshgrid(Y,X)
@@ -326,11 +368,11 @@ class make_plot:
                 fig.colorbar(im, ax=ax0)
                 
                 # Add a title
-                ax0.set_title(data.title)
+                ax0.set_title(data.metadata.title)
                 
                 # Add axis labels
-                plt.xlabel(data.xlabel)
-                plt.ylabel(data.ylabel)
+                plt.xlabel(data.metadata.xlabel)
+                plt.ylabel(data.metadata.ylabel)
                 
             else:
                 print("Error, dimension not read correctly")
@@ -409,9 +451,9 @@ class make_sub_plot:
             index = index + 1
             ax0 = ax[index]
               
-            print("Plotting data with name " + data.name)
+            print("Plotting data with name " + data.metadata.component_name)
             
-            if type(data.dimension) == int:
+            if type(data.metadata.dimension) == int:
                 #fig = plt.figure(0)
                 #plt.subplot(dim1, dim2, n_plot)
                 
@@ -426,16 +468,16 @@ class make_sub_plot:
                 if self.log[index]:
                     ax0.set_yscale("log",nonposy='clip')
                 
-                ax0.set_xlim(data.limits[0],data.limits[1])
+                ax0.set_xlim(data.metadata.limits[0],data.metadata.limits[1])
                 
                 # Add a title
                 #ax0.title(data.title)
                 
                 # Add axis labels
-                ax0.set_xlabel(data.xlabel)
-                ax0.set_ylabel(data.ylabel)
+                ax0.set_xlabel(data.metadata.xlabel)
+                ax0.set_ylabel(data.metadata.ylabel)
                 
-            elif  len(data.dimension) == 2:
+            elif  len(data.metadata.dimension) == 2:
                 
                 # Split the data into intensity, error and ncount
                 Intensity = data.Intensity
@@ -467,8 +509,8 @@ class make_sub_plot:
                 #print(to_plot.shape)
                 
                 # Set the axis (might be switched?)
-                X=np.linspace(data.limits[0],data.limits[1],data.dimension[0]+1)
-                Y=np.linspace(data.limits[2],data.limits[3],data.dimension[1])
+                X=np.linspace(data.metadata.limits[0],data.metadata.limits[1],data.metadata.dimension[0]+1)
+                Y=np.linspace(data.metadata.limits[2],data.metadata.limits[3],data.metadata.dimension[1])
                 
                 # Create a meshgrid for both x and y
                 y, x = np.meshgrid(Y,X)
@@ -504,11 +546,11 @@ class make_sub_plot:
                 fig.colorbar(im, ax=ax0, format=matplotlib.ticker.FuncFormatter(fmt))
                 
                 # Add a title
-                ax0.set_title(data.title)
+                ax0.set_title(data.metadata.title)
                 
                 # Add axis labels
-                ax0.set_xlabel(data.xlabel)
-                ax0.set_ylabel(data.ylabel)
+                ax0.set_xlabel(data.metadata.xlabel)
+                ax0.set_ylabel(data.metadata.ylabel)
                 
             else:
                 print("Error, dimension not read correctly")
@@ -622,6 +664,26 @@ class component:
             self.AT_relative = "RELATIVE " + kwargs["RELATIVE"]
             self.ROTATED_relative = "RELATIVE " + kwargs["RELATIVE"]
 
+        if "WHEN" in kwargs:
+            self.WHEN = "WHEN (" + kwargs["WHEN"] + ")\n"
+        else:
+            self.WHEN = ""
+            
+        if "EXTEND" in kwargs:
+            self.EXTEND = kwargs["EXTEND"]
+        else:
+            self.EXTEND = ""
+            
+        if "GROUP" in kwargs:
+            self.GROUP = kwargs["GRPUP"]
+        else:
+            self.GROUP = ""
+
+        if "JUMP" in kwargs:
+            self.JUMP = kwargs["JUMP"]
+        else:
+            self.JUMP = ""
+
         # possible to have a c comment
         if "comment" in kwargs:
             self.comment = kwargs["comment"]
@@ -666,6 +728,18 @@ class component:
     # method that adds a parameter name / value pair to dictionary
     def set_parameters(self,dict_input):
         self.component_parameters.update(dict_input)
+        
+    def set_WHEN(self,string):
+        self.WHEN = string
+        
+    def set_GROUP(self,string):
+        self.GROUP = string
+    
+    def set_JUMP(self,string):
+        self.JUMP = string
+        
+    def append_EXTEND(self,string):
+        self.EXTEND = self.EXTEND + string + "\n"
     
     # method that sets a comment to be written to instrument file
     def set_comment(self,string):
@@ -699,18 +773,36 @@ class component:
             if parameters_written < number_of_parameters:
                 fo.write(",") # comma between parameters
                 if parameters_written%parameters_per_line == 0:
-                    fo.write("\n")
+                    fo  .write("\n")
             else:
                 fo.write(")\n") # end paranthesis after last parameter
-    
-        # Need to add WHEN section here
+                
+        # Optional WHEN section
+        if not self.WHEN == "":
+            fo.write("WHEN(%s)\n" % self.WHEN)
         # Need to add JUMP section here
+        
         # write AT and ROTATED section
         fo.write("AT (%s,%s,%s)" % (str(self.AT_data[0]),str(self.AT_data[1]),str(self.AT_data[2])))
         fo.write(" %s\n" % self.AT_relative)
         fo.write("ROTATED (%s,%s,%s)" % (str(self.ROTATED_data[0]),str(self.ROTATED_data[1]),str(self.ROTATED_data[2])))
-        fo.write(" %s\n\n" % self.ROTATED_relative)
-        # Need to add EXTEND section here
+        fo.write(" %s\n" % self.ROTATED_relative)
+        
+        if not self.GROUP == "":
+            fo.write("GROUP %s\n" % self.GROUP)
+        
+        # Optional EXTEND section
+        if not self.EXTEND == "":
+            fo.write("EXTEND %{\n")
+            fo.write("%s" % self.EXTEND)
+            fo.write("%}\n")
+            
+        if not self.JUMP == "":
+            fo.write("JUMP %s\n" % self.JUMP)
+            
+        # Leave a new line between components for readability
+        fo.write("\n")
+            
 
     # print component long
     def print_long(self):
@@ -754,6 +846,7 @@ class McStas_instr:
         self.declare_list = []
         self.initialize_section = "// Start of initialize for generated " + name + "\n"
         self.trace_section = "// Start of trace section for generated " + name + "\n"
+        self.finally_section = "// Start of finally for generated " + name + "\n"
         # handle components
         self.component_list = [] # list of components (have to be ordered)
         self.component_name_list = [] # list of component names
@@ -771,6 +864,12 @@ class McStas_instr:
     
     def append_initialize_no_new_line(self,string):
         self.initialize_section = self.initialize_section + string
+        
+    def append_finally(self,string):
+        self.finally_section = self.finally_section + string + "\n"
+    
+    def append_finally_no_new_line(self,string):
+        self.finally_section = self.finally_section + string
     
     # Need to handle trace string differently when components also exists
     #  A) Could have trace string as a component attribute and set it before / after
@@ -831,6 +930,22 @@ class McStas_instr:
     def set_component_RELATIVE(self,name,relative):
         component = self.get_component(name)
         component.set_RELATIVE(relative)
+        
+    def set_component_WHEN(self,name,WHEN):
+        component = self.get_component(name)
+        component.set_WHEN(WHEN)
+        
+    def append_component_EXTEND(self,name,EXTEND):
+        component = self.get_component(name)
+        component.append_EXTEND(EXTEND)
+        
+    def set_component_GROUP(self,name,GROUP):
+        component = self.get_component(name)
+        component.set_GROUP(GROUP)
+        
+    def set_component_JUMP(self,name,JUMP):
+        component = self.get_component(name)
+        component.set_JUMP(JUMP)
     
     def set_component_comment(self,name,string):
         component = self.get_component(name)
@@ -970,14 +1085,14 @@ class McStas_instr:
         fo.write("\n")
 
         # Write declare
-        fo.write("DECLARE \n %{\n")
+        fo.write("DECLARE \n%{\n")
         for dec_line in self.declare_list:
             dec_line.write_line(fo)
             fo.write("\n")
         fo.write("%}\n\n")
 
         # Write initialize
-        fo.write("INITIALIZE \n %{\n")
+        fo.write("INITIALIZE \n%{\n")
         fo.write(self.initialize_section)
         # Alternatively hide everything in include
         # fo.write("%include "generated_includes/" + self.name + "_initialize.c")
@@ -988,7 +1103,11 @@ class McStas_instr:
         for component in self.component_list:
             component.write_component(fo)
 
-        # Write finally (no finally possible yet)
+        # Write finally
+        fo.write("FINALLY \n%{\n")
+        fo.write(self.finally_section)
+        # Alternatively hide everything in include
+        fo.write("%}\n")
 
         # End instrument file
         fo.write("\nEND\n")
