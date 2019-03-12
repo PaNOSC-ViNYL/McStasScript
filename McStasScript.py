@@ -12,6 +12,7 @@ from matplotlib.colors import BoundaryNorm
 from matplotlib.ticker import MaxNLocator
 from openpyxl.worksheet import dimensions
 from boto.ec2.autoscale import limits
+#from builtins import False, True
 
 try: # check whether python knows about 'basestring'
    basestring
@@ -82,7 +83,31 @@ class mcstas_meta_data:
     def set_ylabel(self,string):
         self.ylabel = string
         
-    
+class mcstas_plot_options:
+    def __init__(self,*args,**kwargs):
+        # settings for plotting this data set
+        self.log = False
+        self.orders_of_mag = 300
+        self.colormap = "jet"
+        
+    def set_options(self,**kwargs):
+        if "log" in kwargs:
+            log_input = kwargs["log"]
+            if type(log_input) == int:
+                if log_input == 0:
+                    self.log = False
+                else:
+                    self.log = True
+            elif type(log_input) == bool:
+                self.log = log_input
+            else:
+                raise NameError("Log input must be either Int or Bool.")
+            
+        if "orders_of_mag" in kwargs:
+            self.orders_of_mag = kwargs["orders_of_mag"]
+            
+        if "colormap" in kwargs:
+            self.colormap = kwargs["colormap"]
         
 class mcstas_data:
     def __init__(self,*args,**kwargs):
@@ -100,8 +125,10 @@ class mcstas_data:
                 self.xaxis = kwargs["xaxis"]
             else:
                 raise NameError("ERROR: Initialization of mcstas_data done with 1d data, but without xaxis" + self.name + "!")
+            
+        self.plot_options = mcstas_plot_options()
         
-    # Methods xlabel, ylabel and title as they might not be found
+    # Methods xlabel, ylabel and title as they might not be found    
     def set_xlabel(self,string):
         self.metadata.set_xlabel(string)
         
@@ -111,6 +138,32 @@ class mcstas_data:
     def set_title(self,string):
         self.metadata.set_title(string)
         
+    def set_plot_options(self,**kwargs):
+        self.plot_options.set_options(**kwargs)
+        
+        
+def name_search(name,data_list):
+    if not type(data_list[0]) == mcstas_data:
+        raise InputError("name_search function needs objects of type mcstas_data as input.")
+    
+    list_result = [x for x in data_list if x.metadata.component_name == name]
+    
+    if len(list_result) == 1: 
+        return list_result[0]
+    else:
+        raise NameError("More than one match for the name search")
+    
+def name_plot_options(name,data_list,*args,**kwargs):
+    if not type(data_list[0]) == mcstas_data:
+        raise InputError("name_search function needs objects of type mcstas_data as input.")
+    
+    list_result = [x for x in data_list if x.metadata.component_name == name]
+    
+    if len(list_result) == 1:
+        list_result[0].set_plot_options(**kwargs)
+    else:
+        raise NameError("More than one match for the name search")
+
 
 class managed_mcrun:
     def __init__(self,*args,**kwargs):
@@ -305,6 +358,9 @@ class make_plot:
                 
                 plt.errorbar(x, y, yerr=y_err)
                 
+                if data.plot_options.log:
+                    ax0.set_yscale("log",nonposy='clip')
+                
                 plt.xlim(data.metadata.limits[0],data.metadata.limits[1])
                 
                 # Add a title
@@ -324,7 +380,7 @@ class make_plot:
                 # Select to plot the intensity
                 #to_plot = np.log(Intensity)
                 
-                if self.log[index]:
+                if data.plot_options.log:
                     min_value = np.min(Intensity[np.nonzero(Intensity)])
                     min_value = np.log10(min_value)
                     
@@ -332,8 +388,8 @@ class make_plot:
                     
                     max_value = to_plot.max()
                     
-                    if max_value - min_value > self.orders_of_mag[index]:
-                        min_value = max_value - self.orders_of_mag[index]
+                    if max_value - min_value > data.plot_options.orders_of_mag:
+                        min_value = max_value - data.plot_options.orders_of_mag
                 else:
                     to_plot = Intensity
                     min_value = to_plot.min()
@@ -362,7 +418,11 @@ class make_plot:
                 fig, (ax0) = plt.subplots()
                 
                 # Plot the data on the meshgrids
-                im = ax0.pcolormesh(x, y, to_plot, cmap=cmap, norm=norm)
+                #im = ax0.pcolormesh(x, y, to_plot, cmap=cmap, norm=norm)
+                if data.plot_options.log: 
+                    im = ax0.pcolormesh(x, y, to_plot, cmap=cmap, norm=matplotlib.colors.LogNorm(vmin=min_value,vmax=max_value))
+                else:
+                    im = ax0.pcolormesh(x, y, to_plot, cmap=cmap, norm=norm)
                 
                 # Add the colorbar
                 fig.colorbar(im, ax=ax0)
@@ -403,40 +463,6 @@ class make_sub_plot:
         
         #fig = plt.figure(figsize=(20,10))
 
-        # instead of passing this information here, it should just be a property of the data
-        self.log = [False]*number_of_plots
-        if "log" in kwargs:
-            if isinstance(kwargs["log"],list):
-                if not len(kwargs["log"]) == number_of_plots:
-                    raise IndexError("Length of list given for log logic does not match number of data elements")
-                else:
-                    self.log = kwargs["log"]
-                    for element in self.log:
-                        if not isinstance(element, bool):
-                            if not element == 0:
-                                element = True 
-            elif isinstance(kwargs["log"],bool):
-                if kwargs["log"] == True:
-                    self.log = [True]*number_of_plots
-            elif isinstance(kwargs["log"],int):
-                if kwargs["log"] == 1:
-                    self.log = [True]*number_of_plots
-            else:
-                raise NameError("log keyword Argument in make_sub_plot not understood. Needs to be int, [1/0], bool [True/False] or array of same length as data.")
-                
-        
-        self.orders_of_mag=[300] * number_of_plots
-        if "max_orders_of_mag" in kwargs:
-            if isinstance(kwargs["max_orders_of_mag"],list):
-                if not len(kwargs["max_orders_of_mag"]) == number_of_plots:
-                    raise IndexError("Length of list given for max_orders_of_mag does not match number of data elements")
-                else: 
-                    self.orders_of_mag = kwargs["max_orders_of_mag"]
-            else:
-                if isinstance(kwargs["max_orders_of_mag"],float) or isinstance(kwargs["max_orders_of_mag"],int):
-                    self.orders_of_magnitude=[kwargs["max_orders_of_mag"]]*number_of_plots
-                else:
-                    raise TypeError("max_orders_of_mag need to be of type float or int")
         
         # Find reasonable grid size for the number of plots
         dim2 = math.ceil(math.sqrt(number_of_plots))
@@ -465,7 +491,7 @@ class make_sub_plot:
                 
                 ax0.errorbar(x, y, yerr=y_err)
                 
-                if self.log[index]:
+                if data.plot_options.log:
                     ax0.set_yscale("log",nonposy='clip')
                 
                 ax0.set_xlim(data.metadata.limits[0],data.metadata.limits[1])
@@ -487,7 +513,7 @@ class make_sub_plot:
                 # Select to plot the intensity
                 #to_plot = np.log(Intensity)
                 
-                if self.log[index]:
+                if data.plot_options.log:
                     min_value = np.min(Intensity[np.nonzero(Intensity)])
                     min_value = np.log10(min_value)
                     
@@ -496,8 +522,8 @@ class make_sub_plot:
                     
                     max_value = np.log10(to_plot.max())
                     
-                    if max_value - min_value > self.orders_of_mag[index]:
-                        min_value = max_value - self.orders_of_mag[index]
+                    if max_value - min_value > data.plot_options.orders_of_mag:
+                        min_value = max_value - data.plot_options.orders_of_mag
                     min_value = 10.0 ** min_value
                     max_value = 10.0 ** max_value
                 else:
@@ -521,7 +547,9 @@ class make_sub_plot:
                 #levels = MaxNLocator(nbins=150).tick_values(to_plot.max()-12, to_plot.max())
                 
                 # Select colormap
-                cmap = plt.get_cmap('jet')
+                #cmap = plt.get_cmap('jet')
+                cmap = plt.get_cmap(data.plot_options.colormap)                
+                
                 norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
                 
                 # Create the figure
@@ -531,7 +559,7 @@ class make_sub_plot:
                 
                 # Plot the data on the meshgrids
                 #im = plt.pcolormesh(x, y, to_plot, cmap=cmap, norm=norm)
-                if self.log[index]: 
+                if data.plot_options.log: 
                     im = ax0.pcolormesh(x, y, to_plot, cmap=cmap, norm=matplotlib.colors.LogNorm(vmin=min_value,vmax=max_value))
                 else:
                     im = ax0.pcolormesh(x, y, to_plot, cmap=cmap, norm=norm)
