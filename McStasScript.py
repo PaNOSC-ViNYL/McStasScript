@@ -392,6 +392,8 @@ class managed_mcrun:
                 Sets parameters
             custom_flags : str
                 Sets custom_flags passed to mcrun
+            mcrun_path : str
+                Path to mcrun command, "" if already in path
         """
         self.name_of_instrumentfile = instr_name
         
@@ -1634,17 +1636,91 @@ class McStas_instr:
         
         The most common way to add code to the trace section is to add 
         components using the seperate methods for this. This method is kept
-        as is still used for writing to c files used in legacy code.
+        as is still used for writing to c files used in legacy code. Each call
+        creates a new line.
         
+        Parameters
+        ----------
+        string : str
+            code to be added to trace
         
         """
         self.trace_section = self.trace_section + string + "\n"
     
     def append_trace_no_new_line(self,string):
+        """
+        Method for appending code to trace section, only used in write_c_files
+        
+        The most common way to add code to the trace section is to add 
+        components using the seperate methods for this. This method is kept
+        as is still used for writing to c files used in legacy code. No new
+        line is made with this call.
+        
+        Parameters
+        ----------
+        string : str
+            code to be added to trace
+        
+        """
         self.trace_section = self.trace_section + string
                  
-    # methods for creating new components and modifiying existing components
+    
     def add_component(self,*args,**kwargs):
+        """
+        Method for adding a new component instance to the instrument
+        
+        Creates a new component instance in the instrument. This requires
+        a unique instance name of the component to be used for future reference
+        and the name of the McStas component to be used. The component is placed
+        at the end of the instrument file unless otherwise specified with the 
+        after and before keywords. The component may be initialized using other
+        keyword arguments, but all attributes can be set with approrpiate methods.
+        
+        Parameters
+        ----------
+        First positional argument : str
+            Unique name of component instance
+            
+        Second positional argument : str
+            Name of McStas component to create instance of
+            
+        Keyword arguments:
+            after : str
+                Place this component after an already added component with given name
+                
+            before : str
+                Place this component before an already added component with given name
+        
+            AT : List of 3 floats
+                Sets AT_data that determines position relative to reference
+                
+            AT_RELATIVE : str
+                Sets reference component for postion
+                
+            ROTATED : List of 3 floats 
+                Sets RELATIVE_data that determines rotation relative to reference
+                
+            ROTATED_RELATIVE : str
+                Sets reference component for rotation
+                
+            RELATIVE : str
+                Sets reference component for both position and rotation
+                
+            WHEN : str
+                Sets when condition which must be a logical c expression
+                
+            EXTEND : str
+                Initialize the extend section with a line of c code
+                
+            GROUP : str
+                Name of the group this component should belong to
+                
+            JUMP : str
+                Set code for McStas JUMP statement
+                
+            comment : str
+                Sets a comment that will be displayed before the component
+        """
         if args[0] in self.component_name_list:
             raise NameError("Component name \"" + str(args[0]) + "\" used twice, McStas does not allow this. Rename or remove one instance of this name.")
         
@@ -1667,6 +1743,19 @@ class McStas_instr:
             self.component_name_list.append(args[0])
     
     def get_component(self,name):
+        """
+        Get the component instance of component with specified name
+        
+        This method is used to get direct access to any component instance
+        in the instrument. The component instance can be manipulated in 
+        much the same way, but it is not necessary to specify the name in
+        each call.
+        
+        Parameters
+        ----------
+        name : str
+            Unique name of component whos instance should be returned
+        """
         if name in self.component_name_list:
             index = self.component_name_list.index(name)
             return self.component_list[index]
@@ -1674,54 +1763,196 @@ class McStas_instr:
             raise NameError("No component was found with name \"" + str(name) + "\"!")
             
     def get_last_component(self):
+        """
+        Get the component instance of last component in the instrument
+        
+        This method is used to get direct access to any component instance
+        in the instrument. The component instance can be manipulated in 
+        much the same way, but it is not necessary to specify the name in
+        each call.
+        """
         return self.component_list[-1]
 
     def set_component_parameter(self,name,input_dict):
+        """
+        Add parameters and their values as dictionary to component
+        
+        This method is the primary way of specifying parameters in a
+        component. Parameters are added to a dictionary specifying 
+        parameter name and value pairs.
+        
+        Parameters
+        ----------
+        name : str
+            Unique name of component to modify
+        
+        input_dict : dict
+            Set of new parameter name and value pairs to add
+        """
         component = self.get_component(name)
         component.set_parameters(input_dict)
 
     def set_component_AT(self,name,at_list,**kwargs):
+        """
+        Method for setting position of component
+        
+        Parameters
+        ----------
+        name : str
+            Unique name of component to modify
+            
+        at_list : List of 3 floats
+            Position of component relative to reference component
+            
+        keyword arguments:
+            RELATIVE : str
+                Sets reference component for position
+        """
         component = self.get_component(name)
         component.set_AT(at_list,**kwargs)
         
     def set_component_ROTATED(self,name,rotated_list,**kwargs):
+        """
+        Method for setting rotiation of component
+        
+        Parameters
+        ----------
+        name : str
+            Unique name of component to modify
+            
+        rotated_list : List of 3 floats
+            Rotation of component relative to reference component
+            
+        keyword arguments:
+            RELATIVE : str
+                Sets reference component for rotation
+        """
         component = self.get_component(name)
         component.set_ROTATED(rotated_list,**kwargs)
     
     def set_component_RELATIVE(self,name,relative):
+        """
+        Method for setting reference of component position and rotation
+        
+        Parameters
+        ----------
+        name : str
+            Unique name of component to modify
+            
+        relative : str
+            Reference component for position and rotation
+        """
         component = self.get_component(name)
         component.set_RELATIVE(relative)
         
     def set_component_WHEN(self,name,WHEN):
+        """
+        Method for setting WHEN c expression to named component
+        
+        Parameters
+        ----------
+        name : str
+            Unique name of component to modify 
+        
+        WHEN : str
+            Sets WHEN c expression for named McStas component
+        """
         component = self.get_component(name)
         component.set_WHEN(WHEN)
         
     def append_component_EXTEND(self,name,EXTEND):
+        """
+        Method for adding line of c to EXTEND section of named component
+        
+        Parameters
+        ----------
+        name : str
+            Unique name of component to modify 
+        
+        EXTEND : str
+            Line of c code added to EXTEND section of named component
+        """
         component = self.get_component(name)
         component.append_EXTEND(EXTEND)
         
     def set_component_GROUP(self,name,GROUP):
+        """
+        Method for setting GROUP name of named component
+        
+        Parameters
+        ----------
+        name : str
+            Unique name of component to modify 
+        
+        GROUP : str
+            Sets GROUP name for named McStas component
+        """
         component = self.get_component(name)
         component.set_GROUP(GROUP)
         
     def set_component_JUMP(self,name,JUMP):
+        """
+        Method for setting JUMP expression of named component
+        
+        Parameters
+        ----------
+        name : str
+            Unique name of component to modify 
+        
+        JUMP : str
+            Sets JUMP expression for named McStas component
+        """
         component = self.get_component(name)
         component.set_JUMP(JUMP)
     
     def set_component_comment(self,name,string):
+        """
+        Sets a comment displayed before the component in written files
+        
+        Parameters
+        ----------
+        name : str
+            Unique name of component to modify 
+                
+        string : str
+            Comment string
+        
+        """
         component = self.get_component(name)
         component.set_comment(string)
-
+    
     def print_component(self,name):
+        """
+        Method for printing summary of contents in named component
+        
+        Parameters
+        ----------
+        name : str
+            Unique name of component to print
+        """
         component = self.get_component(name)
         component.print_long()
     
     def print_component_short(self,name):
+        """
+        Method for printing summary of contents in named component
+        
+        Parameters
+        ----------
+        name : str
+            Unique name of component to print
+        """
         component = self.get_component(name)
         component.print_short()
     
     def print_components(self):
+        """
+        Method for printing overview of all components in instrument
+        
+        Provides overview of component names, what McStas component is
+        used for each and their position and rotation in space.
     
+        """
         longest_name = len(max(self.component_name_list,key=len))
         
         # Investigate how this could have been done in a better way
@@ -1767,8 +1998,15 @@ class McStas_instr:
             #print("")
 
     def write_c_files(self):
-        # method for writing c files that can be included in instruments
+        """
+        Obsolete method for writing instrument to c files for later use
         
+        It is possible to use this function to write c files to a folder called
+        generated_includes that can then be included in the different sections
+        of a McStas instrument. Component objects are NOT written to these
+        files, but rather the contents of the trace_section that can be set 
+        using the append_trace method.
+        """
         path = os.getcwd()
         path = path + "/generated_includes"
         if not os.path.isdir(path):
@@ -1799,11 +2037,13 @@ class McStas_instr:
             component.write_component(fo)
         fo.close()
 
-    # Method that writes full instrument file.
     def write_full_instrument(self):
-        # method for writing an instrument file
-        # could either use generated includes or write everything out
-        # will probably create an option to choose between these methods later
+        """
+        Method for writing full instrument file to disk
+        
+        This method writes the instrument described by the instrument object to
+        disk with the name specified in the initialization of the object.
+        """
         
         # Create file identifier
         fo = open(self.name + ".instr","w")
@@ -1874,6 +2114,34 @@ class McStas_instr:
         fo.write("\nEND\n")
         
     def run_full_instrument(self,*args,**kwargs):
+        """
+        Runs McStas instrument described by this class, returns list of mcstas_data
+        
+        This method will write the instrument to disk and then run it using
+        the mcrun command of the system. Options are set using keyword 
+        arguments. Some options are mandatory, for example foldername, which 
+        can not already exist, if it does data will be read from this folder.
+        If the mcrun command is not in the path of the system, the absolute 
+        path can be given with the mcrun_path keyword argument. This path
+        could also already have been set at initialization of the instrument
+        object.
+        
+        Parameters
+        ----------
+        Keyword arguments
+            foldername : str
+                Sets data_folder_name
+            ncount : int
+                Sets ncount
+            mpi : int
+                Sets thread count
+            parameters : dict
+                Sets parameters
+            custom_flags : str
+                Sets custom_flags passed to mcrun
+            mcrun_path : str
+                Path to mcrun command, "" if already in path
+        """
         # Write the instrument file
         self.write_full_instrument()
         
