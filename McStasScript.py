@@ -27,6 +27,17 @@ except NameError:  # No, it doesn't (it's Python3); use 'str' instead
     basestring = str
 
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
 class McStasMetaData:
     """
     Class for holding metadata for McStas dataset, is to be read from
@@ -1079,12 +1090,18 @@ class component:
     A class describing a McStas component to be written to a instrument
 
     This class is used by the instrument class when setting up
-    components, but can also be used independently.  Most information
+    components as dynamic subclasses to this class.  Most information
     can be given on initialize using keyword arguments, but there are
     methods for setting the attributes describing the component. The
     class contains both methods to write the component to a instrument
     file and methods for printing to the python terminal for checking
-    the information.
+    the information. The McStas_Instr class creates subclasses from
+    this class that have attributes for all parameters for the given
+    component. The component information is read directly from the
+    component files in the McStas installation.  This class is frozen
+    after __init__ so that no new attributes can be created, which
+    allows direct feedback to the user if a parameter name is
+    misspelled.
 
     Attributes
     ----------
@@ -1124,6 +1141,9 @@ class component:
     comment : str
         Comment inserted before the component as an explanation
 
+    __isfrozen : bool
+        If true no new attributes can be created, when false they can
+
     Methods
     -------
     set_AT(at_list,**kwargs)
@@ -1161,7 +1181,20 @@ class component:
 
     print_short(**kwargs)
         Prints short description, used in print_components
+
+    __setattr__(key, value)
+        Overwriting __setattr__ to implement ability to freeze
+
+    _freeze()
+        Freeze the class so no new attributes can be defined
+
+    _unfreeze()
+        Unfreeze the class so new attributes can be defined again
+
     """
+
+    __isfrozen = False  # When frozen, no new attributes allowed
+
     def __init__(self, instance_name, component_name, **kwargs):
         """
         Initializes McStas component with specified name and component
@@ -1205,6 +1238,10 @@ class component:
             comment: str
                 Sets comment string
         """
+
+        # Allow addition of attributes in init
+        self._unfreeze()
+
         self.name = instance_name
         self.component_name = component_name
 
@@ -1258,13 +1295,31 @@ class component:
         else:
             self.comment = ""
 
-        self.component_parameters = {}
-
         """
         Could store an option for whether this component should be
         printed in instrument file or in a seperate file which would
         then be included.
         """
+
+        # Do not allow addition of attributes after init
+        self._freeze()
+
+    def __setattr__(self, key, value):
+        if self.__isfrozen and not hasattr(self, key):
+            raise AttributeError("No parameter called '"
+                                 + key
+                                 + "' in component named "
+                                 + self.name
+                                 + " of component type "
+                                 + self.component_name
+                                 + ".")
+        object.__setattr__(self, key, value)
+
+    def _freeze(self):
+        self.__isfrozen = True
+
+    def _unfreeze(self):
+        self.__isfrozen = False
 
     def set_AT(self, at_list, **kwargs):
         """Sets AT data, List of 3 floats"""
@@ -1296,8 +1351,25 @@ class component:
             self.ROTATED_relative = "RELATIVE " + relative_name
 
     def set_parameters(self, dict_input):
-        """Adds parameters and their values from dictionary input"""
-        self.component_parameters.update(dict_input)
+        """
+        Adds parameters and their values from dictionary input
+
+        Relies on attributes added when McStas_Instr creates a
+        subclass from the component class where each component
+        parameter is added as an attribute.
+
+        """
+        for key, val in dict_input.items():
+            if not hasattr(self, key):
+                raise NameError("No parameter called "
+                                + key
+                                + " in component named "
+                                + self.name
+                                + " of component type "
+                                + self.component_name
+                                + ".")
+            else:
+                setattr(self, key, val)
 
     def set_WHEN(self, string):
         """Sets WHEN string, should be a c logical expression"""
@@ -1320,11 +1392,16 @@ class component:
         self.comment = string
 
     def write_component(self, fo):
-        """Method that writes component to file"""
+        """
+        Method that writes component to file
+
+        Relies on attributes added when McStas_Instr creates a subclass
+        based on the component class.
+
+        """
         parameters_per_line = 2
         # Could use character limit on lines instead
         parameters_written = 0  # internal parameter
-        number_of_parameters = len(self.component_parameters)
 
         # Write comment if present
         if len(self.comment) > 1:
@@ -1333,12 +1410,29 @@ class component:
         # Write component name and component type
         fo.write("COMPONENT %s = %s(" % (self.name, self.component_name))
 
+        component_parameters = {}
+        for key in self.parameter_names:
+            val = getattr(self, key)
+            if val is None:
+                if self.parameter_defaults[key] is None:
+                    raise NameError("Required parameter named "
+                                    + key
+                                    + " in component named "
+                                    + self.name
+                                    + " not set.")
+                else:
+                    continue
+
+            component_parameters[key] = val
+
+        number_of_parameters = len(component_parameters)
+
         if number_of_parameters == 0:
             fo.write(")\n")  # If there are no parameters, close immediately
         else:
             fo.write("\n")  # If there are parameters, start a new line
 
-        for key, val in self.component_parameters.items():
+        for key, val in component_parameters.items():
             if isinstance(val, float):  # CHeck if value is a number
                 # Small or large numbers written in scientific format
                 fo.write(" %s = %G" % (str(key), val))
@@ -1382,12 +1476,40 @@ class component:
         fo.write("\n")
 
     def print_long(self):
-        """Prints contained information to Python terminal"""
-        print("// " + self.comment)
+        """
+        Prints contained information to Python terminal
+
+        Includes information on required parameters if they are not yet
+        specified. Information on the components are added when the
+        class is used as a superclass for classes describing each
+        McStas component.
+
+        """
+        if len(self.comment) > 1:
+            print("// " + self.comment)
         print("COMPONENT", str(self.name),
               "=", str(self.component_name))
-        for key, val in self.component_parameters.items():
-            print(" ", key, "=", val)
+        for key in self.parameter_names:
+            val = getattr(self, key)
+            parameter_name = bcolors.BOLD + key + bcolors.ENDC
+            if val is not None:
+                unit = ""
+                if key in self.parameter_units:
+                    unit = "[" + self.parameter_units[key] + "]"
+                value = (bcolors.BOLD
+                         + bcolors.OKGREEN
+                         + str(val)
+                         + bcolors.ENDC
+                         + bcolors.ENDC)
+                print(" ", parameter_name, "=", value, unit)
+            else:
+                if self.parameter_defaults[key] is None:
+                    print("  "
+                          + parameter_name
+                          + bcolors.FAIL
+                          + " : Required parameter not yet specified"
+                          + bcolors.ENDC)
+
         if not self.WHEN == "":
             print("WHEN (" + self.WHEN + ")")
         print("AT", self.AT_data, self.AT_relative)
@@ -1413,6 +1535,504 @@ class component:
             print(str(self.name), "=", str(self.component_name),
                   "\tAT", self.AT_data, self.AT_relative,
                   "ROTATED", self.ROTATED_data, self.ROTATED_relative)
+
+    def show_parameters(self):
+        """
+        Shows available parameters and their defaults for the component
+
+        Any value specified is not reflected in this view. The
+        additional attributes defined when McStas_Instr creates
+        subclasses for the individual components are required to run
+        this method.
+
+        """
+
+        print(" ___ Help "
+              + self.component_name + " "
+              + (62-len(self.component_name))*"_")
+        print("|"
+              + bcolors.BOLD + "optional parameter" + bcolors.ENDC + "|"
+              + bcolors.BOLD
+              + bcolors.UNDERLINE + "required parameter" + bcolors.ENDC
+              + bcolors.ENDC + "|"
+              + bcolors.BOLD
+              + bcolors.OKBLUE + "default value" + bcolors.ENDC
+              + bcolors.ENDC + "|"
+              + bcolors.BOLD
+              + bcolors.OKGREEN + "user specified value" + bcolors.ENDC
+              + bcolors.ENDC + "|")
+
+        for parameter in self.parameter_names:
+            unit = ""
+            if parameter in self.parameter_units:
+                unit = " [" + self.parameter_units[parameter] + "]"
+            comment = ""
+            if parameter in self.parameter_comments:
+                comment = " // " + self.parameter_comments[parameter]
+
+            parameter_name = bcolors.BOLD + parameter + bcolors.ENDC
+            value = ""
+            if self.parameter_defaults[parameter] is None:
+                parameter_name = (bcolors.UNDERLINE
+                                  + parameter_name
+                                  + bcolors.ENDC)
+            else:
+                value = (" = "
+                         + bcolors.BOLD
+                         + bcolors.OKBLUE
+                         + str(self.parameter_defaults[parameter])
+                         + bcolors.ENDC
+                         + bcolors.ENDC)
+
+            if getattr(self, parameter) is not None:
+                value = (" = "
+                         + bcolors.BOLD
+                         + bcolors.OKGREEN
+                         + str(getattr(self, parameter))
+                         + bcolors.ENDC
+                         + bcolors.ENDC)
+
+            print(parameter_name
+                  + value
+                  + unit
+                  + comment)
+
+        print(73*"-")
+
+    def show_parameters_simple(self):
+        """
+        Shows available parameters and their defaults for the component
+
+        Any value specified is not reflected in this view. The
+        additional attributes defined when McStas_Instr creates
+        subclasses for the individual components are required to run
+        this method.
+
+        """
+        print("---- Help " + self.component_name + " -----")
+        for parameter in self.parameter_names:
+            unit = ""
+            if parameter in self.parameter_units:
+                unit = " [" + self.parameter_units[parameter] + "]"
+            comment = ""
+            if parameter in self.parameter_comments:
+                comment = " // " + self.parameter_comments[parameter]
+            if self.parameter_defaults[parameter] is None:
+                print(parameter
+                      + unit
+                      + comment)
+            else:
+                print(parameter
+                      + " = "
+                      + str(self.parameter_defaults[parameter])
+                      + unit
+                      + comment)
+        print("----------" + "-"*len(self.component_name) + "------")
+    """
+    def show_component(self):
+        print("---- Current parameters for " + self.name + " ----")
+        for parameter in self.parameter_names:
+            parameter_value = getattr(self, parameter)
+            unit = ""
+            if parameter in self.parameter_units:
+                unit = " [" + self.parameter_units[parameter] + "]"
+            if parameter_value is not None:
+                print(" "
+                      + parameter
+                      + " = "
+                      + str(parameter_value)
+                      + unit)
+            else:
+                if self.parameter_defaults[parameter] is None:
+                    print(" "
+                          + parameter
+                          + " : Required parameter not yet specified")
+
+    def show_component_long(self):
+        print("---- Current parameters for " + self.name + " ----")
+        for parameter in self.parameter_names:
+            parameter_value = getattr(self, parameter)
+            unit = ""
+            if parameter in self.parameter_units:
+                unit = " [" + self.parameter_units[parameter] + "]"
+            comment = ""
+            if parameter in self.parameter_comments:
+                comment = " // " + self.parameter_comments[parameter]
+            if parameter_value is not None:
+                print(" "
+                      + parameter
+                      + " = "
+                      + str(parameter_value)
+                      + unit
+                      + comment)
+            else:
+                if self.parameter_defaults[parameter] is None:
+                    print(" "
+                          + parameter
+                          + " : Required parameter not yet specified"
+                          + unit
+                          + comment)
+    """
+
+
+class ComponentInfo:
+    """
+    Internal class used to store information on parameters of components
+    """
+
+    def __init__(self):
+        self.name = ""
+        self.category = ""
+        self.parameter_names = []
+        self.parameter_defaults = {}
+        self.parameter_types = {}
+        self.parameter_comments = {}
+        self.parameter_units = {}
+
+
+class ComponentReader:
+    """
+    Class for retriveing information on available McStas components
+
+    Recursively reads all component files in hardcoded list of
+    folders that represents the component categories in McStas.
+    The results are stored in a dictionary with ComponentInfo
+    instances, the keys are the names of the components. After
+    the components in the McStas installation are read, any
+    components pressent in the current work directory is read,
+    and these will overwrite exisiting information, consistent
+    with how McStas reads component definitions.
+
+    """
+
+    def __init__(self, mcstas_path):
+        """
+        Reads all component files in standard folders. Recursive, so
+        subfolders of these folders are included.
+
+        """
+
+        if mcstas_path[-1] is not "/":
+            mcstas_path = mcstas_path + "/"
+
+        # Hardcoded whitelist of foldernames
+        folder_list = ["sources",
+                       "optics",
+                       "samples",
+                       "monitors",
+                       "misc",
+                       "contrib",
+                       "obsolete",
+                       "union"]
+
+        self.component_path = {}
+        self.component_category = {}
+
+        for folder in folder_list:
+            absolute_path = mcstas_path + folder
+            # self.component_info_dict.update(self._read(absolute_path))
+            self._find_components(absolute_path)
+
+        # McStas component in current directory should overwrite
+        current_directory = os.getcwd()
+
+        for file in os.listdir(current_directory):
+            if file.endswith(".comp"):
+                absolute_path = current_directory + "/" + file
+                component_name = absolute_path.split("/")[-1].split(".")[-2]
+
+                if component_name in self.component_path:
+                    print("Overwriting McStasScript info on component named "
+                          + file
+                          + " because the component is in the"
+                          + " work directory.")
+
+                self.component_path[component_name] = absolute_path
+                self.component_category[component_name] = "Work directory"
+
+    def show_categories(self):
+        """
+        Method that will show all component categories available
+
+        """
+        categories = []
+        for component, category in self.component_category.items():
+            if category not in categories:
+                categories.append(category)
+                print(" " + category)
+
+    def show_components_in_category(self, category_input):
+        """
+        Method that will show all components in given category
+
+        """
+        empty_category = True
+        to_print = []
+        for component, category in self.component_category.items():
+            if category == category_input:
+                to_print.append(component)
+                empty_category = False
+
+        to_print.sort()
+        if empty_category:
+            print("No components found in this category! "
+                  + "Available categories:")
+            self.show_categories()
+
+        elif len(to_print) < 10:
+            for component in to_print:
+                print(" " + component)
+        else:
+            # Prints in collumns, maximum 4 and maximum line length 100
+            columns = 5
+            total_line_length = 1000
+            while(total_line_length > 100):
+                columns = columns - 1
+
+                c_length = math.ceil(len(to_print)/columns)
+                last_length = len(to_print) - (columns-1)*c_length
+
+                column = []
+                longest_name = []
+                for col in range(0, columns-1):
+                    current_list = to_print[c_length*col:c_length*(col+1)]
+                    column.append(current_list)
+                    longest_name.append(len(max(current_list, key=len)))
+
+                column.append(to_print[c_length*(columns-1):])
+                longest_name.append(len(max(column[columns-1], key=len)))
+
+                total_line_length = 1 + sum(longest_name) + (columns-1)*3
+
+            for line_nr in range(0, c_length):
+                print(" ", end="")
+                for col in range(0, columns-1):
+                    this_name = column[col][line_nr]
+                    print(this_name
+                          + " "*(longest_name[col] - len(this_name))
+                          + "   ", end="")  # More columns left, dont break
+                if line_nr < last_length:
+                    this_name = column[columns-1][line_nr]
+                    print(this_name)
+                else:
+                    print("")
+
+    def load_all_components(self):
+        """
+        Method that loads information on all components into memory.
+
+        """
+
+        return_dict = {}
+        for comp_name, abs_path in self.component_path.items():
+            return_dict[comp_name] = self.read_component_file(abs_path)
+
+        return return_dict
+
+    def read_name(self, component_name):
+        """
+        Returns ComponentInfo of component with name component_name.
+
+        Uses table of absolute paths to all known components, and
+        reads the appropriate file in order to generate the information.
+
+        """
+
+        if component_name not in self.component_path:
+            raise NameError("No component named "
+                            + component_name
+                            + " in McStas installation or "
+                            + "current work directory.")
+
+        return self.read_component_file(self.component_path[component_name])
+
+    def _find_components(self, absolute_path):
+        """
+        Recursive read function, can read either file or entire folder
+
+        Updates the component_info_dict with the findings that are
+        stored as ComoponentInfo instances.
+
+        """
+
+        if not os.path.isdir(absolute_path):
+            if absolute_path.endswith(".comp"):
+                # read this file
+                component_name = absolute_path.split("/")[-1].split(".")[-2]
+                self.component_path[component_name] = absolute_path
+
+                component_category = absolute_path.split("/")[-2]
+                self.component_category[component_name] = component_category
+        else:
+            for file in os.listdir(absolute_path):
+                absolute_file_path = absolute_path + "/" + file
+                self._find_components(absolute_file_path)
+
+    def read_component_file(self, absolute_path):
+        """
+        Reads a component file and expands component_info_dict
+
+        The information is stored as ComponentClass instances.
+
+        """
+
+        result = ComponentInfo()
+
+        fo = open(absolute_path, "r")
+
+        cnt = 0
+        while True:
+            cnt += 1
+            line = fo.readline()
+
+            # find parameter comments
+            if self.line_starts_with(line, "* %P"):
+
+                while True:
+                    this_line = fo.readline()
+
+                    if self.line_starts_with(this_line, "DEFINE COMPONENT"):
+                        # No more comments to read through
+                        break
+
+                    if ":" in this_line:
+                        tokens = this_line.split(":")
+
+                        variable_name = tokens[0]
+                        variable_name = variable_name.replace("*", "")
+                        variable_name = variable_name.strip()
+                        if " " in variable_name:
+                            name_tokens = variable_name.split(" ")
+                            variable_name = name_tokens[0]
+
+                        if len(tokens[1]) > 2:
+                            comment = tokens[1].strip()
+
+                            if "[" in comment:  # Search for unit
+                                # If found, store it and remove from string
+                                unit = comment[comment.find("[") + 1:
+                                               comment.find("]")]
+                                result.parameter_units[variable_name] = unit
+                                comment = comment[comment.find("]") + 1:]
+                                comment = comment.strip()
+
+                            # Store the comment
+                            result.parameter_comments[variable_name] = comment
+                    elif "[" in this_line and "]" in this_line:
+                        tokens = this_line.split("[")
+
+                        variable_name = tokens[0]
+                        variable_name = variable_name.replace("*", "")
+                        variable_name = variable_name.strip()
+
+                        unit = this_line[this_line.find("[") + 1:
+                                         this_line.find("]")]
+                        result.parameter_units[variable_name] = unit
+
+                        comment = this_line[this_line.find("]") + 1:]
+                        comment = comment.strip()
+                        result.parameter_comments[variable_name] = comment
+
+            # find definition parameters and their values
+            if (self.line_starts_with(line, "DEFINITION PARAMETERS")
+                    or self.line_starts_with(line, "SETTING PARAMETERS")):
+
+                parts = line.split("(")
+                parameter_parts = parts[1].split(",")
+
+                parameter_parts = list(filter(("\n").__ne__, parameter_parts))
+
+                break_now = False
+                while True:
+                    # Read all definition parameters
+
+                    for part in parameter_parts:
+
+                        temp_par_type = "double"
+
+                        part = part.strip()
+
+                        # remove trailing )
+                        if ")" in part:
+                            part = part.replace(")", "")
+                            break_now = True
+
+                        possible_declare = part.split(" ")
+                        possible_type = possible_declare[0].strip()
+                        if "int" == possible_type:
+                            temp_par_type = "int"
+                            # remove int from part
+                            part = "".join(possible_declare[1:])
+                        if "string" == possible_type:
+                            temp_par_type = "string"
+                            # remove string from part
+                            part = "".join(possible_declare[1:])
+
+                        part = part.replace(" ", "")
+                        if part == "":
+                            continue
+
+                        if self.line_starts_with(part, "//"):
+                            break_now = True
+                            continue
+
+                        if self.line_starts_with(part, "/*"):
+                            break_now = True
+                            continue
+
+                        if "=" not in part:
+                            # no defualt value, required parameter
+                            result.parameter_names.append(part)
+                            result.parameter_defaults[part] = None
+                            result.parameter_types[part] = temp_par_type
+                        else:
+                            # default value available
+                            name_value = part.split("=")
+                            par_name = name_value[0].strip()
+                            par_value = name_value[1].strip()
+                            result.parameter_names.append(par_name)
+                            result.parameter_defaults[par_name] = par_value
+                            result.parameter_types[par_name] = temp_par_type
+
+                    if break_now:
+                        break
+
+                    parameter_parts = fo.readline().split(",")
+
+            if self.line_starts_with(line, "DECLARE"):
+                break
+
+            if self.line_starts_with(line, "TRACE"):
+                break
+
+            if cnt == 1000:
+                break
+
+        fo.close()
+
+        result.name = absolute_path.split("/")[-1].split(".")[-2]
+        foldernames = absolute_path.split("/")
+        result.category = foldernames[-2]
+
+        """
+        To lower memory use one could remove all comments and units that
+        does not correspond to a found parameter name.
+        """
+
+        return result
+
+    def line_starts_with(self, line, input):
+        """
+        Helper method that checks if a string is the start of a line
+
+        """
+        if len(line) < len(input):
+            return False
+
+        if line[0:len(input)] == input:
+            return True
+        else:
+            return False
 
 
 class McStas_instr:
@@ -1557,6 +2177,7 @@ class McStas_instr:
             mcrun_path : str
                 Absolute path of mcrun or empty if already in path
         """
+
         self.name = name
 
         if "author" in kwargs:
@@ -1574,6 +2195,15 @@ class McStas_instr:
         else:
             self.mcrun_path = ""
 
+        if "mcstas_path" in kwargs:
+            self.mcstas_path = kwargs["mcstas_path"]
+        else:
+            self.mcstas_path = ""
+            raise NameError("At this stage of development "
+                            + "McStasScript need the absolute path "
+                            + "for the McStas installation as keyword "
+                            + "named mcstas_path")
+
         self.parameter_list = []
         self.declare_list = []
         self.initialize_section = ("// Start of initialize for generated "
@@ -1585,6 +2215,10 @@ class McStas_instr:
         # Handle components
         self.component_list = []  # List of components (have to be ordered)
         self.component_name_list = []  # List of component names
+
+        # Read info on active McStas components
+        self.component_reader = ComponentReader(self.mcstas_path)
+        self.component_class_lib = {}
 
     def add_parameter(self, *args, **kwargs):
         """
@@ -1746,6 +2380,69 @@ class McStas_instr:
 
         self.trace_section = self.trace_section + string
 
+    def show_components(self, *args):
+        """
+        Helper method that shows available components to the user
+
+        If called without any arguments it will display the available
+        component categories.  The first input
+
+        """
+        if len(args) == 0:
+            print("Here are the availalbe component categories:")
+            self.component_reader.show_categories()
+            print("Call show_components(category_name) to display")
+
+        else:
+            category = args[0]
+            print("Here are all components in the "
+                  + category
+                  + " category.")
+            self.component_reader.show_components_in_category(category)
+
+    def component_help(self, name):
+        """
+        Method for showing parameters for a component before adding it
+        to the instrument
+
+        """
+
+        dummy_instance = self._create_component_instance("dummy", name)
+        dummy_instance.show_parameters()
+
+    def _create_component_instance(self, *args, **kwargs):
+        """
+        Dynamically creates a class for the requested component type
+
+        Created classses kept in dictionary, if the same component type
+        is requested again, the class in the dictionary is used.  The
+        method returns an instance of the created class that was
+        initialized with the paramters passed to this function.
+        """
+
+        if len(args) < 2:
+            raise NameError("Attempting to create component without name")
+
+        component_name = args[1]
+
+        if component_name not in self.component_class_lib:
+            comp_info = self.component_reader.read_name(component_name)
+
+            input_dict = {}
+            input_dict = {key: None for key in comp_info.parameter_names}
+            input_dict["parameter_names"] = comp_info.parameter_names
+            input_dict["parameter_defaults"] = comp_info.parameter_defaults
+            input_dict["parameter_types"] = comp_info.parameter_types
+            input_dict["parameter_units"] = comp_info.parameter_units
+            input_dict["parameter_comments"] = comp_info.parameter_comments
+            input_dict["category"] = comp_info.category
+
+            self.component_class_lib[component_name] = type(component_name,
+                                                            (component,),
+                                                            input_dict)
+
+        return self.component_class_lib[component_name](*args, **kwargs)
+
     def add_component(self, *args, **kwargs):
         """
         Method for adding a new component instance to the instrument
@@ -1819,8 +2516,10 @@ class McStas_instr:
                                  + " not found."))
 
             new_index = self.component_name_list.index(kwargs["after"])
-            self.component_list.insert(new_index+1,
-                                       component(*args, **kwargs))
+
+            new_component = self._create_component_instance(*args, **kwargs)
+            self.component_list.insert(new_index + 1, new_component)
+
             self.component_name_list.insert(new_index+1, args[0])
 
         # Insert component after component with this name
@@ -1833,13 +2532,19 @@ class McStas_instr:
                                  + "name was not found."))
 
             new_index = self.component_name_list.index(kwargs["before"])
-            self.component_list.insert(new_index, component(*args, **kwargs))
+
+            new_component = self._create_component_instance(*args, **kwargs)
+            self.component_list.insert(new_index, new_component)
+
             self.component_name_list.insert(new_index, args[0])
 
         # If after or before keywords absent, place component at the end
         else:
-            self.component_list.append(component(*args, **kwargs))
+            new_component = self._create_component_instance(*args, **kwargs)
+            self.component_list.append(new_component)
             self.component_name_list.append(args[0])
+
+        return new_component
 
     def get_component(self, name):
         """

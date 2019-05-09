@@ -1,14 +1,22 @@
 # Demonstration of McStasScript, an API for creating and running McStas instruments from python scripts
 # Written by Mads Bertelsen, ESS DMSC
 import random
+import sys
+#sys.path.append('/Users/madsbertelsen/PaNOSC/McStasScript/github/McStasScript')
 import McStasScript # McStasScript classes
 
 # if the mcrun command from McStas is not in your path, provide absolute path for the binary here:
 mcrun_path = ""
 #mcrun_path = "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/bin"
+mcstas_path = ""
+#mcstas_path = "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/"
 
 # Create a McStas instrument
-instr = McStasScript.McStas_instr("random_demo",author="Mads Bertelsen",origin="ESS DMSC",mcrun_path=mcrun_path)
+instr = McStasScript.McStas_instr("random_demo",
+                                  author="Mads Bertelsen",
+                                  origin="ESS DMSC",
+                                  mcrun_path = mcrun_path,
+                                  mcstas_path = mcstas_path)
 
 # Set up a material called Cu with approrpiate properties (uses McStas Union components, here the processes)
 instr.add_component("Cu_incoherent","Incoherent_process")
@@ -78,9 +86,15 @@ instr.add_component("large_detector","PSD_monitor",AT=[0,0,2])
 instr.set_component_parameter("large_detector",{"xwidth" : 1.0, "yheight" : 1.0, "nx" : 500, "ny" : 500, "filename" : "\"large_PSD.dat\"", "restore_neutron" : 1})
 
 # Run the McStas simulation, a unique foldername is required for each run
-data = instr.run_full_instrument(foldername="demonstration8",parameters={"energy":600},mpi=10,ncount=5E7)
+data = instr.run_full_instrument(foldername="demonstration",parameters={"energy":600},mpi=2,ncount=5E7)
+
+# Set plotting options for the data (optional)
+McStasScript.name_plot_options("logger_space_zx_all",data,log=1,orders_of_mag=3)
+McStasScript.name_plot_options("logger_space_zy_all",data,log=1,orders_of_mag=3)
+McStasScript.name_plot_options("detector",data,log=1,colormap="hot",orders_of_mag=0.5)
+McStasScript.name_plot_options("large_detector",data,log=1,orders_of_mag=8)
 
 # Plot the resulting data on a logarithmic scale
-plot = McStasScript.make_sub_plot(data,log=1,max_orders_of_mag=[5,10,2,2])
+plot = McStasScript.make_sub_plot(data)
 
 
