@@ -1517,7 +1517,7 @@ class component:
         if not self.GROUP == "":
             print("GROUP " + self.GROUP)
         if not self.EXTEND == "":
-            print("%{")
+            print("EXTEND %{")
             print(self.EXTEND + "%}")
         if not self.JUMP == "":
             print("JUMP " + self.JUMP)
