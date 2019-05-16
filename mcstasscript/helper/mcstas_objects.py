@@ -364,7 +364,7 @@ class component:
             self.ROTATED_data = [0, 0, 0]
         # Could check if ROTATED_RELATIVE is a string
         if "ROTATED_RELATIVE" in kwargs:
-            self.ROTATED_relative = kwargs["ROTATED_RELATIVE"]
+            self.ROTATED_relative = "RELATIVE " + kwargs["ROTATED_RELATIVE"]
         else:
             self.ROTATED_relative = "ABSOLUTE"
 
@@ -384,7 +384,7 @@ class component:
             self.EXTEND = ""
 
         if "GROUP" in kwargs:
-            self.GROUP = kwargs["GRPUP"]
+            self.GROUP = kwargs["GROUP"]
         else:
             self.GROUP = ""
 
@@ -476,7 +476,7 @@ class component:
 
     def set_WHEN(self, string):
         """Sets WHEN string, should be a c logical expression"""
-        self.WHEN = string
+        self.WHEN = "WHEN (" + string + ")\n"
 
     def set_GROUP(self, string):
         """Sets GROUP name"""
@@ -551,7 +551,7 @@ class component:
 
         # Optional WHEN section
         if not self.WHEN == "":
-            fo.write("WHEN(%s)\n" % self.WHEN)
+            fo.write("%s" % self.WHEN)
 
         # Write AT and ROTATED section
         fo.write("AT (%s,%s,%s)" % (str(self.AT_data[0]),

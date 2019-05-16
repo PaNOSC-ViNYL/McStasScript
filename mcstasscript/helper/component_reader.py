@@ -170,7 +170,13 @@ class ComponentReader:
                             + " in McStas installation or "
                             + "current work directory.")
 
-        return self.read_component_file(self.component_path[component_name])
+        output = self.read_component_file(self.component_path[component_name])
+        
+        # Category loaded using path, in case of Work directory it fails
+        if self.component_category[component_name] == "Work directory":
+            output.category = "Work directory"  # Corrects category
+        
+        return output
 
     def _find_components(self, absolute_path):
         """
@@ -316,6 +322,16 @@ class ComponentReader:
                             name_value = part.split("=")
                             par_name = name_value[0].strip()
                             par_value = name_value[1].strip()
+                            
+                            if temp_par_type is "double":
+                                try:
+                                    par_value = float(par_value)
+                                except:
+                                    par_value = par_value
+                                    # Could change the type
+                            elif temp_par_type is "int":
+                                par_value = int(par_value)
+
                             result.parameter_names.append(par_name)
                             result.parameter_defaults[par_name] = par_value
                             result.parameter_types[par_name] = temp_par_type

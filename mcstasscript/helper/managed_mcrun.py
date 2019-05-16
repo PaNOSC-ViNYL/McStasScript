@@ -2,6 +2,7 @@ import os
 import numpy as np
 from mcstasscript.data.data import McStasMetaData
 from mcstasscript.data.data import McStasData
+from docutils.io import InputError
 
 class ManagedMcrun:
     """
@@ -68,13 +69,14 @@ class ManagedMcrun:
         self.name_of_instrumentfile = instr_name
 
         self.data_folder_name = ""
-        self.ncount = 1E6
+        self.ncount = int(1E6)
         self.mpi = 1
         self.parameters = {}
         self.custom_flags = ""
         self.mcrun_path = ""
         # mcrun_path always in kwargs
-        self.mcrun_path = kwargs["mcrun_path"]
+        if "mcrun_path" in kwargs:
+            self.mcrun_path = kwargs["mcrun_path"]
 
         if "foldername" in kwargs:
             self.data_folder_name = kwargs["foldername"]
@@ -84,7 +86,7 @@ class ManagedMcrun:
                 + "with keyword argument.")
 
         if "ncount" in kwargs:
-            self.ncount = kwargs["ncount"]
+            self.ncount = int(kwargs["ncount"])
 
         if "mpi" in kwargs:
             self.mpi = kwargs["mpi"]
@@ -129,23 +131,37 @@ class ManagedMcrun:
         os.system(mcrun_full_path + " "
                   + option_string + " "
                   + self.custom_flags + " "
-                  + self.name_of_instrumentfile + " "
+                  + self.name_of_instrumentfile
                   + parameter_string)
 
         """
         Can use subprocess from spawn* instead of os.system if more
         control is needed over the spawned process, including a timeout
         """
-
+        
+        #return self.load_results(self.data_folder_name)
+        
+    def load_results(self, *args):
+        
+        if len(args) == 0:
+            data_folder_name = self.data_folder_name
+        elif len(args) == 1:
+            data_folder_name = args[0]
+        else:
+            raise InputError("load_results can be caled with 0 or 1 arguments")
+        
+        if not os.path.isdir(data_folder_name):
+            raise NameError("Given data directory does not exist.")
+        
         # Find all data files in generated folder
-        files_in_folder = os.listdir(self.data_folder_name)
+        files_in_folder = os.listdir(data_folder_name)
 
         # Raise an error if mccode.sim is not available
         if "mccode.sim" not in files_in_folder:
-            raise NameError("mccode.sim not written to output folder.")
+            raise NameError("No mccode.sim in data folder.")
 
         # Open mccode to read metadata for all datasets written to disk
-        f = open(self.data_folder_name + "/mccode.sim", "r")
+        f = open(data_folder_name + "/mccode.sim", "r")
 
         # Loop that reads mccode.sim sections
         metadata_list = []
@@ -184,7 +200,7 @@ class ManagedMcrun:
         # Load datasets described in metadata list individually
         for metadata in metadata_list:
             # Load data with numpy
-            data = np.loadtxt(self.data_folder_name
+            data = np.loadtxt(data_folder_name
                               + "/"
                               + metadata.filename.rstrip())
 
