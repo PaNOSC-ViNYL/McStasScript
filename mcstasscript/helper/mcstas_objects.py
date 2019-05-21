@@ -58,16 +58,13 @@ class parameter_variable:
             self.type = args[0] + " "
             self.name = str(args[1])
 
+        self.value = ""
         if "value" in kwargs:
-            self.value_set = 1
             self.value = kwargs["value"]
-        else:
-            self.value_set = 0
 
+        self.comment = ""
         if "comment" in kwargs:
             self.comment = "// " + kwargs["comment"]
-        else:
-            self.comment = ""
 
         # could check for allowed types
         # they are int, double, string, are there more?
@@ -75,7 +72,7 @@ class parameter_variable:
     def write_parameter(self, fo, stop_character):
         """Writes input parameter to file"""
         fo.write("%s%s" % (self.type, self.name))
-        if self.value_set == 1:
+        if self.value is not "":
             if isinstance(self.value, int):
                 fo.write(" = %d" % self.value)
             elif isinstance(self.value, float):
@@ -113,9 +110,6 @@ class declare_variable:
     vector : int
         0 if a single value is given, ortherwise contains the length
 
-    value_set : int
-        Internal variable displaying wether or not a value was given
-
     Methods
     -------
     write_line(fo)
@@ -145,21 +139,17 @@ class declare_variable:
         """
         self.type = args[0]
         self.name = str(args[1])
+        self.value = ""
         if "value" in kwargs:
-            self.value_set = 1
             self.value = kwargs["value"]
-        else:
-            self.value_set = 0
 
+        self.vector = 0
         if "array" in kwargs:
             self.vector = kwargs["array"]
-        else:
-            self.vector = 0
 
+        self.comment = ""
         if "comment" in kwargs:
             self.comment = " // " + kwargs["comment"]
-        else:
-            self.comment = ""
 
     def write_line(self, fo):
         """Writes line declaring variable to file fo
@@ -169,19 +159,19 @@ class declare_variable:
         fo : file object
             File the line will be written to
         """
-        if self.value_set == 0 and self.vector == 0:
+        if self.value is "" and self.vector == 0:
             fo.write("%s %s;%s" % (self.type, self.name, self.comment))
-        if self.value_set == 1 and self.vector == 0:
+        if self.value is not "" and self.vector == 0:
             if self.type == "int":
                 fo.write("%s %s = %d;%s" % (self.type, self.name,
                                             self.value, self.comment))
             else:
                 fo.write("%s %s = %G;%s" % (self.type, self.name,
                                             self.value, self.comment))
-        if self.value_set == 0 and self.vector != 0:
+        if self.value is "" and self.vector != 0:
             fo.write("%s %s[%d];%s" % (self.type, self.name,
                                        self.vector, self.comment))
-        if self.value_set == 1 and self.vector != 0:
+        if self.value is not "" and self.vector != 0:
             fo.write("%s %s[%d] = {" % (self.type, self.name, self.vector))
             for i in range(0, len(self.value) - 1):
                 fo.write("%G," % self.value[i])

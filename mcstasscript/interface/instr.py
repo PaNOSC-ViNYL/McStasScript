@@ -217,6 +217,42 @@ class McStas_instr:
         """
         # parameter_variable class documented independently
         self.parameter_list.append(parameter_variable(*args, **kwargs))
+        
+    def show_parameters(self):
+        """
+        Method for displaying current instrument parameters
+        """
+
+        if len(self.parameter_list) == 0:
+            print("No instrument parameters available")
+            return
+
+        # Find longest fields
+        types = []
+        names = []
+        values = []
+        comments = []
+        for parameter in self.parameter_list:
+            types.append(str(parameter.type))
+            names.append(str(parameter.name))
+            values.append(str(parameter.value))
+            comments.append(str(parameter.comment))
+
+        longest_type = len(max(types, key=len))
+        longest_name = len(max(names, key=len))
+        longest_value = len(max(values, key=len))
+        longest_comment = len(max(comments, key=len))
+
+        # Print to console
+        for parameter in self.parameter_list:
+            print(str(parameter.type).ljust(longest_type), end=' ')
+            print(str(parameter.name).ljust(longest_name), end=' ')
+            if parameter.value is "":
+                print("   ", end=' ')
+            else:
+                print(" = ", end=' ')
+            print(str(parameter.value).ljust(longest_value+1), end=' ')
+            print(str(parameter.comment).ljust(longest_comment))
 
     def add_declare_var(self, *args, **kwargs):
         """

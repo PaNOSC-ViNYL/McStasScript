@@ -85,6 +85,30 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(instr.parameter_list[0].name, "theta")
         self.assertEqual(instr.parameter_list[0].comment, "// test par")
 
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_show_parameters(self, mock_stdout):
+        """
+        Testing that parameters are displayed correctly
+        """
+        instr = setup_instr_no_path()
+
+        instr.add_parameter("double", "theta", comment="test par")
+        instr.add_parameter("single", "theta", comment="test par")
+        instr.add_parameter("float", "theta", value = 8, comment="test par")
+        instr.add_parameter("int", "slits", comment="test par")
+        instr.add_parameter("string", "ref", 
+                            value = "string", comment="new string")
+        
+        instr.show_parameters()
+        
+        output = mock_stdout.getvalue().split("\n")
+        
+        self.assertEqual(output[0],"double  theta             // test par  ")
+        self.assertEqual(output[1],"single  theta             // test par  ")
+        self.assertEqual(output[2],"float   theta  =  8       // test par  ")
+        self.assertEqual(output[3],"int     slits             // test par  ")
+        self.assertEqual(output[4],"string  ref    =  string  // new string")
+
     def test_simple_add_declare_parameter(self):
         """
         This is just an interface to a function that is tested
