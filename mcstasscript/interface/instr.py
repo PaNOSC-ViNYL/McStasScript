@@ -9,6 +9,7 @@ from mcstasscript.helper.mcstas_objects import component
 from mcstasscript.data.data import McStasData
 from mcstasscript.helper.component_reader import ComponentReader
 from mcstasscript.helper.managed_mcrun import ManagedMcrun
+from mcstasscript.helper.formatting import is_legal_filename
 
 class McStas_instr:
     """
@@ -154,6 +155,13 @@ class McStas_instr:
         """
 
         self.name = name
+        
+        if not is_legal_filename(self.name + ".instr"):
+            raise NameError("The instrument is called: \""
+                            + self.name
+                            + "\" resulting in an instrument file named: \""
+                            + self.name + ".instr"
+                            + "\" which is not a legal filename")
 
         if "author" in kwargs:
             self.author = kwargs["author"]
@@ -308,7 +316,6 @@ class McStas_instr:
         ----------
         string : str
             code to be added to initialize section
-
         """
 
         self.initialize_section = self.initialize_section + string

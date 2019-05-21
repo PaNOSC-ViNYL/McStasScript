@@ -94,20 +94,20 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr.add_parameter("double", "theta", comment="test par")
         instr.add_parameter("single", "theta", comment="test par")
-        instr.add_parameter("float", "theta", value = 8, comment="test par")
+        instr.add_parameter("float", "theta", value=8, comment="test par")
         instr.add_parameter("int", "slits", comment="test par")
-        instr.add_parameter("string", "ref", 
-                            value = "string", comment="new string")
-        
+        instr.add_parameter("string", "ref",
+                            value="string", comment="new string")
+
         instr.show_parameters()
-        
+
         output = mock_stdout.getvalue().split("\n")
-        
-        self.assertEqual(output[0],"double  theta             // test par  ")
-        self.assertEqual(output[1],"single  theta             // test par  ")
-        self.assertEqual(output[2],"float   theta  =  8       // test par  ")
-        self.assertEqual(output[3],"int     slits             // test par  ")
-        self.assertEqual(output[4],"string  ref    =  string  // new string")
+
+        self.assertEqual(output[0], "double  theta             // test par  ")
+        self.assertEqual(output[1], "single  theta             // test par  ")
+        self.assertEqual(output[2], "float   theta  =  8       // test par  ")
+        self.assertEqual(output[3], "int     slits             // test par  ")
+        self.assertEqual(output[4], "string  ref    =  string  // new string")
 
     def test_simple_add_declare_parameter(self):
         """
