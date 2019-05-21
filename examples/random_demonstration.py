@@ -2,41 +2,54 @@
 # Written by Mads Bertelsen, ESS DMSC
 import random
 import sys
-sys.path.append('/Users/madsbertelsen/PaNOSC/McStasScript')
+sys.path.append('/Users/madsbertelsen/PaNOSC/McStasScript/github/McStasScript')
 from mcstasscript.interface import instr, plotter, functions
 
 # if the mcrun command from McStas is not in your path, provide absolute path for the binary here:
-#mcrun_path = ""
-mcrun_path = "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/bin"
-#mcstas_path = ""
-mcstas_path = "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/"
+mcrun_path = ""
+mcstas_path = ""
+# On OS X most likely:
+#mcrun_path = "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/bin"
+#mcstas_path = "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/"
 
 # Create a McStas instrument
-instr = instr.McStas_instr("random_demo",
+Instr = instr.McStas_instr("random_demo",
                            author = "Mads Bertelsen",
                            origin = "ESS DMSC",
                            mcrun_path = mcrun_path,
                            mcstas_path = mcstas_path)
 
-# Set up a material called Cu with approrpiate properties (uses McStas Union components, here the processes)
-instr.add_component("Cu_incoherent", "Incoherent_process")
-instr.set_component_parameter("Cu_incoherent", {"sigma" : 4*0.55, "packing_factor" : 1, "unit_cell_volume" :  55.4})
+# Set up a material called Cu with approrpiate properties
+# (uses McStas Union components, here the processes)
+Cu_inc = Instr.add_component("Cu_incoherent", "Incoherent_process")
+Cu_inc.sigma = 4*0.55
+Cu_inc.packing_factor = 1
+Cu_inc.unit_cell_volume = 55.4
 
-instr.add_component("Cu_powder", "Powder_process")
-instr.set_component_parameter("Cu_powder", {"reflections" : "\"Cu.laz\""})
+Cu_powder = Instr.add_component("Cu_powder", "Powder_process")
+Cu_powder.reflections = "\"Cu.laz\""
 
-instr.add_component("Cu", "Union_make_material")
-instr.set_component_parameter("Cu", {"my_absorption" : "100*4*3.78/55.4", "process_string" : "\"Cu_incoherent,Cu_powder\""})
+Cu = Instr.add_component("Cu", "Union_make_material")
+Cu.my_absorption = "100*4*3.78/55.4"
+Cu.process_string = "\"Cu_incoherent,Cu_powder\""
 
-# Set neutron source
-instr.add_component("source","Source_div", AT=[0,0,0])
-instr.add_parameter("double","energy", value=10, comment="[meV] source energy") # Add parameter to select energy at run time
-instr.set_component_parameter("source", {"xwidth" : 0.12, "yheight" : 0.12, "focus_aw" : 0.1, "focus_ah" : 0.1, "E0" : "energy", "dE" : 0, "flux" : 1E13})
+# Add neutron source
+Source = Instr.add_component("source", "Source_div", AT=[0,0,0])
+# Add parameter to select energy at run time
+Instr.add_parameter("double","energy", value=10, comment="[meV] source energy")
+
+Source.xwidth = 0.12
+Source.yheight = 0.12
+Source.focus_aw = 0.1
+Source.focus_ah = 0.1
+Source.E0 = "energy"
+Source.dE = 0.0
+Source.flux = 1E13
 
 # List of available materials, Vacuum is provided by the system
 material_name_list = ["Cu", "Vacuum"]
 
-# Wish to set up a number of randomly sized and placed boxes, here we choose the number
+# Wish to set up a number of random boxes, here the number is chosen at random
 number_of_volumes = random.randint(30,40)
 
 # Initialize the priority that needs to be unique for each volume
@@ -46,47 +59,81 @@ for volume in range(number_of_volumes):
     current_priority = current_priority + 1 # update the priority
     max_side_length = 0.04
     max_depth = 0.003
-    position = [random.uniform(-0.05,0.05), random.uniform(-0.05,0.05), 1+random.uniform(-0.05,0.05)] # Set position in 10x10x10 cm^3 box 1 m from source
-    rotation = [random.uniform(0,360), random.uniform(0,360), random.uniform(0,360)] # random rotation
-    
+    # Set position in 10x10x10 cm^3 box 1 m from source
+    position = [random.uniform(-0.05,0.05),
+                random.uniform(-0.05,0.05),
+                1+random.uniform(-0.05,0.05)]
+    # Set random rotation
+    rotation = [random.uniform(0,360),
+                random.uniform(0,360),
+                random.uniform(0,360)]
+
     # Choose a random material from the list of available materials
     volume_material = random.choice(material_name_list)
 
     # Add a McStas Union geometry with unique name
-    instr.add_component("volume_" + str(volume), "Union_box")
-    instr.set_component_parameter("volume_" + str(volume), {"xwidth" : random.uniform(0.01,max_side_length), "yheight" : random.uniform(0.01,max_side_length), "zdepth" : random.uniform(0.001,max_depth),})
-    instr.set_component_parameter("volume_" + str(volume), {"material_string" : "\""+volume_material+"\"", "priority" : current_priority, "p_interact" : 0.3})
-    instr.set_component_AT("volume_" + str(volume), position, RELATIVE="ABSOLUTE")
-    instr.set_component_ROTATED("volume_" + str(volume), rotation, RELATIVE="ABSOLUTE")
-
+    this_geometry = Instr.add_component("volume_" + str(volume), "Union_box")
+    this_geometry.xwidth = random.uniform(0.01,max_side_length)
+    this_geometry.yheight = random.uniform(0.01,max_side_length)
+    this_geometry.zdepth = random.uniform(0.01,max_side_length)
+    this_geometry.material_string = "\"" + volume_material + "\""
+    this_geometry.priority = current_priority
+    this_geometry.p_interact = 0.3
+    
+    this_geometry.set_AT(position, RELATIVE="ABSOLUTE")
+    this_geometry.set_ROTATED(rotation, RELATIVE="ABSOLUTE")
 
 # A few Union loggers are set up for display of the scattering locations
-instr.add_component("logger_space_zx_all", "Union_logger_2D_space")
-current_component = instr.get_last_component()
-current_component.set_parameters({"filename" : "\"space_zx.dat\"",})
-current_component.set_parameters({"n1" : 1000, "D_direction_1" : "\"z\"", "D1_min" : -0.05, "D1_max" : 0.05})
-current_component.set_parameters({"n2" : 1000, "D_direction_2" : "\"x\"", "D2_min" : -0.05, "D2_max" : 0.05})
-current_component.set_AT([0,0,1])
+space_2D_zx = Instr.add_component("logger_space_zx_all", "Union_logger_2D_space")
+space_2D_zx.filename = "\"space_zx.dat\""
+space_2D_zx.n1 = 1000
+space_2D_zx.D_direction_1 = "\"z\""
+space_2D_zx.D1_min = -0.05
+space_2D_zx.D1_max = 0.05
+space_2D_zx.n2 = 1000
+space_2D_zx.D_direction_2 = "\"x\""
+space_2D_zx.D2_min = -0.05
+space_2D_zx.D2_max = 0.05
+space_2D_zx.set_AT([0,0,1])
 
-instr.add_component("logger_space_zy_all", "Union_logger_2D_space")
-current_component = instr.get_last_component()
-current_component.set_parameters({"filename" : "\"space_zy.dat\"",})
-current_component.set_parameters({"n1" : 1000, "D_direction_1" : "\"z\"", "D1_min" : -0.05, "D1_max" : 0.05})
-current_component.set_parameters({"n2" : 1000, "D_direction_2" : "\"y\"", "D2_min" : -0.05, "D2_max" : 0.05})
-current_component.set_AT([0,0,1])
+space_2D_zy = Instr.add_component("logger_space_zy_all", "Union_logger_2D_space")
+space_2D_zy.filename = "\"space_zy.dat\""
+space_2D_zy.n1 = 1000
+space_2D_zy.D_direction_1 = "\"z\""
+space_2D_zy.D1_min = -0.05
+space_2D_zy.D1_max = 0.05
+space_2D_zy.n2 = 1000
+space_2D_zy.D_direction_2 = "\"y\""
+space_2D_zy.D2_min = -0.05
+space_2D_zy.D2_max = 0.05
+space_2D_zy.set_AT([0,0,1])
 
 # Union master component that executes the simulation of the random boxes
-instr.add_component("random_boxes", "Union_master")
+Instr.add_component("random_boxes", "Union_master")
 
 # McStas monitors for viewing the beam after the random boxes
-instr.add_component("detector", "PSD_monitor", AT=[0,0,2])
-instr.set_component_parameter("detector", {"xwidth" : 0.10, "yheight" : 0.10, "nx" : 500, "ny" : 500, "filename" : "\"PSD.dat\"", "restore_neutron" : 1})
+PSD = Instr.add_component("detector", "PSD_monitor", AT=[0,0,2])
+PSD.xwidth = 0.1
+PSD.yheight = 0.1
+PSD.nx = 500
+PSD.ny = 500
+PSD.filename = "\"PSD.dat\""
+PSD.restore_neutron = 1
 
-instr.add_component("large_detector","PSD_monitor", AT=[0,0,2])
-instr.set_component_parameter("large_detector", {"xwidth" : 1.0, "yheight" : 1.0, "nx" : 500, "ny" : 500, "filename" : "\"large_PSD.dat\"", "restore_neutron" : 1})
+big_PSD = Instr.add_component("large_detector","PSD_monitor", AT=[0,0,2])
+big_PSD.xwidth = 1.0
+big_PSD.yheight = 1.0
+big_PSD.nx = 500
+big_PSD.ny = 500
+big_PSD.filename = "\"big_PSD.dat\""
+big_PSD.restore_neutron = 1
+
+Instr.print_components()
 
 # Run the McStas simulation, a unique foldername is required for each run
-data = instr.run_full_instrument(foldername="demonstration2", parameters={"energy":600},mpi=2,ncount=5E7)
+data = Instr.run_full_instrument(foldername="demonstration",
+                                 parameters={"energy": 600},
+                                 mpi=2, ncount=5E7)
 
 # Set plotting options for the data (optional)
 functions.name_plot_options("logger_space_zx_all", data, log=1, orders_of_mag=3)
@@ -96,5 +143,3 @@ functions.name_plot_options("large_detector", data, log=1, orders_of_mag=8)
 
 # Plot the resulting data on a logarithmic scale
 plot = plotter.make_sub_plot(data)
-
-

@@ -328,7 +328,7 @@ class TestManagedMcrun(unittest.TestCase):
 
         os.chdir(current_work_dir)  # Reset work directory
 
-    def test_ManagedMcrun_load_data_L_mon_direct_error(self):
+    def test_ManagedMcrun_load_data_L_mon_empty_error(self):
         """
         Check an error occurs when pointed to empty directory
         """

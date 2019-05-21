@@ -28,13 +28,20 @@ def name_search(name, data_list):
 
     list_result = []
     for check in data_list:
-        if check.metadata.component_name == name:
+        if check.name == name:
             list_result.append(check)
+            
+    if len(list_result) == 0:
+        raise NameError("No dataset with name: \""
+                        + name
+                        + "\" found.")
 
     if len(list_result) == 1:
         return list_result[0]
     else:
-        raise NameError("More than one match for the name search")
+        raise NameError("Found " + str(len(list_result)) + " matches in "
+                        + "the search for a dataset with name: \""
+                        + name + "\".")
 
 def name_plot_options(name, data_list, **kwargs):
     """"

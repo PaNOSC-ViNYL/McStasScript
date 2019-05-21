@@ -67,13 +67,34 @@ def setup_McStasData_array():
 
     return data_list
 
+def setup_McStasData_array_repeat():
+
+    data_list = []
+
+    data_list.append(set_dummy_McStasData_1d("A_1d_thing"))
+    data_list.append(set_dummy_McStasData_2d("A_2d_thing"))
+    data_list.append(set_dummy_McStasData_1d("Another_1d_thing"))
+    data_list.append(set_dummy_McStasData_2d("Another_2d_thing"))
+    data_list.append(set_dummy_McStasData_2d("Hero"))
+
+    hero_object = set_dummy_McStasData_2d("Big_Hero")
+    hero_object.metadata.dimension = 123
+    hero_object.plot_options.colormap = "very hot"
+
+    data_list.append(hero_object)
+
+    data_list.append(set_dummy_McStasData_2d("After_hero_2d"))
+    data_list.append(set_dummy_McStasData_2d("Last_object_2d"))
+
+    return data_list
+
+
 
 class Test_name_search(unittest.TestCase):
     """
     Test the utility function called name_search which finds and
     returns a McStasData set with a given name from a list of
     McStasData objects.
-
     """
 
     def test_name_search_read(self):
@@ -84,6 +105,17 @@ class Test_name_search(unittest.TestCase):
         data_list = setup_McStasData_array()
 
         hero_object = name_search("Hero", data_list)
+
+        self.assertEqual(hero_object.metadata.dimension, 123)
+        
+    def test_name_search_read_repeat(self):
+        """
+        Test simple case with repeat name
+        """
+
+        data_list = setup_McStasData_array_repeat()
+
+        hero_object = name_search("Big_Hero", data_list)
 
         self.assertEqual(hero_object.metadata.dimension, 123)
 

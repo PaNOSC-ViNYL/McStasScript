@@ -1,4 +1,5 @@
 from mcstasscript.helper.formatting import bcolors
+from mcstasscript.helper.formatting import is_legal_parameter
 
 class parameter_variable:
     """
@@ -57,6 +58,12 @@ class parameter_variable:
         if len(args) == 2:
             self.type = args[0] + " "
             self.name = str(args[1])
+
+        if not is_legal_parameter(self.name):
+            raise NameError("The given parameter name: \""
+                            + self.name
+                            + "\" is not a legal c variable name, "
+                            + " and cannot be used in McStas.")
 
         self.value = ""
         if "value" in kwargs:
@@ -139,6 +146,13 @@ class declare_variable:
         """
         self.type = args[0]
         self.name = str(args[1])
+
+        if not is_legal_parameter(self.name):
+            raise NameError("The given parameter name: \""
+                            + self.name
+                            + "\" is not a legal c variable name, "
+                            + " and cannot be used in McStas.")
+
         self.value = ""
         if "value" in kwargs:
             self.value = kwargs["value"]
@@ -283,7 +297,6 @@ class component:
 
     _unfreeze()
         Unfreeze the class so new attributes can be defined again
-
     """
 
     __isfrozen = False  # When frozen, no new attributes allowed
@@ -576,7 +589,6 @@ class component:
         specified. Information on the components are added when the
         class is used as a superclass for classes describing each
         McStas component.
-
         """
         if len(self.comment) > 1:
             print("// " + self.comment)
@@ -636,7 +648,6 @@ class component:
         additional attributes defined when McStas_Instr creates
         subclasses for the individual components are required to run
         this method.
-
         """
 
         print(" ___ Help "
@@ -700,7 +711,6 @@ class component:
         additional attributes defined when McStas_Instr creates
         subclasses for the individual components are required to run
         this method.
-
         """
         print("---- Help " + self.component_name + " -----")
         for parameter in self.parameter_names:
