@@ -1,0 +1,141 @@
+import unittest
+
+import numpy as np
+
+from mcstasscript.interface.functions import name_search
+from mcstasscript.interface.functions import name_plot_options
+from mcstasscript.data.data import McStasData
+from mcstasscript.data.data import McStasMetaData
+from mcstasscript.data.data import McStasPlotOptions
+
+
+def set_dummy_MetaData_1d(name):
+    meta_data = McStasMetaData()
+    meta_data.component_name = name
+    meta_data.dimension = 50
+
+    return meta_data
+
+
+def set_dummy_McStasData_1d(name):
+    meta_data = set_dummy_MetaData_1d(name)
+
+    intensity = np.arange(20)
+    error = 0.5 * np.arange(20)
+    ncount = 2 * np.arange(20)
+    axis = np.arange(20)*5.0
+
+    return McStasData(meta_data, intensity, error, ncount, xaxis=axis)
+
+
+def set_dummy_MetaData_2d(name):
+    meta_data = McStasMetaData()
+    meta_data.component_name = name
+    meta_data.dimension = [50, 100]
+
+    return meta_data
+
+
+def set_dummy_McStasData_2d(name):
+    meta_data = set_dummy_MetaData_2d(name)
+
+    intensity = np.arange(20).reshape(4, 5)
+    error = 0.5 * np.arange(20).reshape(4, 5)
+    ncount = 2 * np.arange(20).reshape(4, 5)
+
+    return McStasData(meta_data, intensity, error, ncount)
+
+
+def setup_McStasData_array():
+
+    data_list = []
+
+    data_list.append(set_dummy_McStasData_1d("A_1d_thing"))
+    data_list.append(set_dummy_McStasData_2d("A_2d_thing"))
+    data_list.append(set_dummy_McStasData_1d("Another_1d_thing"))
+    data_list.append(set_dummy_McStasData_2d("Another_2d_thing"))
+    data_list.append(set_dummy_McStasData_2d("A_third_2d_thing"))
+
+    hero_object = set_dummy_McStasData_2d("Hero")
+    hero_object.metadata.dimension = 123
+    hero_object.plot_options.colormap = "very hot"
+
+    data_list.append(hero_object)
+
+    data_list.append(set_dummy_McStasData_2d("After_hero_2d"))
+    data_list.append(set_dummy_McStasData_2d("Last_object_2d"))
+
+    return data_list
+
+
+class Test_name_search(unittest.TestCase):
+    """
+    Test the utility function called name_search which finds and
+    returns a McStasData set with a given name from a list of
+    McStasData objects.
+
+    """
+
+    def test_name_search_read(self):
+        """
+        Test simple case
+        """
+
+        data_list = setup_McStasData_array()
+
+        hero_object = name_search("Hero", data_list)
+
+        self.assertEqual(hero_object.metadata.dimension, 123)
+
+    def test_name_search_read_error(self):
+        """
+        Test simple case
+        """
+
+        data_list = setup_McStasData_array()
+
+        with self.assertRaises(NameError):
+            hero_object = name_search("Hero8", data_list)
+
+    def test_name_search_type_error_not_list(self):
+        """
+        Test simple case
+        """
+
+        data_list = set_dummy_McStasData_2d("Last_object_2d")
+
+        with self.assertRaises(NameError):
+            hero_object = name_search("Hero", data_list)
+
+    def test_name_search_type_error_not_McStasData(self):
+        """
+        Test simple case
+        """
+
+        data_list = [1, 2, 3]
+
+        with self.assertRaises(NameError):
+            hero_object = name_search(1, data_list)
+
+
+class Test_name_plot_options(unittest.TestCase):
+    """
+    Test the utility function called name_plot_options which sends
+    keyword arguments to the set_plot_options method of the
+    McStasData object in a given list that has the given name.
+
+    """
+
+    def test_name_plot_options_simple(self):
+        """
+        Test simple case
+        """
+
+        data_list = setup_McStasData_array()
+        name_plot_options("Hero", data_list, colormap="very hot")
+        hero_object = name_search("Hero", data_list)
+        self.assertEqual(hero_object.plot_options.colormap, "very hot")
+
+
+if __name__ == '__main__':
+    unittest.main()

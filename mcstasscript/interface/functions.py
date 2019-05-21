@@ -17,11 +17,14 @@ def name_search(name, data_list):
     data_list : List of McStasData instances
         List of datasets to search
     """
+    
+    if type(data_list) is not list:
+        raise InputError(
+            "name_search function needs list of McStasData as input")
 
     if not type(data_list[0]) == McStasData:
         raise InputError(
-            "name_search function needs objects of type "
-            + "McStasData as input.")
+            "name_search function needs objects of type McStasData as input.")
 
     list_result = []
     for check in data_list:
@@ -53,11 +56,6 @@ def name_plot_options(name, data_list, **kwargs):
         Keyword arguments passed to set_plot_options in
         McStasPlotOptions
     """
-
-    if not isinstance(data_list[0], McStasData):
-        raise InputError(
-            "name_search function needs objects of type McStasData "
-            + "as input.")
 
     object_to_modify = name_search(name, data_list)
     object_to_modify.set_plot_options(**kwargs)

@@ -364,7 +364,7 @@ class McStas_instr:
 
         """
         if len(args) == 0:
-            print("Here are the availalbe component categories:")
+            print("Here are the available component categories:")
             self.component_reader.show_categories()
             print("Call show_components(category_name) to display")
 

@@ -374,7 +374,7 @@ class component:
             self.ROTATED_relative = "RELATIVE " + kwargs["RELATIVE"]
 
         if "WHEN" in kwargs:
-            self.WHEN = "WHEN (" + kwargs["WHEN"] + ")\n"
+            self.WHEN = "WHEN (" + kwargs["WHEN"] + ")"
         else:
             self.WHEN = ""
 
@@ -476,7 +476,7 @@ class component:
 
     def set_WHEN(self, string):
         """Sets WHEN string, should be a c logical expression"""
-        self.WHEN = "WHEN (" + string + ")\n"
+        self.WHEN = "WHEN (" + string + ")"
 
     def set_GROUP(self, string):
         """Sets GROUP name"""
@@ -551,7 +551,7 @@ class component:
 
         # Optional WHEN section
         if not self.WHEN == "":
-            fo.write("%s" % self.WHEN)
+            fo.write("%s\n" % self.WHEN)
 
         # Write AT and ROTATED section
         fo.write("AT (%s,%s,%s)" % (str(self.AT_data[0]),
@@ -614,7 +614,7 @@ class component:
                           + bcolors.ENDC)
 
         if not self.WHEN == "":
-            print("WHEN (" + self.WHEN + ")")
+            print(self.WHEN)
         print("AT", self.AT_data, self.AT_relative)
         print("ROTATED", self.ROTATED_data, self.ROTATED_relative)
         if not self.GROUP == "":
@@ -628,7 +628,6 @@ class component:
     def print_short(self, **kwargs):
         """Prints short description of component to list print"""
         if "longest_name" in kwargs:
-            print("test")
             number_of_spaces = 3+kwargs["longest_name"]-len(self.name)
             print(str(self.name) + " "*number_of_spaces, end='')
             print(str(self.component_name),
@@ -671,7 +670,8 @@ class component:
                 unit = " [" + self.parameter_units[parameter] + "]"
             comment = ""
             if parameter in self.parameter_comments:
-                comment = " // " + self.parameter_comments[parameter]
+                if not self.parameter_comments[parameter] == "":
+                    comment = " // " + self.parameter_comments[parameter]
 
             parameter_name = bcolors.BOLD + parameter + bcolors.ENDC
             value = ""
@@ -714,20 +714,21 @@ class component:
         """
         print("---- Help " + self.component_name + " -----")
         for parameter in self.parameter_names:
+            value = ""
+            if self.parameter_defaults[parameter] is not None:
+                value = " = " + str(self.parameter_defaults[parameter])
+            if getattr(self, parameter) is not None:
+                value = " = " + str(getattr(self, parameter))
+            
             unit = ""
             if parameter in self.parameter_units:
                 unit = " [" + self.parameter_units[parameter] + "]"
+            
             comment = ""
             if parameter in self.parameter_comments:
-                comment = " // " + self.parameter_comments[parameter]
-            if self.parameter_defaults[parameter] is None:
-                print(parameter
-                      + unit
-                      + comment)
-            else:
-                print(parameter
-                      + " = "
-                      + str(self.parameter_defaults[parameter])
-                      + unit
-                      + comment)
+                if self.parameter_comments[parameter] is not "":
+                    comment = " // " + self.parameter_comments[parameter]
+
+            print(parameter + value + unit + comment)
+                
         print("----------" + "-"*len(self.component_name) + "------")
