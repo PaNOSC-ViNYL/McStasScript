@@ -1,4 +1,5 @@
 from mcstasscript.data.data import McStasData
+from mcstasscript.helper.managed_mcrun import ManagedMcrun
 
 def name_search(name, data_list):
     """"
@@ -66,3 +67,17 @@ def name_plot_options(name, data_list, **kwargs):
 
     object_to_modify = name_search(name, data_list)
     object_to_modify.set_plot_options(**kwargs)
+
+def load_data(foldername):
+    """
+    Loads data from a McStas data folder including mccode.sim
+    
+    Parameters
+    ----------
+        foldername : string
+            Name of the folder from which to load data
+    """
+    
+    managed_mcrun = ManagedMcrun("dummy", foldername=foldername)    
+    return managed_mcrun.load_results()
+    

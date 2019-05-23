@@ -74,6 +74,8 @@ class ManagedMcrun:
         self.parameters = {}
         self.custom_flags = ""
         self.mcrun_path = ""
+        self.increment_folder_name = False
+        self.compile = True
         # mcrun_path always in kwargs
         if "mcrun_path" in kwargs:
             self.mcrun_path = kwargs["mcrun_path"]
@@ -96,6 +98,12 @@ class ManagedMcrun:
 
         if "custom_flags" in kwargs:
             self.custom_flags = kwargs["custom_flags"]
+            
+        if "increment_folder_name" in kwargs:
+            self.increment_folder_name = kwargs["increment_folder_name"]
+            
+        if "force_compile" in kwargs:
+            self.compile = kwargs["force_compile"]
 
     def run_simulation(self):
         """
@@ -103,10 +111,24 @@ class ManagedMcrun:
         """
 
         # construct command to run
-        option_string = ("-c"
-                         + " -n " + str(self.ncount)  # Set ncount
+        
+        options_string = ""
+        if self.compile:
+            options_string = "-c " 
+
+        option_string = (options_string 
+                         + "-n " + str(self.ncount)  # Set ncount
                          + " --mpi=" + str(self.mpi)  # Set mpi
                          + " ")
+        
+        if self.increment_folder_name and os.path.isdir(self.data_folder_name):
+            counter = 0
+            new_name = self.data_folder_name + "_" + str(counter)
+            while os.path.isdir(new_name):
+                counter = counter + 1
+                new_name = self.data_folder_name + "_" + str(counter)
+            
+            self.data_folder_name = new_name
 
         if len(self.data_folder_name) > 0:
             option_string = (option_string

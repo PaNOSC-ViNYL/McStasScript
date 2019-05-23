@@ -174,6 +174,30 @@ class TestManagedMcrun(unittest.TestCase):
         expected_call = ("path/mcrun -c -n 48 --mpi=7 "
                          + "-d test_folder -fo test.instr "
                          + "A=2 BC=car th=\"toy\"")
+        
+    @unittest.mock.patch("os.system")
+    def test_ManagedMcrun_run_simulation_compile(self, os_system):
+        """
+        Check a run with parameters is correct
+        """
+
+        mcrun_obj = ManagedMcrun("test.instr",
+                                 foldername="test_folder",
+                                 mcrun_path="path",
+                                 mpi=7,
+                                 ncount=48.4,
+                                 force_compile = False,
+                                 custom_flags="-fo",
+                                 parameters={"A": 2,
+                                             "BC": "car",
+                                             "th": "\"toy\""})
+
+        mcrun_obj.run_simulation()
+
+        # a double space because of a missing option
+        expected_call = ("path/mcrun -n 48 --mpi=7 "
+                         + "-d test_folder -fo test.instr "
+                         + "A=2 BC=car th=\"toy\"")
 
         os_system.assert_called_once_with(expected_call)
 

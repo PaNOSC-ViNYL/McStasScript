@@ -1,9 +1,12 @@
+import os
 import unittest
+
 
 import numpy as np
 
 from mcstasscript.interface.functions import name_search
 from mcstasscript.interface.functions import name_plot_options
+from mcstasscript.interface.functions import load_data
 from mcstasscript.data.data import McStasData
 from mcstasscript.data.data import McStasMetaData
 from mcstasscript.data.data import McStasPlotOptions
@@ -168,6 +171,40 @@ class Test_name_plot_options(unittest.TestCase):
         hero_object = name_search("Hero", data_list)
         self.assertEqual(hero_object.plot_options.colormap, "very hot")
 
+
+class Test_load_data(unittest.TestCase):
+    """
+    Testing the load data function which calls ManagedMcrun, which was
+    tested elsewhere. Since the load data is tested elsewhere, this
+    function has just a single test to check the interface.
+    """
+    def test_crun_load_data_PSD4PI(self):
+        """
+        Use test_data_set to test load_data for PSD_4PI
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
+        results = load_data("test_data_set")
+
+        os.chdir(current_work_dir)  # Reset work directory
+
+        self.assertEqual(len(results), 3)
+
+        PSD_4PI = results[0]
+
+        self.assertEqual(PSD_4PI.name, "PSD_4PI")
+        self.assertEqual(PSD_4PI.metadata.dimension, [300, 300])
+        self.assertEqual(PSD_4PI.metadata.limits, [-180, 180, -90, 90])
+        self.assertEqual(PSD_4PI.metadata.xlabel, "Longitude [deg]")
+        self.assertEqual(PSD_4PI.metadata.ylabel, "Lattitude [deg]")
+        self.assertEqual(PSD_4PI.metadata.title, "4PI PSD monitor")
+        self.assertEqual(PSD_4PI.Ncount[1][4], 4)
+        self.assertEqual(PSD_4PI.Intensity[1][4], 1.537334562E-10)
+        self.assertEqual(PSD_4PI.Error[1][4], 1.139482296E-10)
 
 if __name__ == '__main__':
     unittest.main()

@@ -266,8 +266,9 @@ class ComponentReader:
                         result.parameter_comments[variable_name] = comment
 
             # find definition parameters and their values
-            if (self.line_starts_with(line, "DEFINITION PARAMETERS")
-                    or self.line_starts_with(line, "SETTING PARAMETERS")):
+            if (self.line_starts_with(line.strip(), "DEFINITION PARAMETERS")
+                    or self.line_starts_with(line.strip(), 
+                                             "SETTING PARAMETERS")):
 
                 parts = line.split("(")
                 parameter_parts = parts[1].split(",")
