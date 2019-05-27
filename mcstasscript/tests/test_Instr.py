@@ -35,6 +35,7 @@ def setup_populated_instr():
     instr = setup_instr_no_path()
 
     instr.add_parameter("double", "theta")
+    instr.add_parameter("double", "has_default", value=37)
     instr.add_declare_var("double", "two_theta")
     instr.append_initialize("two_theta = 2.0*theta;")
 
@@ -992,6 +993,11 @@ class TestMcStas_instr(unittest.TestCase):
          my_call("DEFINE INSTRUMENT test_instrument ("),
          my_call("\n"),
          my_call("double theta"),
+         my_call(","),
+         my_call(""),
+         my_call("\n"),
+         my_call("double has_default"),
+         my_call(" = 37"),
          my_call(" "),
          my_call(""),
          my_call("\n"),
@@ -1035,6 +1041,21 @@ class TestMcStas_instr(unittest.TestCase):
         mock_f.assert_called_with("test_instrument.instr", "w")
         handle = mock_f()
         handle.write.assert_has_calls(wrts, any_order=False)
+        
+        
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_run_full_instrument_required_par_error(self, mock_stdout):
+        """
+        The populated instr has a required parameter, and when not
+        given it should raise an error.
+        """
+
+        instr = setup_populated_instr()
+
+        with self.assertRaises(NameError):
+            instr.run_full_instrument("test_instrument.instr",
+                                      foldername="test_data_set",
+                                      mcrun_path="path")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch('__main__.__builtins__.open',
@@ -1051,11 +1072,13 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_populated_instr()
         instr.run_full_instrument("test_instrument.instr",
                                   foldername="test_data_set",
-                                  mcrun_path="path")
+                                  mcrun_path="path",
+                                  parameters={"theta" : 1})
 
         # a double space because of a missing option
         expected_call = ("path/mcrun -c -n 1000000 --mpi=1 "
-                         + "-d test_data_set  test_instrument.instr")
+                         + "-d test_data_set  test_instrument.instr" 
+                         + " has_default=37 theta=1")
 
         os_system.assert_called_once_with(expected_call)
 
@@ -1080,12 +1103,42 @@ class TestMcStas_instr(unittest.TestCase):
                                   custom_flags="-fo",
                                   parameters={"A": 2,
                                               "BC": "car",
-                                              "th": "\"toy\""})
+                                              "theta": "\"toy\""})
 
         # a double space because of a missing option
         expected_call = ("path/mcrun -c -n 48 --mpi=7 "
                          + "-d test_data_set -fo test_instrument.instr "
-                         + "A=2 BC=car th=\"toy\"")
+                         + "has_default=37 A=2 BC=car theta=\"toy\"")
+
+        os_system.assert_called_once_with(expected_call)
+        
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    @unittest.mock.patch('__main__.__builtins__.open',
+                         new_callable=unittest.mock.mock_open)
+    @unittest.mock.patch("os.system")
+    def test_run_full_instrument_overwrite_default(self, os_system,
+                                         mock_f, mock_stdout,):
+        """
+        Check that default parameters are overwritten by given
+        parameters.
+        """
+
+        instr = setup_populated_instr()
+        instr.run_full_instrument("test_instrument.instr",
+                                  foldername="test_data_set",
+                                  mcrun_path="path",
+                                  mpi=7,
+                                  ncount=48.4,
+                                  custom_flags="-fo",
+                                  parameters={"A": 2,
+                                              "BC": "car",
+                                              "theta": "\"toy\"",
+                                              "has_default": 10})
+
+        # a double space because of a missing option
+        expected_call = ("path/mcrun -c -n 48 --mpi=7 "
+                         + "-d test_data_set -fo test_instrument.instr "
+                         + "has_default=10 A=2 BC=car theta=\"toy\"")
 
         os_system.assert_called_once_with(expected_call)
 

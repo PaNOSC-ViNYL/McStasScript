@@ -1007,12 +1007,48 @@ class McStas_instr:
             mcrun_path : str
                 Path to mcrun command, "" if already in path
         """
-        # Write the instrument file
-        self.write_full_instrument()
+        
 
         # Make sure mcrun path is in kwargs
         if "mcrun_path" not in kwargs:
             kwargs["mcrun_path"] = self.mcrun_path
+        
+        # Find required parameters
+        required_parameters = []
+        default_parameters = {}
+        passed_parameters = {}
+        
+        for index in range(0,len(self.parameter_list)):
+            if self.parameter_list[index].value == "":
+                required_parameters.append(self.parameter_list[index].name)
+            else:
+                default_parameters.update({self.parameter_list[index].name :
+                                           self.parameter_list[index].value})
+            
+        # Check if parameters are given 
+        if "parameters" not in kwargs:
+            if len(required_parameters) > 0:
+                # print required parameters and raise error
+                print("Required instrument parameters:")
+                for name in required_parameters:
+                    print("  " + name)
+                raise NameError("Required parameters not provided.")
+            else:
+                # If all parameters have defaults, just run with the defaults.
+                passed_parameters = default_parameters
+        else:
+            given_parameters = kwargs["parameters"]
+            for name in required_parameters:
+                if name not in given_parameters:
+                    raise NameError("The required instrument parameter "
+                                    + name 
+                                    + " was not provided.")
+            # Overwrite default parameters with given parameters
+            default_parameters.update(given_parameters)
+            kwargs["parameters"] = default_parameters
+
+        # Write the instrument file
+        self.write_full_instrument()
 
         # Set up the simulation
         simulation = ManagedMcrun(self.name + ".instr", **kwargs)
