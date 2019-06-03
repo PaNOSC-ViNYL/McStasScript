@@ -5,11 +5,17 @@ Prototype for an API that allow interaction with McStas through an interface lik
 
 ## Instructions for basic use:
 Download the entire project
+
 Set up paths to McStas in the configuration.yaml file
+
 Before import in python, add the project to your path: 
+
 import sys
+
 sys.path.append('path/to/McStasScript')
+
 Import the interface 
+
 from mcstasscript.interface import instr, plotter, functions
 
 Now the package can be used. Start with creating a new instrument, just needs a name
@@ -37,6 +43,7 @@ my_source.focus_xw = 0.05
 my_source.focus_yh = 0.05
 
 Running the simple instrument of just a source
+
 data = my_instrument.run_full_instrument(foldername="first_run", increment_folder_name=True)
 
 Any data generated would be stored as a list of McStasData objects in the returned data
