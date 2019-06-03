@@ -13,9 +13,11 @@ Import the interface
 from mcstasscript.interface import instr, plotter, functions
 
 Now the package can be used. Start with creating a new instrument, just needs a name
+
 my_instrument = instr.McStas_instr("my_instrument_file")
 
 Then McStas components can be added, here we add a source
+
 my_source = my_instrument.add_component("source", "Source_simple")
 
 my_source.show_parameters() # Can be used to show available parameters for Source simple
@@ -23,10 +25,15 @@ my_source.show_parameters() # Can be used to show available parameters for Sourc
 The parameters of the source can be adjusted directly as attributes of the python object
 
 my_source.xwidth = 0.12
+
 my_source.yheight = 0.12
+
 my_source.lambda0 = 3
+
 my_source.dlambda = 2.2
+
 my_source.focus_xw = 0.05
+
 my_source.focus_yh = 0.05
 
 Running the simple instrument of just a source
