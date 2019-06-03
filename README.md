@@ -21,6 +21,7 @@ my_source = my_instrument.add_component("source", "Source_simple")
 my_source.show_parameters() # Can be used to show available parameters for Source simple
 
 The parameters of the source can be adjusted directly as attributes of the python object
+
 my_source.xwidth = 0.12
 my_source.yheight = 0.12
 my_source.lambda0 = 3
