@@ -2,14 +2,16 @@ from __future__ import print_function
 
 import os
 import datetime
+import yaml
 
+from mcstasscript.data.data import McStasData
 from mcstasscript.helper.mcstas_objects import declare_variable
 from mcstasscript.helper.mcstas_objects import parameter_variable
 from mcstasscript.helper.mcstas_objects import component
-from mcstasscript.data.data import McStasData
 from mcstasscript.helper.component_reader import ComponentReader
 from mcstasscript.helper.managed_mcrun import ManagedMcrun
 from mcstasscript.helper.formatting import is_legal_filename
+from mcstasscript.helper.formatting import bcolors
 
 class McStas_instr:
     """
@@ -172,20 +174,34 @@ class McStas_instr:
             self.origin = kwargs["origin"]
         else:
             self.origin = "ESS DMSC"
+            
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        configuration_file_name = THIS_DIR + "/../../configuration.yaml"
+        if not os.path.isfile(configuration_file_name):
+            raise NameError("Could not find configuration file!")
+        with open(configuration_file_name, 'r') as ymlfile:
+            config = yaml.safe_load(ymlfile)
+
+        if type(config) is dict:
+            self.mcrun_path = config["paths"]["mcrun_path"]
+            self.mcstas_path = config["paths"]["mcstas_path"]
+            self.line_limit = config["other"]["characters_per_line"]
+        else:
+            # This happens in unit tests that mocks open
+            self.mcrun_path = "" 
+            self.mcstas_path = ""
+            self.line_limit = 180
 
         if "mcrun_path" in kwargs:
             self.mcrun_path = kwargs["mcrun_path"]
-        else:
-            self.mcrun_path = ""
 
         if "mcstas_path" in kwargs:
             self.mcstas_path = kwargs["mcstas_path"]
-        else:
-            self.mcstas_path = ""
+        elif self.mcstas_path is "":
             raise NameError("At this stage of development "
                             + "McStasScript need the absolute path "
                             + "for the McStas installation as keyword "
-                            + "named mcstas_path")
+                            + "named mcstas_path or in configuration.yaml")
 
         self.parameter_list = []
         self.declare_list = []
@@ -226,10 +242,19 @@ class McStas_instr:
         # parameter_variable class documented independently
         self.parameter_list.append(parameter_variable(*args, **kwargs))
         
-    def show_parameters(self):
+    def show_parameters(self, **kwargs):
         """
         Method for displaying current instrument parameters
+        
+        keyword arguments
+            line_length : int
+                Maximum line length for terminal output
         """
+        
+        if "line_length" in kwargs:
+            line_limit = kwargs["line_length"]
+        else:
+            line_limit = self.line_limit
 
         if len(self.parameter_list) == 0:
             print("No instrument parameters available")
@@ -249,7 +274,9 @@ class McStas_instr:
         longest_type = len(max(types, key=len))
         longest_name = len(max(names, key=len))
         longest_value = len(max(values, key=len))
+        comment_start_point = longest_type + longest_name + longest_value + 11
         longest_comment = len(max(comments, key=len))
+        length_for_comment = line_limit - comment_start_point
 
         # Print to console
         for parameter in self.parameter_list:
@@ -260,7 +287,46 @@ class McStas_instr:
             else:
                 print(" = ", end=' ')
             print(str(parameter.value).ljust(longest_value+1), end=' ')
-            print(str(parameter.comment).ljust(longest_comment))
+            if (length_for_comment < 5 
+                or length_for_comment > len(str(parameter.comment))):
+                print(str(parameter.comment))
+            else:
+                # Split comment into several lines
+                comment = str(parameter.comment)
+                words = comment.split(" ")
+                words_left = len(words)
+                last_index = 0
+                current_index = 0
+                comment = ""
+                iterations = 0
+                max_iterations = 50
+                while(words_left > 0):
+                    iterations += 1
+                    if iterations > max_iterations:
+                        #  Something went long, print on one line
+                        break
+                    
+                    line_left = length_for_comment
+                    
+                    while(line_left > 0):
+                        if current_index >= len(words):
+                            current_index = len(words) + 1
+                            break
+                        line_left -= len(str(words[current_index])) + 1
+                        current_index += 1
+                        
+                    current_index -= 1
+                    for word in words[last_index:current_index]:
+                        comment += word + " "
+                    words_left = len(words) - current_index
+                    if words_left > 0:
+                        comment += "\n" + " "*comment_start_point
+                        last_index = current_index
+
+                if not iterations == max_iterations + 1:
+                    print(comment)
+                else:
+                    print(str(parameter.comment).ljust(longest_comment))
 
     def add_declare_var(self, *args, **kwargs):
         """
@@ -418,15 +484,18 @@ class McStas_instr:
                   + " category.")
             self.component_reader.show_components_in_category(category)
 
-    def component_help(self, name):
+    def component_help(self, name, **kwargs):
         """
         Method for showing parameters for a component before adding it
         to the instrument
 
+        keyword arguments
+            line_length : int
+                Maximum line length in output to terminal
         """
 
         dummy_instance = self._create_component_instance("dummy", name)
-        dummy_instance.show_parameters()
+        dummy_instance.show_parameters(**kwargs)
 
     def _create_component_instance(self, *args, **kwargs):
         """
@@ -454,6 +523,7 @@ class McStas_instr:
             input_dict["parameter_units"] = comp_info.parameter_units
             input_dict["parameter_comments"] = comp_info.parameter_comments
             input_dict["category"] = comp_info.category
+            input_dict["line_limit"] = self.line_limit
 
             self.component_class_lib[component_name] = type(component_name,
                                                             (component,),
@@ -780,78 +850,182 @@ class McStas_instr:
         component = self.get_component(name)
         component.print_short()
 
-    def print_components(self):
+    def print_components(self, **kwargs):
         """
         Method for printing overview of all components in instrument
 
         Provides overview of component names, what McStas component is
         used for each and their position and rotation in space.
+        
+        keyword arguments:
+        line_length : int
+            Maximum line length in console
         """
+        
+        if "line_length" in kwargs:
+            line_limit = kwargs["line_length"]
+        else:
+            line_limit = self.line_limit
 
         longest_name = len(max(self.component_name_list, key=len))
 
         # Investigate how this could have been done in a better way
         # Find longest field for each type of data printed
         component_type_list = []
-        at_x_list = []
-        at_y_list = []
-        at_z_list = []
+        at_xyz_list = []
         at_relative_list = []
-        rotated_x_list = []
-        rotated_y_list = []
-        rotated_z_list = []
+        rotated_xyz_list = []
         rotated_relative_list = []
         for component in self.component_list:
             component_type_list.append(component.component_name)
-            at_x_list.append(str(component.AT_data[0]))
-            at_y_list.append(str(component.AT_data[1]))
-            at_z_list.append(str(component.AT_data[2]))
+            at_xyz_list.append(str(component.AT_data[0])
+                               + str(component.AT_data[1])
+                               + str(component.AT_data[2]))
             at_relative_list.append(component.AT_relative)
-            rotated_x_list.append(str(component.ROTATED_data[0]))
-            rotated_y_list.append(str(component.ROTATED_data[1]))
-            rotated_z_list.append(str(component.ROTATED_data[2]))
+            rotated_xyz_list.append(str(component.ROTATED_data[0])
+                                    + str(component.ROTATED_data[1])
+                                    + str(component.ROTATED_data[2]))
             rotated_relative_list.append(component.ROTATED_relative)
 
         longest_component_name = len(max(component_type_list, key=len))
-        longest_at_x_name = len(max(at_x_list, key=len))
-        longest_at_y_name = len(max(at_y_list, key=len))
-        longest_at_z_name = len(max(at_z_list, key=len))
+        longest_at_xyz_name = len(max(at_xyz_list, key=len))
         longest_at_relative_name = len(max(at_relative_list, key=len))
-        longest_rotated_x_name = len(max(rotated_x_list, key=len))
-        longest_rotated_y_name = len(max(rotated_y_list, key=len))
-        longest_rotated_z_name = len(max(rotated_z_list, key=len))
+        longest_rotated_xyz_name = len(max(rotated_xyz_list, key=len))
         longest_rotated_relative_name = len(max(rotated_relative_list,
                                                 key=len))
 
-        # Have longest field for each type, use ljust to align all columns
-        for component in self.component_list:
-            print(str(component.name).ljust(longest_name+2), end=' ')
+        # Padding settings, 0,0,6,0,6 is minimum values
+        name_pad = 0
+        comp_name_pad = 0
+        AT_pad = 6 # requires (, , ) in addition to data length
+        RELATIVE_pad = 0
+        ROTATED_pad = 6 # requires (, , ) in addition to data length
 
-            comp_name = component.component_name
-            comp_name_print = str(comp_name).ljust(longest_component_name + 2)
-            print(comp_name_print, end=' ')
+        # Check if longest line length exceeded
+        longest_line_length = (longest_name + name_pad
+                               + longest_component_name + comp_name_pad
+                               + longest_at_xyz_name + AT_pad
+                               + longest_at_relative_name + RELATIVE_pad
+                               + longest_rotated_xyz_name + ROTATED_pad
+                               + longest_rotated_relative_name + 8 + 9)
+        
+        def coordinates_to_string(data):
+            return ("(" 
+                    + str(data[0]) + ", "
+                    + str(data[1]) + ", "
+                    + str(data[2]) + ")") 
 
-            comp_at_data = str(component.AT_data)
-            longest_at_xyz_sum = (longest_at_x_name
-                                  + longest_at_y_name
-                                  + longest_at_z_name)
-            print("AT ",
-                  comp_at_data.ljust(longest_at_xyz_sum + 11),
-                  end='')
+        n_lines = 1
+        """
+        If calculated line length is above the limit loaded from the
+        configuration file, attempt to split the output over an
+        additional line. This is hardcoded up to 3 lines.
+        """
+        if longest_line_length > line_limit:
+            n_lines = 2
+            longest_at_xyz_name = max([longest_at_xyz_name,
+                                       longest_rotated_xyz_name])
+            longest_rotated_xyz_name = longest_at_xyz_name
+            RELATIVE_pad = 0            
 
-            comp_at_relative = component.AT_relative
-            print(comp_at_relative.ljust(longest_at_relative_name + 2),
-                  end=' ')
+            longest_line_length_at = (longest_name 
+                                      + comp_name_pad
+                                      + longest_component_name 
+                                      + comp_name_pad
+                                      + longest_at_xyz_name 
+                                      + AT_pad
+                                      + longest_at_relative_name 
+                                      + 7 + 6 )
+            longest_line_length_rotated = (longest_name 
+                                           + comp_name_pad
+                                           + longest_component_name 
+                                           + comp_name_pad
+                                           + longest_rotated_xyz_name 
+                                           + ROTATED_pad
+                                           + longest_rotated_relative_name 
+                                           + 7 + 6)
 
-            comp_rotated_data = str(component.ROTATED_data)
-            longest_rotated_xyz_sum = (longest_rotated_x_name
-                                       + longest_rotated_y_name
-                                       + longest_rotated_z_name)
-            print("ROTATED ",
-                  comp_rotated_data.ljust(longest_rotated_xyz_sum + 11),
-                  end='')
-            print(component.ROTATED_relative)
-            # print("")
+            if (longest_line_length_at > line_limit 
+                or longest_line_length_rotated > line_limit):
+                n_lines = 3
+
+        if n_lines == 1:
+            for component in self.component_list:
+                p_name = str(component.name)
+                p_name = p_name.ljust(longest_name + name_pad)
+
+                p_comp_name = str(component.component_name)
+                p_comp_name = p_comp_name.ljust(longest_component_name 
+                                                + comp_name_pad)
+
+                p_AT = coordinates_to_string(component.AT_data)
+                p_AT = p_AT.ljust(longest_at_xyz_name + AT_pad)
+
+                p_AT_RELATIVE = str(component.AT_relative)
+                p_AT_RELATIVE = p_AT_RELATIVE.ljust(longest_at_relative_name
+                                                    + RELATIVE_pad)
+
+                p_ROTATED = coordinates_to_string(component.ROTATED_data)
+                p_ROTATED = p_ROTATED.ljust(longest_rotated_xyz_name
+                                            + ROTATED_pad)
+
+                p_ROTATED_RELATIVE = str(component.ROTATED_relative)
+
+                print(p_name, p_comp_name,
+                      "AT", p_AT, p_AT_RELATIVE,
+                      "ROTATED", p_ROTATED, p_ROTATED_RELATIVE)
+
+        elif n_lines == 2:
+            for component in self.component_list:
+                p_name = str(component.name)
+                p_name = p_name.ljust(longest_name + name_pad)
+
+                p_comp_name = str(component.component_name)
+                p_comp_name = p_comp_name.ljust(longest_component_name 
+                                                + comp_name_pad)
+
+                p_AT = coordinates_to_string(component.AT_data)
+                p_AT = p_AT.ljust(longest_at_xyz_name + AT_pad)
+
+                p_AT_RELATIVE = str(component.AT_relative)
+                p_AT_RELATIVE = p_AT_RELATIVE.ljust(longest_at_relative_name
+                                                    + RELATIVE_pad)
+
+                p_ROTATED_align = " "*(longest_name
+                                       + comp_name_pad 
+                                       + longest_component_name 
+                                       + comp_name_pad)
+
+                p_ROTATED = coordinates_to_string(component.ROTATED_data)
+                p_ROTATED = p_ROTATED.ljust(longest_rotated_xyz_name
+                                            + ROTATED_pad)
+
+                p_ROTATED_RELATIVE = str(component.ROTATED_relative)
+
+                print(p_name, p_comp_name, 
+                      "AT     ", p_AT, p_AT_RELATIVE, "\n",
+                      p_ROTATED_align, "ROTATED",
+                      p_ROTATED, p_ROTATED_RELATIVE)
+
+        elif n_lines == 3:
+            for component in self.component_list:
+                p_name = bcolors.BOLD + str(component.name) + bcolors.ENDC
+
+                p_comp_name = (bcolors.BOLD 
+                               + str(component.component_name)
+                               + bcolors.ENDC)
+
+                p_AT = coordinates_to_string(component.AT_data)
+
+                p_AT_RELATIVE = str(component.AT_relative)
+
+                p_ROTATED = coordinates_to_string(component.ROTATED_data)
+
+                p_ROTATED_RELATIVE = str(component.ROTATED_relative)
+
+                print(p_name + " ", p_comp_name, "\n",
+                      " AT     ", p_AT, p_AT_RELATIVE, "\n",
+                      " ROTATED", p_ROTATED, p_ROTATED_RELATIVE)
 
     def write_c_files(self):
         """

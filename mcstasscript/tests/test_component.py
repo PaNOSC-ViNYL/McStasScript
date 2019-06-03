@@ -75,6 +75,7 @@ def setup_component_with_parameters():
                             "new_par2": "AA",
                             "this_par": "",
                             "that_par": "1"}
+    comp.line_limit = 117
     comp._freeze()
 
     return comp
@@ -539,7 +540,7 @@ class Testcomponent(unittest.TestCase):
         output = mock_stdout.getvalue()
         output = output.split("\n")
 
-        self.assertEqual(output[0], " ___ Help Arm " + "_"*59)
+        self.assertEqual(output[0], " ___ Help Arm " + "_"*103)
 
         legend = ("|"
                   + bcolors.BOLD + "optional parameter" + bcolors.ENDC

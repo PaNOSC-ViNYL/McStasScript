@@ -8,13 +8,17 @@ import datetime
 from mcstasscript.interface.instr import McStas_instr
 from mcstasscript.helper.formatting import bcolors
 
-
 def setup_instr_no_path():
     """
-    Sets up a instrument without a valid mcstas_path
+    Sets up a instrument without a mcstas_path
+    """
+    return McStas_instr("test_instrument")
+
+def setup_instr_root_path():
+    """
+    Sets up a instrument with root mcstas_path
     """
     return McStas_instr("test_instrument", mcstas_path="/")
-
 
 def setup_instr_with_path():
     """
@@ -32,7 +36,7 @@ def setup_populated_instr():
     """
     Sets up a instrument with some features used and two components
     """
-    instr = setup_instr_no_path()
+    instr = setup_instr_root_path()
 
     instr.add_parameter("double", "theta")
     instr.add_parameter("double", "has_default", value=37)
@@ -55,7 +59,7 @@ class TestMcStas_instr(unittest.TestCase):
         """
         Test basic initialization runs
         """
-        my_instrument = setup_instr_no_path()
+        my_instrument = setup_instr_root_path()
 
         self.assertEqual(my_instrument.name, "test_instrument")
 
@@ -73,13 +77,52 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(my_instrument.origin, "DMSC")
         self.assertEqual(my_instrument.mcrun_path, "/path/to/mcrun")
         self.assertEqual(my_instrument.mcstas_path, "/path/to/mcstas")
+        
+    def test_load_config_file(self):
+        """
+        Test that configuration file is read correctly. In order to have
+        an independent test, the yaml file is read manually instead of
+        using the yaml package.
+        """
+        # Load configuration file and read manually
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        configuration_file_name = THIS_DIR + "/../../configuration.yaml"
+
+        if not os.path.isfile(configuration_file_name):
+            raise NameError("Could not find configuration file!")
+
+        f = open(configuration_file_name,"r")
+
+        lines = f.readlines()
+        for line in lines:
+            line = line.strip()
+            if line.startswith("mcrun_path:"):
+                parts = line.split(" ")
+                correct_mcrun_path = parts[1][1:-1]
+            
+            if line.startswith("mcstas_path:"):
+                parts = line.split(" ")
+                correct_mcstas_path = parts[1][1:-1]
+            
+            if line.startswith("characters_per_line:"):
+                parts = line.split(" ")
+                correct_n_of_characters = int(parts[1])
+
+        f.close()
+
+        # Check the value matches what is loaded by initialization
+        my_instrument = setup_instr_no_path()
+
+        self.assertEqual(my_instrument.mcrun_path, correct_mcrun_path)
+        self.assertEqual(my_instrument.mcstas_path, correct_mcstas_path)
+        self.assertEqual(my_instrument.line_limit, correct_n_of_characters)
 
     def test_simple_add_parameter(self):
         """
         This is just an interface to a function that is tested
         elsewhere, so only a basic test is performed here.
         """
-        instr = setup_instr_no_path()
+        instr = setup_instr_root_path()
 
         instr.add_parameter("double", "theta", comment="test par")
 
@@ -91,7 +134,7 @@ class TestMcStas_instr(unittest.TestCase):
         """
         Testing that parameters are displayed correctly
         """
-        instr = setup_instr_no_path()
+        instr = setup_instr_root_path()
 
         instr.add_parameter("double", "theta", comment="test par")
         instr.add_parameter("single", "theta", comment="test par")
@@ -100,22 +143,70 @@ class TestMcStas_instr(unittest.TestCase):
         instr.add_parameter("string", "ref",
                             value="string", comment="new string")
 
-        instr.show_parameters()
+        instr.show_parameters(line_length=300)
 
         output = mock_stdout.getvalue().split("\n")
 
-        self.assertEqual(output[0], "double  theta             // test par  ")
-        self.assertEqual(output[1], "single  theta             // test par  ")
-        self.assertEqual(output[2], "float   theta  =  8       // test par  ")
-        self.assertEqual(output[3], "int     slits             // test par  ")
+        self.assertEqual(output[0], "double  theta             // test par")
+        self.assertEqual(output[1], "single  theta             // test par")
+        self.assertEqual(output[2], "float   theta  =  8       // test par")
+        self.assertEqual(output[3], "int     slits             // test par")
         self.assertEqual(output[4], "string  ref    =  string  // new string")
+        
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_show_parameters_line_break(self, mock_stdout):
+        """
+        Testing that parameters are displayed correctly
+        
+        Here multiple lines are used for a long comment that was
+        dynamically broken up.
+        """
+        instr = setup_instr_root_path()
+
+        instr.add_parameter("double", "theta", comment="test par")
+        instr.add_parameter("single", "theta", comment="test par")
+        instr.add_parameter("float", "theta", value=8, comment="test par")
+        instr.add_parameter("int", "slits", comment="test par")
+        instr.add_parameter("string", "ref",
+                            value="string", comment="new string")
+        
+        longest_comment = ("This is a very long comment meant for "
+                           + "testing the dynamic line breaking "
+                           + "that is used in this method. It needs "
+                           + "to have many lines in order to ensure "
+                           + "it really works.")
+        
+        instr.add_parameter("double", "value",
+                            value="37", comment=longest_comment)
+
+        instr.show_parameters(line_length=80)
+
+        output = mock_stdout.getvalue().split("\n")
+
+        self.assertEqual(output[0], "double  theta             // test par")
+        self.assertEqual(output[1], "single  theta             // test par")
+        self.assertEqual(output[2], "float   theta  =  8       // test par")
+        self.assertEqual(output[3], "int     slits             // test par")
+        self.assertEqual(output[4], "string  ref    =  string  // new string")
+        comment_line = "This is a very long comment meant for testing "
+        self.assertEqual(output[5], "double  value  =  37      // "
+                                   + comment_line)
+        comment_line = "the dynamic line breaking that is used in this "
+        self.assertEqual(output[6], "                             "
+                                   + comment_line)
+        comment_line = "method. It needs to have many lines in order to "
+        self.assertEqual(output[7], "                             "
+                                   + comment_line)
+        comment_line = "ensure it really works. "
+        self.assertEqual(output[8], "                             "
+                                   + comment_line)
 
     def test_simple_add_declare_parameter(self):
         """
         This is just an interface to a function that is tested
         elsewhere, so only a basic test is performed here.
         """
-        instr = setup_instr_no_path()
+        instr = setup_instr_root_path()
 
         instr.add_declare_var("double", "two_theta", comment="test par")
 
@@ -127,7 +218,7 @@ class TestMcStas_instr(unittest.TestCase):
         The initialize section is held as a string. This method
         appends that string.
         """
-        instr = setup_instr_no_path()
+        instr = setup_instr_root_path()
 
         self.assertEqual(instr.initialize_section,
                          "// Start of initialize for generated "
@@ -149,7 +240,7 @@ class TestMcStas_instr(unittest.TestCase):
         The initialize section is held as a string. This method
         appends that string.
         """
-        instr = setup_instr_no_path()
+        instr = setup_instr_root_path()
 
         self.assertEqual(instr.initialize_section,
                          "// Start of initialize for generated "
@@ -169,7 +260,7 @@ class TestMcStas_instr(unittest.TestCase):
         The initialize section is held as a string. This method
         appends that string.
         """
-        instr = setup_instr_no_path()
+        instr = setup_instr_root_path()
 
         self.assertEqual(instr.finally_section,
                          "// Start of finally for generated "
@@ -191,7 +282,7 @@ class TestMcStas_instr(unittest.TestCase):
         The initialize section is held as a string. This method
         appends that string.
         """
-        instr = setup_instr_no_path()
+        instr = setup_instr_root_path()
 
         self.assertEqual(instr.finally_section,
                          "// Start of finally for generated "
@@ -211,7 +302,7 @@ class TestMcStas_instr(unittest.TestCase):
         The initialize section is held as a string. This method
         appends that string.
         """
-        instr = setup_instr_no_path()
+        instr = setup_instr_root_path()
 
         self.assertEqual(instr.trace_section,
                          "// Start of trace section for generated "
@@ -233,7 +324,7 @@ class TestMcStas_instr(unittest.TestCase):
         The initialize section is held as a string. This method
         appends that string.
         """
-        instr = setup_instr_no_path()
+        instr = setup_instr_root_path()
 
         self.assertEqual(instr.trace_section,
                          "// Start of trace section for generated "
@@ -299,7 +390,7 @@ class TestMcStas_instr(unittest.TestCase):
         """
         instr = setup_instr_with_path()
 
-        instr.component_help("test_for_reading")
+        instr.component_help("test_for_reading",line_length=90)
         # This call creates a dummy component and calls its
         # show_parameter method which has been tested. Here we
         # need to ensure the call is succesful, not test all
@@ -308,7 +399,7 @@ class TestMcStas_instr(unittest.TestCase):
         output = mock_stdout.getvalue()
         output = output.split("\n")
 
-        self.assertEqual(output[1], " ___ Help test_for_reading " + "_"*46)
+        self.assertEqual(output[1], " ___ Help test_for_reading " + "_"*63)
 
         legend = ("|"
                   + bcolors.BOLD + "optional parameter" + bcolors.ENDC
@@ -819,23 +910,23 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_populated_instr()
 
-        instr.print_components()
+        instr.print_components(line_length=300)
 
         output = mock_stdout.getvalue().split("\n")
 
-        expected = ("first_component    test_for_reading"
-                    + "   AT  [0, 0, 0]     ABSOLUTE"
-                    + "   ROTATED  [0, 0, 0]     ABSOLUTE")
+        expected = ("first_component  test_for_reading"
+                    + " AT (0, 0, 0) ABSOLUTE"
+                    + " ROTATED (0, 0, 0) ABSOLUTE")
         self.assertEqual(output[0], expected)
 
-        expected = ("second_component   test_for_reading"
-                    + "   AT  [0, 0, 0]     ABSOLUTE"
-                    + "   ROTATED  [0, 0, 0]     ABSOLUTE")
+        expected = ("second_component test_for_reading"
+                    + " AT (0, 0, 0) ABSOLUTE"
+                    + " ROTATED (0, 0, 0) ABSOLUTE")
         self.assertEqual(output[1], expected)
 
-        expected = ("third_component    test_for_reading"
-                    + "   AT  [0, 0, 0]     ABSOLUTE"
-                    + "   ROTATED  [0, 0, 0]     ABSOLUTE")
+        expected = ("third_component  test_for_reading"
+                    + " AT (0, 0, 0) ABSOLUTE"
+                    + " ROTATED (0, 0, 0) ABSOLUTE")
         self.assertEqual(output[2], expected)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
@@ -856,24 +947,144 @@ class TestMcStas_instr(unittest.TestCase):
         comp = instr.get_last_component()
         comp.component_name = "test_name"
 
-        instr.print_components()
+        instr.print_components(line_length=300)
 
         output = mock_stdout.getvalue().split("\n")
 
-        expected = ("first_component    test_for_reading"
-                    + "   AT  [-0.1, 12, 'dist']   RELATIVE home"
-                    + "   ROTATED  [0, 0, 0]              ABSOLUTE")
+        expected = ("first_component  test_for_reading"
+                    + " AT (-0.1, 12, dist) RELATIVE home"
+                    + " ROTATED (0, 0, 0)          ABSOLUTE")
         self.assertEqual(output[0], expected)
 
-        expected = ("second_component   test_for_reading"
-                    + "   AT  [0, 0, 0]            ABSOLUTE"
-                    + "        ROTATED  [-4, 0.001, 'theta']   RELATIVE etc")
+        expected = ("second_component test_for_reading"
+                    + " AT (0, 0, 0)        ABSOLUTE"
+                    + "      ROTATED (-4, 0.001, theta) RELATIVE etc")
         self.assertEqual(output[1], expected)
 
-        expected = ("third_component    test_name"
-                    + "          AT  [0, 0, 0]            ABSOLUTE"
-                    + "        ROTATED  [0, 0, 0]              ABSOLUTE")
+        expected = ("third_component  test_name"
+                    + "        AT (0, 0, 0)        ABSOLUTE"
+                    + "      ROTATED (0, 0, 0)          ABSOLUTE")
         self.assertEqual(output[2], expected)
+        
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_print_components_complex_2lines(self, mock_stdout):
+        """
+        print_components calls the print_short method in the component
+        class for each component and aligns the data for display
+        
+        This version of the tests forces two lines of output.
+        """
+
+        instr = setup_populated_instr()
+
+        instr.set_component_AT("first_component",
+                               [-0.1, 12, "dist"],
+                               RELATIVE="home")
+        instr.set_component_ROTATED("second_component",
+                                    [-4, 0.001, "theta"],
+                                    RELATIVE="etc")
+        comp = instr.get_last_component()
+        comp.component_name = "test_name"
+
+        instr.print_components(line_length=80)
+
+        output = mock_stdout.getvalue().split("\n")
+
+        expected = ("first_component  test_for_reading"
+                    + " AT      (-0.1, 12, dist)   RELATIVE home ")
+        self.assertEqual(output[0], expected)
+
+        expected = ("                                 "
+                    + " ROTATED (0, 0, 0)          ABSOLUTE")
+        self.assertEqual(output[1], expected)
+
+        expected = ("second_component test_for_reading"
+                    + " AT      (0, 0, 0)          ABSOLUTE      ")
+        self.assertEqual(output[2], expected)
+
+        expected = ("                                 "
+                    + " ROTATED (-4, 0.001, theta) RELATIVE etc")
+        self.assertEqual(output[3], expected)
+
+        expected = ("third_component  test_name       "
+                    + " AT      (0, 0, 0)          ABSOLUTE      ")
+        self.assertEqual(output[4], expected)
+
+        expected = ("                                 "
+                    + " ROTATED (0, 0, 0)          ABSOLUTE")
+        self.assertEqual(output[5], expected)
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_print_components_complex_3lines(self, mock_stdout):
+        """
+        print_components calls the print_short method in the component
+        class for each component and aligns the data for display
+        
+        This version of the tests forces three lines of output.
+        """
+
+        instr = setup_populated_instr()
+
+        instr.set_component_AT("first_component",
+                               [-0.1, 12, "dist"],
+                               RELATIVE="home")
+        instr.set_component_ROTATED("second_component",
+                                    [-4, 0.001, "theta"],
+                                    RELATIVE="etc")
+        comp = instr.get_last_component()
+        comp.component_name = "test_name"
+
+        instr.print_components(line_length=1) #  Three lines maximum
+
+        output = mock_stdout.getvalue().split("\n")
+
+        expected = (bcolors.BOLD
+                    + "first_component"
+                    + bcolors.ENDC
+                    + "  "
+                    + bcolors.BOLD
+                    + "test_for_reading"
+                    + bcolors.ENDC
+                    + " ")
+        self.assertEqual(output[0], expected)
+
+        expected = ("  AT      (-0.1, 12, dist) RELATIVE home ")
+        self.assertEqual(output[1], expected)
+
+        expected = ("  ROTATED (0, 0, 0) ABSOLUTE")
+        self.assertEqual(output[2], expected)
+
+        expected = (bcolors.BOLD
+                    + "second_component"
+                    + bcolors.ENDC
+                    + "  "
+                    + bcolors.BOLD
+                    + "test_for_reading"
+                    + bcolors.ENDC
+                    + " ")
+        self.assertEqual(output[3], expected)
+
+        expected = ("  AT      (0, 0, 0) ABSOLUTE ")
+        self.assertEqual(output[4], expected)
+
+        expected = ("  ROTATED (-4, 0.001, theta) RELATIVE etc")
+        self.assertEqual(output[5], expected)
+
+        expected = (bcolors.BOLD
+                    + "third_component"
+                    + bcolors.ENDC
+                    + "  "
+                    + bcolors.BOLD
+                    + "test_name"
+                    + bcolors.ENDC
+                    + " ")
+        self.assertEqual(output[6], expected)        
+
+        expected = ("  AT      (0, 0, 0) ABSOLUTE ")
+        self.assertEqual(output[7], expected)
+
+        expected = ("  ROTATED (0, 0, 0) ABSOLUTE")
+        self.assertEqual(output[8], expected)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch('__main__.__builtins__.open',

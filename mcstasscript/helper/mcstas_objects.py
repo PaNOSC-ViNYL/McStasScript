@@ -640,7 +640,7 @@ class component:
                   "\tAT", self.AT_data, self.AT_relative,
                   "ROTATED", self.ROTATED_data, self.ROTATED_relative)
 
-    def show_parameters(self):
+    def show_parameters(self, **kwargs):
         """
         Shows available parameters and their defaults for the component
 
@@ -649,10 +649,19 @@ class component:
         subclasses for the individual components are required to run
         this method.
         """
+        
+        if "line_length" in kwargs:
+            line_limit = kwargs["line_length"]
+        else:
+            line_limit = self.line_limit
+
+        # Minimum reasonable line length
+        if line_limit < 74:
+            line_limit = 74
 
         print(" ___ Help "
               + self.component_name + " "
-              + (62-len(self.component_name))*"_")
+              + (line_limit - 11 - len(self.component_name))*"_")
         print("|"
               + bcolors.BOLD + "optional parameter" + bcolors.ENDC + "|"
               + bcolors.BOLD
@@ -666,42 +675,90 @@ class component:
               + bcolors.ENDC + "|")
 
         for parameter in self.parameter_names:
+            characters_before_comment = 4
             unit = ""
             if parameter in self.parameter_units:
                 unit = " [" + self.parameter_units[parameter] + "]"
+                characters_before_comment += len(unit)
             comment = ""
             if parameter in self.parameter_comments:
                 if not self.parameter_comments[parameter] == "":
                     comment = " // " + self.parameter_comments[parameter]
 
             parameter_name = bcolors.BOLD + parameter + bcolors.ENDC
+            characters_before_comment += len(parameter)
+
             value = ""
+            characters_from_value = 0
             if self.parameter_defaults[parameter] is None:
                 parameter_name = (bcolors.UNDERLINE
                                   + parameter_name
                                   + bcolors.ENDC)
             else:
+                this_default = str(self.parameter_defaults[parameter])
                 value = (" = "
                          + bcolors.BOLD
                          + bcolors.OKBLUE
-                         + str(self.parameter_defaults[parameter])
+                         + this_default
                          + bcolors.ENDC
                          + bcolors.ENDC)
+                characters_from_value = 3 + len(this_default)
 
             if getattr(self, parameter) is not None:
+                this_set_value = str(getattr(self, parameter))
                 value = (" = "
                          + bcolors.BOLD
                          + bcolors.OKGREEN
-                         + str(getattr(self, parameter))
+                         + this_set_value
                          + bcolors.ENDC
                          + bcolors.ENDC)
+                characters_from_value = 3 + len(this_set_value)
+            characters_before_comment += characters_from_value
 
-            print(parameter_name
-                  + value
-                  + unit
-                  + comment)
+            print(parameter_name + value + unit, end="")
+            
+            if characters_before_comment + len(comment) < line_limit:
+                print(comment)
+            else:
+                length_for_comment = line_limit - characters_before_comment
+                # Split comment into several lines
+                original_comment = comment
+                words = comment.split(" ")
+                words_left = len(words)
+                last_index = 0
+                current_index = 0
+                comment = ""
+                iterations = 0
+                max_iterations = 50
+                while(words_left > 0):
+                    iterations += 1
+                    if iterations > max_iterations:
+                        #  Something went long, print on one line
+                        break
+                    
+                    line_left = length_for_comment
+                    
+                    while(line_left > 0):
+                        if current_index >= len(words):
+                            current_index = len(words) + 1
+                            break
+                        line_left -= len(str(words[current_index])) + 1
+                        current_index += 1
+                        
+                    current_index -= 1
+                    for word in words[last_index:current_index]:
+                        comment += word + " "
+                    words_left = len(words) - current_index
+                    if words_left > 0:
+                        comment += "\n" + " "*characters_before_comment
+                        last_index = current_index
 
-        print(73*"-")
+                if not iterations == max_iterations + 1:
+                    print(comment)
+                else:
+                    print(str(original_comment))
+
+        print(line_limit*"-")
 
     def show_parameters_simple(self):
         """
