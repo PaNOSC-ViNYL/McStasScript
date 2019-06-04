@@ -57,3 +57,34 @@ Plotting is usually done in a subplot of all monitors recorded.
     plot = plotter.make_sub_plot(data)
 
 
+## Method overview
+Here is a quick overview of the available methods of the main classes in the project. Most have more options from keyword arguments that are explained in the manual, but also in python help, for example help(instr.McStas_instr.show_components).
+
+    instr
+    ├── McStas_instr(str instr_name) # Returns McStas instrument object on initialize
+        ├── show_components(str category_name) # Show available components in given category
+        ├── component_help(str component_name) # Prints component parameters for given component name   
+        ├── add_component(str name, str component_name) # Adds component to instrument and returns object
+        ├── add_parameter(str name) # Adds instrument parameter with name
+        ├── add_declare_var(str type, str name) # Adds declared variable with type and name
+        ├── append_initialize(str string) # Appends a line to initialize (c syntax)
+        ├── print_components() # Prints list of components and their location
+        ├── write_full_instrument() # Writes instrument to disk with given name + ".instr"
+        └── run_full_instrument() # Runs simulation. Options in keyword arguments. Returns list of McStasData
+        
+    component # returned by add_component
+    ├── set_AT(list at_list) # Sets component position (list of x,y,z positions in [m])
+    ├── set_ROTATED(list rotated_list) # Sets component rotation (list of x,y,z rotations in [deg])
+    ├── set_RELATIVE(str component_name) # Sets relative to other component name
+    ├── set_parameters(dict input) # Set parameters using dict input
+    ├── set_comment(str string) # Set comment explaining something about the component
+    └── print_long() # Prints currently contained information on component
+    
+    functions
+    ├── name_search(str name, list McStasData) # Returns data set with given name from McStasData list
+    ├── name_plot_options(str name, list McStasData, kwargs) # Sends kwargs to dataset with given name
+    └── load_data(str foldername) # Loads data from folder with McStas data as McStasData list
+    
+    plotter
+    ├── make_plot(list McStasData) # Plots each data set individually
+    └── make_sub_plot(list McStasData) # Plots data as subplot
