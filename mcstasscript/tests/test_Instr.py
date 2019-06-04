@@ -28,9 +28,13 @@ def setup_instr_with_path():
 
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     dummy_path = THIS_DIR + "/dummy_mcstas"
+    
+    current_work_dir = os.getcwd()
+    os.chdir(THIS_DIR)  # Set work directory to test folder
 
     return McStas_instr("test_instrument", mcstas_path=dummy_path)
 
+    os.chdir(current_work_dir)  # Return to previous workdir
 
 def setup_populated_instr():
     """
@@ -344,8 +348,9 @@ class TestMcStas_instr(unittest.TestCase):
         """
         Simple test of show components to show categories
         """
+        
         instr = setup_instr_with_path()
-
+        
         instr.show_components()
 
         output = mock_stdout.getvalue()

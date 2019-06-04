@@ -79,6 +79,9 @@ class McStas_instr:
 
     append_trace(string)
         Obsolete method, add components instead (used in write_c_files)
+        
+    show_components(string)
+        Shows available components in given category
 
     add_component(instance_name,component_name,**kwargs)
         Add a component to the instrument file
@@ -469,7 +472,13 @@ class McStas_instr:
         Helper method that shows available components to the user
 
         If called without any arguments it will display the available
-        component categories.  The first input
+        component categories. If a category is given as a string in
+        the first input, components in that category are printed.
+        
+        Parameters
+        ----------
+        first argument (optional): str
+            Category that matches one of the McStas component folders
 
         """
         if len(args) == 0:
@@ -482,7 +491,9 @@ class McStas_instr:
             print("Here are all components in the "
                   + category
                   + " category.")
-            self.component_reader.show_components_in_category(category)
+            this_reader = self.component_reader
+            this_reader.show_components_in_category(category,
+                                                    line_length=self.line_limit)
 
     def component_help(self, name, **kwargs):
         """
@@ -1150,6 +1161,8 @@ class McStas_instr:
 
         # End instrument file
         fo.write("\nEND\n")
+        
+        fo.close()
 
     def run_full_instrument(self, *args, **kwargs):
         """
@@ -1209,7 +1222,7 @@ class McStas_instr:
                 raise NameError("Required parameters not provided.")
             else:
                 # If all parameters have defaults, just run with the defaults.
-                passed_parameters = default_parameters
+                kwargs["parameters"] = default_parameters
         else:
             given_parameters = kwargs["parameters"]
             for name in required_parameters:

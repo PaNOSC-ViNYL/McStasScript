@@ -129,7 +129,7 @@ class TestComponentReader(unittest.TestCase):
 
         component_reader = setup_component_reader()
 
-        component_reader.show_components_in_category("misc")
+        component_reader.show_components_in_category("misc", line_length=100)
 
         output = mock_stdout.getvalue()
         output = output.split("\n")
@@ -152,7 +152,7 @@ class TestComponentReader(unittest.TestCase):
 
         #component_reader.component_category[]
 
-        component_reader.show_components_in_category("misc")
+        component_reader.show_components_in_category("misc", line_length=100)
 
         output = mock_stdout.getvalue()
         output = output.split("\n")

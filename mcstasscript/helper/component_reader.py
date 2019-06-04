@@ -87,11 +87,17 @@ class ComponentReader:
                 categories.append(category)
                 print(" " + category)
 
-    def show_components_in_category(self, category_input):
+    def show_components_in_category(self, category_input, **kwargs):
         """
         Method that will show all components in given category
 
         """
+        
+        if "line_length" in kwargs:
+            line_limit = kwargs["line_length"]
+        else:
+            line_limit = 100
+        
         empty_category = True
         to_print = []
         for component, category in self.component_category.items():
@@ -109,10 +115,10 @@ class ComponentReader:
             for component in to_print:
                 print(" " + component)
         else:
-            # Prints in collumns, maximum 4 and maximum line length 100
+            # Prints in collumns, maximum 4 and maximum line length line_liimt
             columns = 5
             total_line_length = 1000
-            while(total_line_length > 100):
+            while(total_line_length > line_limit):
                 columns = columns - 1
 
                 c_length = math.ceil(len(to_print)/columns)
