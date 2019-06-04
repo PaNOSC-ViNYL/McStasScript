@@ -72,7 +72,7 @@ class McStasMetaData:
                 type_string1 = type_data.split(",")[0]
                 type_string1 = type_string1.split("(")[1]
                 self.dimension.append(int(type_string1))
-                
+
                 type_string2 = type_data.split(",")[1]
                 type_string2 = type_string2.split(")")[0]
                 self.dimension.append(int(type_string2))

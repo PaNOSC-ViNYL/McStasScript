@@ -11,6 +11,7 @@ from mcstasscript.data.data import McStasMetaData
 from mcstasscript.data.data import McStasPlotOptions
 from mcstasscript.data.data import McStasData
 
+
 class make_plot:
     """
     make_plot plots contents of McStasData objects

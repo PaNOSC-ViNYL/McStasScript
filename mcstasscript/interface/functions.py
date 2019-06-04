@@ -1,6 +1,7 @@
 from mcstasscript.data.data import McStasData
 from mcstasscript.helper.managed_mcrun import ManagedMcrun
 
+
 def name_search(name, data_list):
     """"
     name_search returns McStasData instance with specific name if it is
@@ -18,7 +19,6 @@ def name_search(name, data_list):
     data_list : List of McStasData instances
         List of datasets to search
     """
-    
     if type(data_list) is not list:
         raise InputError(
             "name_search function needs list of McStasData as input")
@@ -31,7 +31,7 @@ def name_search(name, data_list):
     for check in data_list:
         if check.name == name:
             list_result.append(check)
-            
+
     if len(list_result) == 0:
         raise NameError("No dataset with name: \""
                         + name
@@ -43,6 +43,7 @@ def name_search(name, data_list):
         raise NameError("Found " + str(len(list_result)) + " matches in "
                         + "the search for a dataset with name: \""
                         + name + "\".")
+
 
 def name_plot_options(name, data_list, **kwargs):
     """"
@@ -64,20 +65,18 @@ def name_plot_options(name, data_list, **kwargs):
         Keyword arguments passed to set_plot_options in
         McStasPlotOptions
     """
-
     object_to_modify = name_search(name, data_list)
     object_to_modify.set_plot_options(**kwargs)
+
 
 def load_data(foldername):
     """
     Loads data from a McStas data folder including mccode.sim
-    
+
     Parameters
     ----------
         foldername : string
             Name of the folder from which to load data
     """
-    
-    managed_mcrun = ManagedMcrun("dummy", foldername=foldername)    
+    managed_mcrun = ManagedMcrun("dummy", foldername=foldername)
     return managed_mcrun.load_results()
-    

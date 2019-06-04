@@ -4,11 +4,12 @@ import unittest.mock
 
 from mcstasscript.interface import instr, functions, plotter
 
+
 def setup_simple_instrument():
     Instr = instr.McStas_instr("integration_test_simple")
-    
+
     source = Instr.add_component("source", "Source_div")
-    
+
     source.xwidth = 0.03
     source.yheight = 0.01
     source.focus_aw = 0.01
@@ -16,21 +17,22 @@ def setup_simple_instrument():
     source.E0 = 81.81
     source.dE = 1.0
     source.flux = 1E10
-    
+
     PSD = Instr.add_component("PSD_1D", "PSDlin_monitor")
-    
-    PSD.set_AT([0,0,1], RELATIVE="source")
+
+    PSD.set_AT([0, 0, 1], RELATIVE="source")
     PSD.xwidth = 0.1
     PSD.nx = 100
     PSD.yheight = 0.03
     PSD.filename = "\"PSD.dat\""
     PSD.restore_neutron = 1
-    
+
     return Instr
+
 
 def setup_simple_slit_instrument():
     Instr = instr.McStas_instr("integration_test_simple")
-    
+
     source = Instr.add_component("source", "Source_div")
     source.xwidth = 0.1
     source.yheight = 0.01
@@ -39,23 +41,24 @@ def setup_simple_slit_instrument():
     source.E0 = 81.81
     source.dE = 1.0
     source.flux = 1E10
-    
+
     Instr.add_parameter("slit_offset", value=0)
-    
+
     Slit = Instr.add_component("slit", "Slit")
     Slit.set_AT(["slit_offset", 0, 0.5], RELATIVE="source")
     Slit.xwidth = 0.01
     Slit.yheight = 0.03
-    
+
     PSD = Instr.add_component("PSD_1D", "PSDlin_monitor")
-    PSD.set_AT([0,0,1], RELATIVE="source")
+    PSD.set_AT([0, 0, 1], RELATIVE="source")
     PSD.xwidth = 0.1
     PSD.nx = 100
     PSD.yheight = 0.03
     PSD.filename = "\"PSD.dat\""
     PSD.restore_neutron = 1
-    
+
     return Instr
+
 
 class TestSimpleInstrument(unittest.TestCase):
     """
@@ -63,7 +66,7 @@ class TestSimpleInstrument(unittest.TestCase):
     performed by the system. The configuration file needs to be set up
     correctly in order for these tests to succeed.
     """
-    
+
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_simple_instrument(self, mock_stdout):
         """
@@ -72,7 +75,7 @@ class TestSimpleInstrument(unittest.TestCase):
         detector.
         """
         Instr = setup_simple_instrument()
-        
+
         data = Instr.run_full_instrument(foldername="integration_test_simple",
                                          ncount=1E6, mpi=1,
                                          increment_folder_name=True)
@@ -80,9 +83,10 @@ class TestSimpleInstrument(unittest.TestCase):
         intensity_data = data[0].Intensity
         # beam should be on pixel 35 to 65
 
-        sum_outside_beam = sum(intensity_data[0:34]) + sum(intensity_data[66:99]) 
+        sum_outside_beam = (sum(intensity_data[0:34])
+                            + sum(intensity_data[66:99]))
         sum_inside_beam = sum(intensity_data[35:65])
-        
+
         self.assertTrue(1000*sum_outside_beam < sum_inside_beam)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
@@ -101,11 +105,12 @@ class TestSimpleInstrument(unittest.TestCase):
         intensity_data = data[0].Intensity
         # beam should be on pixel 35 to 65
 
-        sum_outside_beam = sum(intensity_data[0:34]) + sum(intensity_data[66:99]) 
+        sum_outside_beam = (sum(intensity_data[0:34])
+                            + sum(intensity_data[66:99]))
         sum_inside_beam = sum(intensity_data[35:65])
 
         self.assertTrue(1000*sum_outside_beam < sum_inside_beam)
-        
+
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_slit_instrument(self, mock_stdout):
         """
@@ -122,11 +127,11 @@ class TestSimpleInstrument(unittest.TestCase):
         intensity_data = data[0].Intensity
         # beam should be on pixel 45 to 55
 
-        sum_outside_beam = sum(intensity_data[0:44]) + sum(intensity_data[56:99]) 
+        sum_outside_beam = (sum(intensity_data[0:44])
+                            + sum(intensity_data[56:99]))
         sum_inside_beam = sum(intensity_data[45:55])
+        self.assertTrue(1000*sum_outside_beam < sum_inside_beam)
 
-        self.assertTrue(1000*sum_outside_beam < sum_inside_beam)      
-        
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_slit_moved_instrument(self, mock_stdout):
         """
@@ -143,7 +148,11 @@ class TestSimpleInstrument(unittest.TestCase):
         intensity_data = data[0].Intensity
         # beam should be on pixel 75 to 85
 
-        sum_outside_beam = sum(intensity_data[0:74]) + sum(intensity_data[86:99]) 
+        sum_outside_beam = (um(intensity_data[0:74])
+                            + sum(intensity_data[86:99]))
         sum_inside_beam = sum(intensity_data[75:85])
 
-        self.assertTrue(1000*sum_outside_beam < sum_inside_beam) 
+        self.assertTrue(1000*sum_outside_beam < sum_inside_beam)
+
+if __name__ == '__main__':
+    unittest.main()

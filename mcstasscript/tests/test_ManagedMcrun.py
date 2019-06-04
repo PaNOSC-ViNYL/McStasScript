@@ -174,7 +174,7 @@ class TestManagedMcrun(unittest.TestCase):
         expected_call = ("path/mcrun -c -n 48 --mpi=7 "
                          + "-d test_folder -fo test.instr "
                          + "A=2 BC=car th=\"toy\"")
-        
+
     @unittest.mock.patch("os.system")
     def test_ManagedMcrun_run_simulation_compile(self, os_system):
         """
@@ -186,7 +186,7 @@ class TestManagedMcrun(unittest.TestCase):
                                  mcrun_path="path",
                                  mpi=7,
                                  ncount=48.4,
-                                 force_compile = False,
+                                 force_compile=False,
                                  custom_flags="-fo",
                                  parameters={"A": 2,
                                              "BC": "car",

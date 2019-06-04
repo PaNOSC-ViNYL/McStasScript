@@ -4,6 +4,7 @@ from mcstasscript.data.data import McStasMetaData
 from mcstasscript.data.data import McStasData
 from docutils.io import InputError
 
+
 class ManagedMcrun:
     """
     A class for performing a mcstas simulation and organizing the data
@@ -98,10 +99,10 @@ class ManagedMcrun:
 
         if "custom_flags" in kwargs:
             self.custom_flags = kwargs["custom_flags"]
-            
+
         if "increment_folder_name" in kwargs:
             self.increment_folder_name = kwargs["increment_folder_name"]
-            
+
         if "force_compile" in kwargs:
             self.compile = kwargs["force_compile"]
 
@@ -111,23 +112,23 @@ class ManagedMcrun:
         """
 
         # construct command to run
-        
+
         options_string = ""
         if self.compile:
-            options_string = "-c " 
+            options_string = "-c "
 
-        option_string = (options_string 
+        option_string = (options_string
                          + "-n " + str(self.ncount)  # Set ncount
                          + " --mpi=" + str(self.mpi)  # Set mpi
                          + " ")
-        
+
         if self.increment_folder_name and os.path.isdir(self.data_folder_name):
             counter = 0
             new_name = self.data_folder_name + "_" + str(counter)
             while os.path.isdir(new_name):
                 counter = counter + 1
                 new_name = self.data_folder_name + "_" + str(counter)
-            
+
             self.data_folder_name = new_name
 
         if len(self.data_folder_name) > 0:
@@ -160,21 +161,21 @@ class ManagedMcrun:
         Can use subprocess from spawn* instead of os.system if more
         control is needed over the spawned process, including a timeout
         """
-        
-        #return self.load_results(self.data_folder_name)
-        
+
+        # return self.load_results(self.data_folder_name)
+
     def load_results(self, *args):
-        
+
         if len(args) == 0:
             data_folder_name = self.data_folder_name
         elif len(args) == 1:
             data_folder_name = args[0]
         else:
             raise InputError("load_results can be caled with 0 or 1 arguments")
-        
+
         if not os.path.isdir(data_folder_name):
             raise NameError("Given data directory does not exist.")
-        
+
         # Find all data files in generated folder
         files_in_folder = os.listdir(data_folder_name)
 

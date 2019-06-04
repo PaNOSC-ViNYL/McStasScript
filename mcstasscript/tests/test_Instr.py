@@ -8,17 +8,20 @@ import datetime
 from mcstasscript.interface.instr import McStas_instr
 from mcstasscript.helper.formatting import bcolors
 
+
 def setup_instr_no_path():
     """
     Sets up a instrument without a mcstas_path
     """
     return McStas_instr("test_instrument")
 
+
 def setup_instr_root_path():
     """
     Sets up a instrument with root mcstas_path
     """
     return McStas_instr("test_instrument", mcstas_path="/")
+
 
 def setup_instr_with_path():
     """
@@ -28,13 +31,14 @@ def setup_instr_with_path():
 
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     dummy_path = THIS_DIR + "/dummy_mcstas"
-    
+
     current_work_dir = os.getcwd()
     os.chdir(THIS_DIR)  # Set work directory to test folder
 
     return McStas_instr("test_instrument", mcstas_path=dummy_path)
 
     os.chdir(current_work_dir)  # Return to previous workdir
+
 
 def setup_populated_instr():
     """
@@ -81,7 +85,7 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(my_instrument.origin, "DMSC")
         self.assertEqual(my_instrument.mcrun_path, "/path/to/mcrun")
         self.assertEqual(my_instrument.mcstas_path, "/path/to/mcstas")
-        
+
     def test_load_config_file(self):
         """
         Test that configuration file is read correctly. In order to have
@@ -95,7 +99,7 @@ class TestMcStas_instr(unittest.TestCase):
         if not os.path.isfile(configuration_file_name):
             raise NameError("Could not find configuration file!")
 
-        f = open(configuration_file_name,"r")
+        f = open(configuration_file_name, "r")
 
         lines = f.readlines()
         for line in lines:
@@ -103,11 +107,11 @@ class TestMcStas_instr(unittest.TestCase):
             if line.startswith("mcrun_path:"):
                 parts = line.split(" ")
                 correct_mcrun_path = parts[1][1:-1]
-            
+
             if line.startswith("mcstas_path:"):
                 parts = line.split(" ")
                 correct_mcstas_path = parts[1][1:-1]
-            
+
             if line.startswith("characters_per_line:"):
                 parts = line.split(" ")
                 correct_n_of_characters = int(parts[1])
@@ -156,12 +160,12 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[2], "float   theta  =  8       // test par")
         self.assertEqual(output[3], "int     slits             // test par")
         self.assertEqual(output[4], "string  ref    =  string  // new string")
-        
+
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_show_parameters_line_break(self, mock_stdout):
         """
         Testing that parameters are displayed correctly
-        
+
         Here multiple lines are used for a long comment that was
         dynamically broken up.
         """
@@ -173,13 +177,13 @@ class TestMcStas_instr(unittest.TestCase):
         instr.add_parameter("int", "slits", comment="test par")
         instr.add_parameter("string", "ref",
                             value="string", comment="new string")
-        
+
         longest_comment = ("This is a very long comment meant for "
                            + "testing the dynamic line breaking "
                            + "that is used in this method. It needs "
                            + "to have many lines in order to ensure "
                            + "it really works.")
-        
+
         instr.add_parameter("double", "value",
                             value="37", comment=longest_comment)
 
@@ -194,16 +198,16 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[4], "string  ref    =  string  // new string")
         comment_line = "This is a very long comment meant for testing "
         self.assertEqual(output[5], "double  value  =  37      // "
-                                   + comment_line)
+                                    + comment_line)
         comment_line = "the dynamic line breaking that is used in this "
         self.assertEqual(output[6], "                             "
-                                   + comment_line)
+                                    + comment_line)
         comment_line = "method. It needs to have many lines in order to "
         self.assertEqual(output[7], "                             "
-                                   + comment_line)
+                                    + comment_line)
         comment_line = "ensure it really works. "
         self.assertEqual(output[8], "                             "
-                                   + comment_line)
+                                    + comment_line)
 
     def test_simple_add_declare_parameter(self):
         """
@@ -348,9 +352,8 @@ class TestMcStas_instr(unittest.TestCase):
         """
         Simple test of show components to show categories
         """
-        
         instr = setup_instr_with_path()
-        
+
         instr.show_components()
 
         output = mock_stdout.getvalue()
@@ -395,7 +398,7 @@ class TestMcStas_instr(unittest.TestCase):
         """
         instr = setup_instr_with_path()
 
-        instr.component_help("test_for_reading",line_length=90)
+        instr.component_help("test_for_reading", line_length=90)
         # This call creates a dummy component and calls its
         # show_parameter method which has been tested. Here we
         # need to ensure the call is succesful, not test all
@@ -970,13 +973,13 @@ class TestMcStas_instr(unittest.TestCase):
                     + "        AT (0, 0, 0)        ABSOLUTE"
                     + "      ROTATED (0, 0, 0)          ABSOLUTE")
         self.assertEqual(output[2], expected)
-        
+
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_print_components_complex_2lines(self, mock_stdout):
         """
         print_components calls the print_short method in the component
         class for each component and aligns the data for display
-        
+
         This version of the tests forces two lines of output.
         """
 
@@ -1024,7 +1027,7 @@ class TestMcStas_instr(unittest.TestCase):
         """
         print_components calls the print_short method in the component
         class for each component and aligns the data for display
-        
+
         This version of the tests forces three lines of output.
         """
 
@@ -1039,7 +1042,7 @@ class TestMcStas_instr(unittest.TestCase):
         comp = instr.get_last_component()
         comp.component_name = "test_name"
 
-        instr.print_components(line_length=1) #  Three lines maximum
+        instr.print_components(line_length=1)  # Three lines maximum
 
         output = mock_stdout.getvalue().split("\n")
 
@@ -1083,7 +1086,7 @@ class TestMcStas_instr(unittest.TestCase):
                     + "test_name"
                     + bcolors.ENDC
                     + " ")
-        self.assertEqual(output[6], expected)        
+        self.assertEqual(output[6], expected)
 
         expected = ("  AT      (0, 0, 0) ABSOLUTE ")
         self.assertEqual(output[7], expected)
@@ -1257,8 +1260,7 @@ class TestMcStas_instr(unittest.TestCase):
         mock_f.assert_called_with("test_instrument.instr", "w")
         handle = mock_f()
         handle.write.assert_has_calls(wrts, any_order=False)
-        
-        
+
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_run_full_instrument_required_par_error(self, mock_stdout):
         """
@@ -1289,11 +1291,11 @@ class TestMcStas_instr(unittest.TestCase):
         instr.run_full_instrument("test_instrument.instr",
                                   foldername="test_data_set",
                                   mcrun_path="path",
-                                  parameters={"theta" : 1})
+                                  parameters={"theta": 1})
 
         # a double space because of a missing option
         expected_call = ("path/mcrun -c -n 1000000 --mpi=1 "
-                         + "-d test_data_set  test_instrument.instr" 
+                         + "-d test_data_set  test_instrument.instr"
                          + " has_default=37 theta=1")
 
         os_system.assert_called_once_with(expected_call)
@@ -1327,13 +1329,13 @@ class TestMcStas_instr(unittest.TestCase):
                          + "has_default=37 A=2 BC=car theta=\"toy\"")
 
         os_system.assert_called_once_with(expected_call)
-        
+
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
     @unittest.mock.patch("os.system")
     def test_run_full_instrument_overwrite_default(self, os_system,
-                                         mock_f, mock_stdout,):
+                                                   mock_f, mock_stdout,):
         """
         Check that default parameters are overwritten by given
         parameters.

@@ -1,6 +1,7 @@
 from mcstasscript.helper.formatting import bcolors
 from mcstasscript.helper.formatting import is_legal_parameter
 
+
 class parameter_variable:
     """
     Class describing a input parameter in McStas instrument
@@ -649,7 +650,7 @@ class component:
         subclasses for the individual components are required to run
         this method.
         """
-        
+
         if "line_length" in kwargs:
             line_limit = kwargs["line_length"]
         else:
@@ -716,7 +717,7 @@ class component:
             characters_before_comment += characters_from_value
 
             print(parameter_name + value + unit, end="")
-            
+
             if characters_before_comment + len(comment) < line_limit:
                 print(comment)
             else:
@@ -735,16 +736,16 @@ class component:
                     if iterations > max_iterations:
                         #  Something went long, print on one line
                         break
-                    
+
                     line_left = length_for_comment
-                    
+
                     while(line_left > 0):
                         if current_index >= len(words):
                             current_index = len(words) + 1
                             break
                         line_left -= len(str(words[current_index])) + 1
                         current_index += 1
-                        
+
                     current_index -= 1
                     for word in words[last_index:current_index]:
                         comment += word + " "
@@ -776,16 +777,16 @@ class component:
                 value = " = " + str(self.parameter_defaults[parameter])
             if getattr(self, parameter) is not None:
                 value = " = " + str(getattr(self, parameter))
-            
+
             unit = ""
             if parameter in self.parameter_units:
                 unit = " [" + self.parameter_units[parameter] + "]"
-            
+
             comment = ""
             if parameter in self.parameter_comments:
                 if self.parameter_comments[parameter] is not "":
                     comment = " // " + self.parameter_comments[parameter]
 
             print(parameter + value + unit + comment)
-                
+
         print("----------" + "-"*len(self.component_name) + "------")

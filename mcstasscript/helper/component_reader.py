@@ -1,6 +1,7 @@
 import os
 import math
 
+
 class ComponentInfo:
     """
     Internal class used to store information on parameters of components
@@ -92,12 +93,11 @@ class ComponentReader:
         Method that will show all components in given category
 
         """
-        
         if "line_length" in kwargs:
             line_limit = kwargs["line_length"]
         else:
             line_limit = 100
-        
+
         empty_category = True
         to_print = []
         for component, category in self.component_category.items():
@@ -177,11 +177,11 @@ class ComponentReader:
                             + "current work directory.")
 
         output = self.read_component_file(self.component_path[component_name])
-        
+
         # Category loaded using path, in case of Work directory it fails
         if self.component_category[component_name] == "Work directory":
             output.category = "Work directory"  # Corrects category
-        
+
         return output
 
     def _find_components(self, absolute_path):
@@ -273,7 +273,7 @@ class ComponentReader:
 
             # find definition parameters and their values
             if (self.line_starts_with(line.strip(), "DEFINITION PARAMETERS")
-                    or self.line_starts_with(line.strip(), 
+                    or self.line_starts_with(line.strip(),
                                              "SETTING PARAMETERS")):
 
                 parts = line.split("(")
@@ -329,7 +329,7 @@ class ComponentReader:
                             name_value = part.split("=")
                             par_name = name_value[0].strip()
                             par_value = name_value[1].strip()
-                            
+
                             if temp_par_type is "double":
                                 try:
                                     par_value = float(par_value)

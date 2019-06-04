@@ -13,6 +13,7 @@ from mcstasscript.helper.managed_mcrun import ManagedMcrun
 from mcstasscript.helper.formatting import is_legal_filename
 from mcstasscript.helper.formatting import bcolors
 
+
 class McStas_instr:
     """
     Main class for writing a McStas instrument using McStasScript
@@ -79,7 +80,7 @@ class McStas_instr:
 
     append_trace(string)
         Obsolete method, add components instead (used in write_c_files)
-        
+
     show_components(string)
         Shows available components in given category
 
@@ -160,7 +161,7 @@ class McStas_instr:
         """
 
         self.name = name
-        
+
         if not is_legal_filename(self.name + ".instr"):
             raise NameError("The instrument is called: \""
                             + self.name
@@ -177,7 +178,7 @@ class McStas_instr:
             self.origin = kwargs["origin"]
         else:
             self.origin = "ESS DMSC"
-            
+
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         configuration_file_name = THIS_DIR + "/../../configuration.yaml"
         if not os.path.isfile(configuration_file_name):
@@ -191,7 +192,7 @@ class McStas_instr:
             self.line_limit = config["other"]["characters_per_line"]
         else:
             # This happens in unit tests that mocks open
-            self.mcrun_path = "" 
+            self.mcrun_path = ""
             self.mcstas_path = ""
             self.line_limit = 180
 
@@ -244,16 +245,15 @@ class McStas_instr:
         """
         # parameter_variable class documented independently
         self.parameter_list.append(parameter_variable(*args, **kwargs))
-        
+
     def show_parameters(self, **kwargs):
         """
         Method for displaying current instrument parameters
-        
+
         keyword arguments
             line_length : int
                 Maximum line length for terminal output
         """
-        
         if "line_length" in kwargs:
             line_limit = kwargs["line_length"]
         else:
@@ -290,8 +290,8 @@ class McStas_instr:
             else:
                 print(" = ", end=' ')
             print(str(parameter.value).ljust(longest_value+1), end=' ')
-            if (length_for_comment < 5 
-                or length_for_comment > len(str(parameter.comment))):
+            if (length_for_comment < 5
+                    or length_for_comment > len(str(parameter.comment))):
                 print(str(parameter.comment))
             else:
                 # Split comment into several lines
@@ -308,16 +308,16 @@ class McStas_instr:
                     if iterations > max_iterations:
                         #  Something went long, print on one line
                         break
-                    
+
                     line_left = length_for_comment
-                    
+
                     while(line_left > 0):
                         if current_index >= len(words):
                             current_index = len(words) + 1
                             break
                         line_left -= len(str(words[current_index])) + 1
                         current_index += 1
-                        
+
                     current_index -= 1
                     for word in words[last_index:current_index]:
                         comment += word + " "
@@ -474,7 +474,7 @@ class McStas_instr:
         If called without any arguments it will display the available
         component categories. If a category is given as a string in
         the first input, components in that category are printed.
-        
+
         Parameters
         ----------
         first argument (optional): str
@@ -492,8 +492,9 @@ class McStas_instr:
                   + category
                   + " category.")
             this_reader = self.component_reader
+            line_lim = self.line_limit
             this_reader.show_components_in_category(category,
-                                                    line_length=self.line_limit)
+                                                    line_length=line_lim)
 
     def component_help(self, name, **kwargs):
         """
@@ -867,12 +868,12 @@ class McStas_instr:
 
         Provides overview of component names, what McStas component is
         used for each and their position and rotation in space.
-        
+
         keyword arguments:
         line_length : int
             Maximum line length in console
         """
-        
+
         if "line_length" in kwargs:
             line_limit = kwargs["line_length"]
         else:
@@ -908,9 +909,9 @@ class McStas_instr:
         # Padding settings, 0,0,6,0,6 is minimum values
         name_pad = 0
         comp_name_pad = 0
-        AT_pad = 6 # requires (, , ) in addition to data length
+        AT_pad = 6  # requires (, , ) in addition to data length
         RELATIVE_pad = 0
-        ROTATED_pad = 6 # requires (, , ) in addition to data length
+        ROTATED_pad = 6  # requires (, , ) in addition to data length
 
         # Check if longest line length exceeded
         longest_line_length = (longest_name + name_pad
@@ -919,12 +920,12 @@ class McStas_instr:
                                + longest_at_relative_name + RELATIVE_pad
                                + longest_rotated_xyz_name + ROTATED_pad
                                + longest_rotated_relative_name + 8 + 9)
-        
+
         def coordinates_to_string(data):
-            return ("(" 
+            return ("("
                     + str(data[0]) + ", "
                     + str(data[1]) + ", "
-                    + str(data[2]) + ")") 
+                    + str(data[2]) + ")")
 
         n_lines = 1
         """
@@ -937,27 +938,27 @@ class McStas_instr:
             longest_at_xyz_name = max([longest_at_xyz_name,
                                        longest_rotated_xyz_name])
             longest_rotated_xyz_name = longest_at_xyz_name
-            RELATIVE_pad = 0            
+            RELATIVE_pad = 0
 
-            longest_line_length_at = (longest_name 
+            longest_line_length_at = (longest_name
                                       + comp_name_pad
-                                      + longest_component_name 
+                                      + longest_component_name
                                       + comp_name_pad
-                                      + longest_at_xyz_name 
+                                      + longest_at_xyz_name
                                       + AT_pad
-                                      + longest_at_relative_name 
-                                      + 7 + 6 )
-            longest_line_length_rotated = (longest_name 
+                                      + longest_at_relative_name
+                                      + 7 + 6)
+            longest_line_length_rotated = (longest_name
                                            + comp_name_pad
-                                           + longest_component_name 
+                                           + longest_component_name
                                            + comp_name_pad
-                                           + longest_rotated_xyz_name 
+                                           + longest_rotated_xyz_name
                                            + ROTATED_pad
-                                           + longest_rotated_relative_name 
+                                           + longest_rotated_relative_name
                                            + 7 + 6)
 
-            if (longest_line_length_at > line_limit 
-                or longest_line_length_rotated > line_limit):
+            if (longest_line_length_at > line_limit
+                    or longest_line_length_rotated > line_limit):
                 n_lines = 3
 
         if n_lines == 1:
@@ -966,7 +967,7 @@ class McStas_instr:
                 p_name = p_name.ljust(longest_name + name_pad)
 
                 p_comp_name = str(component.component_name)
-                p_comp_name = p_comp_name.ljust(longest_component_name 
+                p_comp_name = p_comp_name.ljust(longest_component_name
                                                 + comp_name_pad)
 
                 p_AT = coordinates_to_string(component.AT_data)
@@ -992,7 +993,7 @@ class McStas_instr:
                 p_name = p_name.ljust(longest_name + name_pad)
 
                 p_comp_name = str(component.component_name)
-                p_comp_name = p_comp_name.ljust(longest_component_name 
+                p_comp_name = p_comp_name.ljust(longest_component_name
                                                 + comp_name_pad)
 
                 p_AT = coordinates_to_string(component.AT_data)
@@ -1003,8 +1004,8 @@ class McStas_instr:
                                                     + RELATIVE_pad)
 
                 p_ROTATED_align = " "*(longest_name
-                                       + comp_name_pad 
-                                       + longest_component_name 
+                                       + comp_name_pad
+                                       + longest_component_name
                                        + comp_name_pad)
 
                 p_ROTATED = coordinates_to_string(component.ROTATED_data)
@@ -1013,7 +1014,7 @@ class McStas_instr:
 
                 p_ROTATED_RELATIVE = str(component.ROTATED_relative)
 
-                print(p_name, p_comp_name, 
+                print(p_name, p_comp_name,
                       "AT     ", p_AT, p_AT_RELATIVE, "\n",
                       p_ROTATED_align, "ROTATED",
                       p_ROTATED, p_ROTATED_RELATIVE)
@@ -1022,7 +1023,7 @@ class McStas_instr:
             for component in self.component_list:
                 p_name = bcolors.BOLD + str(component.name) + bcolors.ENDC
 
-                p_comp_name = (bcolors.BOLD 
+                p_comp_name = (bcolors.BOLD
                                + str(component.component_name)
                                + bcolors.ENDC)
 
@@ -1161,7 +1162,7 @@ class McStas_instr:
 
         # End instrument file
         fo.write("\nEND\n")
-        
+
         fo.close()
 
     def run_full_instrument(self, *args, **kwargs):
@@ -1194,25 +1195,23 @@ class McStas_instr:
             mcrun_path : str
                 Path to mcrun command, "" if already in path
         """
-        
-
         # Make sure mcrun path is in kwargs
         if "mcrun_path" not in kwargs:
             kwargs["mcrun_path"] = self.mcrun_path
-        
+
         # Find required parameters
         required_parameters = []
         default_parameters = {}
         passed_parameters = {}
-        
-        for index in range(0,len(self.parameter_list)):
+
+        for index in range(0, len(self.parameter_list)):
             if self.parameter_list[index].value == "":
                 required_parameters.append(self.parameter_list[index].name)
             else:
-                default_parameters.update({self.parameter_list[index].name :
+                default_parameters.update({self.parameter_list[index].name:
                                            self.parameter_list[index].value})
-            
-        # Check if parameters are given 
+
+        # Check if parameters are given
         if "parameters" not in kwargs:
             if len(required_parameters) > 0:
                 # print required parameters and raise error
@@ -1228,7 +1227,7 @@ class McStas_instr:
             for name in required_parameters:
                 if name not in given_parameters:
                     raise NameError("The required instrument parameter "
-                                    + name 
+                                    + name
                                     + " was not provided.")
             # Overwrite default parameters with given parameters
             default_parameters.update(given_parameters)
@@ -1243,5 +1242,3 @@ class McStas_instr:
         # Run the simulation and return data
         simulation.run_simulation()
         return simulation.load_results()
-    
-

@@ -70,6 +70,7 @@ def setup_McStasData_array():
 
     return data_list
 
+
 def setup_McStasData_array_repeat():
 
     data_list = []
@@ -92,7 +93,6 @@ def setup_McStasData_array_repeat():
     return data_list
 
 
-
 class Test_name_search(unittest.TestCase):
     """
     Test the utility function called name_search which finds and
@@ -110,7 +110,7 @@ class Test_name_search(unittest.TestCase):
         hero_object = name_search("Hero", data_list)
 
         self.assertEqual(hero_object.metadata.dimension, 123)
-        
+
     def test_name_search_read_repeat(self):
         """
         Test simple case with repeat name
@@ -205,6 +205,7 @@ class Test_load_data(unittest.TestCase):
         self.assertEqual(PSD_4PI.Ncount[1][4], 4)
         self.assertEqual(PSD_4PI.Intensity[1][4], 1.537334562E-10)
         self.assertEqual(PSD_4PI.Error[1][4], 1.139482296E-10)
+
 
 if __name__ == '__main__':
     unittest.main()
