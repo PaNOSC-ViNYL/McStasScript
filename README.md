@@ -61,7 +61,7 @@ Plotting is usually done in a subplot of all monitors recorded.
 Here is a quick overview of the available methods of the main classes in the project. Most have more options from keyword arguments that are explained in the manual, but also in python help, for example help(instr.McStas_instr.show_components).
 
     instr
-    ├── McStas_instr(str instr_name) # Returns McStas instrument object on initialize
+    └── McStas_instr(str instr_name) # Returns McStas instrument object on initialize
         ├── show_components(str category_name) # Show available components in given category
         ├── component_help(str component_name) # Prints component parameters for given component name   
         ├── add_component(str name, str component_name) # Adds component to instrument and returns object
