@@ -22,7 +22,7 @@ class make_plot:
     If a list is given, the plots appear individually.
     """
 
-    def __init__(self, data_list):
+    def __init__(self, data_list, **kwargs):
         """
         plots McStasData, single object or list of McStasData
 
@@ -50,6 +50,9 @@ class make_plot:
 
         number_of_plots = len(data_list)
 
+        if "fontsize" in kwargs:
+            plt.rcParams.update({'font.size': kwargs["fontsize"]})
+
         print("number of elements in data list = " + str(len(data_list)))
 
         index = -1
@@ -60,17 +63,22 @@ class make_plot:
             if type(data.metadata.dimension) == int:
                 fig = plt.figure(0)
 
+                x_axis_mult = data.plot_options.x_limit_multiplier
                 # print(data.T)
-                x = data.xaxis
+                x = data.xaxis*x_axis_mult
                 y = data.Intensity
                 y_err = data.Error
 
+                #(fig, ax0) = plt.errorbar(x, y, yerr=y_err)
                 plt.errorbar(x, y, yerr=y_err)
+
+                ax0 = plt.gca()
 
                 if data.plot_options.log:
                     ax0.set_yscale("log", nonposy='clip')
 
-                plt.xlim(data.metadata.limits[0], data.metadata.limits[1])
+                ax0.set_xlim(data.metadata.limits[0]*x_axis_mult,
+                             data.metadata.limits[1]*x_axis_mult)
 
                 # Add a title
                 plt.title(data.metadata.title)
@@ -79,39 +87,59 @@ class make_plot:
                 plt.xlabel(data.metadata.xlabel)
                 plt.ylabel(data.metadata.ylabel)
 
-            elif len(data.metadata.dimension) == 2:
+                if data.plot_options.custom_xlim_left:
+                    ax0.set_xlim(left=data.plot_options.left_lim)
 
+                if data.plot_options.custom_xlim_right:
+                    ax0.set_xlim(right=data.plot_options.right_lim)
+
+            elif len(data.metadata.dimension) == 2:
                 # Split the data into intensity, error and ncount
                 Intensity = data.Intensity
                 Error = data.Error
                 Ncount = data.Ncount
 
+                cut_max = data.plot_options.cut_max  # Default 1
+                cut_min = data.plot_options.cut_min  # Default 0
+
                 if data.plot_options.log:
+                    to_plot = Intensity
+
+                    max_data_value = to_plot.max()
+
                     min_value = np.min(Intensity[np.nonzero(Intensity)])
-                    min_value = np.log10(min_value)
+                    min_value = np.log10(min_value
+                                         + (max_data_value-min_value)*cut_min)
 
-                    to_plot = np.log10(Intensity)
-
-                    max_value = to_plot.max()
+                    max_value = np.log10(max_data_value*cut_max)
 
                     if (max_value - min_value
                             > data.plot_options.orders_of_mag):
                         min_value = (max_value
                                      - data.plot_options.orders_of_mag)
+                    min_value = 10.0 ** min_value
+                    max_value = 10.0 ** max_value
                 else:
                     to_plot = Intensity
-                    min_value = to_plot.min()
+                    min_value = to_plot.min() 
                     max_value = to_plot.max()
+
+                    # Cut top and bottom of data as specified in cut variables
+                    min_value = min_value + (max_value-min_value)*cut_min
+                    max_value = max_value*cut_max
 
                 # Check the size of the array to be plotted
                 # print(to_plot.shape)
 
                 # Set the axis (might be switched?)
-                X = np.linspace(data.metadata.limits[0],
-                                data.metadata.limits[1],
+                x_axis_mult = data.plot_options.x_limit_multiplier
+                y_axis_mult = data.plot_options.y_limit_multiplier
+
+                X = np.linspace(data.metadata.limits[0]*x_axis_mult,
+                                data.metadata.limits[1]*x_axis_mult,
                                 data.metadata.dimension[0]+1)
-                Y = np.linspace(data.metadata.limits[2],
-                                data.metadata.limits[3],
+                Y = np.linspace(data.metadata.limits[2]*y_axis_mult,
+                                data.metadata.limits[3]*y_axis_mult,
                                 data.metadata.dimension[1])
 
                 # Create a meshgrid for both x and y
@@ -142,10 +170,22 @@ class make_plot:
 
                 # Add a title
                 ax0.set_title(data.metadata.title)
-
+                
                 # Add axis labels
                 plt.xlabel(data.metadata.xlabel)
                 plt.ylabel(data.metadata.ylabel)
+
+                if data.plot_options.custom_ylim_top:
+                    ax0.set_ylim(top=data.plot_options.top_lim)
+
+                if data.plot_options.custom_ylim_bottom:
+                    ax0.set_ylim(bottom=data.plot_options.bottom_lim)
+
+                if data.plot_options.custom_xlim_left:
+                    ax0.set_xlim(left=data.plot_options.left_lim)
+
+                if data.plot_options.custom_xlim_right:
+                    ax0.set_xlim(right=data.plot_options.right_lim)
 
             else:
                 print("Error, dimension not read correctly")
@@ -162,7 +202,7 @@ class make_sub_plot:
     subplot.
     """
 
-    def __init__(self, data_list):
+    def __init__(self, data_list, **kwargs):
         """
         plots McStasData, single object or list of McStasData
 
@@ -196,6 +236,9 @@ class make_sub_plot:
         dim2 = math.ceil(math.sqrt(number_of_plots))
         dim1 = math.ceil(number_of_plots/dim2)
 
+        if "fontsize" in kwargs:
+            plt.rcParams.update({'font.size': kwargs["fontsize"]})
+
         fig, axs = plt.subplots(dim1, dim2, figsize=(13, 7))
         axs = np.array(axs)
         ax = axs.reshape(-1)
@@ -211,7 +254,9 @@ class make_sub_plot:
             if isinstance(data.metadata.dimension, int):
                 # fig = plt.figure(0)
                 # plt.subplot(dim1, dim2, n_plot)
-                x = data.xaxis
+                x_axis_mult = data.plot_options.x_limit_multiplier
+
+                x = data.xaxis*x_axis_mult
                 y = data.Intensity
                 y_err = data.Error
 
@@ -220,15 +265,21 @@ class make_sub_plot:
                 if data.plot_options.log:
                     ax0.set_yscale("log", nonposy='clip')
 
-                ax0.set_xlim(data.metadata.limits[0],
-                             data.metadata.limits[1])
+                ax0.set_xlim(data.metadata.limits[0]*x_axis_mult,
+                             data.metadata.limits[1]*x_axis_mult)
 
                 # Add a title
-                # ax0.title(data.title)
+                ax0.set_title(data.metadata.title)
 
                 # Add axis labels
                 ax0.set_xlabel(data.metadata.xlabel)
                 ax0.set_ylabel(data.metadata.ylabel)
+
+                if data.plot_options.custom_xlim_left:
+                    ax0.set_xlim(left=data.plot_options.left_lim)
+
+                if data.plot_options.custom_xlim_right:
+                    ax0.set_xlim(right=data.plot_options.right_lim)
 
             elif len(data.metadata.dimension) == 2:
 
@@ -237,13 +288,19 @@ class make_sub_plot:
                 Error = data.Error
                 Ncount = data.Ncount
 
-                if data.plot_options.log:
-                    min_value = np.min(Intensity[np.nonzero(Intensity)])
-                    min_value = np.log10(min_value)
+                cut_max = data.plot_options.cut_max  # Default 1
+                cut_min = data.plot_options.cut_min  # Default 0
 
+                if data.plot_options.log:
                     to_plot = Intensity
 
-                    max_value = np.log10(to_plot.max())
+                    max_data_value = to_plot.max()
+
+                    min_value = np.min(Intensity[np.nonzero(Intensity)])
+                    min_value = np.log10(min_value
+                                         + (max_data_value-min_value)*cut_min)
+
+                    max_value = np.log10(max_data_value*cut_max)
 
                     if (max_value - min_value
                             > data.plot_options.orders_of_mag):
@@ -253,18 +310,25 @@ class make_sub_plot:
                     max_value = 10.0 ** max_value
                 else:
                     to_plot = Intensity
-                    min_value = to_plot.min()
+                    min_value = to_plot.min() 
                     max_value = to_plot.max()
+
+                    # Cut top and bottom of data as specified in cut variables
+                    min_value = min_value + (max_value-min_value)*cut_min
+                    max_value = max_value*cut_max
 
                 # Check the size of the array to be plotted
                 # print(to_plot.shape)
 
-                # Set the axis (might be switched?)
-                X = np.linspace(data.metadata.limits[0],
-                                data.metadata.limits[1],
+                # Set the axis
+                x_axis_mult = data.plot_options.x_limit_multiplier
+                y_axis_mult = data.plot_options.y_limit_multiplier
+
+                X = np.linspace(data.metadata.limits[0]*x_axis_mult,
+                                data.metadata.limits[1]*x_axis_mult,
                                 data.metadata.dimension[0]+1)
-                Y = np.linspace(data.metadata.limits[2],
-                                data.metadata.limits[3],
+                Y = np.linspace(data.metadata.limits[2]*y_axis_mult,
+                                data.metadata.limits[3]*y_axis_mult,
                                 data.metadata.dimension[1])
 
                 # Create a meshgrid for both x and y
@@ -290,7 +354,10 @@ class make_sub_plot:
                 def fmt(x, pos):
                     a, b = '{:.2e}'.format(x).split('e')
                     b = int(b)
-                    return r'${} \times 10^{{{}}}$'.format(a, b)
+                    if abs(float(a) - 1) < 0.01 :
+                        return r'$10^{{{}}}$'.format(b)
+                    else:
+                        return r'${} \times 10^{{{}}}$'.format(a, b)
 
                 # Add the colorbar
                 fig.colorbar(im, ax=ax0,
@@ -302,6 +369,18 @@ class make_sub_plot:
                 # Add axis labels
                 ax0.set_xlabel(data.metadata.xlabel)
                 ax0.set_ylabel(data.metadata.ylabel)
+
+                if data.plot_options.custom_ylim_top:
+                    ax0.set_ylim(top=data.plot_options.top_lim)
+
+                if data.plot_options.custom_ylim_bottom:
+                    ax0.set_ylim(bottom=data.plot_options.bottom_lim)
+
+                if data.plot_options.custom_xlim_left:
+                    ax0.set_xlim(left=data.plot_options.left_lim)
+
+                if data.plot_options.custom_xlim_right:
+                    ax0.set_xlim(right=data.plot_options.right_lim)
 
             else:
                 print("Error, dimension not read correctly")

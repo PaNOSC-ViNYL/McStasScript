@@ -155,6 +155,15 @@ class McStasPlotOptions:
         self.log = False
         self.orders_of_mag = 300
         self.colormap = "jet"
+        self.cut_max = 1
+        self.cut_min = 0
+        self.x_limit_multiplier = 1
+        self.y_limit_multiplier = 1
+        
+        self.custom_ylim_top = False
+        self.custom_ylim_bottom = False
+        self.custom_xlim_left = False
+        self.custom_xlim_right = False
 
     def set_options(self, **kwargs):
         """Set custom values for plotting preferences"""
@@ -176,6 +185,35 @@ class McStasPlotOptions:
 
         if "colormap" in kwargs:
             self.colormap = kwargs["colormap"]
+            
+        if "cut_max" in kwargs:
+            self.cut_max = kwargs["cut_max"]
+            
+        if "cut_min" in kwargs:
+            self.cut_min = kwargs["cut_min"]
+            
+        if "x_axis_multiplier" in kwargs:
+            self.x_limit_multiplier = kwargs["x_axis_multiplier"]
+        
+        if "y_axis_multiplier" in kwargs:
+            self.y_limit_multiplier = kwargs["y_axis_multiplier"]
+            
+        if "top_lim" in kwargs:
+            self.top_lim = kwargs["top_lim"]
+            self.custom_ylim_top = True
+            
+        if "bottom_lim" in kwargs:
+            self.bottom_lim = kwargs["bottom_lim"]
+            self.custom_ylim_bottom = True
+            
+        if "left_lim" in kwargs:
+            self.left_lim = kwargs["left_lim"]
+            self.custom_xlim_left = True
+            
+        if "right_lim" in kwargs:
+            self.right_lim = kwargs["right_lim"]
+            self.custom_xlim_right = True
+            
 
 
 class McStasData:

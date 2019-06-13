@@ -2,7 +2,6 @@ import os
 import numpy as np
 from mcstasscript.data.data import McStasMetaData
 from mcstasscript.data.data import McStasData
-from docutils.io import InputError
 
 
 class ManagedMcrun:
