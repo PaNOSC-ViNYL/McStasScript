@@ -3,6 +3,7 @@ from __future__ import print_function
 import os
 import datetime
 import yaml
+import subprocess
 
 from mcstasscript.data.data import McStasData
 from mcstasscript.helper.mcstas_objects import declare_variable
@@ -1242,3 +1243,66 @@ class McStas_instr:
         # Run the simulation and return data
         simulation.run_simulation(**kwargs)
         return simulation.load_results()
+    
+    def show_instrument(self, *args, **kwargs):
+        """
+        Uses mcdisplay to show the instrument in webbroser
+        """
+        
+        # Find required parameters
+        required_parameters = []
+        default_parameters = {}
+        passed_parameters = {}
+
+        for index in range(0, len(self.parameter_list)):
+            if self.parameter_list[index].value == "":
+                required_parameters.append(self.parameter_list[index].name)
+            else:
+                default_parameters.update({self.parameter_list[index].name:
+                                           self.parameter_list[index].value})
+
+        # Check if parameters are given
+        if "parameters" not in kwargs:
+            if len(required_parameters) > 0:
+                # print required parameters and raise error
+                print("Required instrument parameters:")
+                for name in required_parameters:
+                    print("  " + name)
+                raise NameError("Required parameters not provided.")
+            else:
+                # If all parameters have defaults, just run with the defaults.
+                kwargs["parameters"] = default_parameters
+        else:
+            given_parameters = kwargs["parameters"]
+            for name in required_parameters:
+                if name not in given_parameters:
+                    raise NameError("The required instrument parameter "
+                                    + name
+                                    + " was not provided.")
+            # Overwrite default parameters with given parameters
+            default_parameters.update(given_parameters)
+            kwargs["parameters"] = default_parameters                
+
+        parameters = kwargs["parameters"]
+        # add parameters to command
+        parameter_string = ""
+        for key, val in parameters.items():
+            parameter_string = (parameter_string + " "
+                                + str(key)  # parameter name
+                                + "="
+                                + str(val))  # parameter value
+
+        bin_path = self.mcstas_path + "/bin/"
+        #full_command = (bin_path + "mcdisplay-webgl "
+        full_command = (bin_path + "mcdisplay " 
+                        + self.name + ".instr"
+                        + " " + parameter_string) 
+        print(full_command)
+        #os.system(full_command)
+        process = subprocess.run(full_command, shell=True,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 universal_newlines=True)
+        print(process.stderr)
+        print(process.stdout)
+        

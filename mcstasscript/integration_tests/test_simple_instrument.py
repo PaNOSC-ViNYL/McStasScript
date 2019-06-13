@@ -148,7 +148,7 @@ class TestSimpleInstrument(unittest.TestCase):
         intensity_data = data[0].Intensity
         # beam should be on pixel 75 to 85
 
-        sum_outside_beam = (um(intensity_data[0:74])
+        sum_outside_beam = (sum(intensity_data[0:74])
                             + sum(intensity_data[86:99]))
         sum_inside_beam = sum(intensity_data[75:85])
 

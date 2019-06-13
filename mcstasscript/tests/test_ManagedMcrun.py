@@ -95,8 +95,8 @@ class TestManagedMcrun(unittest.TestCase):
         with self.assertRaises(NameError):
             mcrun_obj = ManagedMcrun("test.instr", mcrun_path="")
 
-    @unittest.mock.patch("os.system")
-    def test_ManagedMcrun_run_simulation_basic(self, os_system):
+    @unittest.mock.patch("subprocess.run")
+    def test_ManagedMcrun_run_simulation_basic(self, mock_sub):
         """
         Check a basic system call is correct
         """
@@ -111,10 +111,13 @@ class TestManagedMcrun(unittest.TestCase):
         expected_call = ("path/mcrun -c -n 1000000 --mpi=1 "
                          + "-d test_folder  test.instr")
 
-        os_system.assert_called_once_with(expected_call)
+        mock_sub.assert_called_once_with(expected_call,
+                                         shell=True,
+                                         stderr=-1, stdout=-1,
+                                         universal_newlines=True)
 
-    @unittest.mock.patch("os.system")
-    def test_ManagedMcrun_run_simulation_basic_path(self, os_system):
+    @unittest.mock.patch("subprocess.run")
+    def test_ManagedMcrun_run_simulation_basic_path(self, mock_sub):
         """
         Check a basic system call is correct, with different path format
         """
@@ -129,10 +132,13 @@ class TestManagedMcrun(unittest.TestCase):
         expected_call = ("path/mcrun -c -n 1000000 --mpi=1 "
                          + "-d test_folder  test.instr")
 
-        os_system.assert_called_once_with(expected_call)
+        mock_sub.assert_called_once_with(expected_call,
+                                         shell=True,
+                                         stderr=-1, stdout=-1,
+                                         universal_newlines=True)
 
-    @unittest.mock.patch("os.system")
-    def test_ManagedMcrun_run_simulation_no_standard(self, os_system):
+    @unittest.mock.patch("subprocess.run")
+    def test_ManagedMcrun_run_simulation_no_standard(self, mock_sub):
         """
         Check a non standard system call is correct
         """
@@ -150,10 +156,13 @@ class TestManagedMcrun(unittest.TestCase):
         expected_call = ("path/mcrun -c -n 48 --mpi=7 "
                          + "-d test_folder -fo test.instr")
 
-        os_system.assert_called_once_with(expected_call)
+        mock_sub.assert_called_once_with(expected_call,
+                                         shell=True,
+                                         stderr=-1, stdout=-1,
+                                         universal_newlines=True)
 
-    @unittest.mock.patch("os.system")
-    def test_ManagedMcrun_run_simulation_parameters(self, os_system):
+    @unittest.mock.patch("subprocess.run")
+    def test_ManagedMcrun_run_simulation_parameters(self, mock_sub):
         """
         Check a run with parameters is correct
         """
@@ -175,8 +184,13 @@ class TestManagedMcrun(unittest.TestCase):
                          + "-d test_folder -fo test.instr "
                          + "A=2 BC=car th=\"toy\"")
 
-    @unittest.mock.patch("os.system")
-    def test_ManagedMcrun_run_simulation_compile(self, os_system):
+        mock_sub.assert_called_once_with(expected_call,
+                                         shell=True,
+                                         stderr=-1, stdout=-1,
+                                         universal_newlines=True)
+
+    @unittest.mock.patch("subprocess.run")
+    def test_ManagedMcrun_run_simulation_compile(self, mock_sub):
         """
         Check a run with parameters is correct
         """
@@ -199,7 +213,10 @@ class TestManagedMcrun(unittest.TestCase):
                          + "-d test_folder -fo test.instr "
                          + "A=2 BC=car th=\"toy\"")
 
-        os_system.assert_called_once_with(expected_call)
+        mock_sub.assert_called_once_with(expected_call,
+                                         shell=True,
+                                         stderr=-1, stdout=-1,
+                                         universal_newlines=True)
 
     def test_ManagedMcrun_load_data_PSD4PI(self):
         """

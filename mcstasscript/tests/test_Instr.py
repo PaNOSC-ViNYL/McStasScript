@@ -1278,8 +1278,8 @@ class TestMcStas_instr(unittest.TestCase):
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
-    @unittest.mock.patch("os.system")
-    def test_run_full_instrument_basic(self, os_system,
+    @unittest.mock.patch("subprocess.run")
+    def test_run_full_instrument_basic(self, mock_sub,
                                        mock_f, mock_stdout,):
         """
         Check a simple run performs the correct system call.  Here
@@ -1298,13 +1298,16 @@ class TestMcStas_instr(unittest.TestCase):
                          + "-d test_data_set  test_instrument.instr"
                          + " has_default=37 theta=1")
 
-        os_system.assert_called_once_with(expected_call)
+        mock_sub.assert_called_once_with(expected_call,
+                                         shell=True,
+                                         stderr=-1, stdout=-1,
+                                         universal_newlines=True)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
-    @unittest.mock.patch("os.system")
-    def test_run_full_instrument_complex(self, os_system,
+    @unittest.mock.patch("subprocess.run")
+    def test_run_full_instrument_complex(self, mock_sub,
                                          mock_f, mock_stdout,):
         """
         Check a complex run performs the correct system call.  Here
@@ -1328,13 +1331,16 @@ class TestMcStas_instr(unittest.TestCase):
                          + "-d test_data_set -fo test_instrument.instr "
                          + "has_default=37 A=2 BC=car theta=\"toy\"")
 
-        os_system.assert_called_once_with(expected_call)
+        mock_sub.assert_called_once_with(expected_call,
+                                         shell=True,
+                                         stderr=-1, stdout=-1,
+                                         universal_newlines=True)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
-    @unittest.mock.patch("os.system")
-    def test_run_full_instrument_overwrite_default(self, os_system,
+    @unittest.mock.patch("subprocess.run")
+    def test_run_full_instrument_overwrite_default(self, mock_sub,
                                                    mock_f, mock_stdout,):
         """
         Check that default parameters are overwritten by given
@@ -1358,7 +1364,10 @@ class TestMcStas_instr(unittest.TestCase):
                          + "-d test_data_set -fo test_instrument.instr "
                          + "has_default=10 A=2 BC=car theta=\"toy\"")
 
-        os_system.assert_called_once_with(expected_call)
+        mock_sub.assert_called_once_with(expected_call,
+                                         shell=True,
+                                         stderr=-1, stdout=-1,
+                                         universal_newlines=True)
 
 
 if __name__ == '__main__':
