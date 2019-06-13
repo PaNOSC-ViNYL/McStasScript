@@ -1240,5 +1240,5 @@ class McStas_instr:
         simulation = ManagedMcrun(self.name + ".instr", **kwargs)
 
         # Run the simulation and return data
-        simulation.run_simulation()
+        simulation.run_simulation(**kwargs)
         return simulation.load_results()

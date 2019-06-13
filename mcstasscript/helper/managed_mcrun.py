@@ -1,5 +1,7 @@
 import os
 import numpy as np
+import subprocess
+
 from mcstasscript.data.data import McStasMetaData
 from mcstasscript.data.data import McStasData
 
@@ -105,7 +107,7 @@ class ManagedMcrun:
         if "force_compile" in kwargs:
             self.compile = kwargs["force_compile"]
 
-    def run_simulation(self):
+    def run_simulation(self, **kwargs):
         """
         Runs McStas simulation described by initializing the object
         """
@@ -150,18 +152,26 @@ class ManagedMcrun:
                 mcrun_full_path = self.mcrun_path + "/mcrun"
 
         # Run the mcrun command on the system
-        os.system(mcrun_full_path + " "
+        full_command = (mcrun_full_path + " "
                   + option_string + " "
                   + self.custom_flags + " "
                   + self.name_of_instrumentfile
                   + parameter_string)
+        
+        #os.system(full_command)
+        process = subprocess.run(full_command, shell=True,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 universal_newlines=True)
 
-        """
-        Can use subprocess from spawn* instead of os.system if more
-        control is needed over the spawned process, including a timeout
-        """
+        if "suppress_output" in kwargs:
+            if kwargs["suppress_output"] is False:
+                print(process.stderr)
+                print(process.stdout)
+        else:
+            print(process.stderr)
+            print(process.stdout)
 
-        # return self.load_results(self.data_folder_name)
 
     def load_results(self, *args):
 
