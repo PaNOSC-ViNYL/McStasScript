@@ -1165,6 +1165,50 @@ class McStas_instr:
         fo.write("\nEND\n")
 
         fo.close()
+        
+    def _handle_parameters(self, given_parameters):
+        """
+        Internal helper function that handles which parameters to pass
+        when givne a certain set of parameters and values.
+        
+        Parameters
+        ----------
+        given_parameters: dict
+            Parameters given by the user for simulation run
+        
+        """
+        
+        # Find required parameters
+        required_parameters = []
+        default_parameters = {}
+
+        for index in range(0, len(self.parameter_list)):
+            if self.parameter_list[index].value == "":
+                required_parameters.append(self.parameter_list[index].name)
+            else:
+                default_parameters.update({self.parameter_list[index].name:
+                                           self.parameter_list[index].value})
+
+        # Check if parameters are given
+        if len(given_parameters) is 0:
+            if len(required_parameters) > 0:
+                # print required parameters and raise error
+                print("Required instrument parameters:")
+                for name in required_parameters:
+                    print("  " + name)
+                raise NameError("Required parameters not provided.")
+            else:
+                # If all parameters have defaults, just run with the defaults.
+                return default_parameters
+        else:
+            for name in required_parameters:
+                if name not in given_parameters:
+                    raise NameError("The required instrument parameter "
+                                    + name
+                                    + " was not provided.")
+            # Overwrite default parameters with given parameters
+            default_parameters.update(given_parameters)
+            return default_parameters
 
     def run_full_instrument(self, *args, **kwargs):
         """
@@ -1199,40 +1243,13 @@ class McStas_instr:
         # Make sure mcrun path is in kwargs
         if "mcrun_path" not in kwargs:
             kwargs["mcrun_path"] = self.mcrun_path
-
-        # Find required parameters
-        required_parameters = []
-        default_parameters = {}
-        passed_parameters = {}
-
-        for index in range(0, len(self.parameter_list)):
-            if self.parameter_list[index].value == "":
-                required_parameters.append(self.parameter_list[index].name)
-            else:
-                default_parameters.update({self.parameter_list[index].name:
-                                           self.parameter_list[index].value})
-
-        # Check if parameters are given
-        if "parameters" not in kwargs:
-            if len(required_parameters) > 0:
-                # print required parameters and raise error
-                print("Required instrument parameters:")
-                for name in required_parameters:
-                    print("  " + name)
-                raise NameError("Required parameters not provided.")
-            else:
-                # If all parameters have defaults, just run with the defaults.
-                kwargs["parameters"] = default_parameters
-        else:
+                    
+        if "parameters" in kwargs:
             given_parameters = kwargs["parameters"]
-            for name in required_parameters:
-                if name not in given_parameters:
-                    raise NameError("The required instrument parameter "
-                                    + name
-                                    + " was not provided.")
-            # Overwrite default parameters with given parameters
-            default_parameters.update(given_parameters)
-            kwargs["parameters"] = default_parameters
+        else:
+            given_parameters = {}
+
+        kwargs["parameters"] = self._handle_parameters(given_parameters)
 
         # Write the instrument file
         self.write_full_instrument()
@@ -1249,41 +1266,13 @@ class McStas_instr:
         Uses mcdisplay to show the instrument in webbroser
         """
         
-        # Find required parameters
-        required_parameters = []
-        default_parameters = {}
-        passed_parameters = {}
-
-        for index in range(0, len(self.parameter_list)):
-            if self.parameter_list[index].value == "":
-                required_parameters.append(self.parameter_list[index].name)
-            else:
-                default_parameters.update({self.parameter_list[index].name:
-                                           self.parameter_list[index].value})
-
-        # Check if parameters are given
-        if "parameters" not in kwargs:
-            if len(required_parameters) > 0:
-                # print required parameters and raise error
-                print("Required instrument parameters:")
-                for name in required_parameters:
-                    print("  " + name)
-                raise NameError("Required parameters not provided.")
-            else:
-                # If all parameters have defaults, just run with the defaults.
-                kwargs["parameters"] = default_parameters
-        else:
+        if "parameters" in kwargs:
             given_parameters = kwargs["parameters"]
-            for name in required_parameters:
-                if name not in given_parameters:
-                    raise NameError("The required instrument parameter "
-                                    + name
-                                    + " was not provided.")
-            # Overwrite default parameters with given parameters
-            default_parameters.update(given_parameters)
-            kwargs["parameters"] = default_parameters                
+        else:
+            given_parameters = {}
 
-        parameters = kwargs["parameters"]
+        parameters = self._handle_parameters(given_parameters)
+
         # add parameters to command
         parameter_string = ""
         for key, val in parameters.items():
@@ -1293,16 +1282,21 @@ class McStas_instr:
                                 + str(val))  # parameter value
 
         bin_path = self.mcstas_path + "/bin/"
-        #full_command = (bin_path + "mcdisplay-webgl "
-        full_command = (bin_path + "mcdisplay " 
+        executable = "mcdisplay-webgl"
+        if "format" in kwargs:
+            if kwargs["format"] is "webgl":
+                executable = "mcdisplay-webgl"
+            elif kwargs["format"] is "window":
+                executable = "mcdisplay"
+
+        full_command = (bin_path + executable + " "
                         + self.name + ".instr"
                         + " " + parameter_string) 
-        print(full_command)
-        #os.system(full_command)
+
         process = subprocess.run(full_command, shell=True,
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE,
                                  universal_newlines=True)
         print(process.stderr)
         print(process.stdout)
-        
+
