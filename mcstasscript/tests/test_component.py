@@ -22,6 +22,7 @@ def setup_component_all_keywords():
                      EXTEND="nscat = 8;",
                      GROUP="developers",
                      JUMP="myself 37",
+                     SPLIT=7,
                      comment="test comment")
 
 
@@ -38,6 +39,7 @@ def setup_component_relative():
                      EXTEND="nscat = 8;",
                      GROUP="developers",
                      JUMP="myself 37",
+                     SPLIT=7,
                      comment="test comment")
 
 
@@ -123,7 +125,6 @@ class Testcomponent(unittest.TestCase):
     def test_component_init_complex_call(self):
         """
         Testing keywords set attributes correctly
-
         """
 
         comp = setup_component_all_keywords()
@@ -138,13 +139,13 @@ class Testcomponent(unittest.TestCase):
         self.assertEqual(comp.EXTEND, "nscat = 8;\n")
         self.assertEqual(comp.GROUP, "developers")
         self.assertEqual(comp.JUMP, "myself 37")
+        self.assertEqual(comp.SPLIT, 7)
         self.assertEqual(comp.comment, "test comment")
 
     def test_component_init_complex_call_relative(self):
         """
         Tests the relative keyword overwrites AT_relative and
         ROTATED_relative
-
         """
         comp = setup_component_relative()
 
@@ -158,12 +159,12 @@ class Testcomponent(unittest.TestCase):
         self.assertEqual(comp.EXTEND, "nscat = 8;\n")
         self.assertEqual(comp.GROUP, "developers")
         self.assertEqual(comp.JUMP, "myself 37")
+        self.assertEqual(comp.SPLIT, 7)
         self.assertEqual(comp.comment, "test comment")
 
     def test_component_basic_init_set_AT(self):
         """
         Testing set_AT method
-
         """
 
         comp = component("test_component", "Arm")
@@ -178,7 +179,6 @@ class Testcomponent(unittest.TestCase):
     def test_component_basic_init_set_ROTATED(self):
         """
         Testing set_ROTATED method
-
         """
 
         comp = component("test_component", "Arm")
@@ -193,7 +193,6 @@ class Testcomponent(unittest.TestCase):
     def test_component_basic_init_set_RELATIVE(self):
         """
         Testing set_RELATIVE method
-
         """
 
         comp = component("test_component", "Arm")
@@ -209,7 +208,6 @@ class Testcomponent(unittest.TestCase):
         """
         Testing set_parameters method. Need to set some attribute
         parameters manually to test this.
-
         """
 
         comp = component("test_component", "Arm")
@@ -237,7 +235,6 @@ class Testcomponent(unittest.TestCase):
     def test_component_basic_init_set_WHEN(self):
         """
         Testing WHEN method
-
         """
 
         comp = component("test_component", "Arm")
@@ -251,7 +248,6 @@ class Testcomponent(unittest.TestCase):
     def test_component_basic_init_set_GROUP(self):
         """
         Testing set_GROUP method
-
         """
 
         comp = component("test_component", "Arm")
@@ -265,7 +261,6 @@ class Testcomponent(unittest.TestCase):
     def test_component_basic_init_set_JUMP(self):
         """
         Testing set_JUMP method
-
         """
 
         comp = component("test_component", "Arm")
@@ -275,11 +270,23 @@ class Testcomponent(unittest.TestCase):
         self.assertEqual(comp.name, "test_component")
         self.assertEqual(comp.component_name, "Arm")
         self.assertEqual(comp.JUMP, "test jump")
+        
+    def test_component_basic_init_set_SPLIT(self):
+        """
+        Testing set_SPLIT method
+        """
+
+        comp = component("test_component", "Arm")
+
+        comp.set_SPLIT(500)
+
+        self.assertEqual(comp.name, "test_component")
+        self.assertEqual(comp.component_name, "Arm")
+        self.assertEqual(comp.SPLIT, 500)
 
     def test_component_basic_init_set_EXTEND(self):
         """
         Testing set_EXTEND method
-
         """
 
         comp = component("test_component", "Arm")
@@ -297,7 +304,6 @@ class Testcomponent(unittest.TestCase):
     def test_component_basic_init_set_comment(self):
         """
         Testing set_comment method
-
         """
         comp = component("test_component", "Arm")
 
@@ -361,7 +367,6 @@ class Testcomponent(unittest.TestCase):
         """
         Testing that a component can be written to file with the
         expected output. Here with complex input.
-
         """
 
         comp = setup_component_with_parameters()
@@ -376,7 +381,8 @@ class Testcomponent(unittest.TestCase):
             comp.write_component(m_fo)
 
         my_call = unittest.mock.call
-        expected_writes = [my_call("COMPONENT test_component = Arm("),
+        expected_writes = [my_call("SPLIT 7 "), 
+                           my_call("COMPONENT test_component = Arm("),
                            my_call("\n"),
                            my_call(" new_par1 = 1.5"),
                            my_call(","),
@@ -438,7 +444,7 @@ class Testcomponent(unittest.TestCase):
         output = output.split("\n")
 
         self.assertEqual(output[0], "// test comment")
-        self.assertEqual(output[1], "COMPONENT test_component = Arm")
+        self.assertEqual(output[1], "SPLIT 7 COMPONENT test_component = Arm")
 
         par_name = bcolors.BOLD + "new_par1" + bcolors.ENDC
         value = (bcolors.BOLD + bcolors.OKGREEN

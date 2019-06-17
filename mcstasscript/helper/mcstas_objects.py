@@ -341,6 +341,9 @@ class component:
 
             JUMP : str
                 Sets JUMP str
+                
+            SPLIT : int
+                Sets SPLIT value
 
             comment: str
                 Sets comment string
@@ -396,6 +399,11 @@ class component:
             self.JUMP = kwargs["JUMP"]
         else:
             self.JUMP = ""
+            
+        if "SPLIT" in kwargs:
+            self.SPLIT = kwargs["SPLIT"]
+        else:
+            self.SPLIT = 0
 
         if "comment" in kwargs:
             self.comment = kwargs["comment"]
@@ -489,6 +497,10 @@ class component:
     def set_JUMP(self, string):
         """Sets JUMP string, should contain all text after JUMP"""
         self.JUMP = string
+        
+    def set_SPLIT(self, value):
+        """Sets SPLIT value, should contain all text after JUMP"""
+        self.SPLIT = value
 
     def append_EXTEND(self, string):
         """Appends a line of code to EXTEND block of component"""
@@ -513,6 +525,9 @@ class component:
         # Write comment if present
         if len(self.comment) > 1:
             fo.write("// %s\n" % (str(self.comment)))
+
+        if self.SPLIT is not 0:
+            fo.write("SPLIT " + str(self.SPLIT) + " ") 
 
         # Write component name and component type
         fo.write("COMPONENT %s = %s(" % (self.name, self.component_name))
@@ -593,6 +608,8 @@ class component:
         """
         if len(self.comment) > 1:
             print("// " + self.comment)
+        if self.SPLIT is not 0:
+            print("SPLIT " + str(self.SPLIT) + " ", end="")
         print("COMPONENT", str(self.name),
               "=", str(self.component_name))
         for key in self.parameter_names:

@@ -90,6 +90,8 @@ def setup_complex_instrument():
     guide2.l = "guide_length"
     guide2.m = 4
     guide2.G = -9.82
+    
+    guide2.set_SPLIT = 2
 
     done = Instr.add_component("done", "Arm", RELATIVE="after_guide")
 
