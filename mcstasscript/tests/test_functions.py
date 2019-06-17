@@ -16,6 +16,7 @@ def set_dummy_MetaData_1d(name):
     meta_data = McStasMetaData()
     meta_data.component_name = name
     meta_data.dimension = 50
+    meta_data.filename = name + ".dat"
 
     return meta_data
 
@@ -35,6 +36,7 @@ def set_dummy_MetaData_2d(name):
     meta_data = McStasMetaData()
     meta_data.component_name = name
     meta_data.dimension = [50, 100]
+    meta_data.filename = name + ".dat"
 
     return meta_data
 
@@ -108,6 +110,17 @@ class Test_name_search(unittest.TestCase):
         data_list = setup_McStasData_array()
 
         hero_object = name_search("Hero", data_list)
+
+        self.assertEqual(hero_object.metadata.dimension, 123)
+        
+    def test_name_search_filename_read(self):
+        """
+        Test simple case
+        """
+
+        data_list = setup_McStasData_array()
+
+        hero_object = name_search("Hero.dat", data_list)
 
         self.assertEqual(hero_object.metadata.dimension, 123)
 

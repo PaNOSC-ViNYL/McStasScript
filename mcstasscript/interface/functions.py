@@ -27,11 +27,18 @@ def name_search(name, data_list):
         raise InputError(
             "name_search function needs objects of type McStasData as input.")
 
+    # Search by component name
     list_result = []
     for check in data_list:
         if check.name == name:
             list_result.append(check)
 
+    if len(list_result) == 0:
+        # Search by filename
+        for check in data_list:
+            if check.metadata.filename == name:
+                list_result.append(check)
+    
     if len(list_result) == 0:
         raise NameError("No dataset with name: \""
                         + name
