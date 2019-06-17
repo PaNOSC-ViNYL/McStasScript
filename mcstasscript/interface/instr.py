@@ -118,6 +118,9 @@ class McStas_instr:
     set_component_JUMP(instance_name,string)
         Sets JUMP code for named component
 
+    set_component_SPLIT(instance_name,string)
+        Sets SPLIT value for named component
+
     set_component_comment(instance_name,string)
         Sets comment to be written before named component
 
@@ -819,6 +822,22 @@ class McStas_instr:
 
         component = self.get_component(name)
         component.set_JUMP(JUMP)
+        
+    def set_component_SPLIT(self, name, SPLIT):
+        """
+        Method for setting SPLIT value of named component
+
+        Parameters
+        ----------
+        name : str
+            Unique name of component to modify
+
+        SPLIT : int
+            Sets SPLIT value for named McStas component
+        """
+
+        component = self.get_component(name)
+        component.set_SPLIT(SPLIT)
 
     def set_component_comment(self, name, string):
         """
