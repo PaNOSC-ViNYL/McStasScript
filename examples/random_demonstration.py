@@ -5,19 +5,11 @@ import sys
 sys.path.append('/Users/madsbertelsen/PaNOSC/McStasScript/github/McStasScript')
 from mcstasscript.interface import instr, plotter, functions
 
-# if the mcrun command from McStas is not in your path, provide absolute path for the binary here:
-mcrun_path = ""
-mcstas_path = ""
-# On OS X most likely:
-#mcrun_path = "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/bin"
-#mcstas_path = "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/"
 
 # Create a McStas instrument
 Instr = instr.McStas_instr("random_demo",
                            author = "Mads Bertelsen",
-                           origin = "ESS DMSC",
-                           mcrun_path = mcrun_path,
-                           mcstas_path = mcstas_path)
+                           origin = "ESS DMSC")
 
 # Set up a material called Cu with approrpiate properties
 # (uses McStas Union components, here the processes)
