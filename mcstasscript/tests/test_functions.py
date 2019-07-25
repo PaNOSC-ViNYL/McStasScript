@@ -134,6 +134,26 @@ class Test_name_search(unittest.TestCase):
         hero_object = name_search("Big_Hero", data_list)
 
         self.assertEqual(hero_object.metadata.dimension, 123)
+        
+    def test_name_search_read_dubplicate(self):
+        """
+        Test simple case with duplicated name, should return list
+        """
+
+        data_list = setup_McStasData_array_repeat()
+        
+        hero_object = set_dummy_McStasData_2d("Big_Hero")
+        hero_object.metadata.dimension = 321
+        hero_object.plot_options.colormap = "very hot"
+
+        data_list.append(hero_object)
+        
+        results = name_search("Big_Hero", data_list)
+
+        self.assertEqual(len(results), 2)
+
+        self.assertEqual(results[0].metadata.dimension, 123)
+        self.assertEqual(results[1].metadata.dimension, 321)
 
     def test_name_search_read_error(self):
         """
@@ -183,6 +203,27 @@ class Test_name_plot_options(unittest.TestCase):
         name_plot_options("Hero", data_list, colormap="very hot")
         hero_object = name_search("Hero", data_list)
         self.assertEqual(hero_object.plot_options.colormap, "very hot")
+        
+    def test_name_plot_options_duplicate(self):
+        """
+        Test case where several datasets are modified
+        """
+
+        data_list = setup_McStasData_array()
+        
+        hero_object = set_dummy_McStasData_2d("Hero")
+        hero_object.metadata.dimension = 321
+        hero_object.plot_options.colormap = "absurdly hot"
+
+        data_list.append(hero_object)
+        
+        name_plot_options("Hero", data_list, colormap="cold")
+        
+        results = name_search("Hero", data_list)
+        
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0].plot_options.colormap, "cold")
+        self.assertEqual(results[1].plot_options.colormap, "cold")
 
 
 class Test_load_data(unittest.TestCase):

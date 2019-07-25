@@ -184,7 +184,7 @@ class McStas_instr:
             self.origin = "ESS DMSC"
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-        configuration_file_name = THIS_DIR + "/../../configuration.yaml"
+        configuration_file_name = THIS_DIR + "/../configuration.yaml"
         if not os.path.isfile(configuration_file_name):
             raise NameError("Could not find configuration file!")
         with open(configuration_file_name, 'r') as ymlfile:

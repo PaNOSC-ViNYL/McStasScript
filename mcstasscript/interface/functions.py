@@ -5,7 +5,9 @@ from mcstasscript.helper.managed_mcrun import ManagedMcrun
 def name_search(name, data_list):
     """"
     name_search returns McStasData instance with specific name if it is
-    in the given data_list
+    in the given data_list. If no match is found, a search for the data
+    filename is performed. If several matches are found, a list of
+    McStasData objects are returned.
 
     The index of certain datasets in the data_list can change if
     additional monitors are added so it is more convinient to access
@@ -47,9 +49,7 @@ def name_search(name, data_list):
     if len(list_result) == 1:
         return list_result[0]
     else:
-        raise NameError("Found " + str(len(list_result)) + " matches in "
-                        + "the search for a dataset with name: \""
-                        + name + "\".")
+        return list_result
 
 
 def name_plot_options(name, data_list, **kwargs):
@@ -73,7 +73,11 @@ def name_plot_options(name, data_list, **kwargs):
         McStasPlotOptions
     """
     object_to_modify = name_search(name, data_list)
-    object_to_modify.set_plot_options(**kwargs)
+    if type(object_to_modify) is not list:                     
+        object_to_modify.set_plot_options(**kwargs)
+    else:
+        for data_object in object_to_modify:
+            data_object.set_plot_options(**kwargs)
 
 
 def load_data(foldername):

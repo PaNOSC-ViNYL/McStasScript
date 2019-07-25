@@ -94,7 +94,7 @@ class TestMcStas_instr(unittest.TestCase):
         """
         # Load configuration file and read manually
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-        configuration_file_name = THIS_DIR + "/../../configuration.yaml"
+        configuration_file_name = THIS_DIR + "/../configuration.yaml"
 
         if not os.path.isfile(configuration_file_name):
             raise NameError("Could not find configuration file!")
@@ -834,6 +834,21 @@ class TestMcStas_instr(unittest.TestCase):
         comp = instr.get_component("second_component")
 
         self.assertEqual(comp.JUMP, "myself 8")
+        
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_set_component_SPLIT(self, mock_stdout):
+        """
+        set_component_SPLIT passes the argument to the similar method
+        in the component class.
+        """
+
+        instr = setup_populated_instr()
+
+        instr.set_component_SPLIT("second_component", 3)
+
+        comp = instr.get_component("second_component")
+
+        self.assertEqual(comp.SPLIT, 3)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_set_component_comment(self, mock_stdout):
