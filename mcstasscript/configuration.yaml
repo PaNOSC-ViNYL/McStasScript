@@ -1,10 +1,5 @@
----
-paths:
-    # path to mcrun, example for OS X
-    mcrun_path: "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/bin/"
-    # path to mcstas directory, example for OS X
-    # the mcstas directory should contain the component folders, sources, optics, ...
-    mcstas_path: "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/"
 other:
-    # limit characters per line in terminal output
-    characters_per_line: 93
+  characters_per_line: 93
+paths:
+  mcrun_path: /Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/bin/
+  mcstas_path: /Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/
