@@ -3,16 +3,19 @@ McStas API for creating and running McStas instruments from python scripting
 
 Prototype for an API that allow interaction with McStas through an interface like Jupyter Notebooks created under WP5 of PaNOSC.
 
+## Install
+The package can be installed using pip
+python3 -m pip install McStasScript --upgrade
+
+It is necessary to configure the package so the McStas installation can be found, here we show how the appropriate code for an Ubuntu system. The configuration is saved permanently, and only needs to be updated when McStas is updated.
+
+    from mcstasscript.interface import functions
+    my_configurator = functions.Configurator()
+    my_configurator.set_mcstas_path("/usr/bin/")
+    my_configurator.set_mcrun_path("/usr/share/mcstas/2.5/")
+
+
 ## Instructions for basic use:
-Download the entire project
-
-Set up paths to McStas in the configuration.yaml file
-
-Before import in python, add the project to your path: 
-
-    import sys
-    sys.path.append('path/to/McStasScript')
-
 Import the interface 
 
     from mcstasscript.interface import instr, plotter, functions
@@ -83,7 +86,11 @@ Here is a quick overview of the available methods of the main classes in the pro
     functions
     ├── name_search(str name, list McStasData) # Returns data set with given name from McStasData list
     ├── name_plot_options(str name, list McStasData, kwargs) # Sends kwargs to dataset with given name
-    └── load_data(str foldername) # Loads data from folder with McStas data as McStasData list
+    ├── load_data(str foldername) # Loads data from folder with McStas data as McStasData list
+    └── Configurator()
+        ├── set_mcrun_path(str path) # sets mcrun path
+        ├── set_mcstas_path(str path) # sets mcstas path
+        └── set_line_length(int length) # sets maximum line length
     
     plotter
     ├── make_plot(list McStasData) # Plots each data set individually
