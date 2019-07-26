@@ -5,6 +5,7 @@ Prototype for an API that allow interaction with McStas through an interface lik
 
 ## Installation
 The package can be installed using pip
+
     python3 -m pip install McStasScript --upgrade
 
 It is necessary to configure the package so the McStas installation can be found, here we show how the appropriate code for an Ubuntu system. The configuration is saved permanently, and only needs to be updated when McStas is updated.
