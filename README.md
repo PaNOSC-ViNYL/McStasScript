@@ -3,9 +3,10 @@ McStas API for creating and running McStas instruments from python scripting
 
 Prototype for an API that allow interaction with McStas through an interface like Jupyter Notebooks created under WP5 of PaNOSC.
 
-## Install
+## Installation
 The package can be installed using pip
-python3 -m pip install McStasScript --upgrade
+
+    python3 -m pip install McStasScript --upgrade
 
 It is necessary to configure the package so the McStas installation can be found, here we show how the appropriate code for an Ubuntu system. The configuration is saved permanently, and only needs to be updated when McStas is updated.
 
