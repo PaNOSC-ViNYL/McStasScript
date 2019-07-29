@@ -11,8 +11,8 @@ It is necessary to configure the package so the McStas installation can be found
 
     from mcstasscript.interface import functions
     my_configurator = functions.Configurator()
-    my_configurator.set_mcstas_path("/usr/bin/")
-    my_configurator.set_mcrun_path("/usr/share/mcstas/2.5/")
+    my_configurator.set_mcrun_path("/usr/bin/")
+    my_configurator.set_mcstas_path("/usr/share/mcstas/2.5/")
 
 
 ## Instructions for basic use:
