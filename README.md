@@ -41,7 +41,7 @@ The parameters of the source can be adjusted directly as attributes of the pytho
     
 A monitor is added as well to get data out of the simulation
 
-    PSD = Instr.add_component("PSD", "PSD_monitor", AT=[0,0,1], RELATIVE="source") 
+    PSD = my_instrument.add_component("PSD", "PSD_monitor", AT=[0,0,1], RELATIVE="source") 
     PSD.xwidth = 0.1
     PSD.yheight = 0.1
     PSD.nx = 200
