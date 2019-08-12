@@ -19,7 +19,7 @@ It is necessary to configure the package so the McStas installation can be found
 ## Instructions for basic use:
 Import the interface 
 
-    from mcstasscript.interface import instr, plotter, functions
+    from mcstasscript.interface import instr, plotter, functions, reader
 
 Now the package can be used. Start with creating a new instrument, just needs a name
 
@@ -60,6 +60,13 @@ Plotting is usually done in a subplot of all monitors recorded.
 
     plot = plotter.make_sub_plot(data)
 
+## Use in existing project
+If one wish to work on existing projects using McStasScript, there is a reader included that will read a McStas Instrument file and write the corresponding McStasScript python instrument to disk. Here is an example where the PSI_DMC.instr example is converted:
+
+    Reader = reader.McStas_file("PSI_DMC.instr")
+    reader.write_python_file("PSI_DMC_generated.py")
+
+It is highly advised to run a check between the output of the generated file and the original to ensure the process was sucessful.
 
 ## Method overview
 Here is a quick overview of the available methods of the main classes in the project. Most have more options from keyword arguments that are explained in the manual, but also in python help, for example help(instr.McStas_instr.show_components).
@@ -96,3 +103,10 @@ Here is a quick overview of the available methods of the main classes in the pro
     plotter
     ├── make_plot(list McStasData) # Plots each data set individually
     └── make_sub_plot(list McStasData) # Plots data as subplot
+    
+    reader
+    └──  McStas_file(str filename) # Returns a reader that can extract information from given instr file
+
+    InstrumentReader # returned by McStas_file
+    ├── generate_python_file(str filename) # Writes python file with information contaiend in isntrument
+    └── add_to_instr(McStas_instr Instr) # Adds information from instrument to McStasScirpt instrument
