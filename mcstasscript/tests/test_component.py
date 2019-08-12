@@ -353,9 +353,48 @@ class Testcomponent(unittest.TestCase):
         expected_writes = [my_call("COMPONENT test_component = Arm("),
                            my_call(")\n"),
                            my_call("AT (0,0,0)"),
-                           my_call(" ABSOLUTE\n"),
-                           my_call("ROTATED (0,0,0)"),
                            my_call(" ABSOLUTE\n")]
+
+        mock_f.assert_called_with('test.txt', 'w')
+        handle = mock_f()
+        handle.write.assert_has_calls(expected_writes, any_order=False)
+
+    @unittest.mock.patch('__main__.__builtins__.open',
+                         new_callable=unittest.mock.mock_open)    
+    def test_component_write_to_file_include(self, mock_f):
+        """
+        Testing that a component can be written to file with the
+        expected output. Here with simple input.
+        """
+
+        comp = component("test_component", "Arm",
+                         c_code_before="%include \"test.instr\"")
+        
+        comp.set_c_code_after("%include \"after.instr\"")
+        
+        comp._unfreeze()
+        # Need to set up attribute parameters
+        # Also need to categorize them as when created
+        comp.parameter_names = []
+        comp.parameter_defaults = {}
+        comp.parameter_types = {}
+        comp._freeze()
+
+        with mock_f('test.txt', 'w') as m_fo:
+            comp.write_component(m_fo)
+
+        my_call = unittest.mock.call
+        expected_writes = [my_call("%include \"test.instr\" // From"
+                                   + " component named test_component\n"),
+                           my_call("\n"),
+                           my_call("COMPONENT test_component = Arm("),
+                           my_call(")\n"),
+                           my_call("AT (0,0,0)"),
+                           my_call(" ABSOLUTE\n"),
+                           my_call("\n"),
+                           my_call("%include \"after.instr\" // From"
+                                   + " component named test_component\n"),
+                           my_call("\n")]
 
         mock_f.assert_called_with('test.txt', 'w')
         handle = mock_f()

@@ -278,6 +278,8 @@ class ComponentReader:
 
                 parts = line.split("(")
                 parameter_parts = parts[1].split(",")
+                
+                parameter_parts = self.correct_for_brackets(parameter_parts)
 
                 parameter_parts = list(filter(("\n").__ne__, parameter_parts))
 
@@ -347,6 +349,7 @@ class ComponentReader:
                         break
 
                     parameter_parts = fo.readline().split(",")
+                    parameter_parts = self.correct_for_brackets(parameter_parts)
 
             if self.line_starts_with(line, "DECLARE"):
                 break
@@ -369,6 +372,31 @@ class ComponentReader:
         """
 
         return result
+    
+    def correct_for_brackets(self, parameter_parts):
+        corrected_parts = []
+        current_part = ""
+        index = 0
+        while True:
+            
+            current_part = parameter_parts[index]
+            inner_index = 0
+            while True: 
+                if (current_part.count("{") == current_part.count("}")):
+                    corrected_parts.append(current_part)
+                    index += inner_index
+                    break                          
+                else:
+                    inner_index +=1
+                    current_part += "," + parameter_parts[index+inner_index]
+
+            index += 1
+            
+            if index >= len(parameter_parts):
+                break
+            
+        return corrected_parts
+        
 
     def line_starts_with(self, line, string):
         """

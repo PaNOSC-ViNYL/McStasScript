@@ -124,7 +124,8 @@ class declare_variable:
         Writes a line to text file fo declaring the parameter in c
     """
     def __init__(self, *args, **kwargs):
-        """Initializing mcstas parameter object
+        """
+        Initializing mcstas parameter object
 
         Parameters
         ----------
@@ -148,7 +149,16 @@ class declare_variable:
         self.type = args[0]
         self.name = str(args[1])
 
-        if not is_legal_parameter(self.name):
+
+        par_name = self.name
+        if "*" in par_name[0]:
+            # Remove any number of prefixed *, indicating variable is a pointer
+            par_name = par_name.split("*")[-1]
+        elif "&" in par_name[0]:
+            # Remove the first & indicating the variable is an address
+            par_name = par_name[1:]
+            
+        if not is_legal_parameter(par_name):
             raise NameError("The given parameter name: \""
                             + self.name
                             + "\" is not a legal c variable name, "
@@ -167,7 +177,8 @@ class declare_variable:
             self.comment = " // " + kwargs["comment"]
 
     def write_line(self, fo):
-        """Writes line declaring variable to file fo
+        """
+        Writes line declaring variable to file fo
 
         Parameters
         ----------
@@ -181,16 +192,29 @@ class declare_variable:
                 fo.write("%s %s = %d;%s" % (self.type, self.name,
                                             self.value, self.comment))
             else:
-                fo.write("%s %s = %G;%s" % (self.type, self.name,
-                                            self.value, self.comment))
+                try:
+                    fo.write("%s %s = %G;%s" % (self.type, self.name,
+                                                self.value, self.comment))
+                except:
+                    fo.write("%s %s = %s;%s" % (self.type, self.name,
+                                                self.value, self.comment))
         if self.value is "" and self.vector != 0:
             fo.write("%s %s[%d];%s" % (self.type, self.name,
                                        self.vector, self.comment))
         if self.value is not "" and self.vector != 0:
-            fo.write("%s %s[%d] = {" % (self.type, self.name, self.vector))
-            for i in range(0, len(self.value) - 1):
-                fo.write("%G," % self.value[i])
-            fo.write("%G};%s" % (self.value[-1], self.comment))
+            if isinstance(self.value, str):
+                # value is a string
+                string = self.value
+                #string = string.replace('"',"\\\"")
+                fo.write("%s %s[%d] = %s;" % (self.type, self.name, self.vector, string))
+            else:
+                # list of values
+                fo.write("%s %s[%d] = {" % (self.type, self.name, self.vector))
+                for i in range(0, len(self.value) - 1):
+                    fo.write("%G," % self.value[i])
+                fo.write("%G};%s" % (self.value[-1], self.comment))
+                
+                
 
 
 class component:
@@ -355,60 +379,23 @@ class component:
         self.name = instance_name
         self.component_name = component_name
 
-        if "AT" in kwargs:
-            self.AT_data = kwargs["AT"]
-        else:
-            self.AT_data = [0, 0, 0]
-        # Could check if AT_RELATIVE is a string
-        if "AT_RELATIVE" in kwargs:
-            self.AT_relative = "RELATIVE " + kwargs["AT_RELATIVE"]
-        else:
-            self.AT_relative = "ABSOLUTE"
+        # initialize McStas information
+        self.AT_data = [0, 0, 0]
+        self.AT_relative = "ABSOLUTE"
+        self.ROTATED_specified = False
+        self.ROTATED_data = [0, 0, 0]
+        self.ROTATED_relative = "ABSOLUTE"
+        self.WHEN = ""
+        self.EXTEND = ""
+        self.GROUP = ""
+        self.JUMP = ""
+        self.SPLIT = 0
+        self.comment = ""
+        self.c_code_before = "" 
+        self.c_code_after = ""
 
-        if "ROTATED" in kwargs:
-            self.ROTATED_data = kwargs["ROTATED"]
-        else:
-            self.ROTATED_data = [0, 0, 0]
-        # Could check if ROTATED_RELATIVE is a string
-        if "ROTATED_RELATIVE" in kwargs:
-            self.ROTATED_relative = "RELATIVE " + kwargs["ROTATED_RELATIVE"]
-        else:
-            self.ROTATED_relative = "ABSOLUTE"
-
-        # Could check if RELATIVE is a string
-        if "RELATIVE" in kwargs:
-            self.AT_relative = "RELATIVE " + kwargs["RELATIVE"]
-            self.ROTATED_relative = "RELATIVE " + kwargs["RELATIVE"]
-
-        if "WHEN" in kwargs:
-            self.WHEN = "WHEN (" + kwargs["WHEN"] + ")"
-        else:
-            self.WHEN = ""
-
-        if "EXTEND" in kwargs:
-            self.EXTEND = kwargs["EXTEND"] + "\n"
-        else:
-            self.EXTEND = ""
-
-        if "GROUP" in kwargs:
-            self.GROUP = kwargs["GROUP"]
-        else:
-            self.GROUP = ""
-
-        if "JUMP" in kwargs:
-            self.JUMP = kwargs["JUMP"]
-        else:
-            self.JUMP = ""
-            
-        if "SPLIT" in kwargs:
-            self.SPLIT = kwargs["SPLIT"]
-        else:
-            self.SPLIT = 0
-
-        if "comment" in kwargs:
-            self.comment = kwargs["comment"]
-        else:
-            self.comment = ""
+        # If any keywords are set in kwargs, update these
+        self.set_keyword_input(**kwargs)
 
         """
         Could store an option for whether this component should be
@@ -418,6 +405,58 @@ class component:
 
         # Do not allow addition of attributes after init
         self._freeze()
+    
+    def set_keyword_input(self, **kwargs):
+        # Allow addition of attributes in init
+        self._unfreeze()
+
+        if "AT" in kwargs:
+            self.AT_data = kwargs["AT"]
+        
+        # Could check if AT_RELATIVE is a string
+        if "AT_RELATIVE" in kwargs:
+            self.AT_relative = "RELATIVE " + kwargs["AT_RELATIVE"]
+
+        self.ROTATED_specified = False
+        if "ROTATED" in kwargs:
+            self.ROTATED_data = kwargs["ROTATED"]
+            self.ROTATED_specified = True
+
+        # Could check if ROTATED_RELATIVE is a string
+        if "ROTATED_RELATIVE" in kwargs:
+            self.ROTATED_relative = "RELATIVE " + kwargs["ROTATED_RELATIVE"]
+            self.ROTATED_specified = True
+
+        # Could check if RELATIVE is a string
+        if "RELATIVE" in kwargs:
+            self.AT_relative = "RELATIVE " + kwargs["RELATIVE"]
+            self.ROTATED_relative = "RELATIVE " + kwargs["RELATIVE"]
+            self.ROTATED_specified = True
+
+        if "WHEN" in kwargs:
+            self.WHEN = "WHEN (" + kwargs["WHEN"] + ")"
+
+        if "EXTEND" in kwargs:
+            self.EXTEND = kwargs["EXTEND"] + "\n"
+
+        if "GROUP" in kwargs:
+            self.GROUP = kwargs["GROUP"]
+
+        if "JUMP" in kwargs:
+            self.JUMP = kwargs["JUMP"]
+            
+        if "SPLIT" in kwargs:
+            self.SPLIT = kwargs["SPLIT"]
+
+        if "comment" in kwargs:
+            self.comment = kwargs["comment"]
+            
+        if "c_code_before" in kwargs:
+            self.c_code_before = kwargs["c_code_before"]
+        
+        if "c_code_after" in kwargs:
+            self.c_code_after = kwargs["c_code_after"]
+        
 
     def __setattr__(self, key, value):
         if self.__isfrozen and not hasattr(self, key):
@@ -449,6 +488,7 @@ class component:
     def set_ROTATED(self, rotated_list, **kwargs):
         """Sets ROTATED data, List of 3 floats"""
         self.ROTATED_data = rotated_list
+        self.ROTATED_specified = True
         if "RELATIVE" in kwargs:
             relative_name = kwargs["RELATIVE"]
             if relative_name == "ABSOLUTE":
@@ -509,6 +549,14 @@ class component:
     def set_comment(self, string):
         """Method that sets a comment to be written to instrument file"""
         self.comment = string
+        
+    def set_c_code_before(self, string):
+        """Method that sets c code to be written before the component"""
+        self.c_code_before = string
+        
+    def set_c_code_after(self, string):
+        """Method that sets c code to be written after the component"""
+        self.c_code_after = string
 
     def write_component(self, fo):
         """
@@ -521,6 +569,12 @@ class component:
         parameters_per_line = 2
         # Could use character limit on lines instead
         parameters_written = 0  # internal parameter
+
+
+        if len(self.c_code_before) > 0:
+            explanation = "From component named " + self.name
+            fo.write("%s // %s\n" % (str(self.c_code_before), explanation))
+            fo.write("\n")
 
         # Write comment if present
         if len(self.comment) > 1:
@@ -577,10 +631,12 @@ class component:
                                     str(self.AT_data[1]),
                                     str(self.AT_data[2])))
         fo.write(" %s\n" % self.AT_relative)
-        fo.write("ROTATED (%s,%s,%s)" % (str(self.ROTATED_data[0]),
-                                         str(self.ROTATED_data[1]),
-                                         str(self.ROTATED_data[2])))
-        fo.write(" %s\n" % self.ROTATED_relative)
+        
+        if self.ROTATED_specified:
+            fo.write("ROTATED (%s,%s,%s)" % (str(self.ROTATED_data[0]),
+                                             str(self.ROTATED_data[1]),
+                                             str(self.ROTATED_data[2])))
+            fo.write(" %s\n" % self.ROTATED_relative)
 
         if not self.GROUP == "":
             fo.write("GROUP %s\n" % self.GROUP)
@@ -593,6 +649,11 @@ class component:
 
         if not self.JUMP == "":
             fo.write("JUMP %s\n" % self.JUMP)
+            
+        if len(self.c_code_after) > 0:
+            fo.write("\n")
+            explanation = "From component named " + self.name
+            fo.write("%s // %s\n" % (str(self.c_code_after), explanation))
 
         # Leave a new line between components for readability
         fo.write("\n")
@@ -606,6 +667,8 @@ class component:
         class is used as a superclass for classes describing each
         McStas component.
         """
+        if len(self.c_code_before) > 1:
+            print(self.c_code_before)
         if len(self.comment) > 1:
             print("// " + self.comment)
         if self.SPLIT is not 0:
@@ -636,7 +699,8 @@ class component:
         if not self.WHEN == "":
             print(self.WHEN)
         print("AT", self.AT_data, self.AT_relative)
-        print("ROTATED", self.ROTATED_data, self.ROTATED_relative)
+        if self.ROTATED_specified:
+            print("ROTATED", self.ROTATED_data, self.ROTATED_relative)
         if not self.GROUP == "":
             print("GROUP " + self.GROUP)
         if not self.EXTEND == "":
@@ -644,19 +708,26 @@ class component:
             print(self.EXTEND + "%}")
         if not self.JUMP == "":
             print("JUMP " + self.JUMP)
+        if len(self.c_code_after) > 1:
+            print(self.c_code_after)
 
     def print_short(self, **kwargs):
         """Prints short description of component to list print"""
+        if self.ROTATED_specified:
+            print_rotate_rel = self.ROTATED_relative
+        else:
+            print_rotate_rel = self.AT_relative
+        
         if "longest_name" in kwargs:
             number_of_spaces = 3+kwargs["longest_name"]-len(self.name)
             print(str(self.name) + " "*number_of_spaces, end='')
             print(str(self.component_name),
                   "\tAT", self.AT_data, self.AT_relative,
-                  "ROTATED", self.ROTATED_data, self.ROTATED_relative)
+                  "ROTATED", self.ROTATED_data, print_rotate_rel)
         else:
             print(str(self.name), "=", str(self.component_name),
                   "\tAT", self.AT_data, self.AT_relative,
-                  "ROTATED", self.ROTATED_data, self.ROTATED_relative)
+                  "ROTATED", self.ROTATED_data, print_rotate_rel)
 
     def show_parameters(self, **kwargs):
         """

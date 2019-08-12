@@ -206,7 +206,8 @@ class ManagedMcrun:
                 # Extract the information
                 current_object.extract_info()
                 # Add to metadata list
-                metadata_list.append(current_object)
+                if current_object.filename != "":
+                    metadata_list.append(current_object)
                 # Stop reading data
                 in_data = False
 

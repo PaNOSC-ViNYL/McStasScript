@@ -87,8 +87,12 @@ class McStasMetaData:
         if "filename" in self.info:
             self.filename = self.info["filename"].rstrip()
         else:
-            raise NameError(
-                "No filename found in mccode data section!")
+            # Monitors without output files does exist
+            #raise NameError(
+            #    "No filename found in mccode data section!")
+            print("The component named \"" + self.component_name
+                  + "\" had no data file and will not be loaded.")
+            self.filename = ""
 
         # Extract limits
         self.limits = []

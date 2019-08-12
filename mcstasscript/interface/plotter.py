@@ -6,9 +6,6 @@ import matplotlib.animation as animation
 from matplotlib.colors import BoundaryNorm
 from matplotlib.ticker import MaxNLocator
 
-from openpyxl.worksheet import dimensions
-from boto.ec2.autoscale import limits
-
 from mcstasscript.data.data import McStasMetaData
 from mcstasscript.data.data import McStasPlotOptions
 from mcstasscript.data.data import McStasData

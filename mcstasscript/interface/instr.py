@@ -4,6 +4,7 @@ import os
 import datetime
 import yaml
 import subprocess
+import copy
 
 from mcstasscript.data.data import McStasData
 from mcstasscript.helper.mcstas_objects import declare_variable
@@ -61,7 +62,7 @@ class McStas_instr:
 
     Methods
     -------
-    add_parameter(*args,**kwargs)
+    add_parameter(*args, **kwargs)
         Adds input parameter to the define section
 
     add_declare_var()
@@ -85,7 +86,7 @@ class McStas_instr:
     show_components(string)
         Shows available components in given category
 
-    add_component(instance_name,component_name,**kwargs)
+    add_component(instance_name, component_name, **kwargs)
         Add a component to the instrument file
 
     get_component(instance_name)
@@ -94,34 +95,40 @@ class McStas_instr:
     get_last_component()
         Returns component instance of last component
 
-    set_component_parameter(instance_name,dict)
+    set_component_parameter(instance_name, dict)
         Adds parameters as dict to component with instance_name
 
-    set_component_AT(instance_name,AT_data,**kwargs)
+    set_component_AT(instance_name, AT_data, **kwargs)
         Sets position of component named instance_name
 
-    set_component_ROTATED(instance_name,ROTATED_data,**kwargs)
+    set_component_ROTATED(instance_name, ROTATED_data, **kwargs)
         Sets rotation of component named instance_name
 
-    set_component_RELATIVE(instane_name,string)
+    set_component_RELATIVE(instane_name, string)
         Sets position and rotation reference for named component
 
-    set_component_WHEN(instance_name,string)
+    set_component_WHEN(instance_name, string)
         Sets WHEN condition of named component, is logical c expression
 
-    set_component_GROUP(instance_name,string)
+    set_component_GROUP(instance_name, string)
         Sets GROUP name of component named instance_name
 
-    append_component_EXTEND(instance_name,string)
+    append_component_EXTEND(instance_name, string)
         Appends a line to EXTEND section of named component
 
-    set_component_JUMP(instance_name,string)
+    set_component_JUMP(instance_name, string)
         Sets JUMP code for named component
 
-    set_component_SPLIT(instance_name,string)
+    set_component_SPLIT(instance_name, string)
         Sets SPLIT value for named component
-
-    set_component_comment(instance_name,string)
+        
+    set_component_c_code_before(instance_name, string)
+        Sets c code before the component
+        
+    set_component_c_code_after(instance_name, string)
+        Sets c code after the component
+        
+    set_component_comment(instance_name, string)
         Sets comment to be written before named component
 
     print_component(instance_name)
@@ -213,6 +220,7 @@ class McStas_instr:
 
         self.parameter_list = []
         self.declare_list = []
+        #self.declare_section = ""
         self.initialize_section = ("// Start of initialize for generated "
                                    + name + "\n")
         self.trace_section = ("// Start of trace section for generated "
@@ -361,6 +369,24 @@ class McStas_instr:
         """
         # declare_variable class documented independently
         self.declare_list.append(declare_variable(*args, **kwargs))
+        
+    def append_declare(self, string):
+        """
+        Method for appending code to the declare section directly
+        
+        This method is not meant for declaring simple variables which
+        should be done using add_declare_var. This method can be used
+        to declare functions, structures and unions directly.
+        
+        Parameters
+        ----------
+        string : str
+            code to be added to declare section
+        """
+        
+        #self.declare_section = self.declare_section + string + "\n"
+        self.declare_list.append(string)
+        
 
     def append_initialize(self, string):
         """
@@ -375,6 +401,7 @@ class McStas_instr:
         string : str
             code to be added to initialize section
         """
+        
         self.initialize_section = self.initialize_section + string + "\n"
 
     def append_initialize_no_new_line(self, string):
@@ -649,6 +676,142 @@ class McStas_instr:
             self.component_name_list.append(args[0])
 
         return new_component
+    
+    def copy_component(self, *args, **kwargs):
+        """
+        Method for adding a copy of a component instance to the instrument
+
+        Creates a copy of component instance in the instrument.  This
+        requires a unique instance name of the component to be used for
+        future reference and the name of the McStas component to be
+        used.  The component is placed at the end of the instrument file
+        unless otherwise specified with the after and before keywords.
+        The component may be initialized using other keyword arguments,
+        but all attributes can be set with approrpiate methods.
+
+        Parameters
+        ----------
+        First positional argument : str
+            Unique name of component instance
+
+        Second positional argument : str
+            Name of component instance to create copy of
+
+        Keyword arguments:
+            after : str
+                Place this component after component with given name
+
+            before : str
+                Place this component before component with given name
+
+            AT : List of 3 floats
+                Sets AT_data, position relative to reference
+
+            AT_RELATIVE : str
+                Sets reference component for postion
+
+            ROTATED : List of 3 floats
+                Sets ROTATED_data, rotation relative to reference
+
+            ROTATED_RELATIVE : str
+                Sets reference component for rotation
+
+            RELATIVE : str
+                Sets reference component for both position and rotation
+
+            WHEN : str
+                Sets when condition which must be a logical c expression
+
+            EXTEND : str
+                Initialize the extend section with a line of c code
+
+            GROUP : str
+                Name of the group this component should belong to
+
+            JUMP : str
+                Set code for McStas JUMP statement
+
+            comment : str
+                Comment that will be displayed before the component
+        """
+
+        # could also allow input of a component object        
+        
+        instance_name = args[0]
+        """
+        If the name starts with COPY, use unique naming as described in the
+        McStas manual.
+        """
+        if instance_name.startswith("COPY("):
+            target_name = instance_name.split("(", 1)[1]
+            target_name = target_name.split(")", 1)[0]
+            instance_name = target_name
+
+            label = 0
+            instance_name = target_name + "_" + str(label)
+            while instance_name in self.component_name_list:
+                instance_name = target_name + "_" + str(label)
+                label += 1
+
+        if instance_name in self.component_name_list:
+            raise NameError(("Component name \"" + str(args[0])
+                             + "\" used twice, McStas does not allow this."
+                             + " Rename or remove one instance of this"
+                             + " name."))
+        
+        if not args[1] in self.component_name_list:
+            raise NameError("Component name \"" + str(args[1])
+                            + "\" was not found in the McStas instrument."
+                            + " and thus can not be copied.")
+        else:
+            component_to_copy = self.get_component(args[1])
+        
+        # Insert component after component with this name
+        if "after" in kwargs:
+            if kwargs["after"] not in self.component_name_list:
+                raise NameError("Trying to add a component after a component"
+                                + " named \"" + str(kwargs["after"])
+                                + "\", but a component with that name was"
+                                + " not found.")
+
+            new_index = self.component_name_list.index(kwargs["after"])
+
+            new_component = copy.deepcopy(component_to_copy)
+            new_component.name = instance_name
+            self.component_list.insert(new_index+1, new_component)
+
+            self.component_name_list.insert(new_index+1, instance_name)
+
+        # Insert component after component with this name
+        elif "before" in kwargs:
+            if kwargs["before"] not in self.component_name_list:
+                raise NameError(("Trying to add a component before a "
+                                 + "component named \""
+                                 + str(kwargs["before"])
+                                 + "\", but a component with that "
+                                 + "name was not found."))
+
+            new_index = self.component_name_list.index(kwargs["before"])
+
+            new_component = copy.deepcopy(component_to_copy)
+            new_component.name = instance_name
+            self.component_list.insert(new_index, new_component)
+
+            self.component_name_list.insert(new_index, instance_name)
+
+        # If after or before keywords absent, place component at the end
+        else:
+            new_component = copy.deepcopy(component_to_copy)
+            new_component.name = instance_name
+            self.component_list.append(new_component)
+            self.component_name_list.append(instance_name)
+        
+        # Set the new name of the instance
+        new_component.name = instance_name
+        # Run set_keyword_input again for keyword arguments to take effect
+        new_component.set_keyword_input(**kwargs)
+
+        return new_component
 
     def get_component(self, name):
         """
@@ -838,6 +1001,38 @@ class McStas_instr:
 
         component = self.get_component(name)
         component.set_SPLIT(SPLIT)
+        
+    def set_component_c_code_before(self, name, code):
+        """
+        Method for setting c code before component
+
+        Parameters
+        ----------
+        name : str
+            Unique name of component to modify
+            
+        code : str
+            Code to be pasted before component
+        """
+
+        component = self.get_component(name)
+        component.set_c_code_before(code)
+        
+    def set_component_c_code_after(self, name, code):
+        """
+        Method for setting c code before component
+
+        Parameters
+        ----------
+        name : str
+            Unique name of component to modify
+        
+        code : str
+            Code to be pasted after component
+        """
+
+        component = self.get_component(name)
+        component.set_c_code_after(code)        
 
     def set_component_comment(self, name, string):
         """
@@ -1081,8 +1276,13 @@ class McStas_instr:
         fo.write("// declare section for %s \n" % self.name)
         fo.close()
         fo = open("./generated_includes/" + self.name + "_declare.c", "a")
+        #fo.write(self.declare_section)
         for dec_line in self.declare_list:
-            dec_line.write_line(fo)
+            if isinstance(dec_line, str):
+                # append declare section parts written here
+                fo.write(dec_line)
+            else:
+                dec_line.write_line(fo)
             fo.write("\n")
         fo.close()
 
@@ -1154,8 +1354,13 @@ class McStas_instr:
 
         # Write declare
         fo.write("DECLARE \n%{\n")
+        #fo.write(self.declare_section)
         for dec_line in self.declare_list:
-            dec_line.write_line(fo)
+            if isinstance(dec_line, str):
+                # append declare section parts written here
+                fo.write(dec_line)
+            else:
+                dec_line.write_line(fo)
             fo.write("\n")
         fo.write("%}\n\n")
 

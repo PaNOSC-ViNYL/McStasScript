@@ -57,6 +57,29 @@ def setup_populated_instr():
 
     return instr
 
+def setup_populated_with_some_options_instr():
+    """
+    Sets up a instrument with some features used and two components
+    """
+    instr = setup_instr_root_path()
+
+    instr.add_parameter("double", "theta")
+    instr.add_parameter("double", "has_default", value=37)
+    instr.add_declare_var("double", "two_theta")
+    instr.append_initialize("two_theta = 2.0*theta;")
+
+    comp1 = instr.add_component("first_component", "test_for_reading")
+    comp1.set_AT([0,0,1])
+    comp1.set_GROUP("Starters")
+    comp2 = instr.add_component("second_component", "test_for_reading")
+    comp2.set_AT([0,0,2], RELATIVE="first_component")
+    comp2.set_ROTATED([0,30,0])
+    comp2.set_WHEN("1==1")
+    comp2.yheight=1.23
+    comp3 = instr.add_component("third_component", "test_for_reading")
+
+    return instr
+
 
 class TestMcStas_instr(unittest.TestCase):
     """
@@ -106,11 +129,11 @@ class TestMcStas_instr(unittest.TestCase):
             line = line.strip()
             if line.startswith("mcrun_path:"):
                 parts = line.split(" ")
-                correct_mcrun_path = parts[1][1:-1]
+                correct_mcrun_path = parts[1]
 
             if line.startswith("mcstas_path:"):
                 parts = line.split(" ")
-                correct_mcstas_path = parts[1][1:-1]
+                correct_mcstas_path = parts[1]
 
             if line.startswith("characters_per_line:"):
                 parts = line.split(" ")
@@ -220,6 +243,42 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(instr.declare_list[0].name, "two_theta")
         self.assertEqual(instr.declare_list[0].comment, " // test par")
+        
+    def test_simple_append_declare(self):
+        """
+        The declare lines are held as a string. This method
+        appends that string.
+        """
+        instr = setup_instr_root_path()
+
+        instr.append_declare("First line of declare")
+        instr.append_declare("Second line of declare")
+        instr.append_declare("Third line of declare")
+
+        self.assertEqual(instr.declare_list[0],
+                         "First line of declare")
+        self.assertEqual(instr.declare_list[1], 
+                         "Second line of declare")
+        self.assertEqual(instr.declare_list[2], 
+                         "Third line of declare")
+        
+    def test_simple_append_declare_var_mix(self):
+        """
+        The declare lines are held as a string. This method
+        appends that string.
+        """
+        instr = setup_instr_root_path()
+
+        instr.append_declare("First line of declare")
+        instr.add_declare_var("double", "two_theta", comment="test par")
+        instr.append_declare("Third line of declare")
+
+        self.assertEqual(instr.declare_list[0],
+                         "First line of declare")
+        self.assertEqual(instr.declare_list[1].name, "two_theta")
+        self.assertEqual(instr.declare_list[1].comment, " // test par")
+        self.assertEqual(instr.declare_list[2], 
+                         "Third line of declare")        
 
     def test_simple_append_initialize(self):
         """
@@ -633,18 +692,61 @@ class TestMcStas_instr(unittest.TestCase):
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_add_component_simple_double_naming_error(self, mock_stdout):
         """
-        The add_component method adds a new component object to the
-        instrument and keeps track of its location within the
-        sequence of components.  Normally a new component is added to
-        the end of the sequence, but the before and after keywords can
-        be used to select another location. Here keyword passing is
-        tested.
+        This tests checks that an error occurs when giving the new
+        component a name which has already been used.
         """
 
         instr = setup_populated_instr()
 
         with self.assertRaises(NameError):
             comp = instr.add_component("first_component", "test_for_reading")
+            
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_copy_component_simple(self, mock_stdout):
+        """
+        Checks that a component can be copied
+        """
+
+        instr = setup_populated_with_some_options_instr()
+        
+        comp = instr.copy_component("copy_of_second_comp", "second_component")
+
+        self.assertEqual(comp.name, "copy_of_second_comp")
+        self.assertEqual(comp.yheight, 1.23)
+        self.assertEqual(comp.AT_data[0], 0)
+        self.assertEqual(comp.AT_data[1], 0)
+        self.assertEqual(comp.AT_data[2], 2)
+        
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_copy_component_keywords(self, mock_stdout):
+        """
+        Checks that a component can be copied and that keyword
+        arguments given under copy operation is sucessfully 
+        applied to the new component. A check is also made to 
+        ensure that the original component was not modified.
+        """
+
+        instr = setup_populated_with_some_options_instr()
+
+        comp = instr.copy_component("copy_of_second_comp", "second_component",
+                                    AT=[1,2,3], SPLIT=10)
+
+        self.assertEqual(comp.name, "copy_of_second_comp")
+        self.assertEqual(comp.yheight, 1.23)
+        self.assertEqual(comp.AT_data[0], 1)
+        self.assertEqual(comp.AT_data[1], 2)
+        self.assertEqual(comp.AT_data[2], 3)
+        self.assertEqual(comp.SPLIT, 10)
+        
+        # ensure original component was not changed
+        original = instr.get_component("second_component")
+        self.assertEqual(original.name, "second_component")
+        self.assertEqual(original.yheight, 1.23)
+        self.assertEqual(original.AT_data[0], 0)
+        self.assertEqual(original.AT_data[1], 0)
+        self.assertEqual(original.AT_data[2], 2)
+        self.assertEqual(original.SPLIT, 0)
+        
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_get_component_simple(self, mock_stdout):
@@ -864,6 +966,36 @@ class TestMcStas_instr(unittest.TestCase):
         comp = instr.get_component("second_component")
 
         self.assertEqual(comp.comment, "test comment")
+        
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_set_c_code_before(self, mock_stdout):
+        """
+        set_component_c_code_before passes the argument to the similar
+        method in the component class.
+        """
+
+        instr = setup_populated_instr()
+
+        instr.set_component_c_code_before("second_component", "%include before.instr")
+
+        comp = instr.get_component("second_component")
+
+        self.assertEqual(comp.c_code_before, "%include before.instr")
+        
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_set_c_code_after(self, mock_stdout):
+        """
+        set_component_c_code_after passes the argument to the similar
+        method in the component class.
+        """
+
+        instr = setup_populated_instr()
+
+        instr.set_component_c_code_after("second_component", "%include after.instr")
+
+        comp = instr.get_component("second_component")
+
+        self.assertEqual(comp.c_code_after, "%include after.instr")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_print_component(self, mock_stdout):
@@ -901,7 +1033,8 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[3], "  " + par_name + warning)
 
         self.assertEqual(output[4], "AT [0, 0, 0] ABSOLUTE")
-        self.assertEqual(output[5], "ROTATED [0, 0, 0] ABSOLUTE")
+        # Rotation not printed since it was never specified
+        #self.assertEqual(output[5], "ROTATED [0, 0, 0] ABSOLUTE")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_print_component_short(self, mock_stdout):
@@ -920,7 +1053,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         expected = ("second_component = test_for_reading "
                     + "\tAT [-1, 2, 3.4] RELATIVE home "
-                    + "ROTATED [0, 0, 0] ABSOLUTE")
+                    + "ROTATED [0, 0, 0] RELATIVE home")
 
         self.assertEqual(output[0], expected)
 
@@ -1147,6 +1280,7 @@ class TestMcStas_instr(unittest.TestCase):
         call = unittest.mock.call
         wrts = [
          call("// declare section for test_instrument \n"),
+         #call(""),
          call("double two_theta;"),
          call("\n"),
          call("// Start of initialize for generated test_instrument\n"
@@ -1156,21 +1290,15 @@ class TestMcStas_instr(unittest.TestCase):
          call(")\n"),
          call("AT (0,0,0)"),
          call(" ABSOLUTE\n"),
-         call("ROTATED (0,0,0)"),
-         call(" ABSOLUTE\n"),
          call("\n"),
          call("COMPONENT second_component = test_for_reading("),
          call(")\n"),
          call("AT (0,0,0)"),
          call(" ABSOLUTE\n"),
-         call("ROTATED (0,0,0)"),
-         call(" ABSOLUTE\n"),
          call("\n"),
          call("COMPONENT third_component = test_for_reading("),
          call(")\n"),
          call("AT (0,0,0)"),
-         call(" ABSOLUTE\n"),
-         call("ROTATED (0,0,0)"),
          call(" ABSOLUTE\n"),
          call("\n")]
 
@@ -1238,6 +1366,7 @@ class TestMcStas_instr(unittest.TestCase):
          my_call(")\n"),
          my_call("\n"),
          my_call("DECLARE \n%{\n"),
+         #my_call(""),
          my_call("double two_theta;"),
          my_call("\n"),
          my_call("%}\n\n"),
@@ -1250,21 +1379,15 @@ class TestMcStas_instr(unittest.TestCase):
          my_call(")\n"),
          my_call("AT (0,0,0)"),
          my_call(" ABSOLUTE\n"),
-         my_call("ROTATED (0,0,0)"),
-         my_call(" ABSOLUTE\n"),
          my_call("\n"),
          my_call("COMPONENT second_component = test_for_reading("),
          my_call(")\n"),
          my_call("AT (0,0,0)"),
          my_call(" ABSOLUTE\n"),
-         my_call("ROTATED (0,0,0)"),
-         my_call(" ABSOLUTE\n"),
          my_call("\n"),
          my_call("COMPONENT third_component = test_for_reading("),
          my_call(")\n"),
          my_call("AT (0,0,0)"),
-         my_call(" ABSOLUTE\n"),
-         my_call("ROTATED (0,0,0)"),
          my_call(" ABSOLUTE\n"),
          my_call("\n"),
          my_call("FINALLY \n%{\n"),
