@@ -64,7 +64,7 @@ Plotting is usually done in a subplot of all monitors recorded.
 If one wish to work on existing projects using McStasScript, there is a reader included that will read a McStas Instrument file and write the corresponding McStasScript python instrument to disk. Here is an example where the PSI_DMC.instr example is converted:
 
     Reader = reader.McStas_file("PSI_DMC.instr")
-    reader.write_python_file("PSI_DMC_generated.py")
+    Reader.write_python_file("PSI_DMC_generated.py")
 
 It is highly advised to run a check between the output of the generated file and the original to ensure the process was sucessful.
 
