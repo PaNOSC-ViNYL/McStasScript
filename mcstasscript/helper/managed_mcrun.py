@@ -157,7 +157,7 @@ class ManagedMcrun:
                   + self.custom_flags + " "
                   + self.name_of_instrumentfile
                   + parameter_string)
-        
+
         #os.system(full_command)
         process = subprocess.run(full_command, shell=True,
                                  stdout=subprocess.PIPE,
@@ -180,7 +180,7 @@ class ManagedMcrun:
         elif len(args) == 1:
             data_folder_name = args[0]
         else:
-            raise InputError("load_results can be caled with 0 or 1 arguments")
+            raise InputError("load_results can be called with 0 or 1 arguments")
 
         if not os.path.isdir(data_folder_name):
             raise NameError("Given data directory does not exist.")
