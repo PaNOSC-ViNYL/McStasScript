@@ -1071,18 +1071,15 @@ class TestMcStas_instr(unittest.TestCase):
         output = mock_stdout.getvalue().split("\n")
 
         expected = ("first_component  test_for_reading"
-                    + " AT (0, 0, 0) ABSOLUTE"
-                    + " ROTATED (0, 0, 0) ABSOLUTE")
+                    + " AT (0, 0, 0) ABSOLUTE")
         self.assertEqual(output[0], expected)
 
         expected = ("second_component test_for_reading"
-                    + " AT (0, 0, 0) ABSOLUTE"
-                    + " ROTATED (0, 0, 0) ABSOLUTE")
+                    + " AT (0, 0, 0) ABSOLUTE")
         self.assertEqual(output[1], expected)
 
         expected = ("third_component  test_for_reading"
-                    + " AT (0, 0, 0) ABSOLUTE"
-                    + " ROTATED (0, 0, 0) ABSOLUTE")
+                    + " AT (0, 0, 0) ABSOLUTE")
         self.assertEqual(output[2], expected)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
@@ -1108,8 +1105,7 @@ class TestMcStas_instr(unittest.TestCase):
         output = mock_stdout.getvalue().split("\n")
 
         expected = ("first_component  test_for_reading"
-                    + " AT (-0.1, 12, dist) RELATIVE home"
-                    + " ROTATED (0, 0, 0)          ABSOLUTE")
+                    + " AT (-0.1, 12, dist) RELATIVE home")
         self.assertEqual(output[0], expected)
 
         expected = ("second_component test_for_reading"
@@ -1118,8 +1114,7 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[1], expected)
 
         expected = ("third_component  test_name"
-                    + "        AT (0, 0, 0)        ABSOLUTE"
-                    + "      ROTATED (0, 0, 0)          ABSOLUTE")
+                    + "        AT (0, 0, 0)        ABSOLUTE     ")
         self.assertEqual(output[2], expected)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
@@ -1147,28 +1142,20 @@ class TestMcStas_instr(unittest.TestCase):
         output = mock_stdout.getvalue().split("\n")
 
         expected = ("first_component  test_for_reading"
-                    + " AT      (-0.1, 12, dist)   RELATIVE home ")
+                    + " AT      (-0.1, 12, dist)   RELATIVE home")
         self.assertEqual(output[0], expected)
-
-        expected = ("                                 "
-                    + " ROTATED (0, 0, 0)          ABSOLUTE")
-        self.assertEqual(output[1], expected)
 
         expected = ("second_component test_for_reading"
                     + " AT      (0, 0, 0)          ABSOLUTE      ")
-        self.assertEqual(output[2], expected)
+        self.assertEqual(output[1], expected)
 
         expected = ("                                 "
                     + " ROTATED (-4, 0.001, theta) RELATIVE etc")
-        self.assertEqual(output[3], expected)
+        self.assertEqual(output[2], expected)
 
         expected = ("third_component  test_name       "
-                    + " AT      (0, 0, 0)          ABSOLUTE      ")
-        self.assertEqual(output[4], expected)
-
-        expected = ("                                 "
-                    + " ROTATED (0, 0, 0)          ABSOLUTE")
-        self.assertEqual(output[5], expected)
+                    + " AT      (0, 0, 0)          ABSOLUTE     ")
+        self.assertEqual(output[3], expected)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_print_components_complex_3lines(self, mock_stdout):
@@ -1204,11 +1191,8 @@ class TestMcStas_instr(unittest.TestCase):
                     + " ")
         self.assertEqual(output[0], expected)
 
-        expected = ("  AT      (-0.1, 12, dist) RELATIVE home ")
+        expected = ("  AT      (-0.1, 12, dist) RELATIVE home")
         self.assertEqual(output[1], expected)
-
-        expected = ("  ROTATED (0, 0, 0) ABSOLUTE")
-        self.assertEqual(output[2], expected)
 
         expected = (bcolors.BOLD
                     + "second_component"
@@ -1218,13 +1202,13 @@ class TestMcStas_instr(unittest.TestCase):
                     + "test_for_reading"
                     + bcolors.ENDC
                     + " ")
-        self.assertEqual(output[3], expected)
+        self.assertEqual(output[2], expected)
 
         expected = ("  AT      (0, 0, 0) ABSOLUTE ")
-        self.assertEqual(output[4], expected)
+        self.assertEqual(output[3], expected)
 
         expected = ("  ROTATED (-4, 0.001, theta) RELATIVE etc")
-        self.assertEqual(output[5], expected)
+        self.assertEqual(output[4], expected)
 
         expected = (bcolors.BOLD
                     + "third_component"
@@ -1234,13 +1218,10 @@ class TestMcStas_instr(unittest.TestCase):
                     + "test_name"
                     + bcolors.ENDC
                     + " ")
+        self.assertEqual(output[5], expected)
+
+        expected = ("  AT      (0, 0, 0) ABSOLUTE")
         self.assertEqual(output[6], expected)
-
-        expected = ("  AT      (0, 0, 0) ABSOLUTE ")
-        self.assertEqual(output[7], expected)
-
-        expected = ("  ROTATED (0, 0, 0) ABSOLUTE")
-        self.assertEqual(output[8], expected)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch('__main__.__builtins__.open',

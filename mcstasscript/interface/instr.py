@@ -1198,9 +1198,12 @@ class McStas_instr:
 
                 p_ROTATED_RELATIVE = str(component.ROTATED_relative)
 
-                print(p_name, p_comp_name,
-                      "AT", p_AT, p_AT_RELATIVE,
-                      "ROTATED", p_ROTATED, p_ROTATED_RELATIVE)
+                if component.ROTATED_specified:
+                    print(p_name, p_comp_name,
+                          "AT", p_AT, p_AT_RELATIVE,
+                          "ROTATED", p_ROTATED, p_ROTATED_RELATIVE)
+                else:
+                    print(p_name, p_comp_name, "AT", p_AT, p_AT_RELATIVE)
 
         elif n_lines == 2:
             for component in self.component_list:
@@ -1228,11 +1231,15 @@ class McStas_instr:
                                             + ROTATED_pad)
 
                 p_ROTATED_RELATIVE = str(component.ROTATED_relative)
-
-                print(p_name, p_comp_name,
-                      "AT     ", p_AT, p_AT_RELATIVE, "\n",
-                      p_ROTATED_align, "ROTATED",
-                      p_ROTATED, p_ROTATED_RELATIVE)
+                
+                if component.ROTATED_specified:
+                    print(p_name, p_comp_name,
+                          "AT     ", p_AT, p_AT_RELATIVE, "\n",
+                          p_ROTATED_align, "ROTATED",
+                          p_ROTATED, p_ROTATED_RELATIVE)
+                else:
+                    print(p_name, p_comp_name,
+                          "AT     ", p_AT, p_AT_RELATIVE)
 
         elif n_lines == 3:
             for component in self.component_list:
@@ -1250,9 +1257,13 @@ class McStas_instr:
 
                 p_ROTATED_RELATIVE = str(component.ROTATED_relative)
 
-                print(p_name + " ", p_comp_name, "\n",
-                      " AT     ", p_AT, p_AT_RELATIVE, "\n",
-                      " ROTATED", p_ROTATED, p_ROTATED_RELATIVE)
+                if component.ROTATED_specified:
+                    print(p_name + " ", p_comp_name, "\n",
+                          " AT     ", p_AT, p_AT_RELATIVE, "\n",
+                          " ROTATED", p_ROTATED, p_ROTATED_RELATIVE)
+                else:
+                    print(p_name + " ", p_comp_name, "\n",
+                      " AT     ", p_AT, p_AT_RELATIVE)
 
     def write_c_files(self):
         """

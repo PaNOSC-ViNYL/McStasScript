@@ -67,7 +67,8 @@ class TraceReader(SectionReader):
         if line.strip().startswith("%include") or line.strip().startswith("#include"):
             # Handle include statement and attatch it to a component
             if self.current_component != None:
-                self.current_component.set_c_code_after(line)
+                c_code_after = self.current_component.c_code_after + line + "\n"
+                self.current_component.set_c_code_after(c_code_after)
             else:
                 # If the include statement is before the first component,
                 # it is saved and attatched to the next component
