@@ -223,6 +223,11 @@ class ManagedMcrun:
                 current_object = McStasMetaData()
                 # Start recording data to metadata object
                 in_data = True
+                
+            if "Param" in lines:
+                parm_lst=lines.split(':')[1].split('=')
+                self.parameters[parm_lst[0]]=parm_lst[1]
+
 
         # Close mccode.sim
         f.close()
