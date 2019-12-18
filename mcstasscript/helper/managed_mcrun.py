@@ -213,7 +213,7 @@ class ManagedMcrun:
                 in_data = False
             if in_sim:
                 if "Param" in lines:
-                    print(lines)
+                    #print(lines)
                     parm_lst=lines.split(':')[1].split('=')
                     #print(parm_lst)
                     self.parameters[parm_lst[0]]=parm_lst[1]
