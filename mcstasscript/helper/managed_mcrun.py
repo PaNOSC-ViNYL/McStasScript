@@ -198,6 +198,7 @@ class ManagedMcrun:
         # Loop that reads mccode.sim sections
         metadata_list = []
         in_data = False
+        in_sim = False
         for lines in f:
             # Could read other details about run
 
@@ -210,6 +211,12 @@ class ManagedMcrun:
                     metadata_list.append(current_object)
                 # Stop reading data
                 in_data = False
+            if in_sim:
+                if "Param" in lines:
+                    print(lines)
+                    parm_lst=lines.split(':')[1].split('=')
+                    #print(parm_lst)
+                    self.parameters[parm_lst[0]]=parm_lst[1]
 
             if in_data:
                 # This line contains info to be added to metadata
@@ -223,10 +230,12 @@ class ManagedMcrun:
                 current_object = McStasMetaData()
                 # Start recording data to metadata object
                 in_data = True
-                
-            if "Param" in lines:
-                parm_lst=lines.split(':')[1].split('=')
-                self.parameters[parm_lst[0]]=parm_lst[1]
+
+            if 'begin simulation:' in lines:
+                in_sim = True
+            if 'end simulation:' in lines:
+                in_sim = False
+
 
 
         # Close mccode.sim
