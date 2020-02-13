@@ -159,6 +159,7 @@ class McStasPlotOptions:
         self.log = False
         self.orders_of_mag = 300
         self.colormap = "jet"
+        self.show_colorbar = True
         self.cut_max = 1
         self.cut_min = 0
         self.x_limit_multiplier = 1
@@ -189,6 +190,9 @@ class McStasPlotOptions:
 
         if "colormap" in kwargs:
             self.colormap = kwargs["colormap"]
+            
+        if "show_colorbar" in kwargs:
+            self.show_colorbar = kwargs["show_colorbar"]
             
         if "cut_max" in kwargs:
             self.cut_max = kwargs["cut_max"]

@@ -116,7 +116,7 @@ class declare_variable:
         Comment displayed next to the declaration, could contain units
 
     vector : int
-        0 if a single value is given, ortherwise contains the length
+        0 if a single value is given, otherwise contains the length
 
     Methods
     -------

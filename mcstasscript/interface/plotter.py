@@ -359,8 +359,9 @@ class make_sub_plot:
                         return r'${} \times 10^{{{}}}$'.format(a, b)
 
                 # Add the colorbar
-                fig.colorbar(im, ax=ax0,
-                             format=matplotlib.ticker.FuncFormatter(fmt))
+                if data.plot_options.colormap:
+                    fig.colorbar(im, ax=ax0,
+                                 format=matplotlib.ticker.FuncFormatter(fmt))
 
                 # Add a title
                 ax0.set_title(data.metadata.title)
@@ -582,8 +583,9 @@ class make_animation:
                     return r'${} \times 10^{{{}}}$'.format(a, b)
 
             # Add the colorbar
-            fig.colorbar(im, ax=ax,
-                        format=matplotlib.ticker.FuncFormatter(fmt))
+            if data.plot_options.colormap:
+                fig.colorbar(im, ax=ax,
+                             format=matplotlib.ticker.FuncFormatter(fmt))
 
             # Add a title
             ax.set_title(data.metadata.title)

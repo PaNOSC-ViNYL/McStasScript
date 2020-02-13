@@ -1,5 +1,5 @@
 other:
-  characters_per_line: 93
+  characters_per_line: 85
 paths:
   mcrun_path: /Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/bin/
   mcstas_path: /Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/
