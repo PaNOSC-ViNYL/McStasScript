@@ -65,7 +65,7 @@ class TestConfigurator(unittest.TestCase):
 
         self.assertEqual(default_config["paths"]["mcrun_path"], run)
         self.assertEqual(default_config["paths"]["mcstas_path"], mcstas)
-        self.assertEqual(default_config["other"]["characters_per_line"], 93)
+        self.assertEqual(default_config["other"]["characters_per_line"], 85)
         
         # remove the testing configuration file
         if os.path.isfile(expected_file): 
@@ -87,7 +87,7 @@ class TestConfigurator(unittest.TestCase):
         
         new_config = my_configurator._read_yaml()
         
-        self.assertEqual(new_config["other"]["characters_per_line"], 93)
+        self.assertEqual(new_config["other"]["characters_per_line"], 85)
         self.assertEqual(new_config["new_field"], 123)
         self.assertEqual(new_config["paths"]["new_path"], "/test/path/")
         

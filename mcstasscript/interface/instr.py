@@ -191,7 +191,7 @@ class McStas_instr:
             self.origin = "ESS DMSC"
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-        configuration_file_name = THIS_DIR + "/../configuration.yaml"
+        configuration_file_name = os.path.join(THIS_DIR, "..", "configuration.yaml")
         if not os.path.isfile(configuration_file_name):
             raise NameError("Could not find configuration file!")
         with open(configuration_file_name, 'r') as ymlfile:
@@ -1276,17 +1276,22 @@ class McStas_instr:
         trace_section that can be set using the append_trace method.
         """
         path = os.getcwd()
-        path = path + "/generated_includes"
+        path = os.path.join(path, "generated_includes")
         if not os.path.isdir(path):
             try:
                 os.mkdir(path)
             except OSError:
                 print("Creation of the directory %s failed" % path)
 
-        fo = open("./generated_includes/" + self.name + "_declare.c", "w")
+        file_path = os.path.join(".", "generated_includes",
+                                self.name + "_declare.c") 
+        fo = open(file_path, "w")
         fo.write("// declare section for %s \n" % self.name)
         fo.close()
-        fo = open("./generated_includes/" + self.name + "_declare.c", "a")
+        
+        file_path = os.path.join(".", "generated_includes",
+                                 self.name + "_declare.c") 
+        fo = open(file_path, "a")
         #fo.write(self.declare_section)
         for dec_line in self.declare_list:
             if isinstance(dec_line, str):
@@ -1297,16 +1302,21 @@ class McStas_instr:
             fo.write("\n")
         fo.close()
 
-        fo = open("./generated_includes/" + self.name + "_initialize.c", "w")
+        file_path = os.path.join(".", "generated_includes",
+                                 self.name + "_initialize.c")
+        fo = open(file_path, "w")
         fo.write(self.initialize_section)
         fo.close()
 
-        fo = open("./generated_includes/" + self.name + "_trace.c", "w")
+        file_path = os.path.join(".", "generated_includes",
+                                 self.name + "_trace.c")
+        fo = open(file_path, "w")
         fo.write(self.trace_section)
         fo.close()
 
-        fo = open("./generated_includes/" + self.name
-                  + "_component_trace.c", "w")
+        file_path = os.path.join(".", "generated_includes",
+                                 self.name + "_component_trace.c")
+        fo = open(file_path, "w")
         for component in self.component_list:
             component.write_component(fo)
         fo.close()
@@ -1516,7 +1526,7 @@ class McStas_instr:
                                 + "="
                                 + str(val))  # parameter value
 
-        bin_path = self.mcstas_path + "/bin/"
+        bin_path = os.path.join(self.mcstas_path, "bin", "")
         executable = "mcdisplay-webgl"
         if "format" in kwargs:
             if kwargs["format"] is "webgl":

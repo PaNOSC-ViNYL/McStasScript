@@ -39,8 +39,9 @@ class ComponentReader:
 
         """
 
-        if mcstas_path[-1] is not "/":
-            mcstas_path = mcstas_path + "/"
+        # add trailing / or \ depending on operating system
+        if mcstas_path[-1] is not "/" and mcstas_path[-1] is not "\\":
+            mcstas_path = os.path.join(mcstas_path, "") 
 
         # Hardcoded whitelist of foldernames
         folder_list = ["sources",
@@ -56,17 +57,19 @@ class ComponentReader:
         self.component_category = {}
 
         for folder in folder_list:
-            absolute_path = mcstas_path + folder
-            # self.component_info_dict.update(self._read(absolute_path))
-            self._find_components(absolute_path)
+            abs_path = os.path.join(mcstas_path, folder)
+            self._find_components(abs_path)
 
         # McStas component in current directory should overwrite
         current_directory = os.getcwd()
 
         for file in os.listdir(current_directory):
             if file.endswith(".comp"):
-                absolute_path = current_directory + "/" + file
-                component_name = absolute_path.split("/")[-1].split(".")[-2]
+                abs_path = os.path.join(current_directory, file)
+                if "/" in abs_path:
+                    component_name = abs_path.split("/")[-1].split(".")[-2]
+                else:
+                    component_name = abs_path.split("\\")[-1].split(".")[-2]
 
                 if component_name in self.component_path:
                     print("Overwriting McStasScript info on component named "
@@ -74,7 +77,7 @@ class ComponentReader:
                           + " because the component is in the"
                           + " work directory.")
 
-                self.component_path[component_name] = absolute_path
+                self.component_path[component_name] = abs_path
                 self.component_category[component_name] = "Work directory"
 
     def show_categories(self):
@@ -196,14 +199,15 @@ class ComponentReader:
         if not os.path.isdir(absolute_path):
             if absolute_path.endswith(".comp"):
                 # read this file
-                component_name = absolute_path.split("/")[-1].split(".")[-2]
+                component_name = os.path.split(absolute_path)[1].split(".")[-2]
                 self.component_path[component_name] = absolute_path
 
-                component_category = absolute_path.split("/")[-2]
+                head = os.path.split(absolute_path)[0]
+                component_category = os.path.split(head)[1]
                 self.component_category[component_name] = component_category
         else:
             for file in os.listdir(absolute_path):
-                absolute_file_path = absolute_path + "/" + file
+                absolute_file_path = os.path.join(absolute_path, file)
                 self._find_components(absolute_file_path)
 
     def read_component_file(self, absolute_path):
@@ -362,9 +366,11 @@ class ComponentReader:
 
         fo.close()
 
-        result.name = absolute_path.split("/")[-1].split(".")[-2]
-        foldernames = absolute_path.split("/")
-        result.category = foldernames[-2]
+        result.name = os.path.split(absolute_path)[1].split(".")[-2]
+        
+        tail = os.path.split(absolute_path)[0]
+        result.category = os.path.split(tail)[1]
+
 
         """
         To lower memory use one could remove all comments and units that

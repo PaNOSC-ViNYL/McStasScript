@@ -149,7 +149,7 @@ class ManagedMcrun:
         if len(self.mcrun_path) > 1:
             if not (self.mcrun_path[-1] == "\\"
                     or self.mcrun_path[-1] == "/"):
-                mcrun_full_path = self.mcrun_path + "/mcrun"
+                mcrun_full_path = os.path.join(self.mcrun_path, "mcrun")
 
         # Run the mcrun command on the system
         full_command = (mcrun_full_path + " "
@@ -193,7 +193,7 @@ class ManagedMcrun:
             raise NameError("No mccode.sim in data folder.")
 
         # Open mccode to read metadata for all datasets written to disk
-        f = open(data_folder_name + "/mccode.sim", "r")
+        f = open(os.path.join(data_folder_name, "mccode.sim"), "r")
 
         # Loop that reads mccode.sim sections
         metadata_list = []
@@ -233,9 +233,8 @@ class ManagedMcrun:
         # Load datasets described in metadata list individually
         for metadata in metadata_list:
             # Load data with numpy
-            data = np.loadtxt(data_folder_name
-                              + "/"
-                              + metadata.filename.rstrip())
+            data = np.loadtxt(os.path.join(data_folder_name,
+                              metadata.filename.rstrip()))
 
             # Split data into intensity, error and ncount
             if type(metadata.dimension) == int:
