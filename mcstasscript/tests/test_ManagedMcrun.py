@@ -329,7 +329,7 @@ class TestManagedMcrun(unittest.TestCase):
         current_work_dir = os.getcwd()
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
-        load_path = THIS_DIR + "/test_data_set"
+        load_path = os.path.join(THIS_DIR, "test_data_set")
         results = mcrun_obj.load_results(load_path)
 
         os.chdir(current_work_dir)  # Reset work directory
@@ -363,7 +363,7 @@ class TestManagedMcrun(unittest.TestCase):
         current_work_dir = os.getcwd()
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
-        load_path = THIS_DIR + "/non_exsistent_dataset"
+        load_path = os.path.join(THIS_DIR, "non_exsistent_dataset")
         with self.assertRaises(NameError):
             results = mcrun_obj.load_results(load_path)
 
@@ -383,7 +383,7 @@ class TestManagedMcrun(unittest.TestCase):
         current_work_dir = os.getcwd()
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
-        load_path = THIS_DIR + "/dummy_mcstas"
+        load_path = os.path.join(THIS_DIR, "/dummy_mcstas")
         with self.assertRaises(NameError):
             results = mcrun_obj.load_results(load_path)
 

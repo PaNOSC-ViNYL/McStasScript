@@ -5,7 +5,7 @@ from mcstasscript.interface.functions import Configurator
 
 def setup_expected_file(test_name):
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-    expected_file = THIS_DIR + "/../" + test_name + ".yaml"
+    expected_file = os.path.join(THIS_DIR, "..", test_name + ".yaml")
     
     if os.path.isfile(expected_file):
         os.remove(expected_file)

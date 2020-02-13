@@ -9,7 +9,7 @@ from mcstasscript.helper.component_reader import ComponentReader
 
 def setup_component_reader():
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-    dummy_path = THIS_DIR + "/dummy_mcstas"
+    dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
     current_work_dir = os.getcwd()
     os.chdir(THIS_DIR)  # Set work directory to test folder
@@ -245,7 +245,7 @@ class TestComponentReader(unittest.TestCase):
         component_reader.component_category = {}
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-        dummy_path = THIS_DIR + "/dummy_mcstas/misc"
+        dummy_path = os.path.join(THIS_DIR, "dummy_mcstas", "misc")
         current_work_dir = os.getcwd()
         os.chdir(THIS_DIR)  # Set work directory to test folder
         component_reader._find_components(dummy_path)
@@ -268,7 +268,7 @@ class TestComponentReader(unittest.TestCase):
         component_reader.component_category = {}
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-        dummy_path = THIS_DIR + "/dummy_mcstas/misc"
+        dummy_path = os.path.join(THIS_DIR, "dummy_mcstas", "misc")
         current_work_dir = os.getcwd()
         os.chdir(THIS_DIR)  # Set work directory to test folder
         component_reader._find_components(dummy_path)

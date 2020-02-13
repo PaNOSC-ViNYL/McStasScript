@@ -30,7 +30,7 @@ def setup_instr_with_path():
     """
 
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-    dummy_path = THIS_DIR + "/dummy_mcstas"
+    dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
     current_work_dir = os.getcwd()
     os.chdir(THIS_DIR)  # Set work directory to test folder
@@ -117,7 +117,8 @@ class TestMcStas_instr(unittest.TestCase):
         """
         # Load configuration file and read manually
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-        configuration_file_name = THIS_DIR + "/../configuration.yaml"
+        configuration_file_name = os.path.join(THIS_DIR,
+                                               "..", "configuration.yaml")
 
         if not os.path.isfile(configuration_file_name):
             raise NameError("Could not find configuration file!")
