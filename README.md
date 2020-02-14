@@ -4,19 +4,31 @@ McStas API for creating and running McStas instruments from python scripting
 Prototype for an API that allow interaction with McStas through an interface like Jupyter Notebooks created under WP5 of PaNOSC.
 
 ## Installation
-The package can be installed using pip
+McStasScript does not include the McStas installation, so McStas should be installed separately.
+McStasScript can be installed using pip,
 
     python3 -m pip install McStasScript --upgrade
 
-It is necessary to configure the package so the McStas installation can be found, here we show how the appropriate code for an Ubuntu system. The configuration is saved permanently, and only needs to be updated when McStas is updated.
+After installation it is necessary to configure the package so the McStas installation can be found, here we show how the appropriate code for an Ubuntu system. The configuration is saved permanently, and only needs to be updated when McStas or McStasScript is updated.
 
     from mcstasscript.interface import functions
     my_configurator = functions.Configurator()
     my_configurator.set_mcrun_path("/usr/bin/")
     my_configurator.set_mcstas_path("/usr/share/mcstas/2.5/")
+    
+### Notes on windows installation
+McStasScript was tested on Windows 10 installed using this [guide](https://github.com/McStasMcXtrace/McCode/blob/master/INSTALL-McStas/Windows/README.md), it is necessary to include MPI using MSMpiSetup.exe and msmpisdk.msi located in the extras folder.
 
+Open the McStas-shell cmd (shortcut should be available on desktop) and install McStasScript / jupyter notebook with these commands:
 
-## Instructions for basic use:
+    python -m pip install notebook 
+    python -m pip install McStasScript --upgrade
+    
+Using the McStas-shell one can start a jupyter notebook server with this command:
+
+    jupyter notebook
+
+## Instructions for basic use
 Import the interface 
 
     from mcstasscript.interface import instr, plotter, functions, reader
