@@ -80,7 +80,7 @@ class parameter_variable:
     def write_parameter(self, fo, stop_character):
         """Writes input parameter to file"""
         fo.write("%s%s" % (self.type, self.name))
-        if self.value is not "":
+        if self.value != "":
             if isinstance(self.value, int):
                 fo.write(" = %d" % self.value)
             elif isinstance(self.value, float):
@@ -185,9 +185,9 @@ class declare_variable:
         fo : file object
             File the line will be written to
         """
-        if self.value is "" and self.vector == 0:
+        if self.value == "" and self.vector == 0:
             fo.write("%s %s;%s" % (self.type, self.name, self.comment))
-        if self.value is not "" and self.vector == 0:
+        if self.value != "" and self.vector == 0:
             if self.type == "int":
                 fo.write("%s %s = %d;%s" % (self.type, self.name,
                                             self.value, self.comment))
@@ -198,10 +198,10 @@ class declare_variable:
                 except:
                     fo.write("%s %s = %s;%s" % (self.type, self.name,
                                                 self.value, self.comment))
-        if self.value is "" and self.vector != 0:
+        if self.value == "" and self.vector != 0:
             fo.write("%s %s[%d];%s" % (self.type, self.name,
                                        self.vector, self.comment))
-        if self.value is not "" and self.vector != 0:
+        if self.value != "" and self.vector != 0:
             if isinstance(self.value, str):
                 # value is a string
                 string = self.value
@@ -580,7 +580,7 @@ class component:
         if len(self.comment) > 1:
             fo.write("// %s\n" % (str(self.comment)))
 
-        if self.SPLIT is not 0:
+        if self.SPLIT != 0:
             fo.write("SPLIT " + str(self.SPLIT) + " ") 
 
         # Write component name and component type
@@ -671,7 +671,7 @@ class component:
             print(self.c_code_before)
         if len(self.comment) > 1:
             print("// " + self.comment)
-        if self.SPLIT is not 0:
+        if self.SPLIT != 0:
             print("SPLIT " + str(self.SPLIT) + " ", end="")
         print("COMPONENT", str(self.name),
               "=", str(self.component_name))
@@ -872,7 +872,7 @@ class component:
 
             comment = ""
             if parameter in self.parameter_comments:
-                if self.parameter_comments[parameter] is not "":
+                if self.parameter_comments[parameter] != "":
                     comment = " // " + self.parameter_comments[parameter]
 
             print(parameter + value + unit + comment)
