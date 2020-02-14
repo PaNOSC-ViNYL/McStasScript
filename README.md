@@ -28,6 +28,13 @@ Using the McStas-shell one can start a jupyter notebook server with this command
 
     jupyter notebook
 
+For a standard McStas installation on Windows, the appropriate configuration can be set with these commands in a notebook:
+
+    from mcstasscript.interface import functions
+    my_configurator = functions.Configurator()
+    my_configurator.set_mcrun_path("\\mcstas-2.6\\bin\\")
+    my_configurator.set_mcstas_path("\\mcstas-2.6\\lib\\")
+
 ## Instructions for basic use
 Import the interface 
 
