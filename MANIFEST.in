@@ -1,5 +1,7 @@
 include McStasScript_documentation.pdf
 include mcstasscript/configuration.yaml
 include mcstasscript/tests/test_for_reading.comp
+include mcstasscript/tests/test_instrument.instr
+include mcstasscript/tests/Union_demonstration_test.instr
 graft mcstasscript/tests/dummy_mcstas
 graft mcstasscript/tests/test_data_set

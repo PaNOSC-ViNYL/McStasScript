@@ -1413,8 +1413,10 @@ class TestMcStas_instr(unittest.TestCase):
                                   mcrun_path="path",
                                   parameters={"theta": 1})
 
+        expected_path = os.path.join("path","mcrun")
+
         # a double space because of a missing option
-        expected_call = ("path/mcrun -c -n 1000000 --mpi=1 "
+        expected_call = (expected_path + " -c -n 1000000 --mpi=1 "
                          + "-d test_data_set  test_instrument.instr"
                          + " has_default=37 theta=1")
 
@@ -1446,8 +1448,10 @@ class TestMcStas_instr(unittest.TestCase):
                                               "BC": "car",
                                               "theta": "\"toy\""})
 
+        expected_path = os.path.join("path","mcrun")
+
         # a double space because of a missing option
-        expected_call = ("path/mcrun -c -n 48 --mpi=7 "
+        expected_call = (expected_path + " -c -n 48 --mpi=7 "
                          + "-d test_data_set -fo test_instrument.instr "
                          + "has_default=37 A=2 BC=car theta=\"toy\"")
 
@@ -1478,9 +1482,11 @@ class TestMcStas_instr(unittest.TestCase):
                                               "BC": "car",
                                               "theta": "\"toy\"",
                                               "has_default": 10})
+        
+        expected_path = os.path.join("path","mcrun")
 
         # a double space because of a missing option
-        expected_call = ("path/mcrun -c -n 48 --mpi=7 "
+        expected_call = (expected_path + " -c -n 48 --mpi=7 "
                          + "-d test_data_set -fo test_instrument.instr "
                          + "has_default=10 A=2 BC=car theta=\"toy\"")
 

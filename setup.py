@@ -5,15 +5,15 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
      name='McStasScript',
-     version='0.0.10',
+     version='0.0.12',
      author="Mads Bertelsen",
-     author_email="Mads.Bertelsen@esss.se",
+     author_email="Mads.Bertelsen@ess.eu",
      description="A python scripting interface for McStas",
      include_package_data=True,
      long_description=long_description,
      long_description_content_type="text/markdown",
      url="https://github.com/PaNOSC-ViNYL/McStasScript",
-     install_requires=['numpy', 'matplotlib'],
+     install_requires=['numpy', 'matplotlib', 'PyYAML'],
      packages=setuptools.find_packages(),
      classifiers=[
          "Programming Language :: Python :: 3",
