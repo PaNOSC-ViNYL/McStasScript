@@ -103,10 +103,11 @@ class TestInstrReader(unittest.TestCase):
         self.assertEqual(test_component.component_name, "Union_make_material")
         
         val = getattr(test_component, "my_absorption")
-        self.assertEqual(val, "\"100*4*0.231/66.4\"")
+        #self.assertEqual(val, "\"100*4*0.231/66.4\"")
+        self.assertEqual(val, "100*4*0.231/66.4")
         
         val = getattr(test_component, "process_string")
-        self.assertEqual(val, '"\\\"Al_incoherent,Al_powder\\\""')
+        self.assertEqual(val, "\"Al_incoherent,Al_powder\"")
         
         self.assertEqual(test_component.AT_data, ["0", "0", "0"])
         self.assertEqual(test_component.AT_relative, "ABSOLUTE")
@@ -224,7 +225,7 @@ class TestInstrReader(unittest.TestCase):
         
         self.assertEqual(test_component.component_name, "Arm")
         
-        self.assertEqual(test_component.GROUP, "\"arms\"")
+        self.assertEqual(test_component.GROUP, "arms")
         
         self.assertEqual(test_component.AT_data, ["0", "0", "0"])
         self.assertEqual(test_component.AT_relative, "ABSOLUTE")
@@ -262,7 +263,7 @@ class TestInstrReader(unittest.TestCase):
         
         self.assertEqual(test_component.component_name, "Arm")
         
-        self.assertEqual(test_component.GROUP, "\"arms\"")
+        self.assertEqual(test_component.GROUP, "arms")
         self.assertEqual(test_component.JUMP, "myself 2")
         
         self.assertEqual(test_component.AT_data, ["0", "0", "0"])
