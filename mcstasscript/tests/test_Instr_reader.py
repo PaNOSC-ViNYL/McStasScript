@@ -308,11 +308,11 @@ class TestInstrReader(unittest.TestCase):
         self.assertEqual(test_component.AT_data, ["0", "0", "0"])
         self.assertEqual(test_component.AT_relative, "ABSOLUTE")
 
-    
+    """
     def test_comma_split(self):
-        """
-        Test the Tracer_reader._split_func
-        """
+        
+        #Test the Tracer_reader._split_func
+        
 
         blockPrint()
         Instr = instr.McStas_instr("test_instrument")
@@ -328,10 +328,13 @@ class TestInstrReader(unittest.TestCase):
         self.assertEqual(result[2],"C")
         self.assertEqual(result[3],"D(a,b)")
         self.assertEqual(result[4],"E")
-    
     """
+    
     def test_comma_split_limited(self):
-
+        """
+        Test the Tracer_reader._split_func
+        """
+        
         blockPrint()
         Instr = instr.McStas_instr("test_instrument")
         enablePrint()
@@ -344,7 +347,7 @@ class TestInstrReader(unittest.TestCase):
         self.assertEqual(result[0],"A")
         self.assertEqual(result[1],"B")
         self.assertEqual(result[2],"C,D(a,b),E")
-    """
+    
         
     def test_parenthesis_split(self):
         """
