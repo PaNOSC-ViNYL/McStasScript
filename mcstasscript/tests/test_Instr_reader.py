@@ -283,6 +283,9 @@ class TestInstrReader(unittest.TestCase):
         self.assertEqual(test_component.AT_relative, "RELATIVE sample_4")     
     
     def test_read_component_JUMP(self):
+        """
+        Check a JUMP and GROUP statement is read correctly
+        """
         
         blockPrint()
         Instr = instr.McStas_instr("test_instrument")
@@ -308,7 +311,7 @@ class TestInstrReader(unittest.TestCase):
     
     def test_comma_split(self):
         """
-        Check if the instrument name is read correctly
+        Test the Tracer_reader._split_func
         """
 
         blockPrint()
@@ -325,10 +328,11 @@ class TestInstrReader(unittest.TestCase):
         self.assertEqual(result[2],"C")
         self.assertEqual(result[3],"D(a,b)")
         self.assertEqual(result[4],"E")
-        
+    
+    """
     def test_comma_split_limited(self):
         """
-        Check if the instrument name is read correctly
+        Test the Tracer_reader._split_func
         """
 
         blockPrint()
@@ -343,10 +347,11 @@ class TestInstrReader(unittest.TestCase):
         self.assertEqual(result[0],"A")
         self.assertEqual(result[1],"B")
         self.assertEqual(result[2],"C,D(a,b),E")
+    """
         
     def test_parenthesis_split(self):
         """
-        Check if the instrument name is read correctly
+        Test the Tracer_reader._split_func
         """
         
         blockPrint()
@@ -366,7 +371,7 @@ class TestInstrReader(unittest.TestCase):
         
     def test_comma_split_brack(self):
         """
-        Check if the instrument name is read correctly
+        Test the Tracer_reader._split_func
         """
 
         blockPrint()
