@@ -1,4 +1,5 @@
 import os
+import sys
 import unittest
 
 from mcstasscript.interface import instr
@@ -6,11 +7,22 @@ from mcstasscript.instr_reader import control
 from mcstasscript.instr_reader import util
 
 
-def setup_standard(Instr):
-    filename = "Union_demonstration_test.instr"
+# Disable print
+def blockPrint():
+    sys.stdout = open(os.devnull, 'w')
 
+# Restore print
+def enablePrint():
+    sys.stdout = sys.__stdout__
+
+def setup_standard(Instr):
+    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(os.path.join(THIS_DIR, "dummy_instrument_folder"))
+
+    filename = "Union_demonstration_test.instr"
     InstrReader = control.InstrumentReader(filename)
     InstrReader.add_to_instr(Instr)
+    
     return InstrReader 
 
 class TestInstrReader(unittest.TestCase):
@@ -21,7 +33,10 @@ class TestInstrReader(unittest.TestCase):
         """
 
         filename = "Union_demonstration_test.instr"
+        
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
 
         InstrReader = control.InstrumentReader(filename)
         InstrReader.add_to_instr(Instr)
@@ -30,8 +45,11 @@ class TestInstrReader(unittest.TestCase):
 
     def test_read_input_parameter(self):
         
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
+        
         
         self.assertEqual(Instr.parameter_list[0].name, "stick_displacement")
         # space in type inserted for easier writing by McStas_Instr class
@@ -50,7 +68,9 @@ class TestInstrReader(unittest.TestCase):
 
     def test_read_declare_parameter(self):
         
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         self.assertEqual(Instr.declare_list[0].name, "sample_1_index")
@@ -78,7 +98,9 @@ class TestInstrReader(unittest.TestCase):
         
     def test_read_initialize_line(self):
         
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         self.assertEqual(Instr.initialize_section,
@@ -89,7 +111,9 @@ class TestInstrReader(unittest.TestCase):
     # Check a few components are read correctly
     def test_read_component_1(self):
         
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         components = Instr.component_list
@@ -117,7 +141,9 @@ class TestInstrReader(unittest.TestCase):
         
     def test_read_component_2(self):
         
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         components = Instr.component_list
@@ -144,7 +170,9 @@ class TestInstrReader(unittest.TestCase):
 
     def test_read_component_WHEN(self):
         
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         components = Instr.component_list
@@ -173,7 +201,9 @@ class TestInstrReader(unittest.TestCase):
         
     def test_read_component_EXTEND(self):
         
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         components = Instr.component_list
@@ -212,7 +242,9 @@ class TestInstrReader(unittest.TestCase):
         
     def test_read_component_GROUP(self):
         
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         components = Instr.component_list
@@ -232,7 +264,9 @@ class TestInstrReader(unittest.TestCase):
         
     def test_read_component_SPLIT(self):
         
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         components = Instr.component_list
@@ -250,7 +284,9 @@ class TestInstrReader(unittest.TestCase):
     
     def test_read_component_JUMP(self):
         
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         components = Instr.component_list
@@ -275,7 +311,9 @@ class TestInstrReader(unittest.TestCase):
         Check if the instrument name is read correctly
         """
 
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         test_string = "A,B,C,D(a,b),E"
@@ -293,7 +331,9 @@ class TestInstrReader(unittest.TestCase):
         Check if the instrument name is read correctly
         """
 
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         test_string = "A,B,C,D(a,b),E"
@@ -308,8 +348,10 @@ class TestInstrReader(unittest.TestCase):
         """
         Check if the instrument name is read correctly
         """
-
+        
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         test_string = "A)B)C)D(a,b))E"
@@ -327,7 +369,9 @@ class TestInstrReader(unittest.TestCase):
         Check if the instrument name is read correctly
         """
 
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         test_string = "A,B{C,D(a,b)},E"
