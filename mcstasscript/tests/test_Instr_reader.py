@@ -331,9 +331,6 @@ class TestInstrReader(unittest.TestCase):
     
     """
     def test_comma_split_limited(self):
-        """
-        Test the Tracer_reader._split_func
-        """
 
         blockPrint()
         Instr = instr.McStas_instr("test_instrument")
