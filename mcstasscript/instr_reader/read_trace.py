@@ -217,8 +217,7 @@ class TraceReader(SectionReader):
                         # There is an uneven number of quotation marks
                         par_exp += ","
                         if "," in par_line:
-                            # include the up to the next comma in par_exp
-                            #par_exp += "," + par_line.split(",",1)[0]
+                            # include up to the next comma in par_exp
                             par_exp += par_line.split(",",1)[0]
                             # remove the part of the par_line added to par_exp
                             par_line = par_line.split(",",1)[1]
