@@ -107,9 +107,12 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj.run_simulation()
 
+        current_directory = os.getcwd()
+        expected_folder_path = os.path.join(current_directory, "test_folder")
+
         # a double space because of a missing option
         expected_call = ("path/mcrun -c -n 1000000 --mpi=1 "
-                         + "-d test_folder  test.instr")
+                         + "-d " + expected_folder_path + "  test.instr")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
@@ -128,9 +131,12 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj.run_simulation()
 
+        current_directory = os.getcwd()
+        expected_folder_path = os.path.join(current_directory, "test_folder")
+
         # a double space because of a missing option
         expected_call = ("path/mcrun -c -n 1000000 --mpi=1 "
-                         + "-d test_folder  test.instr")
+                         + "-d " + expected_folder_path + "  test.instr")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
@@ -152,9 +158,12 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj.run_simulation()
 
+        current_directory = os.getcwd()
+        expected_folder_path = os.path.join(current_directory, "test_folder")
+
         # a double space because of a missing option
         expected_call = ("path/mcrun -c -n 48 --mpi=7 "
-                         + "-d test_folder -fo test.instr")
+                         + "-d " + expected_folder_path + " -fo test.instr")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
@@ -179,9 +188,11 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj.run_simulation()
 
+        current_directory = os.getcwd()
+        expected_folder_path = os.path.join(current_directory, "test_folder")
         # a double space because of a missing option
         expected_call = ("path/mcrun -c -n 48 --mpi=7 "
-                         + "-d test_folder -fo test.instr "
+                         + "-d " + expected_folder_path + " -fo test.instr "
                          + "A=2 BC=car th=\"toy\"")
 
         mock_sub.assert_called_once_with(expected_call,
@@ -208,9 +219,12 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj.run_simulation()
 
+        current_directory = os.getcwd()
+        expected_folder_path = os.path.join(current_directory, "test_folder")
+
         # a double space because of a missing option
         expected_call = ("path/mcrun -n 48 --mpi=7 "
-                         + "-d test_folder -fo test.instr "
+                         + "-d " + expected_folder_path + " -fo test.instr "
                          + "A=2 BC=car th=\"toy\"")
 
         mock_sub.assert_called_once_with(expected_call,

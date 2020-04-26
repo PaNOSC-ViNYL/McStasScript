@@ -32,10 +32,19 @@ class ComponentReader:
 
     """
 
-    def __init__(self, mcstas_path):
+    def __init__(self, mcstas_path, input_path="."):
         """
         Reads all component files in standard folders. Recursive, so
         subfolders of these folders are included.
+
+        Parameters
+        ----------
+        mcstas_path : str
+            Path to McStas folder, used to find the installed components
+
+        keyword arguments:
+            input_path : str
+                Path to work directory, most often current directory
 
         """
 
@@ -60,10 +69,19 @@ class ComponentReader:
             abs_path = os.path.join(mcstas_path, folder)
             self._find_components(abs_path)
 
-        # McStas component in current directory should overwrite
+        # Will overwrite McStas components with definitions in input_folder
         current_directory = os.getcwd()
 
-        for file in os.listdir(current_directory):
+        if os.path.isabs(input_path):
+            input_directory = input_path
+        else:
+            input_directory = os.path.join(current_directory, input_path)
+
+        if not os.path.isdir(input_directory):
+            raise ValueError("Can't find given input_path,"
+                             + " directory must exist.")
+
+        for file in os.listdir(input_directory):
             if file.endswith(".comp"):
                 abs_path = os.path.join(current_directory, file)
                 if "/" in abs_path:

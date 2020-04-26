@@ -169,6 +169,9 @@ class McStas_instr:
 
             mcrun_path : str
                 Absolute path of mcrun or empty if already in path
+
+            input_path : str
+                Work directory, will load components from this folder
         """
 
         self.name = name
@@ -189,6 +192,11 @@ class McStas_instr:
             self.origin = kwargs["origin"]
         else:
             self.origin = "ESS DMSC"
+
+        if "input_path" in kwargs:
+            self.input_path = kwargs["input_path"]
+        else:
+            self.input_path = "."
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         configuration_file_name = os.path.join(THIS_DIR, "..", "configuration.yaml")
@@ -232,7 +240,8 @@ class McStas_instr:
         self.component_name_list = []  # List of component names
 
         # Read info on active McStas components
-        self.component_reader = ComponentReader(self.mcstas_path)
+        self.component_reader = ComponentReader(self.mcstas_path,
+                                                input_path=self.input_path)
         self.component_class_lib = {}
 
     def add_parameter(self, *args, **kwargs):

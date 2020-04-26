@@ -66,6 +66,13 @@ class ManagedMcrun:
                 Sets custom_flags passed to mcrun
             mcrun_path : str
                 Path to mcrun command, "" if already in path
+            increment_folder_name : bool
+                If True, automaticaly appends foldername to make it unique
+            force_compile : bool
+                If True, forces compile, default is True
+            run_folder : str
+                Path to folder in which to run McStas
+
         """
 
         self.name_of_instrumentfile = instr_name
@@ -78,6 +85,7 @@ class ManagedMcrun:
         self.mcrun_path = ""
         self.increment_folder_name = False
         self.compile = True
+        self.run_path = "."
         # mcrun_path always in kwargs
         if "mcrun_path" in kwargs:
             self.mcrun_path = kwargs["mcrun_path"]
@@ -107,13 +115,28 @@ class ManagedMcrun:
         if "force_compile" in kwargs:
             self.compile = kwargs["force_compile"]
 
+        if "run_path" in kwargs:
+            self.run_path = kwargs["run_path"]
+
     def run_simulation(self, **kwargs):
         """
         Runs McStas simulation described by initializing the object
         """
 
-        # construct command to run
+        # get relevant paths
+        current_directory = os.getcwd()
 
+        if not os.path.isabs(self.data_folder_name):
+            self.data_folder_name = os.path.join(current_directory,
+                                                 self.data_folder_name)
+
+        if not os.path.isabs(self.run_path):
+            self.run_path = os.path.join(current_directory, self.run_path)
+
+        if not os.path.isdir(self.run_path):
+            raise ValueError("Given run_path for McStas not a directory!")
+
+        # construct command to run
         options_string = ""
         if self.compile:
             options_string = "-c "
@@ -158,11 +181,20 @@ class ManagedMcrun:
                   + self.name_of_instrumentfile
                   + parameter_string)
 
-        #os.system(full_command)
-        process = subprocess.run(full_command, shell=True,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 universal_newlines=True)
+        try:
+            os.chdir(self.run_path)
+
+            #os.system(full_command)
+            process = subprocess.run(full_command, shell=True,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     universal_newlines=True)
+
+            os.chdir(current_directory)
+
+        except:
+            os.chdir(current_directory)
+            raise RuntimeError("Could not run McStas command")
 
         if "suppress_output" in kwargs:
             if kwargs["suppress_output"] is False:

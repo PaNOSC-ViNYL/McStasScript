@@ -1415,9 +1415,13 @@ class TestMcStas_instr(unittest.TestCase):
 
         expected_path = os.path.join("path","mcrun")
 
+        current_directory = os.getcwd()
+        expected_folder_path = os.path.join(current_directory, "test_data_set")
+
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 1000000 --mpi=1 "
-                         + "-d test_data_set  test_instrument.instr"
+                         + "-d " + expected_folder_path
+                         + "  test_instrument.instr"
                          + " has_default=37 theta=1")
 
         mock_sub.assert_called_once_with(expected_call,
@@ -1450,9 +1454,13 @@ class TestMcStas_instr(unittest.TestCase):
 
         expected_path = os.path.join("path","mcrun")
 
+        current_directory = os.getcwd()
+        expected_folder_path = os.path.join(current_directory, "test_data_set")
+
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 48 --mpi=7 "
-                         + "-d test_data_set -fo test_instrument.instr "
+                         + "-d " + expected_folder_path
+                         + " -fo test_instrument.instr "
                          + "has_default=37 A=2 BC=car theta=\"toy\"")
 
         mock_sub.assert_called_once_with(expected_call,
@@ -1485,9 +1493,13 @@ class TestMcStas_instr(unittest.TestCase):
         
         expected_path = os.path.join("path","mcrun")
 
+        current_directory = os.getcwd()
+        expected_folder_path = os.path.join(current_directory, "test_data_set")
+
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 48 --mpi=7 "
-                         + "-d test_data_set -fo test_instrument.instr "
+                         + "-d " + expected_folder_path
+                         + " -fo test_instrument.instr "
                          + "has_default=10 A=2 BC=car theta=\"toy\"")
 
         mock_sub.assert_called_once_with(expected_call,
