@@ -81,6 +81,7 @@ class ComponentReader:
             raise ValueError("Can't find given input_path,"
                              + " directory must exist.")
 
+        overwritten_components = []
         for file in os.listdir(input_directory):
             if file.endswith(".comp"):
                 abs_path = os.path.join(current_directory, file)
@@ -90,13 +91,19 @@ class ComponentReader:
                     component_name = abs_path.split("\\")[-1].split(".")[-2]
 
                 if component_name in self.component_path:
-                    print("Overwriting McStasScript info on component named "
-                          + file
-                          + " because the component is in the"
-                          + " work directory.")
+                    overwritten_components.append(file)
 
                 self.component_path[component_name] = abs_path
                 self.component_category[component_name] = "Work directory"
+
+        if len(overwritten_components) > 0:
+            print("The following components are found in the work_directory"
+                  + " / input_path:")
+            for name in overwritten_components:
+                print("    ", name)
+
+            print("These definitions will be used instead of the installed "
+                  + "versions.")
 
     def show_categories(self):
         """

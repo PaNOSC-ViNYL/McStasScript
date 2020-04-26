@@ -36,9 +36,10 @@ class TestComponentReader(unittest.TestCase):
 
         component_reader = setup_component_reader()
 
-        message = ("Overwriting McStasScript info on component named "
-                   + "test_for_reading.comp because the component is in "
-                   + "the work directory.\n")
+        message = ("The following components are found in the work_directory "
+                   + "/ input_path:\n     test_for_reading.comp\n"
+                   + "These definitions will be used instead of the "
+                   + "installed versions.\n")
 
         self.assertEqual(mock_stdout.getvalue(), message)
 
@@ -92,7 +93,7 @@ class TestComponentReader(unittest.TestCase):
         output = mock_stdout.getvalue()
         output = output.split("\n")
 
-        self.assertEqual(len(output), 5)
+        self.assertEqual(len(output), 7)
         self.assertIn(" sources", output)
         self.assertIn(" Work directory", output)
         self.assertIn(" misc", output)
@@ -113,9 +114,10 @@ class TestComponentReader(unittest.TestCase):
         output = mock_stdout.getvalue()
         output = output.split("\n")
 
-        self.assertEqual(output[1], " sources")
-        self.assertEqual(output[2], " Work directory")
-        self.assertEqual(output[3], " misc")
+        # Ignoring message about overwritten components, starting from 3
+        self.assertEqual(output[3], " sources")
+        self.assertEqual(output[4], " Work directory")
+        self.assertEqual(output[5], " misc")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_ComponentReader_show_components_short(self, mock_stdout):
@@ -134,7 +136,7 @@ class TestComponentReader(unittest.TestCase):
         output = mock_stdout.getvalue()
         output = output.split("\n")
 
-        self.assertEqual(len(output), 3)
+        self.assertEqual(len(output), 5)
         self.assertIn(" test_for_structure", output)
         # Check overwritten component is not in the output
         self.assertNotIn(" test_for_reading", output)

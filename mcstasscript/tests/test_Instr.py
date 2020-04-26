@@ -420,14 +420,16 @@ class TestMcStas_instr(unittest.TestCase):
         output = output.split("\n")
 
         self.assertEqual(output[0],
-                         "Overwriting McStasScript info on component "
-                         + "named test_for_reading.comp because the "
-                         + "component is in the work directory.")
-        self.assertEqual(output[1],
+                         "The following components are found in the "
+                         + "work_directory / input_path:")
+        self.assertEqual(output[1], "     test_for_reading.comp")
+        self.assertEqual(output[2], "These definitions will be used "
+                                    +"instead of the installed versions.")
+        self.assertEqual(output[3],
                          "Here are the available component categories:")
-        self.assertEqual(output[2], " sources")
-        self.assertEqual(output[3], " Work directory")
-        self.assertEqual(output[4], " misc")
+        self.assertEqual(output[4], " sources")
+        self.assertEqual(output[5], " Work directory")
+        self.assertEqual(output[6], " misc")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_show_components_folder(self, mock_stdout):
@@ -442,14 +444,16 @@ class TestMcStas_instr(unittest.TestCase):
         output = output.split("\n")
 
         self.assertEqual(output[0],
-                         "Overwriting McStasScript info on component "
-                         + "named test_for_reading.comp because the "
-                         + "component is in the work directory.")
-        self.assertEqual(output[1],
+                         "The following components are found in the "
+                         + "work_directory / input_path:")
+        self.assertEqual(output[1], "     test_for_reading.comp")
+        self.assertEqual(output[2], "These definitions will be used "
+                         + "instead of the installed versions.")
+        self.assertEqual(output[3],
                          "Here are all components in the Work directory "
                          + "category.")
-        self.assertEqual(output[2], " test_for_reading")
-        self.assertEqual(output[3], "")
+        self.assertEqual(output[4], " test_for_reading")
+        self.assertEqual(output[5], "")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_component_help(self, mock_stdout):
@@ -467,7 +471,7 @@ class TestMcStas_instr(unittest.TestCase):
         output = mock_stdout.getvalue()
         output = output.split("\n")
 
-        self.assertEqual(output[1], " ___ Help test_for_reading " + "_"*63)
+        self.assertEqual(output[3], " ___ Help test_for_reading " + "_"*63)
 
         legend = ("|"
                   + bcolors.BOLD + "optional parameter" + bcolors.ENDC
@@ -485,14 +489,14 @@ class TestMcStas_instr(unittest.TestCase):
                   + bcolors.ENDC + bcolors.ENDC
                   + "|")
 
-        self.assertEqual(output[2], legend)
+        self.assertEqual(output[4], legend)
 
         par_name = bcolors.BOLD + "radius" + bcolors.ENDC
         value = (bcolors.BOLD + bcolors.OKBLUE
                  + "0.1" + bcolors.ENDC + bcolors.ENDC)
         comment = ("// Radius of circle in (x,y,0) plane where "
                    + "neutrons are generated.")
-        self.assertEqual(output[3],
+        self.assertEqual(output[5],
                          par_name + " = " + value + " [m] " + comment)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
