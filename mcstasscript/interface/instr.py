@@ -169,6 +169,9 @@ class McStas_instr:
 
             mcrun_path : str
                 Absolute path of mcrun or empty if already in path
+
+            input_path : str
+                Work directory, will load components from this folder
         """
 
         self.name = name
@@ -189,6 +192,11 @@ class McStas_instr:
             self.origin = kwargs["origin"]
         else:
             self.origin = "ESS DMSC"
+
+        if "input_path" in kwargs:
+            self.input_path = kwargs["input_path"]
+        else:
+            self.input_path = "."
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         configuration_file_name = os.path.join(THIS_DIR, "..", "configuration.yaml")
@@ -232,7 +240,8 @@ class McStas_instr:
         self.component_name_list = []  # List of component names
 
         # Read info on active McStas components
-        self.component_reader = ComponentReader(self.mcstas_path)
+        self.component_reader = ComponentReader(self.mcstas_path,
+                                                input_path=self.input_path)
         self.component_class_lib = {}
 
     def add_parameter(self, *args, **kwargs):
@@ -1331,7 +1340,7 @@ class McStas_instr:
         """
 
         # Create file identifier
-        fo = open(self.name + ".instr", "w")
+        fo = open(os.path.join(self.input_path, self.name + ".instr"), "w")
 
         # Write quick doc start
         fo.write("/" + 80*"*" + "\n")
@@ -1488,6 +1497,11 @@ class McStas_instr:
         # Make sure mcrun path is in kwargs
         if "mcrun_path" not in kwargs:
             kwargs["mcrun_path"] = self.mcrun_path
+
+        if "run_path" not in kwargs:
+            # path where mcrun is executed, will load components there
+            # if not set, use input_folder given
+            kwargs["run_path"] = self.input_path
                     
         if "parameters" in kwargs:
             given_parameters = kwargs["parameters"]

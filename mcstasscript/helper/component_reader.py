@@ -32,10 +32,19 @@ class ComponentReader:
 
     """
 
-    def __init__(self, mcstas_path):
+    def __init__(self, mcstas_path, input_path="."):
         """
         Reads all component files in standard folders. Recursive, so
         subfolders of these folders are included.
+
+        Parameters
+        ----------
+        mcstas_path : str
+            Path to McStas folder, used to find the installed components
+
+        keyword arguments:
+            input_path : str
+                Path to work directory, most often current directory
 
         """
 
@@ -60,25 +69,43 @@ class ComponentReader:
             abs_path = os.path.join(mcstas_path, folder)
             self._find_components(abs_path)
 
-        # McStas component in current directory should overwrite
+        # Will overwrite McStas components with definitions in input_folder
         current_directory = os.getcwd()
 
-        for file in os.listdir(current_directory):
+        if os.path.isabs(input_path):
+            input_directory = input_path
+        else:
+            input_directory = os.path.join(current_directory, input_path)
+
+        if not os.path.isdir(input_directory):
+            print("input_path: ", input_directory)
+            raise ValueError("Can't find given input_path,"
+                             + " directory must exist.")
+
+        overwritten_components = []
+        for file in os.listdir(input_directory):
             if file.endswith(".comp"):
-                abs_path = os.path.join(current_directory, file)
+                abs_path = os.path.join(input_directory, file)
                 if "/" in abs_path:
                     component_name = abs_path.split("/")[-1].split(".")[-2]
                 else:
                     component_name = abs_path.split("\\")[-1].split(".")[-2]
 
                 if component_name in self.component_path:
-                    print("Overwriting McStasScript info on component named "
-                          + file
-                          + " because the component is in the"
-                          + " work directory.")
+                    overwritten_components.append(file)
 
                 self.component_path[component_name] = abs_path
                 self.component_category[component_name] = "Work directory"
+
+        if len(overwritten_components) > 0:
+            print("The following components are found in the work_directory"
+                  + " / input_path:")
+            for name in overwritten_components:
+                print("    ", name)
+
+            print("These definitions will be used instead of the installed "
+                  + "versions.")
+
 
     def show_categories(self):
         """
