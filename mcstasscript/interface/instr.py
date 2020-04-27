@@ -1340,7 +1340,7 @@ class McStas_instr:
         """
 
         # Create file identifier
-        fo = open(self.name + ".instr", "w")
+        fo = open(os.path.join(self.input_path, self.name + ".instr"), "w")
 
         # Write quick doc start
         fo.write("/" + 80*"*" + "\n")
@@ -1497,6 +1497,11 @@ class McStas_instr:
         # Make sure mcrun path is in kwargs
         if "mcrun_path" not in kwargs:
             kwargs["mcrun_path"] = self.mcrun_path
+
+        if "run_path" not in kwargs:
+            # path where mcrun is executed, will load components there
+            # if not set, use input_folder given
+            kwargs["run_path"] = self.input_path
                     
         if "parameters" in kwargs:
             given_parameters = kwargs["parameters"]

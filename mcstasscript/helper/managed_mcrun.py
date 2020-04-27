@@ -183,8 +183,7 @@ class ManagedMcrun:
 
         try:
             os.chdir(self.run_path)
-
-            #os.system(full_command)
+            print("running mcrun from: ", os.getcwd())
             process = subprocess.run(full_command, shell=True,
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE,
@@ -194,7 +193,7 @@ class ManagedMcrun:
 
         except:
             os.chdir(current_directory)
-            raise RuntimeError("Could not run McStas command")
+            raise RuntimeError("Could not run McStas command.")
 
         if "suppress_output" in kwargs:
             if kwargs["suppress_output"] is False:

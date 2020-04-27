@@ -78,13 +78,14 @@ class ComponentReader:
             input_directory = os.path.join(current_directory, input_path)
 
         if not os.path.isdir(input_directory):
+            print("input_path: ", input_directory)
             raise ValueError("Can't find given input_path,"
                              + " directory must exist.")
 
         overwritten_components = []
         for file in os.listdir(input_directory):
             if file.endswith(".comp"):
-                abs_path = os.path.join(current_directory, file)
+                abs_path = os.path.join(input_directory, file)
                 if "/" in abs_path:
                     component_name = abs_path.split("/")[-1].split(".")[-2]
                 else:
@@ -104,6 +105,7 @@ class ComponentReader:
 
             print("These definitions will be used instead of the installed "
                   + "versions.")
+
 
     def show_categories(self):
         """
