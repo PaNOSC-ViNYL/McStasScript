@@ -183,7 +183,7 @@ class ManagedMcrun:
 
         try:
             os.chdir(self.run_path)
-            print("running mcrun from: ", os.getcwd())
+
             process = subprocess.run(full_command, shell=True,
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE,

@@ -39,6 +39,25 @@ def setup_instr_with_path():
 
     os.chdir(current_work_dir)  # Return to previous workdir
 
+def setup_instr_with_input_path():
+    """
+    Sets up a instrument with a valid mcstas_path, but it points to
+    the dummy installation in the test folder.
+    """
+
+    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+    dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
+    input_path = os.path.join(THIS_DIR, "test_input_folder")
+
+    current_work_dir = os.getcwd()
+    os.chdir(THIS_DIR)  # Set work directory to test folder
+
+    return McStas_instr("test_instrument",
+                        mcstas_path=dummy_path,
+                        input_path=input_path)
+
+    os.chdir(current_work_dir)  # Return to previous workdir
+
 
 def setup_populated_instr():
     """
@@ -454,6 +473,30 @@ class TestMcStas_instr(unittest.TestCase):
                          + "category.")
         self.assertEqual(output[4], " test_for_reading")
         self.assertEqual(output[5], "")
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_show_components_input_path_simple(self, mock_stdout):
+        """
+        Simple test of show components to show categories
+        """
+        instr = setup_instr_with_input_path()
+
+        instr.show_components()
+
+        output = mock_stdout.getvalue()
+        output = output.split("\n")
+
+        self.assertEqual(output[0],
+                         "The following components are found in the "
+                         + "work_directory / input_path:")
+        self.assertEqual(output[1], "     test_for_reading.comp")
+        self.assertEqual(output[2], "These definitions will be used "
+                                    +"instead of the installed versions.")
+        self.assertEqual(output[3],
+                         "Here are the available component categories:")
+        self.assertEqual(output[4], " sources")
+        self.assertEqual(output[5], " Work directory")
+        self.assertEqual(output[6], " misc")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_component_help(self, mock_stdout):
