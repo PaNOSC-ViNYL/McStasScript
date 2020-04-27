@@ -1381,7 +1381,7 @@ class TestMcStas_instr(unittest.TestCase):
          my_call("%}\n"),
          my_call("\nEND\n")]
 
-        mock_f.assert_called_with("test_instrument.instr", "w")
+        mock_f.assert_called_with("./test_instrument.instr", "w")
         handle = mock_f()
         handle.write.assert_has_calls(wrts, any_order=False)
 
