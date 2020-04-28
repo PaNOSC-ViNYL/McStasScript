@@ -9,7 +9,7 @@ McStasScript can be installed using pip,
 
     python3 -m pip install McStasScript --upgrade
 
-After installation it is necessary to configure the package so the McStas installation can be found, here we show how the appropriate code for an Ubuntu system. The configuration is saved permanently, and only needs to be updated when McStas or McStasScript is updated.
+After installation it is necessary to configure the package so the McStas installation can be found, here we show how the appropriate code for an Ubuntu system. The configuration is saved permanently, and only needs to be updated when McStas or McStasScript is updated. This has to be done from within python.
 
     from mcstasscript.interface import functions
     my_configurator = functions.Configurator()

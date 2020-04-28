@@ -72,10 +72,15 @@ class ComponentReader:
         # Will overwrite McStas components with definitions in input_folder
         current_directory = os.getcwd()
 
+        # Set up absolute input_path
         if os.path.isabs(input_path):
             input_directory = input_path
         else:
-            input_directory = os.path.join(current_directory, input_path)
+            if input_path == ".":
+                # Default case, avoid having /./ in absolute path
+                input_directory = current_directory
+            else:
+                input_directory = os.path.join(current_directory, input_path)
 
         if not os.path.isdir(input_directory):
             print("input_path: ", input_directory)

@@ -88,6 +88,85 @@ class TestComponentReader(unittest.TestCase):
         self.assertIn("test_for_structure2", component_reader.component_path)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_ComponentReader_init_component_paths(self, mock_stdout):
+        """
+        Test that ComponentReader stores correct absolute paths to
+        the components found in the McStas installation
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        component_reader = setup_component_reader()
+
+        n_components_found = len(component_reader.component_path)
+        self.assertEqual(n_components_found, 3)
+
+        expected_path = os.path.join(THIS_DIR, "test_for_reading.comp")
+        self.assertIn("test_for_reading", component_reader.component_path)
+        self.assertEqual(component_reader.component_path["test_for_reading"],
+                         expected_path)
+        self.assertEqual(component_reader.component_category["test_for_reading"],
+                         "Work directory")
+
+        expected_path = os.path.join(dummy_path, "misc",
+                                     "test_for_structure.comp")
+        self.assertIn("test_for_structure", component_reader.component_path)
+        self.assertEqual(component_reader.component_path["test_for_structure"],
+                         expected_path)
+        self.assertEqual(component_reader.component_category["test_for_structure"],
+                         "misc")
+
+        expected_path = os.path.join(dummy_path, "sources",
+                                     "test_for_structure2.comp")
+        self.assertIn("test_for_structure2", component_reader.component_path)
+        self.assertEqual(component_reader.component_path["test_for_structure2"],
+                         expected_path)
+        self.assertEqual(component_reader.component_category["test_for_structure2"],
+                         "sources")
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_ComponentReader_init_component_paths_input(self, mock_stdout):
+        """
+        Test that ComponentReader stores correct absolute paths to
+        the components found in the McStas installation.
+        This version uses custom input_path
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
+        input_path = os.path.join(THIS_DIR, "test_input_folder")
+
+        component_reader = setup_component_reader_input_path()
+
+        n_components_found = len(component_reader.component_path)
+        self.assertEqual(n_components_found, 3)
+
+        expected_path = os.path.join(dummy_path, "misc",
+                                     "test_for_reading.comp")
+        self.assertIn("test_for_reading", component_reader.component_path)
+        self.assertEqual(component_reader.component_path["test_for_reading"],
+                         expected_path)
+        self.assertEqual(component_reader.component_category["test_for_reading"],
+                         "misc")
+
+        expected_path = os.path.join(input_path, "test_for_structure.comp")
+        self.assertIn("test_for_structure", component_reader.component_path)
+        self.assertEqual(component_reader.component_path["test_for_structure"],
+                         expected_path)
+        self.assertEqual(component_reader.component_category["test_for_structure"],
+                         "Work directory")
+
+
+        expected_path = os.path.join(dummy_path, "sources",
+                                     "test_for_structure2.comp")
+        self.assertIn("test_for_structure2", component_reader.component_path)
+        self.assertEqual(component_reader.component_path["test_for_structure2"],
+                         expected_path)
+        self.assertEqual(component_reader.component_category["test_for_structure2"],
+                         "sources")
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_ComponentReader_init_categories(self, mock_stdout):
         """
         Test that ComponentReader initializes categories correctly
