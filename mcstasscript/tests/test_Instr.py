@@ -477,7 +477,8 @@ class TestMcStas_instr(unittest.TestCase):
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_show_components_input_path_simple(self, mock_stdout):
         """
-        Simple test of show components to show categories
+        Simple test of input_path being recoignized and passed
+        to component_reader so PSDlin_monitor is overwritten
         """
         instr = setup_instr_with_input_path()
 
@@ -489,14 +490,14 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[0],
                          "The following components are found in the "
                          + "work_directory / input_path:")
-        self.assertEqual(output[1], "     test_for_reading.comp")
+        self.assertEqual(output[1], "     test_for_structure.comp")
         self.assertEqual(output[2], "These definitions will be used "
                                     +"instead of the installed versions.")
         self.assertEqual(output[3],
                          "Here are the available component categories:")
         self.assertEqual(output[4], " sources")
-        self.assertEqual(output[5], " Work directory")
-        self.assertEqual(output[6], " misc")
+        self.assertEqual(output[5], " misc")
+        self.assertEqual(output[6], " Work directory")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_component_help(self, mock_stdout):

@@ -20,6 +20,21 @@ def setup_component_reader():
 
     return component_reader
 
+def setup_component_reader_input_path():
+    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+    dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
+    input_path = os.path.join(THIS_DIR, "test_input_folder")
+
+    current_work_dir = os.getcwd()
+    os.chdir(THIS_DIR)  # Set work directory to test folder
+
+    component_reader = ComponentReader(mcstas_path=dummy_path,
+                                       input_path=input_path)
+
+    os.chdir(current_work_dir)  # Reset work directory
+
+    return component_reader
+
 
 class TestComponentReader(unittest.TestCase):
     """
@@ -38,6 +53,21 @@ class TestComponentReader(unittest.TestCase):
 
         message = ("The following components are found in the work_directory "
                    + "/ input_path:\n     test_for_reading.comp\n"
+                   + "These definitions will be used instead of the "
+                   + "installed versions.\n")
+
+        self.assertEqual(mock_stdout.getvalue(), message)
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_ComponentReader_init_overwrite_message_input(self, mock_stdout):
+        """
+        Test that ComponentReader reports overwritten components
+        """
+
+        component_reader = setup_component_reader_input_path()
+
+        message = ("The following components are found in the work_directory "
+                   + "/ input_path:\n     test_for_structure.comp\n"
                    + "These definitions will be used instead of the "
                    + "installed versions.\n")
 
