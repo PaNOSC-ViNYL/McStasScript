@@ -40,6 +40,7 @@ class TestManagedMcrun(unittest.TestCase):
 
         self.assertEqual(mcrun_obj.mpi, 1)
         self.assertEqual(mcrun_obj.ncount, 1000000)
+        self.assertEqual(mcrun_obj.run_path, ".")
 
     def test_ManagedMcrun_init_set_values(self):
         """
@@ -48,11 +49,13 @@ class TestManagedMcrun(unittest.TestCase):
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
                                  mcrun_path="",
+                                 run_path="test",
                                  mpi=4,
                                  ncount=128)
 
         self.assertEqual(mcrun_obj.mpi, 4)
         self.assertEqual(mcrun_obj.ncount, 128)
+        self.assertEqual(mcrun_obj.run_path, "test")
 
     def test_ManagedMcrun_init_set_parameters(self):
         """
