@@ -27,7 +27,7 @@ class DefinitionReader(SectionReader):
         
         if "(" in line:
             # Start of instrument definition, get name
-            self.instr_name = line.split("(")[0].split(" ")[-1]
+            self.instr_name = line.split("(")[0].strip().split(" ")[-1]
             self._start_py_file()
             # Remove the parameters from the paranthesis
             parameters = line.split("(")[1]

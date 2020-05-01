@@ -176,7 +176,7 @@ class InstrumentReader:
             if definition_mode and not comment_mode:
                 # Get instrument name
                 if not instr_name_read:
-                    self.instr_name = line.split("(")[0].split(" ")[-1]
+                    self.instr_name = line.split("(")[0].strip().split(" ")[-1]
                     instr_name_read = True
                     self.update_file_name()
 
