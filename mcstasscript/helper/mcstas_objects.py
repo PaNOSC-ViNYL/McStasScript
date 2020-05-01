@@ -278,11 +278,17 @@ class component:
 
     Methods
     -------
-    set_AT(at_list,**kwargs)
+    set_AT(at_list, RELATIVE)
         Sets AT_data, can set AT_relative using keyword
 
-    set_ROTATED(rotated_list,**kwargs)
+    set_AT_RELATIVE(relative)
+        Can set RELATIVE for position
+
+    set_ROTATED(rotated_list, RELATIVE)
         Sets ROTATED_data, can set ROTATED_relative using keyword
+
+    set_ROTATED_RELATIVE(relative)
+        Can set RELATIVE for rotation
 
     set_RELATIVE(relative_name)
         Set both AT_relative and ROTATED_relative to relative_name
@@ -411,27 +417,20 @@ class component:
         self._unfreeze()
 
         if "AT" in kwargs:
-            self.AT_data = kwargs["AT"]
-        
-        # Could check if AT_RELATIVE is a string
+            self.set_AT(kwargs["AT"])
+
         if "AT_RELATIVE" in kwargs:
-            self.AT_relative = "RELATIVE " + kwargs["AT_RELATIVE"]
+            self.set_AT_RELATIVE(kwargs["AT_RELATIVE"])
 
         self.ROTATED_specified = False
         if "ROTATED" in kwargs:
-            self.ROTATED_data = kwargs["ROTATED"]
-            self.ROTATED_specified = True
+            self.set_ROTATED(kwargs["ROTATED"])
 
-        # Could check if ROTATED_RELATIVE is a string
         if "ROTATED_RELATIVE" in kwargs:
-            self.ROTATED_relative = "RELATIVE " + kwargs["ROTATED_RELATIVE"]
-            self.ROTATED_specified = True
+            self.set_ROTATED_RELATIVE(kwargs["ROTATED_RELATIVE"])
 
-        # Could check if RELATIVE is a string
         if "RELATIVE" in kwargs:
-            self.AT_relative = "RELATIVE " + kwargs["RELATIVE"]
-            self.ROTATED_relative = "RELATIVE " + kwargs["RELATIVE"]
-            self.ROTATED_specified = True
+            self.set_RELATIVE(kwargs["RELATIVE"])
 
         if "WHEN" in kwargs:
             self.WHEN = "WHEN (" + kwargs["WHEN"] + ")"
@@ -475,35 +474,67 @@ class component:
     def _unfreeze(self):
         self.__isfrozen = False
 
-    def set_AT(self, at_list, **kwargs):
+    def set_AT(self, at_list, RELATIVE=None):
         """Sets AT data, List of 3 floats"""
         self.AT_data = at_list
-        if "RELATIVE" in kwargs:
-            relative_name = kwargs["RELATIVE"]
-            if relative_name == "ABSOLUTE":
-                self.AT_relative = relative_name
-            else:
-                self.AT_relative = "RELATIVE " + relative_name
+        if RELATIVE is not None:
+            self.set_AT_RELATIVE(RELATIVE)
 
-    def set_ROTATED(self, rotated_list, **kwargs):
+    def set_AT_RELATIVE(self, relative):
+        """Sets AT RELATIVE with string or component instance"""
+
+        # Extract name if component instance is given
+        if isinstance(relative, component):
+            relative = relative.name
+        elif not isinstance(relative, str):
+            raise ValueError("Relative must be either string or "
+                             + "component object.")
+
+        # Set AT relative
+        if relative == "ABSOLUTE":
+            self.AT_relative = "ABSOLUTE"
+        else:
+            self.AT_relative = "RELATIVE " + relative
+
+    def set_ROTATED(self, rotated_list, RELATIVE=None):
         """Sets ROTATED data, List of 3 floats"""
         self.ROTATED_data = rotated_list
         self.ROTATED_specified = True
-        if "RELATIVE" in kwargs:
-            relative_name = kwargs["RELATIVE"]
-            if relative_name == "ABSOLUTE":
-                self.ROTATED_relative = relative_name
-            else:
-                self.ROTATED_relative = "RELATIVE " + relative_name
+        if RELATIVE is not None:
+            self.set_ROTATED_RELATIVE(RELATIVE)
 
-    def set_RELATIVE(self, relative_name):
-        """Sets both AT_relative and ROTATED_relative"""
-        if relative_name == "ABSOLUTE":
-            self.AT_relative = relative_name
-            self.ROTATED_relative = relative_name
+    def set_ROTATED_RELATIVE(self, relative):
+        """Sets ROTATED RELATIVE with string or component instance"""
+
+        self.ROTATED_specified = True
+        # Extract name if a component instance is given
+        if isinstance(relative, component):
+            relative = relative.name
+        elif not isinstance(relative, str):
+            raise ValueError("Relative must be either string or "
+                             + "component object.")
+
+        # Set ROTATED relative
+        if relative == "ABSOLUTE":
+            self.ROTATED_relative = "ABSOLUTE"
         else:
-            self.AT_relative = "RELATIVE " + relative_name
-            self.ROTATED_relative = "RELATIVE " + relative_name
+            self.ROTATED_relative = "RELATIVE " + relative
+
+    def set_RELATIVE(self, relative):
+        """Sets both AT_relative and ROTATED_relative"""
+        # Extract name if a component instance is given
+        if isinstance(relative, component):
+            relative = relative.name
+        elif not isinstance(relative, str):
+            raise ValueError("Relative must be either string or "
+                             + "component object.")
+
+        if relative == "ABSOLUTE":
+            self.AT_relative = "ABSOLUTE"
+            self.ROTATED_relative = "ABSOLUTE"
+        else:
+            self.AT_relative = "RELATIVE " + relative
+            self.ROTATED_relative = "RELATIVE " + relative
 
     def set_parameters(self, dict_input):
         """
