@@ -1,4 +1,5 @@
 import io
+import os
 import time
 import unittest
 import unittest.mock
@@ -138,6 +139,10 @@ class TestComplexInstrument(unittest.TestCase):
         Test parameters can be controlled through McStasScript.  Here
         a slit is moved to one side and the result is verified.
         """
+        CURRENT_DIR = os.getcwd()
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        os.chdir(THIS_DIR)
+
         Instr = setup_complex_instrument()
 
         data = Instr.run_full_instrument(foldername="integration_test_complex",
@@ -145,6 +150,8 @@ class TestComplexInstrument(unittest.TestCase):
                                          increment_folder_name=True,
                                          parameters={"guide_width": 0.03,
                                                      "guide_length": 8.0})
+
+        os.chdir(CURRENT_DIR)
 
         intensity_data_pos = functions.name_search("PSD_1D_1", data).Intensity
         sum_outside_beam = sum(intensity_data_pos[0:50])
