@@ -54,10 +54,10 @@ class parameter_variable:
                 sets comment displayed next to declaration
         """
         if len(args) == 1:
-            self.type = ""
+            self.type = "double"
             self.name = str(args[0])
         if len(args) == 2:
-            self.type = args[0] + " "
+            self.type = args[0]
             self.name = str(args[1])
 
         if not is_legal_parameter(self.name):
@@ -79,7 +79,10 @@ class parameter_variable:
 
     def write_parameter(self, fo, stop_character):
         """Writes input parameter to file"""
-        fo.write("%s%s" % (self.type, self.name))
+        if self.type == "double":
+            fo.write("%s" % (self.name))
+        else:
+            fo.write("%s %s" % (self.type, self.name))
         if self.value != "":
             if isinstance(self.value, int):
                 fo.write(" = %d" % self.value)
@@ -149,7 +152,6 @@ class declare_variable:
         self.type = args[0]
         self.name = str(args[1])
 
-
         par_name = self.name
         if "*" in par_name[0]:
             # Remove any number of prefixed *, indicating variable is a pointer
@@ -213,8 +215,6 @@ class declare_variable:
                 for i in range(0, len(self.value) - 1):
                     fo.write("%G," % self.value[i])
                 fo.write("%G};%s" % (self.value[-1], self.comment))
-                
-                
 
 
 class component:
@@ -403,6 +403,16 @@ class component:
         # If any keywords are set in kwargs, update these
         self.set_keyword_input(**kwargs)
 
+        # Type saftey
+        if not hasattr(self, "parameter_types"):
+            self.parameter_types = {}
+
+        if not hasattr(self, "instrument_parameters"):
+            self.instrument_parameters = {}
+
+        if not hasattr(self, "instrument_variables"):
+            self.instrument_variables = {}
+
         """
         Could store an option for whether this component should be
         printed in instrument file or in a seperate file which would
@@ -466,6 +476,29 @@ class component:
                                  + " of component type "
                                  + self.component_name
                                  + ".")
+
+        # Type checking when giving parameters
+        if self.__isfrozen:
+            if key in self.parameter_types:
+                expected_type = self.parameter_types[key]
+
+                if isinstance(value, str):
+                    # check this value is within the data base and has
+                    # correct type
+                    pass
+                    if key in self.instrument_parameters:
+                        parameter = self.instrument_parameters[key]
+                        given_type = parameter.type
+
+                    # if string is expected and string is given, check "
+
+                elif isinstance(value, int):
+                    if expected_type not in ["double", "float", "int"]:
+                        raise AttributeError("Type does not match.")
+                elif isinstance(value, float):
+                    if expected_type not in ["double", "float"]:
+                        raise AttributeError("Type does not match.")
+
         object.__setattr__(self, key, value)
 
     def _freeze(self):

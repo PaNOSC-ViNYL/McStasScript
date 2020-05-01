@@ -577,6 +577,10 @@ class McStas_instr:
             input_dict["category"] = comp_info.category
             input_dict["line_limit"] = self.line_limit
 
+            # Used for type checking
+            input_dict["instrument_parameters"] = self.parameter_list
+            input_dict["instrument_variables"] = self.declare_list
+
             self.component_class_lib[component_name] = type(component_name,
                                                             (component,),
                                                             input_dict)
