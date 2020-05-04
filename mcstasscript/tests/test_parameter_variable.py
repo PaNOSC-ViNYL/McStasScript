@@ -29,7 +29,7 @@ class Test_parameter_variable(unittest.TestCase):
         par = parameter_variable("double", "test")
 
         self.assertEqual(par.name, "test")
-        self.assertEqual(par.type, "double ")  # space for easier writing
+        self.assertEqual(par.type, "double")  # space for easier writing
 
     def test_parameter_variable_init_basic_type_value(self):
         """
@@ -39,7 +39,7 @@ class Test_parameter_variable(unittest.TestCase):
         par = parameter_variable("double", "test", value=518)
 
         self.assertEqual(par.name, "test")
-        self.assertEqual(par.type, "double ")  # space for easier writing
+        self.assertEqual(par.type, "double")
         self.assertEqual(par.value, 518)
 
     def test_parameter_variable_init_basic_type_value_comment(self):
@@ -51,7 +51,7 @@ class Test_parameter_variable(unittest.TestCase):
                                  value=518, comment="test comment /")
 
         self.assertEqual(par.name, "test")
-        self.assertEqual(par.type, "double ")  # space for easier writing
+        self.assertEqual(par.type, "double")
         self.assertEqual(par.value, 518)
         self.assertEqual(par.comment, "// test comment /")
 
@@ -64,7 +64,7 @@ class Test_parameter_variable(unittest.TestCase):
                                  value=518, comment="test comment /")
 
         self.assertEqual(par.name, "test")
-        self.assertEqual(par.type, "")
+        self.assertEqual(par.type, "double")
         self.assertEqual(par.value, 518)
         self.assertEqual(par.comment, "// test comment /")
 

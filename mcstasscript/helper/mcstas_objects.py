@@ -26,6 +26,9 @@ class parameter_variable:
     comment : str
         Comment displayed next to the parameter, could contain units
 
+    user_specified_type : bool
+        True if user specified type, False if it was automatically assigned
+
     Methods
     -------
     write_parameter(fo,stop_character)
@@ -55,9 +58,11 @@ class parameter_variable:
         """
         if len(args) == 1:
             self.type = "double"
+            self.user_specified_type = False
             self.name = str(args[0])
         if len(args) == 2:
             self.type = args[0]
+            self.user_specified_type = True
             self.name = str(args[1])
 
         if not is_legal_parameter(self.name):
@@ -66,9 +71,34 @@ class parameter_variable:
                             + "\" is not a legal c variable name, "
                             + " and cannot be used in McStas.")
 
+        if self.type not in ["double", "int", "char", "string"]:
+            raise NameError("Given parameter type not allowed, choose from "
+                            + "double, int, char and string.")
+
         self.value = ""
         if "value" in kwargs:
             self.value = kwargs["value"]
+
+            if self.type == "char":
+                # check apostrophes around character
+                if self.value[0] != "'":
+                    self.value = "'" + self.value
+
+                if self.value[-1] != "'":
+                    self.value = self.value + "'"
+
+                # check only single character is given
+                if len(self.value) != 3:
+                    raise ValueError("Given char value illegal, only one "
+                                     + "character allowed.")
+
+            if self.type == "string":
+                # check quotation marks around string
+                if self.value[0] != '"':
+                    self.value = '"' + self.value
+
+                if self.value[-1] != '"':
+                    self.value = self.value + '"'
 
         self.comment = ""
         if "comment" in kwargs:
@@ -79,10 +109,11 @@ class parameter_variable:
 
     def write_parameter(self, fo, stop_character):
         """Writes input parameter to file"""
-        if self.type == "double":
-            fo.write("%s" % (self.name))
-        else:
+        if self.user_specified_type:
             fo.write("%s %s" % (self.type, self.name))
+        else:
+            # McStas default type is double if nothing specified
+            fo.write("%s" % (self.name))
         if self.value != "":
             if isinstance(self.value, int):
                 fo.write(" = %d" % self.value)

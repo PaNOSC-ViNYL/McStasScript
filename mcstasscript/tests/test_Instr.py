@@ -205,8 +205,7 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_instr_root_path()
 
         instr.add_parameter("double", "theta", comment="test par")
-        instr.add_parameter("single", "theta", comment="test par")
-        instr.add_parameter("float", "theta", value=8, comment="test par")
+        instr.add_parameter("char", "theta2", value="A", comment="test char")
         instr.add_parameter("int", "slits", comment="test par")
         instr.add_parameter("string", "ref",
                             value="string", comment="new string")
@@ -215,11 +214,10 @@ class TestMcStas_instr(unittest.TestCase):
 
         output = mock_stdout.getvalue().split("\n")
 
-        self.assertEqual(output[0], "double  theta             // test par")
-        self.assertEqual(output[1], "single  theta             // test par")
-        self.assertEqual(output[2], "float   theta  =  8       // test par")
-        self.assertEqual(output[3], "int     slits             // test par")
-        self.assertEqual(output[4], "string  ref    =  string  // new string")
+        self.assertEqual(output[0], "double theta                // test par")
+        self.assertEqual(output[1], "char   theta2  =  'A'       // test char")
+        self.assertEqual(output[2], "int    slits                // test par")
+        self.assertEqual(output[3], "string ref     =  \"string\"  // new string")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_show_parameters_line_break(self, mock_stdout):
@@ -232,8 +230,7 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_instr_root_path()
 
         instr.add_parameter("double", "theta", comment="test par")
-        instr.add_parameter("single", "theta", comment="test par")
-        instr.add_parameter("float", "theta", value=8, comment="test par")
+        instr.add_parameter("char", "theta2", value="A", comment="test par")
         instr.add_parameter("int", "slits", comment="test par")
         instr.add_parameter("string", "ref",
                             value="string", comment="new string")
@@ -251,22 +248,21 @@ class TestMcStas_instr(unittest.TestCase):
 
         output = mock_stdout.getvalue().split("\n")
 
-        self.assertEqual(output[0], "double  theta             // test par")
-        self.assertEqual(output[1], "single  theta             // test par")
-        self.assertEqual(output[2], "float   theta  =  8       // test par")
-        self.assertEqual(output[3], "int     slits             // test par")
-        self.assertEqual(output[4], "string  ref    =  string  // new string")
-        comment_line = "This is a very long comment meant for testing "
-        self.assertEqual(output[5], "double  value  =  37      // "
+        self.assertEqual(output[0], "double theta                // test par")
+        self.assertEqual(output[1], "char   theta2  =  'A'       // test par")
+        self.assertEqual(output[2], "int    slits                // test par")
+        self.assertEqual(output[3], "string ref     =  \"string\"  // new string")
+        comment_line = "This is a very long comment meant for "
+        self.assertEqual(output[4], "double value   =  37        // "
                                     + comment_line)
-        comment_line = "the dynamic line breaking that is used in this "
-        self.assertEqual(output[6], "                             "
+        comment_line = "testing the dynamic line breaking that is used "
+        self.assertEqual(output[5], "                               "
                                     + comment_line)
-        comment_line = "method. It needs to have many lines in order to "
-        self.assertEqual(output[7], "                             "
+        comment_line = "in this method. It needs to have many lines in "
+        self.assertEqual(output[6], "                               "
                                     + comment_line)
-        comment_line = "ensure it really works. "
-        self.assertEqual(output[8], "                             "
+        comment_line = "order to ensure it really works. "
+        self.assertEqual(output[7], "                               "
                                     + comment_line)
 
     def test_simple_add_declare_parameter(self):
