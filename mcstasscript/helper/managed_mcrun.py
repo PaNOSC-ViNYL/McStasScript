@@ -79,9 +79,10 @@ class ManagedMcrun:
 
         self.data_folder_name = ""
         self.ncount = int(1E6)
-        self.mpi = 1
+        self.mpi = None
         self.parameters = {}
         self.custom_flags = ""
+        self.seed = None
         self.mcrun_path = ""
         self.increment_folder_name = False
         self.compile = True
@@ -105,6 +106,9 @@ class ManagedMcrun:
 
         if "parameters" in kwargs:
             self.parameters = kwargs["parameters"]
+
+        if "seed" in kwargs:
+            self.seed = kwargs["seed"]
 
         if "custom_flags" in kwargs:
             self.custom_flags = kwargs["custom_flags"]
@@ -141,10 +145,18 @@ class ManagedMcrun:
         if self.compile:
             options_string = "-c "
 
+        """
         option_string = (options_string
                          + "-n " + str(self.ncount)  # Set ncount
                          + " --mpi=" + str(self.mpi)  # Set mpi
                          + " ")
+        """
+        options_string += "-n " + str(self.ncount) + " " # Set ncount
+        if self.mpi is not None:
+            options_string += "--mpi=" + str(self.mpi) + " " # Set mpi
+
+        if self.seed is not None:
+            options_string += "--seed=" + str(self.seed) + " " # Set seed
 
         if self.increment_folder_name and os.path.isdir(self.data_folder_name):
             counter = 0
@@ -156,7 +168,7 @@ class ManagedMcrun:
             self.data_folder_name = new_name
 
         if len(self.data_folder_name) > 0:
-            option_string = (option_string
+            options_string = (options_string
                              + "-d "
                              + self.data_folder_name)
 
@@ -176,7 +188,7 @@ class ManagedMcrun:
 
         # Run the mcrun command on the system
         full_command = (mcrun_full_path + " "
-                  + option_string + " "
+                  + options_string + " "
                   + self.custom_flags + " "
                   + self.name_of_instrumentfile
                   + parameter_string)

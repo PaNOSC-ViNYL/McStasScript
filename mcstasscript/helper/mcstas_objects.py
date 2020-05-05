@@ -508,25 +508,76 @@ class component:
                                  + self.component_name
                                  + ".")
 
-        # Type checking when giving parameters
+        # Type checking when setting a component parameter
         if self.__isfrozen:
             if key in self.parameter_types:
                 expected_type = self.parameter_types[key]
 
                 if isinstance(value, str):
-                    # check this value is within the data base and has
-                    # correct type
-                    pass
-                    if key in self.instrument_parameters:
-                        parameter = self.instrument_parameters[key]
-                        given_type = parameter.type
+                    # check this value is within the data base and has correct type
 
-                    # if string is expected and string is given, check "
+                    # need to check for arrays
+                    if "[" in value:
+                        value_name = value.split("[")[0]
+                    else:
+                        value_name = value
+
+                    # Prepare list of names for parameters and variables
+                    par_name_list = [par.name for par in self.instrument_parameters]
+                    var_name_list = [var.name for var in self.instrument_variables]
+                    if value_name in par_name_list:
+                        index = par_name_list.index(value_name)
+                        parameter = self.instrument_parameters[index]
+                        given_type = parameter.type
+                        input_exists = True
+                    elif value_name in var_name_list:
+                        index = var_name_list.index(value_name)
+                        variable = self.instrument_variables[index]
+                        given_type = variable.type
+                        input_exists = True
+                    else:
+                        # Given string did not match a parameter or variable
+                        input_exists = False
+
+                    if input_exists:
+                        # If this matches a declared parameter, check type matches
+                        if expected_type != given_type:
+                            # report error to user
+                            msg = ("Component parameter with name "
+                                   + key
+                                   + " has type "
+                                   + expected_type
+                                   + " but the assigned variable named "
+                                   + value
+                                   + " has type "
+                                   + given_type
+                                   + " and is thus incompatible.")
+
+                            raise AttributeError(msg)
+                    else:
+                        # The given parameter has not been declared
+                        if expected_type == "string":
+                            # Convert input to string in instrument file
+                            if '"' not in value:
+                                value = '"' + value + '"'
+
+                        else:
+                            # Check that it is not just an expression
+                            operators = set('+-*/()')
+                            if not any((c in operators) for c in value):
+                                # String is given, but not recognized and not accepted
+                                msg = ("Input " + value + " not recognized as instrument "
+                                       "parameter or declared variable. "
+                                       "The component parameter set, " + key + ", " +
+                                       "requires type: " + expected_type + ".")
+                                raise AttributeError(msg)
 
                 elif isinstance(value, int):
+                    # Given int, check this is allowed
                     if expected_type not in ["double", "float", "int"]:
                         raise AttributeError("Type does not match.")
                 elif isinstance(value, float):
+                    # Given float, check this is allowed
                     if expected_type not in ["double", "float"]:
                         raise AttributeError("Type does not match.")
 
