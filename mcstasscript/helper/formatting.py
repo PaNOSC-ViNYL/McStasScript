@@ -52,3 +52,24 @@ def is_legal_filename(name):
         return False
 
     return True
+
+
+class LegalTypes:
+    all_c_types = ["int", "double", "char", "string"]
+    py_types = ["int", "float", "str"]
+
+
+class LegalAssignments:
+    var_from_py = {"int": int,
+                   "double": (int, float),
+                   "char": str,
+                   "string": str}
+
+    py_to_var = {int: ["int", "double"],
+                 float: ["double"],
+                 str: ["char", "string"]}
+
+    var_to_var = {"int": ["int"],
+                  "double": ["double"],
+                  "char": ["char", "string"],
+                  "string": ["string"]}

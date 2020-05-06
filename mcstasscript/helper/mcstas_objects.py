@@ -1,6 +1,503 @@
 from mcstasscript.helper.formatting import bcolors
 from mcstasscript.helper.formatting import is_legal_parameter
+from mcstasscript.helper.formatting import LegalTypes
+from mcstasscript.helper.formatting import LegalAssignments
 
+
+
+class Variable:
+    """
+    Class describing a generic C variable
+    """
+    def __init__(self, *args, **kwargs):
+
+        if len(args) == 1:
+            self.type = "double"
+            self.user_specified_type = False
+            self.name = str(args[0])
+        if len(args) == 2:
+            self.type = args[0]
+            self.user_specified_type = True
+            self.name = str(args[1])
+
+        self.check_name()
+        self.check_type()
+
+        self.value = None
+        if "value" in kwargs:
+            self.set_value(kwargs["value"])
+
+        self.comment = ""
+        if "comment" in kwargs:
+            self.comment = "// " + kwargs["comment"]
+
+        self.existing_vars = None
+        if "existing_vars" in kwargs:
+            self.existing_vars = kwargs["existing_vars"]
+
+    def check_name(self):
+        if not is_legal_parameter(self.name):
+            raise NameError("The given parameter name: \""
+                            + self.name
+                            + "\" is not a legal c variable name, "
+                            + " and cannot be used in McStas.")
+
+    def check_type(self):
+        if self.type not in LegalTypes.all_c_types:
+            raise NameError("Given parameter type not allowed, choose from "
+                            + str(LegalTypes.all_c_types))
+
+    def set_value(self, value):
+        self.value = value
+        self.check_value()
+
+    def check_value(self, value):
+        pass
+
+    def make_literal_string(self):
+        if self.type == "char":
+            # check apostrophes around character
+            if self.value[0] != "'":
+                self.value = "'" + self.value
+
+            if self.value[-1] != "'":
+                self.value = self.value + "'"
+
+            # check only single character is given
+            if len(self.value) != 3:
+                raise ValueError("Given char value illegal, only one "
+                                 + "character allowed.")
+
+        if self.type == "string":
+            # check quotation marks around string
+            if self.value[0] != '"':
+                self.value = '"' + self.value
+
+            if self.value[-1] != '"':
+                self.value = self.value + '"'
+
+    def is_value_expression(self):
+        """
+        Checks if the value contained in this variable is
+        a C expression. Returns True if it is, False otherwise.
+        This will also catch pointer arithmetic, *(A+3).
+        """
+        if not isinstance(self.value, str):
+            return False
+
+        # If the string contains +-/(), it must be an expression
+        operators = set('+-/()')
+        if any((c in operators) for c in self.value):
+            # this is an expression
+            return True
+
+        # * has other meanings
+        # check for expressions that has *
+        expression_parts = self.value.split("*")
+        expression_parts.remove("")
+        if len(expression_parts) > 1:
+            # this is an expression
+            return True
+
+        return False
+
+
+class Parameter(Variable):
+    """
+    Class describing a input parameter in McStas instrument
+
+    McStas input parameters are of default type double, but can be
+    cast.  If two positional arguments are given, the first is the
+    type, and the second is the parameter name.  With one input, only
+    the parameter name is read.  It is also possible to assign a
+    default value and a comment through keyword arguments.
+
+    Attributes
+    ----------
+    type : str
+        McStas type of input: Double, Int, String
+
+    name : str
+        Name of input parameter
+
+    value : any
+        Default value/string of parameter, converted to string
+
+    comment : str
+        Comment displayed next to the parameter, could contain units
+
+    user_specified_type : bool
+        True if user specified type, False if it was automatically assigned
+
+    Methods
+    -------
+    check_value(value)
+        checks if the given value makes sense
+
+    write_parameter(fo,stop_character)
+        writes the parameter to file fo, uses given stop character
+    """
+    def __init__(self, *args, **kwargs):
+
+        if "value" in kwargs:
+            if isinstance(kwargs["value"], list):
+                raise ValueError("Lists not allowed as parameter value.")
+
+        super(Parameter).__init__(self, *args, **kwargs)
+
+    def check_value(self, value):
+        if type(value) not in LegalTypes.py_types:
+            raise ValueError("Given value for parameter named "
+                             + self.name + " must be within these types "
+                             + str(LegalTypes)
+                             + ". Given type: " + type(value))
+
+        allowed_types = LegalAssignments.py_to_var[type(value)]
+        if not isinstance(value, allowed_types):
+            py_type = type(value)
+            raise ValueError("Given value of python type "
+                             + py_type + " can not be "
+                             + "stored in the C type " + self.type + " "
+                             + "which was chosen for the " + self.name + " "
+                             + "parameter.")
+
+        self.make_literal_string()
+
+    def write_parameter(self, fo, stop_character):
+        """Writes input parameter to file"""
+        if self.user_specified_type:
+            fo.write("%s %s" % (self.type, self.name))
+        else:
+            # McStas default type is double if nothing specified
+            fo.write("%s" % self.name)
+        if self.value is not None:
+            if isinstance(self.value, int):
+                fo.write(" = %d" % self.value)
+            elif isinstance(self.value, float):
+                fo.write(" = %G" % self.value)
+            else:
+                fo.write(" = %s" % str(self.value))
+        fo.write(stop_character)
+        fo.write(self.comment)
+        fo.write("\n")
+
+
+class DeclareVariable(Variable):
+    """
+    Class describing a declared variable in McStas instrument
+
+    McStas parameters are declared in declare section with c syntax.
+    This class is initialized with type, name.  Using keyword
+    arguments, the variable can become an array and have its initial
+    value set.
+
+    Attributes
+    ----------
+    type : str
+        McStas type to declare: Double, Int, String
+
+    name : str
+        Name of variable
+
+    value : any
+        Initial value of variable, converted to string
+
+    comment : str
+        Comment displayed next to the declaration, could contain units
+
+    vector : int
+        0 if a single value is given, otherwise contains the length
+
+    Methods
+    -------
+    set_value(value)
+        Sets the value of the variable, used during initialization
+
+    check_value()
+        Checks the value of the variable, used during initialization
+
+    write_line(fo)
+        Writes a line to text file fo declaring the parameter in c
+    """
+    def __init__(self, *args, **kwargs):
+        self.vector = 0 # Assume input is not vector
+
+        if "array" in kwargs:
+            self.vector = kwargs["array"]
+            if not isinstance(self.vector, int):
+                raise ValueError("Array length has to be an integer.")
+
+        super(DeclareVariable).__init__(*args, **kwargs)
+
+    def set_value(self, value):
+        # Extract length of list if value is a list
+        if isinstance(value, list):
+            if self.vector == 0 or self.vector < len(value):
+                self.vector = len(value)
+
+        self.value = value
+
+    def check_value(self):
+        """
+        Checks the type is reasonable. If the variable is a string, it may
+        refer to an already declared variable or parameter, and in that case
+        a type check is made to check this is legal in c.
+
+        The given value is checked against the given type to check this is
+        sensible. Done for all elements in a list if the variable is an array.
+        """
+        # Check if the given value is actually a variable in the given scope
+        if self.existing_vars is not None and isinstance(self.value, str):
+            # Remove [ ], *, & from variable name
+            # TODO THIS WONT WORK IN ALL CASES A[5] would be A5
+            var_name = self.value.replace("&", "").replace("*", "")
+            var_name = var_name.split("[")[0]
+
+            if var_name in self.existing_vars:
+                # The given value is within the current scope
+                assigned_var = self.existing_vars[var_name]
+                if assigned_var.type == self.type:
+                    # The types match, all is good
+                    return
+                else:
+                    raise ValueError("Type mismatch detected.\n"
+                                     + "Variable named "
+                                     + assigned_var.name
+                                     + " with type "
+                                     + assigned_var.type
+                                     + " was used to initialize variable named "
+                                     + self.name
+                                     + " with type "
+                                     + self.type
+                                     + ".")
+            else:
+                """
+                The variable was not found, if we are trying to set an int or
+                double, check if it was an expression.
+                """
+                operators = set('+-*/()')
+                if (not any((c in operators) for c in self.value)
+                   and self.type in ["double", "int"]):
+                    raise ValueError("Attempted to initialize declared variable"
+                                     + self.name +
+                                     + " of type " + self.type + " with a string,"
+                                     + " which does not match any known variable:"
+                                     + self.value + ".")
+                """
+                Since we know this variable is not a reference to something in
+                the scope, it is a literal string that needs '' or "" depending
+                on if it is a char or a string. Check this is correct.
+                """
+                self.make_literal_string()
+
+        if self.vector == 0:
+            check_list = [self.value]
+        else:
+            check_list = self.value
+
+        for element in check_list:
+            # Could consider not allowing arrays of strings / chars
+            if type(element) not in LegalTypes.py_types:
+                raise ValueError("Given value for declare variable named "
+                                 + self.name + " must be within these types "
+                                 + str(LegalTypes)
+                                 + ". Given type: " + type(element))
+
+            allowed_types = LegalAssignments.py_to_var[type(element)]
+            if not isinstance(element, allowed_types):
+                py_type = type(element)
+                raise ValueError("Given value of python type "
+                                 + py_type + " can not be "
+                                 + "stored in the C type " + self.type + " "
+                                 + "which was chosen for the " + self.name
+                                 + " declare variable.")
+
+    def write_line(self, fo):
+        """
+        Writes line declaring variable to file fo
+
+        Parameters
+        ----------
+        fo : file object
+            File the line will be written to
+        """
+        if self.value == "" and self.vector == 0:
+            fo.write("%s %s;%s" % (self.type, self.name, self.comment))
+        if self.value != "" and self.vector == 0:
+            if self.type == "int":
+                fo.write("%s %s = %d;%s" % (self.type, self.name,
+                                            self.value, self.comment))
+            else:
+                try:
+                    fo.write("%s %s = %G;%s" % (self.type, self.name,
+                                                self.value, self.comment))
+                except:
+                    fo.write("%s %s = %s;%s" % (self.type, self.name,
+                                                self.value, self.comment))
+        if self.value == "" and self.vector != 0:
+            fo.write("%s %s[%d];%s" % (self.type, self.name,
+                                       self.vector, self.comment))
+        if self.value != "" and self.vector != 0:
+            if isinstance(self.value, str):
+                # value is a string
+                string = self.value
+                # string = string.replace('"',"\\\"")
+                fo.write("%s %s[%d] = %s;" % (self.type, self.name, self.vector, string))
+            else:
+                # list of values
+                fo.write("%s %s[%d] = {" % (self.type, self.name, self.vector))
+                for i in range(0, len(self.value) - 1):
+                    fo.write("%G," % self.value[i])
+                fo.write("%G};%s" % (self.value[-1], self.comment))
+
+class DefinitionParameter(Variable):
+    def __init__(self, *args, **kwargs):
+
+        super(DefinitionParameter).__init__(*args, **kwargs)
+
+    def check_type(self):
+        # Basicly all c types allowed, including function pointers!
+        pass
+
+    def check_value(self):
+        # Check if an expression was given which can't be checked
+        if self.is_value_expression():
+            raise ValueError("Expression not allowed for definition "
+                             + "parameters:" + str(self.value) + ".")
+
+        if type(self.value) not in LegalTypes.py_types:
+            raise ValueError("Given value for parameter named "
+                             + self.name + " must be within these types "
+                             + str(LegalTypes)
+                             + ". Given type: " + type(self.value))
+
+        # Check if the given value is actually a variable in the given scope
+        if self.existing_vars is not None and isinstance(self.value, str):
+            # Remove [ ], *, & from variable name
+            var_name = self.value.replace("&", "").replace("*", "")
+            var_name = var_name.split("[")[0]
+
+            if var_name in self.existing_vars:
+                # The given value is within the current scope
+                assigned_var = self.existing_vars[var_name]
+                if assigned_var.type == self.type:
+                    # The types match, all is good
+                    return
+                else:
+                    raise ValueError("Type mismatch detected.\n"
+                                     + "Variable named "
+                                     + assigned_var.name
+                                     + " with type "
+                                     + assigned_var.type
+                                     + " was used to initialize component "
+                                     + "definition parameter named:"
+                                     + self.name
+                                     + " with type "
+                                     + self.type
+                                     + ".")
+            else:
+                """
+                We know the given string is not a reference to a variable
+                in the given scope. If the required type is char or string,
+                it may need '' or "", add these if necessary.
+                """
+                self.make_literal_string()
+
+        allowed_types = LegalAssignments.py_to_var[type(self.value)]
+        if not isinstance(self.value, allowed_types):
+            py_type = type(self.value)
+            raise ValueError("Given value of python type "
+                             + py_type + " can not be "
+                             + "stored in the C type " + self.type + " "
+                             + "which was chosen for the " + self.name + " "
+                             + "parameter.")
+
+class SettingParameter(Variable):
+    def __init__(self, *args, **kwargs):
+
+        super(SettingParameter).__init__(*args, **kwargs)
+
+
+    def check_type(self):
+        # Need to allow pointers, arrays, function pointers, ...
+        pass
+
+    def check_value(self):
+
+        if type(self.value) not in LegalTypes.py_types:
+            raise ValueError("Given value for component setting parameter "
+                             + "named " + self.name + " must be within these "
+                             + "types " + str(LegalTypes)
+                             + ". Given type: " + type(self.value))
+
+        # Check if the given value is actually a variable in the given scope
+        if self.existing_vars is not None and isinstance(self.value, str):
+
+            if self.is_value_expression():
+                # If the value is an expression, type checking not performed
+                return
+
+            # could be array index to give value, want base variable
+            # array if: exactly one pair of [ ]
+            if self.value.count("[") == 1 and self.value.count("]") == 1:
+                # nothing after ]
+                if self.value.split("]")[-1] == "":
+                    var_name = self.value.split("[")[0]
+                    var_name = self.value.replace("&", "").replace("*", "")
+
+                    # number between [ ]
+                    given_index = self.value.split("[")[-1].split("]")[0]
+
+                    # Can check the given index, it will either be an integer
+                    #  or a int variable in the current scope.
+
+            # Could be a pointer or address, allow this.
+            var_name = self.value.replace("&", "").replace("*", "")
+
+            if var_name in self.existing_vars:
+                # The given value is within the current scope
+                assigned_var = self.existing_vars[var_name]
+                if assigned_var.type == self.type:
+                    # The types match, all is good
+                    return
+                else:
+                    raise ValueError("Type mismatch detected.\n"
+                                     + "Variable named "
+                                     + assigned_var.name
+                                     + " with type "
+                                     + assigned_var.type
+                                     + " was used to initialize component "
+                                     + "definition parameter named:"
+                                     + self.name
+                                     + " with type "
+                                     + self.type
+                                     + ".")
+            else:
+                """
+                We know the given string is not a reference to a variable
+                in the given scope. If the required type is char or string,
+                it may need '' or "", add these if necessary.
+                """
+
+                if self.type not in ["char", "string"]:
+                    # raise an error, this string does not make sense
+                    raise ValueError("Setting value of setting parameter "
+                                     + "named " + self.name + " with type "
+                                     + self.type + " failed, given string \""
+                                     + self.value + "\" did not match any "
+                                     + "known declared variable")
+                else:
+                    # Must be a literal string, make safety checks for that
+                    self.make_literal_string()
+
+        allowed_types = LegalAssignments.py_to_var[type(self.value)]
+        if not isinstance(self.value, allowed_types):
+            py_type = type(self.value)
+            raise ValueError("Given value of python type "
+                             + py_type + " can not be "
+                             + "stored in the C type " + self.type + " "
+                             + "which was chosen for the " + self.name + " "
+                             + "parameter.")
 
 class parameter_variable:
     """
