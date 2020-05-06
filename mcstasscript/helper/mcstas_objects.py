@@ -4,7 +4,6 @@ from mcstasscript.helper.formatting import LegalTypes
 from mcstasscript.helper.formatting import LegalAssignments
 
 
-
 class Variable:
     """
     Class describing a generic C variable
@@ -51,7 +50,7 @@ class Variable:
         self.value = value
         self.check_value()
 
-    def check_value(self, value):
+    def check_value(self):
         pass
 
     def make_literal_string(self):
@@ -143,18 +142,19 @@ class Parameter(Variable):
             if isinstance(kwargs["value"], list):
                 raise ValueError("Lists not allowed as parameter value.")
 
-        super(Parameter).__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
-    def check_value(self, value):
-        if type(value) not in LegalTypes.py_types:
+    def check_value(self):
+        if type(self.value) not in LegalTypes.py_types:
             raise ValueError("Given value for parameter named "
                              + self.name + " must be within these types "
-                             + str(LegalTypes)
-                             + ". Given type: " + type(value))
+                             + str(LegalTypes.py_types)
+                             + ". Given type: " + str(type(self.value)))
 
-        allowed_types = LegalAssignments.py_to_var[type(value)]
-        if not isinstance(value, allowed_types):
-            py_type = type(value)
+        allowed_types = LegalAssignments.py_to_var[type(self.value)]
+        #if not isinstance(self.value, allowed_types):
+        if self.type not in allowed_types:
+            py_type = str(type(self.value))
             raise ValueError("Given value of python type "
                              + py_type + " can not be "
                              + "stored in the C type " + self.type + " "
@@ -227,7 +227,7 @@ class DeclareVariable(Variable):
             if not isinstance(self.vector, int):
                 raise ValueError("Array length has to be an integer.")
 
-        super(DeclareVariable).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def set_value(self, value):
         # Extract length of list if value is a list
@@ -300,8 +300,8 @@ class DeclareVariable(Variable):
             if type(element) not in LegalTypes.py_types:
                 raise ValueError("Given value for declare variable named "
                                  + self.name + " must be within these types "
-                                 + str(LegalTypes)
-                                 + ". Given type: " + type(element))
+                                 + str(LegalTypes.py_types)
+                                 + ". Given type: " + str(type(element)))
 
             allowed_types = LegalAssignments.py_to_var[type(element)]
             if not isinstance(element, allowed_types):
@@ -321,9 +321,12 @@ class DeclareVariable(Variable):
         fo : file object
             File the line will be written to
         """
-        if self.value == "" and self.vector == 0:
+        if self.comment != "":
+            self.comment = " " + self.comment
+
+        if self.value == None and self.vector == 0:
             fo.write("%s %s;%s" % (self.type, self.name, self.comment))
-        if self.value != "" and self.vector == 0:
+        if self.value != None and self.vector == 0:
             if self.type == "int":
                 fo.write("%s %s = %d;%s" % (self.type, self.name,
                                             self.value, self.comment))
@@ -334,15 +337,16 @@ class DeclareVariable(Variable):
                 except:
                     fo.write("%s %s = %s;%s" % (self.type, self.name,
                                                 self.value, self.comment))
-        if self.value == "" and self.vector != 0:
+        if self.value == None and self.vector != 0:
             fo.write("%s %s[%d];%s" % (self.type, self.name,
                                        self.vector, self.comment))
-        if self.value != "" and self.vector != 0:
+        if self.value != None and self.vector != 0:
             if isinstance(self.value, str):
                 # value is a string
                 string = self.value
                 # string = string.replace('"',"\\\"")
-                fo.write("%s %s[%d] = %s;" % (self.type, self.name, self.vector, string))
+                fo.write("%s %s[%d] = %s;" % (self.type, self.name,
+                                              self.vector, string))
             else:
                 # list of values
                 fo.write("%s %s[%d] = {" % (self.type, self.name, self.vector))
@@ -353,7 +357,7 @@ class DeclareVariable(Variable):
 class DefinitionParameter(Variable):
     def __init__(self, *args, **kwargs):
 
-        super(DefinitionParameter).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def check_type(self):
         # Basicly all c types allowed, including function pointers!
@@ -368,8 +372,8 @@ class DefinitionParameter(Variable):
         if type(self.value) not in LegalTypes.py_types:
             raise ValueError("Given value for parameter named "
                              + self.name + " must be within these types "
-                             + str(LegalTypes)
-                             + ". Given type: " + type(self.value))
+                             + str(LegalTypes.py_types)
+                             + ". Given type: " + str(type(self.value)))
 
         # Check if the given value is actually a variable in the given scope
         if self.existing_vars is not None and isinstance(self.value, str):
@@ -415,7 +419,7 @@ class DefinitionParameter(Variable):
 class SettingParameter(Variable):
     def __init__(self, *args, **kwargs):
 
-        super(SettingParameter).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
     def check_type(self):
@@ -428,7 +432,7 @@ class SettingParameter(Variable):
             raise ValueError("Given value for component setting parameter "
                              + "named " + self.name + " must be within these "
                              + "types " + str(LegalTypes)
-                             + ". Given type: " + type(self.value))
+                             + ". Given type: " + str(type(self.value)))
 
         # Check if the given value is actually a variable in the given scope
         if self.existing_vars is not None and isinstance(self.value, str):
@@ -553,6 +557,8 @@ class parameter_variable:
             comment : str
                 sets comment displayed next to declaration
         """
+        raise ValueError("Should not use this class")
+
         if len(args) == 1:
             self.type = "double"
             self.user_specified_type = False
@@ -1006,7 +1012,7 @@ class component:
                                  + ".")
 
         # Type checking when setting a component parameter
-        if self.__isfrozen:
+        if self.__isfrozen and 1 == 2: # disable type checking here
             if key in self.parameter_types:
                 expected_type = self.parameter_types[key]
 

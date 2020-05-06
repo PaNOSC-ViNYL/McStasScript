@@ -242,7 +242,7 @@ class TestMcStas_instr(unittest.TestCase):
                            + "it really works.")
 
         instr.add_parameter("double", "value",
-                            value="37", comment=longest_comment)
+                            value=37, comment=longest_comment)
 
         instr.show_parameters(line_length=80)
 
@@ -275,7 +275,7 @@ class TestMcStas_instr(unittest.TestCase):
         instr.add_declare_var("double", "two_theta", comment="test par")
 
         self.assertEqual(instr.declare_list[0].name, "two_theta")
-        self.assertEqual(instr.declare_list[0].comment, " // test par")
+        self.assertEqual(instr.declare_list[0].comment, "// test par")
         
     def test_simple_append_declare(self):
         """
@@ -309,7 +309,7 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(instr.declare_list[0],
                          "First line of declare")
         self.assertEqual(instr.declare_list[1].name, "two_theta")
-        self.assertEqual(instr.declare_list[1].comment, " // test par")
+        self.assertEqual(instr.declare_list[1].comment, "// test par")
         self.assertEqual(instr.declare_list[2], 
                          "Third line of declare")        
 
@@ -1510,7 +1510,7 @@ class TestMcStas_instr(unittest.TestCase):
         expected_call = (expected_path + " -c -n 1000000 "
                          + "-d " + expected_folder_path
                          + "  test_instrument.instr"
-                         + " has_default=37 theta=1")
+                         + " theta=1 has_default=37")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
@@ -1549,7 +1549,7 @@ class TestMcStas_instr(unittest.TestCase):
         expected_call = (expected_path + " -c -n 48 --mpi=7 "
                          + "-d " + expected_folder_path
                          + " -fo test_instrument.instr "
-                         + "has_default=37 A=2 BC=car theta=\"toy\"")
+                         + "theta=\"toy\" has_default=37 A=2 BC=car")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
@@ -1588,7 +1588,7 @@ class TestMcStas_instr(unittest.TestCase):
         expected_call = (expected_path + " -c -n 48 --mpi=7 "
                          + "-d " + expected_folder_path
                          + " -fo test_instrument.instr "
-                         + "has_default=10 A=2 BC=car theta=\"toy\"")
+                         + "theta=\"toy\" has_default=10 A=2 BC=car")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,

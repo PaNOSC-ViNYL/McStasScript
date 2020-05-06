@@ -8,7 +8,8 @@ import copy
 
 from mcstasscript.data.data import McStasData
 from mcstasscript.helper.mcstas_objects import declare_variable
-from mcstasscript.helper.mcstas_objects import parameter_variable
+from mcstasscript.helper.mcstas_objects import DeclareVariable
+from mcstasscript.helper.mcstas_objects import Parameter
 from mcstasscript.helper.mcstas_objects import component
 from mcstasscript.helper.component_reader import ComponentReader
 from mcstasscript.helper.managed_mcrun import ManagedMcrun
@@ -39,11 +40,11 @@ class McStas_instr:
     mcrun_path : str
         absolute path of mcrun command, or empty if it is in path
 
-    parameter_list : list of parameter_variable instances
+    parameter_list : list of Parameter instances
         contains all input parameters to be written to file
 
-    declare_list : list of declare_variable instances
-        contains all declare parrameters to be written to file
+    declare_list : list of DeclareVariable instances
+        contains all declare variables to be written to file
 
     initialize_section : str
         string containing entire initialize section to be written
@@ -264,8 +265,8 @@ class McStas_instr:
             comment : str
                 Comment displayed next to declaration of parameter
         """
-        # parameter_variable class documented independently
-        self.parameter_list.append(parameter_variable(*args, **kwargs))
+        # Parameter class documented independently
+        self.parameter_list.append(Parameter(*args, **kwargs))
 
     def show_parameters(self, **kwargs):
         """
@@ -306,11 +307,13 @@ class McStas_instr:
         for parameter in self.parameter_list:
             print(str(parameter.type).ljust(longest_type), end=' ')
             print(str(parameter.name).ljust(longest_name), end=' ')
-            if parameter.value is "":
+            if parameter.value is None:
                 print("   ", end=' ')
+                print("".ljust(longest_value + 1), end=' ')
             else:
                 print(" = ", end=' ')
-            print(str(parameter.value).ljust(longest_value+1), end=' ')
+                print(str(parameter.value).ljust(longest_value + 1), end=' ')
+            
             if (length_for_comment < 5
                     or length_for_comment > len(str(parameter.comment))):
                 print(str(parameter.comment))
@@ -377,7 +380,7 @@ class McStas_instr:
 
         """
         # declare_variable class documented independently
-        self.declare_list.append(declare_variable(*args, **kwargs))
+        self.declare_list.append(DeclareVariable(*args, **kwargs))
         
     def append_declare(self, string):
         """

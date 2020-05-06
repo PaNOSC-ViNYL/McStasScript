@@ -3,7 +3,7 @@ import builtins
 import unittest
 import unittest.mock
 
-from mcstasscript.helper.mcstas_objects import parameter_variable
+from mcstasscript.helper.mcstas_objects import Parameter
 
 
 class Test_parameter_variable(unittest.TestCase):
@@ -18,7 +18,7 @@ class Test_parameter_variable(unittest.TestCase):
         Smallest possible initialization
         """
 
-        par = parameter_variable("test")
+        par = Parameter("test")
         self.assertEqual(par.name, "test")
 
     def test_parameter_variable_init_basic_type(self):
@@ -26,7 +26,7 @@ class Test_parameter_variable(unittest.TestCase):
         Initialization with a type
         """
 
-        par = parameter_variable("double", "test")
+        par = Parameter("double", "test")
 
         self.assertEqual(par.name, "test")
         self.assertEqual(par.type, "double")  # space for easier writing
@@ -36,7 +36,7 @@ class Test_parameter_variable(unittest.TestCase):
         Initialization with type and value
         """
 
-        par = parameter_variable("double", "test", value=518)
+        par = Parameter("double", "test", value=518)
 
         self.assertEqual(par.name, "test")
         self.assertEqual(par.type, "double")
@@ -47,8 +47,8 @@ class Test_parameter_variable(unittest.TestCase):
         Initialization with type, value and comment
         """
 
-        par = parameter_variable("double", "test",
-                                 value=518, comment="test comment /")
+        par = Parameter("double", "test",
+                        value=518, comment="test comment /")
 
         self.assertEqual(par.name, "test")
         self.assertEqual(par.type, "double")
@@ -60,8 +60,7 @@ class Test_parameter_variable(unittest.TestCase):
         Initialization with value and comment
         """
 
-        par = parameter_variable("test",
-                                 value=518, comment="test comment /")
+        par = Parameter("test", value=518, comment="test comment /")
 
         self.assertEqual(par.name, "test")
         self.assertEqual(par.type, "double")
@@ -78,7 +77,7 @@ class Test_parameter_variable(unittest.TestCase):
         used.
         """
 
-        par = parameter_variable("double", "test")
+        par = Parameter("double", "test")
         with mock_f('test.txt', 'w') as m_fo:
             par.write_parameter(m_fo, "")
 
@@ -101,10 +100,8 @@ class Test_parameter_variable(unittest.TestCase):
         is used. (float value)
         """
 
-        par = parameter_variable("double",
-                                 "test",
-                                 value=5.4,
-                                 comment="test comment")
+        par = Parameter("double", "test",
+                        value=5.4, comment="test comment")
 
         with mock_f('test.txt', 'w') as m_fo:
             par.write_parameter(m_fo, ")")
@@ -129,10 +126,8 @@ class Test_parameter_variable(unittest.TestCase):
         is used. (integer value)
         """
 
-        par = parameter_variable("double",
-                                 "test",
-                                 value=5,
-                                 comment="test comment")
+        par = Parameter("double", "test",
+                        value=5, comment="test comment")
 
         with mock_f('test.txt', 'w') as m_fo:
             par.write_parameter(m_fo, ")")
@@ -157,15 +152,13 @@ class Test_parameter_variable(unittest.TestCase):
         is used. (string value)
         """
 
-        par = parameter_variable("double",
-                                 "test",
-                                 value="\"Al\"",
-                                 comment="test comment")
+        par = Parameter("string", "test",
+                        value="\"Al\"", comment="test comment")
 
         with mock_f('test.txt', 'w') as m_fo:
             par.write_parameter(m_fo, ",")
 
-        expected_writes = [unittest.mock.call("double test"),
+        expected_writes = [unittest.mock.call("string test"),
                            unittest.mock.call(" = \"Al\""),
                            unittest.mock.call(","),
                            unittest.mock.call("// test comment"),

@@ -56,7 +56,7 @@ def is_legal_filename(name):
 
 class LegalTypes:
     all_c_types = ["int", "double", "char", "string"]
-    py_types = ["int", "float", "str"]
+    py_types = [int, float, str]
 
 
 class LegalAssignments:
