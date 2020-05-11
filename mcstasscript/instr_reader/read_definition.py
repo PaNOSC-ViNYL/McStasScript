@@ -1,5 +1,6 @@
 from mcstasscript.instr_reader.util import SectionReader
 
+
 class DefinitionReader(SectionReader):
     """
     Responsible for reading the defintion section of McStas instrument

@@ -4,6 +4,8 @@ import unittest
 import unittest.mock
 
 from mcstasscript.helper.mcstas_objects import component
+from mcstasscript.helper.mcstas_objects import DefinitionParameter
+from mcstasscript.helper.mcstas_objects import SettingParameter
 from mcstasscript.helper.formatting import bcolors
 
 
@@ -43,7 +45,7 @@ def setup_component_relative():
                      comment="test comment")
 
 
-def setup_component_with_parameters():
+def setup_component_with_parameters_outdated():
     """
     Sets up a component with parameters and all options used.
 
@@ -82,6 +84,48 @@ def setup_component_with_parameters():
 
     return comp
 
+def setup_component_with_parameters():
+    """
+    Sets up component with definition and setting parameter
+    """
+
+    comp = setup_component_all_keywords()
+
+    comp._unfreeze()
+
+    def1 = DefinitionParameter("new_par1", unit="m", value=5.1,
+                               comment="This is important")
+
+    def2 = DefinitionParameter("int", "new_par2", unit="AA", value=9,
+                               comment="This is less important")
+
+    set1 = SettingParameter("double", "new_par3")
+
+    set2 = SettingParameter("string", "this_par", unit="", value="conga",
+                            comment="!")
+
+    set3 = SettingParameter("string", "that_par", unit="1", value="\"txt\"")
+
+    test_parameters = [def1, def2, set1, set2, set3]
+    parameters = {par.name : par for par in test_parameters}
+    parameter_names = [par.name for par in test_parameters]
+
+    for name in parameter_names:
+        comp.__setattr__(name, None)
+
+    comp.parameter_names = parameter_names
+    comp.parameters = parameters
+    comp.line_limit = 117
+
+    comp._freeze()
+
+    # Setting pars here will make them user specified and included in long_print
+    comp.new_par1 = 1.5
+    comp.new_par2 = 3
+    comp.this_par = "test_val"
+    comp.that_par = "\"txt_string\""
+
+    return comp
 
 class Testcomponent(unittest.TestCase):
     """
@@ -414,8 +458,7 @@ class Testcomponent(unittest.TestCase):
         # Need to set up attribute parameters
         # Also need to categorize them as when created
         comp.parameter_names = []
-        comp.parameter_defaults = {}
-        comp.parameter_types = {}
+        comp.parameters = {}
         comp._freeze()
 
         with mock_f('test.txt', 'w') as m_fo:
@@ -486,7 +529,7 @@ class Testcomponent(unittest.TestCase):
         # If this parameter is not set, an error should be returned,
         # this will be tested in the next test.
 
-        comp.new_par3 = "1.25"
+        comp.new_par3 = 1.25
 
         with mock_f('test.txt', 'w') as m_fo:
             comp.write_component(m_fo)
@@ -648,7 +691,7 @@ class Testcomponent(unittest.TestCase):
 
         # This is now not set by the user, but has default
         # This results in different formatting in show_parameters
-        comp.new_par2 = None
+        comp.parameters["new_par2"].user_specified = False
 
         comp._freeze
 
@@ -724,7 +767,7 @@ class Testcomponent(unittest.TestCase):
 
         # This is now not set by the user, but has default
         # This results in different formatting in show_parameters
-        comp.new_par2 = None
+        comp.parameters["new_par2"].user_specified = False
 
         comp._freeze
 

@@ -3,7 +3,6 @@ import builtins
 import unittest
 import unittest.mock
 
-from mcstasscript.helper.mcstas_objects import declare_variable
 from mcstasscript.helper.mcstas_objects import DeclareVariable
 
 

@@ -599,13 +599,14 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(comp.radius, None)
         self.assertIn("radius", comp.parameter_names)
-        self.assertEqual(comp.parameter_defaults["radius"], 0.1)
-        self.assertEqual(comp.parameter_types["radius"], "double")
-        self.assertEqual(comp.parameter_units["radius"], "m")
+        self.assertEqual(comp.parameters["radius"].value, 0.1)
+        self.assertFalse(comp.parameters["radius"].user_specified)
+        self.assertEqual(comp.parameters["radius"].type, "double")
+        self.assertEqual(comp.parameters["radius"].unit, "m")
 
-        comment = ("Radius of circle in (x,y,0) plane where "
+        comment = ("// Radius of circle in (x,y,0) plane where "
                    + "neutrons are generated.")
-        self.assertEqual(comp.parameter_comments["radius"], comment)
+        self.assertEqual(comp.parameters["radius"].comment, comment)
         self.assertEqual(comp.category, "Work directory")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
@@ -640,13 +641,13 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(comp.radius, None)
         self.assertIn("radius", comp.parameter_names)
-        self.assertEqual(comp.parameter_defaults["radius"], 0.1)
-        self.assertEqual(comp.parameter_types["radius"], "double")
-        self.assertEqual(comp.parameter_units["radius"], "m")
+        self.assertEqual(comp.parameters["radius"].value, 0.1)
+        self.assertEqual(comp.parameters["radius"].type, "double")
+        self.assertEqual(comp.parameters["radius"].unit, "m")
 
-        comment = ("Radius of circle in (x,y,0) plane where "
+        comment = ("// Radius of circle in (x,y,0) plane where "
                    + "neutrons are generated.")
-        self.assertEqual(comp.parameter_comments["radius"], comment)
+        self.assertEqual(comp.parameters["radius"].comment, comment)
         self.assertEqual(comp.category, "Work directory")
 
         # The keyword arguments of the call should be passed to the

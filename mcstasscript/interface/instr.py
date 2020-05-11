@@ -7,7 +7,6 @@ import subprocess
 import copy
 
 from mcstasscript.data.data import McStasData
-from mcstasscript.helper.mcstas_objects import declare_variable
 from mcstasscript.helper.mcstas_objects import DeclareVariable
 from mcstasscript.helper.mcstas_objects import Parameter
 from mcstasscript.helper.mcstas_objects import component
@@ -227,8 +226,10 @@ class McStas_instr:
                             + "for the McStas installation as keyword "
                             + "named mcstas_path or in configuration.yaml")
 
-        self.parameter_list = []
-        self.declare_list = []
+        self.parameter_list = [] # List of all parameters
+        self.declare_list = [] # List of all declare variable
+        self.variable_library = {} # Dict of all parameters and declare variables
+
         #self.declare_section = ""
         self.initialize_section = ("// Start of initialize for generated "
                                    + name + "\n")
@@ -266,7 +267,9 @@ class McStas_instr:
                 Comment displayed next to declaration of parameter
         """
         # Parameter class documented independently
-        self.parameter_list.append(Parameter(*args, **kwargs))
+        new_parameter = Parameter(*args, **kwargs)
+        self.variable_library[new_parameter.name] = new_parameter
+        self.parameter_list.append(new_parameter)
 
     def show_parameters(self, **kwargs):
         """
@@ -379,8 +382,11 @@ class McStas_instr:
                 Comment displayed next to declaration of parameter
 
         """
-        # declare_variable class documented independently
-        self.declare_list.append(DeclareVariable(*args, **kwargs))
+        kwargs["existing_vars"] = self.variable_library
+        new_variable = DeclareVariable(*args, **kwargs)
+        self.variable_library[new_variable.name] = new_variable
+
+        self.declare_list.append(new_variable)
         
     def append_declare(self, string):
         """
@@ -573,22 +579,23 @@ class McStas_instr:
             input_dict = {}
             input_dict = {key: None for key in comp_info.parameter_names}
             input_dict["parameter_names"] = comp_info.parameter_names
-            input_dict["parameter_defaults"] = comp_info.parameter_defaults
-            input_dict["parameter_types"] = comp_info.parameter_types
-            input_dict["parameter_units"] = comp_info.parameter_units
-            input_dict["parameter_comments"] = comp_info.parameter_comments
+            input_dict["parameters"] = comp_info.parameters
+
+            # Info needed for help functions
             input_dict["category"] = comp_info.category
             input_dict["line_limit"] = self.line_limit
-
-            # Used for type checking
-            input_dict["instrument_parameters"] = self.parameter_list
-            input_dict["instrument_variables"] = self.declare_list
 
             self.component_class_lib[component_name] = type(component_name,
                                                             (component,),
                                                             input_dict)
 
-        return self.component_class_lib[component_name](*args, **kwargs)
+        # Create component instance
+        comp = self.component_class_lib[component_name](*args, **kwargs)
+
+        # Load the variable library into the component instance
+        comp.set_existing_vars(self.variable_library)
+
+        return comp
 
     def add_component(self, *args, **kwargs):
         """

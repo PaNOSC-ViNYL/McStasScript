@@ -1,6 +1,8 @@
 import os
 import math
 
+from mcstasscript.helper.mcstas_objects import DefinitionParameter
+from mcstasscript.helper.mcstas_objects import SettingParameter
 
 class ComponentInfo:
     """
@@ -10,11 +12,47 @@ class ComponentInfo:
     def __init__(self):
         self.name = ""
         self.category = ""
+
         self.parameter_names = []
-        self.parameter_defaults = {}
-        self.parameter_types = {}
-        self.parameter_comments = {}
-        self.parameter_units = {}
+        self.parameters = {}
+
+    def add_parameter(self, *args, **kwargs):
+        """
+        Called with same syntax as when a Variable is created.
+        Add p_type_d keyword argument specifying if it is a
+        definition parameter or setting parameter. p_type_d
+        needs to be True for definition, false for setting.
+        """
+
+        if len(args) == 1:
+            name = args[0]
+        elif len(args) == 2:
+            name = args[1]
+        else:
+            raise ValueError("add_parameter needs 1 or 2 args.")
+
+        self.parameter_names.append(name)
+
+        if "p_type_d" in kwargs:
+            if kwargs["p_type_d"]:
+                self.parameters[name] = DefinitionParameter(*args, **kwargs)
+            else:
+                self.parameters[name] = SettingParameter(*args, **kwargs)
+        else:
+            raise ValueError("ComponentInfo.add_parameter needs p_type_d "
+                             + "keyword parameter to determine type.")
+
+    def add_unit(self, unit_dict):
+
+        for key in unit_dict:
+            if key in self.parameters:
+                self.parameters[key].unit = unit_dict[key]
+
+    def add_comments(self, comment_dict):
+
+        for key in comment_dict:
+            if key in self.parameters:
+                self.parameters[key].comment = "// " + comment_dict[key]
 
 
 class ComponentReader:
@@ -252,6 +290,10 @@ class ComponentReader:
 
         result = ComponentInfo()
 
+        parameter_units = {}
+        parameter_comments = {}
+
+
         fo = open(absolute_path, "r")
 
         cnt = 0
@@ -286,12 +328,12 @@ class ComponentReader:
                                 # If found, store it and remove from string
                                 unit = comment[comment.find("[") + 1:
                                                comment.find("]")]
-                                result.parameter_units[variable_name] = unit
+                                parameter_units[variable_name] = unit
                                 comment = comment[comment.find("]") + 1:]
                                 comment = comment.strip()
 
                             # Store the comment
-                            result.parameter_comments[variable_name] = comment
+                            parameter_comments[variable_name] = comment
                     elif "[" in this_line and "]" in this_line:
                         tokens = this_line.split("[")
 
@@ -301,16 +343,21 @@ class ComponentReader:
 
                         unit = this_line[this_line.find("[") + 1:
                                          this_line.find("]")]
-                        result.parameter_units[variable_name] = unit
+                        parameter_units[variable_name] = unit
 
                         comment = this_line[this_line.find("]") + 1:]
                         comment = comment.strip()
-                        result.parameter_comments[variable_name] = comment
+                        parameter_comments[variable_name] = comment
 
             # find definition parameters and their values
             if (self.line_starts_with(line.strip(), "DEFINITION PARAMETERS")
                     or self.line_starts_with(line.strip(),
                                              "SETTING PARAMETERS")):
+
+                if self.line_starts_with(line.strip(), "DEFINITION PARAMETERS"):
+                    definition_parameter = True
+                else:
+                    definition_parameter = False
 
                 parts = line.split("(")
                 parameter_parts = parts[1].split(",")
@@ -359,9 +406,12 @@ class ComponentReader:
 
                         if "=" not in part:
                             # no defualt value, required parameter
-                            result.parameter_names.append(part)
-                            result.parameter_defaults[part] = None
-                            result.parameter_types[part] = temp_par_type
+                            result.add_parameter(temp_par_type, part,
+                                                 p_type_d=definition_parameter)
+
+                            #result.parameter_names.append(part)
+                            #result.parameter_defaults[part] = None
+                            #result.parameter_types[part] = temp_par_type
                         else:
                             # default value available
                             name_value = part.split("=")
@@ -377,9 +427,13 @@ class ComponentReader:
                             elif temp_par_type is "int":
                                 par_value = int(par_value)
 
-                            result.parameter_names.append(par_name)
-                            result.parameter_defaults[par_name] = par_value
-                            result.parameter_types[par_name] = temp_par_type
+                            result.add_parameter(temp_par_type, par_name,
+                                                 value=par_value,
+                                                 p_type_d=definition_parameter)
+
+                            #result.parameter_names.append(par_name)
+                            #result.parameter_defaults[par_name] = par_value
+                            #result.parameter_types[par_name] = temp_par_type
 
                     if break_now:
                         break
@@ -408,6 +462,10 @@ class ComponentReader:
         To lower memory use one could remove all comments and units that
         does not correspond to a found parameter name.
         """
+
+        # Add units and comments to results
+        result.add_unit(parameter_units)
+        result.add_comments(parameter_comments)
 
         return result
     

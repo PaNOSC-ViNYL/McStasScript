@@ -1,8 +1,9 @@
+import copy
+
 from mcstasscript.helper.formatting import bcolors
 from mcstasscript.helper.formatting import is_legal_parameter
 from mcstasscript.helper.formatting import LegalTypes
 from mcstasscript.helper.formatting import LegalAssignments
-
 
 class Variable:
     """
@@ -22,10 +23,6 @@ class Variable:
         self.check_name()
         self.check_type()
 
-        self.value = None
-        if "value" in kwargs:
-            self.set_value(kwargs["value"])
-
         self.comment = ""
         if "comment" in kwargs:
             self.comment = "// " + kwargs["comment"]
@@ -33,6 +30,10 @@ class Variable:
         self.existing_vars = None
         if "existing_vars" in kwargs:
             self.existing_vars = kwargs["existing_vars"]
+
+        self.value = None
+        if "value" in kwargs:
+            self.set_value(kwargs["value"])
 
     def check_name(self):
         if not is_legal_parameter(self.name):
@@ -44,7 +45,8 @@ class Variable:
     def check_type(self):
         if self.type not in LegalTypes.all_c_types:
             raise NameError("Given parameter type not allowed, choose from "
-                            + str(LegalTypes.all_c_types))
+                            + str(LegalTypes.all_c_types)
+                            + " given type was: " + self.type + ".")
 
     def set_value(self, value):
         self.value = value
@@ -52,6 +54,20 @@ class Variable:
 
     def check_value(self):
         pass
+
+    def set_existing_vars(self, existing_vars):
+        """
+        Existing vars can be added later, at that point a check is made
+        to ensure the contained value is legal.
+        """
+
+        if isinstance(existing_vars, dict):
+            self.existing_vars = existing_vars
+        else:
+            self.existing_vars = {existing_vars.name: existing_vars}
+
+        if self.value is not None:
+            self.check_value()
 
     def make_literal_string(self):
         if self.type == "char":
@@ -93,12 +109,21 @@ class Variable:
         # * has other meanings
         # check for expressions that has *
         expression_parts = self.value.split("*")
-        expression_parts.remove("")
+        if "" in expression_parts:
+            expression_parts.remove("")
         if len(expression_parts) > 1:
             # this is an expression
             return True
 
         return False
+
+    def __repr__(self):
+        output = "Variable | Name: " + self.name + "\t"
+        output += " Type: " + self.type + "\t"
+        if self.value is not None:
+            output += " Value: " + str(self.value)
+
+        return output
 
 
 class Parameter(Variable):
@@ -236,58 +261,23 @@ class DeclareVariable(Variable):
                 self.vector = len(value)
 
         self.value = value
+        self.check_value()
 
     def check_value(self):
         """
-        Checks the type is reasonable. If the variable is a string, it may
-        refer to an already declared variable or parameter, and in that case
-        a type check is made to check this is legal in c.
+        Checks the type is reasonable.
+
+        Declare variables can not be initialized using other variables.
 
         The given value is checked against the given type to check this is
         sensible. Done for all elements in a list if the variable is an array.
         """
-        # Check if the given value is actually a variable in the given scope
-        if self.existing_vars is not None and isinstance(self.value, str):
-            # Remove [ ], *, & from variable name
-            # TODO THIS WONT WORK IN ALL CASES A[5] would be A5
-            var_name = self.value.replace("&", "").replace("*", "")
-            var_name = var_name.split("[")[0]
 
-            if var_name in self.existing_vars:
-                # The given value is within the current scope
-                assigned_var = self.existing_vars[var_name]
-                if assigned_var.type == self.type:
-                    # The types match, all is good
-                    return
-                else:
-                    raise ValueError("Type mismatch detected.\n"
-                                     + "Variable named "
-                                     + assigned_var.name
-                                     + " with type "
-                                     + assigned_var.type
-                                     + " was used to initialize variable named "
-                                     + self.name
-                                     + " with type "
-                                     + self.type
-                                     + ".")
-            else:
-                """
-                The variable was not found, if we are trying to set an int or
-                double, check if it was an expression.
-                """
-                operators = set('+-*/()')
-                if (not any((c in operators) for c in self.value)
-                   and self.type in ["double", "int"]):
-                    raise ValueError("Attempted to initialize declared variable"
-                                     + self.name +
-                                     + " of type " + self.type + " with a string,"
-                                     + " which does not match any known variable:"
-                                     + self.value + ".")
-                """
-                Since we know this variable is not a reference to something in
-                the scope, it is a literal string that needs '' or "" depending
-                on if it is a char or a string. Check this is correct.
-                """
+        if isinstance(self.value, str):
+            if self.is_value_expression():
+                return
+
+            if self.type == "string":
                 self.make_literal_string()
 
         if self.vector == 0:
@@ -304,8 +294,8 @@ class DeclareVariable(Variable):
                                  + ". Given type: " + str(type(element)))
 
             allowed_types = LegalAssignments.py_to_var[type(element)]
-            if not isinstance(element, allowed_types):
-                py_type = type(element)
+            if self.type not in allowed_types:
+                py_type = str(type(self.value))
                 raise ValueError("Given value of python type "
                                  + py_type + " can not be "
                                  + "stored in the C type " + self.type + " "
@@ -324,9 +314,9 @@ class DeclareVariable(Variable):
         if self.comment != "":
             self.comment = " " + self.comment
 
-        if self.value == None and self.vector == 0:
+        if self.value is None and self.vector == 0:
             fo.write("%s %s;%s" % (self.type, self.name, self.comment))
-        if self.value != None and self.vector == 0:
+        if self.value is not None and self.vector == 0:
             if self.type == "int":
                 fo.write("%s %s = %d;%s" % (self.type, self.name,
                                             self.value, self.comment))
@@ -337,10 +327,10 @@ class DeclareVariable(Variable):
                 except:
                     fo.write("%s %s = %s;%s" % (self.type, self.name,
                                                 self.value, self.comment))
-        if self.value == None and self.vector != 0:
+        if self.value is None and self.vector != 0:
             fo.write("%s %s[%d];%s" % (self.type, self.name,
                                        self.vector, self.comment))
-        if self.value != None and self.vector != 0:
+        if self.value is not None and self.vector != 0:
             if isinstance(self.value, str):
                 # value is a string
                 string = self.value
@@ -354,13 +344,27 @@ class DeclareVariable(Variable):
                     fo.write("%G," % self.value[i])
                 fo.write("%G};%s" % (self.value[-1], self.comment))
 
+
 class DefinitionParameter(Variable):
     def __init__(self, *args, **kwargs):
+
+        self.unit = None
+        if "unit" in kwargs:
+            self.unit = kwargs["unit"]
+
+        if "value" in kwargs:
+            self.required_parameter = False
+            self.default_value = kwargs["value"]
+        else:
+            self.required_parameter = True
+            self.default_value = None
+
+        self.user_specified = False
 
         super().__init__(*args, **kwargs)
 
     def check_type(self):
-        # Basicly all c types allowed, including function pointers!
+        # All c types allowed, including function pointers!
         pass
 
     def check_value(self):
@@ -394,7 +398,7 @@ class DefinitionParameter(Variable):
                                      + " with type "
                                      + assigned_var.type
                                      + " was used to initialize component "
-                                     + "definition parameter named:"
+                                     + "definition parameter named: "
                                      + self.name
                                      + " with type "
                                      + self.type
@@ -407,20 +411,34 @@ class DefinitionParameter(Variable):
                 """
                 self.make_literal_string()
 
-        allowed_types = LegalAssignments.py_to_var[type(self.value)]
-        if not isinstance(self.value, allowed_types):
-            py_type = type(self.value)
-            raise ValueError("Given value of python type "
-                             + py_type + " can not be "
-                             + "stored in the C type " + self.type + " "
-                             + "which was chosen for the " + self.name + " "
-                             + "parameter.")
+        # definition parameters can do what they want
+        #allowed_types = LegalAssignments.py_to_var[type(self.value)]
+        #if self.type not in allowed_types:
+        #    py_type = str(type(self.value))
+        #    raise ValueError("Given value of python type "
+        #                     + py_type + " can not be "
+        #                     + "stored in the C type " + self.type + " "
+        #                     + "which was chosen for the " + self.name + " "
+        #                     + "parameter.")
+
 
 class SettingParameter(Variable):
     def __init__(self, *args, **kwargs):
 
-        super().__init__(*args, **kwargs)
+        self.unit = None
+        if "unit" in kwargs:
+            self.unit = kwargs["unit"]
 
+        if "value" in kwargs:
+            self.required_parameter = False
+            self.default_value = kwargs["value"]
+        else:
+            self.required_parameter = True
+            self.default_value = None
+
+        self.user_specified = False
+
+        super().__init__(*args, **kwargs)
 
     def check_type(self):
         # Need to allow pointers, arrays, function pointers, ...
@@ -431,11 +449,13 @@ class SettingParameter(Variable):
         if type(self.value) not in LegalTypes.py_types:
             raise ValueError("Given value for component setting parameter "
                              + "named " + self.name + " must be within these "
-                             + "types " + str(LegalTypes)
+                             + "types " + str(LegalTypes.py_types)
                              + ". Given type: " + str(type(self.value)))
 
         # Check if the given value is actually a variable in the given scope
         if self.existing_vars is not None and isinstance(self.value, str):
+
+            var_name = self.value
 
             if self.is_value_expression():
                 # If the value is an expression, type checking not performed
@@ -446,17 +466,43 @@ class SettingParameter(Variable):
             if self.value.count("[") == 1 and self.value.count("]") == 1:
                 # nothing after ]
                 if self.value.split("]")[-1] == "":
-                    var_name = self.value.split("[")[0]
-                    var_name = self.value.replace("&", "").replace("*", "")
+                    var_name = var_name.split("[")[0]
+                    var_name = var_name.replace("&", "").replace("*", "")
 
                     # number between [ ]
                     given_index = self.value.split("[")[-1].split("]")[0]
 
-                    # Can check the given index, it will either be an integer
-                    #  or a int variable in the current scope.
+                    if var_name in self.existing_vars:
+                        assigned_var = self.existing_vars[var_name]
+                        # Check given index is a integer
+                        try:
+                            int(given_index)
+                            is_int = True
+                        except:
+                            is_int = False
+
+
+                        if is_int:
+                            if int(given_index) >= assigned_var.vector:
+                                msg = ("Index out of bounds in " + self.value
+                                       + " as the given index was "
+                                       + given_index + " and the length of "
+                                       + "the array is only: "
+                                       + str(assigned_var.vector) + ".")
+                                raise ValueError(msg)
+                        else:
+                            if given_index in self.existing_vars:
+                                index_var = self.existing_vars[given_index]
+                                if index_var.type != "int":
+                                    msg = ("Given index to array "
+                                           + str(self.value)
+                                           + " is not allowed as "
+                                           + str(given_index)
+                                           + " is not an integer.")
+                                    raise ValueError(msg)
 
             # Could be a pointer or address, allow this.
-            var_name = self.value.replace("&", "").replace("*", "")
+            var_name = var_name.replace("&", "").replace("*", "")
 
             if var_name in self.existing_vars:
                 # The given value is within the current scope
@@ -471,7 +517,7 @@ class SettingParameter(Variable):
                                      + " with type "
                                      + assigned_var.type
                                      + " was used to initialize component "
-                                     + "definition parameter named:"
+                                     + "setting parameter named:"
                                      + self.name
                                      + " with type "
                                      + self.type
@@ -495,260 +541,13 @@ class SettingParameter(Variable):
                     self.make_literal_string()
 
         allowed_types = LegalAssignments.py_to_var[type(self.value)]
-        if not isinstance(self.value, allowed_types):
-            py_type = type(self.value)
+        if self.type not in allowed_types:
+            py_type = str(type(self.value))
             raise ValueError("Given value of python type "
                              + py_type + " can not be "
                              + "stored in the C type " + self.type + " "
                              + "which was chosen for the " + self.name + " "
                              + "parameter.")
-
-class parameter_variable:
-    """
-    Class describing a input parameter in McStas instrument
-
-    McStas input parameters are of default type double, but can be
-    cast.  If two positional arguments are given, the first is the
-    type, and the second is the parameter name.  With one input, only
-    the parameter name is read.  It is also possible to assign a
-    default value and a comment through keyword arguments.
-
-    Attributes
-    ----------
-    type : str
-        McStas type of input: Double, Int, String
-
-    name : str
-        Name of input parameter
-
-    value : any
-        Default value/string of parameter, converted to string
-
-    comment : str
-        Comment displayed next to the parameter, could contain units
-
-    user_specified_type : bool
-        True if user specified type, False if it was automatically assigned
-
-    Methods
-    -------
-    write_parameter(fo,stop_character)
-        writes the parameter to file fo, uses given stop character
-    """
-
-    def __init__(self, *args, **kwargs):
-        """Initializing mcstas parameter object
-
-        Parameters
-        ----------
-        If giving a type:
-        Positional argument 1: type: str
-            Type of the parameter, double, int or string
-        Positional argument 2: name: str
-            Name of input parameter
-
-        If not giving type
-        Positional argument 1: name : str
-            Name of input parameter
-
-        Keyword arguments
-            value : any
-                sets default value of parameter
-            comment : str
-                sets comment displayed next to declaration
-        """
-        raise ValueError("Should not use this class")
-
-        if len(args) == 1:
-            self.type = "double"
-            self.user_specified_type = False
-            self.name = str(args[0])
-        if len(args) == 2:
-            self.type = args[0]
-            self.user_specified_type = True
-            self.name = str(args[1])
-
-        if not is_legal_parameter(self.name):
-            raise NameError("The given parameter name: \""
-                            + self.name
-                            + "\" is not a legal c variable name, "
-                            + " and cannot be used in McStas.")
-
-        if self.type not in ["double", "int", "char", "string"]:
-            raise NameError("Given parameter type not allowed, choose from "
-                            + "double, int, char and string.")
-
-        self.value = ""
-        if "value" in kwargs:
-            self.value = kwargs["value"]
-
-            if self.type == "char":
-                # check apostrophes around character
-                if self.value[0] != "'":
-                    self.value = "'" + self.value
-
-                if self.value[-1] != "'":
-                    self.value = self.value + "'"
-
-                # check only single character is given
-                if len(self.value) != 3:
-                    raise ValueError("Given char value illegal, only one "
-                                     + "character allowed.")
-
-            if self.type == "string":
-                # check quotation marks around string
-                if self.value[0] != '"':
-                    self.value = '"' + self.value
-
-                if self.value[-1] != '"':
-                    self.value = self.value + '"'
-
-        self.comment = ""
-        if "comment" in kwargs:
-            self.comment = "// " + kwargs["comment"]
-
-        # could check for allowed types
-        # they are int, double, string, are there more?
-
-    def write_parameter(self, fo, stop_character):
-        """Writes input parameter to file"""
-        if self.user_specified_type:
-            fo.write("%s %s" % (self.type, self.name))
-        else:
-            # McStas default type is double if nothing specified
-            fo.write("%s" % (self.name))
-        if self.value != "":
-            if isinstance(self.value, int):
-                fo.write(" = %d" % self.value)
-            elif isinstance(self.value, float):
-                fo.write(" = %G" % self.value)
-            else:
-                fo.write(" = %s" % str(self.value))
-        fo.write(stop_character)
-        fo.write(self.comment)
-        fo.write("\n")
-
-
-class declare_variable:
-    """
-    Class describing a declared variable in McStas instrument
-
-    McStas parameters are declared in declare section with c syntax.
-    This class is initialized with type, name.  Using keyword
-    arguments, the variable can become an array and have its initial
-    value set.
-
-    Attributes
-    ----------
-    type : str
-        McStas type to declare: Double, Int, String
-
-    name : str
-        Name of variable
-
-    value : any
-        Initial value of variable, converted to string
-
-    comment : str
-        Comment displayed next to the declaration, could contain units
-
-    vector : int
-        0 if a single value is given, otherwise contains the length
-
-    Methods
-    -------
-    write_line(fo)
-        Writes a line to text file fo declaring the parameter in c
-    """
-    def __init__(self, *args, **kwargs):
-        """
-        Initializing mcstas parameter object
-
-        Parameters
-        ----------
-        Positional argument 1: type : str
-            Type of the parameter, double, int or string
-
-        Positional argument 2: name : str
-            Name of input parameter
-
-        Keyword arguments
-            array : int
-                length of array to be allocated, 0 if single value
-
-            value : any
-                sets initial value of parameter,
-                can be a list with length matching array
-
-            comment : str
-                sets comment displayed next to declaration
-        """
-        self.type = args[0]
-        self.name = str(args[1])
-
-        par_name = self.name
-        if "*" in par_name[0]:
-            # Remove any number of prefixed *, indicating variable is a pointer
-            par_name = par_name.split("*")[-1]
-        elif "&" in par_name[0]:
-            # Remove the first & indicating the variable is an address
-            par_name = par_name[1:]
-            
-        if not is_legal_parameter(par_name):
-            raise NameError("The given parameter name: \""
-                            + self.name
-                            + "\" is not a legal c variable name, "
-                            + " and cannot be used in McStas.")
-
-        self.value = ""
-        if "value" in kwargs:
-            self.value = kwargs["value"]
-
-        self.vector = 0
-        if "array" in kwargs:
-            self.vector = kwargs["array"]
-
-        self.comment = ""
-        if "comment" in kwargs:
-            self.comment = " // " + kwargs["comment"]
-
-    def write_line(self, fo):
-        """
-        Writes line declaring variable to file fo
-
-        Parameters
-        ----------
-        fo : file object
-            File the line will be written to
-        """
-        if self.value == "" and self.vector == 0:
-            fo.write("%s %s;%s" % (self.type, self.name, self.comment))
-        if self.value != "" and self.vector == 0:
-            if self.type == "int":
-                fo.write("%s %s = %d;%s" % (self.type, self.name,
-                                            self.value, self.comment))
-            else:
-                try:
-                    fo.write("%s %s = %G;%s" % (self.type, self.name,
-                                                self.value, self.comment))
-                except:
-                    fo.write("%s %s = %s;%s" % (self.type, self.name,
-                                                self.value, self.comment))
-        if self.value == "" and self.vector != 0:
-            fo.write("%s %s[%d];%s" % (self.type, self.name,
-                                       self.vector, self.comment))
-        if self.value != "" and self.vector != 0:
-            if isinstance(self.value, str):
-                # value is a string
-                string = self.value
-                #string = string.replace('"',"\\\"")
-                fo.write("%s %s[%d] = %s;" % (self.type, self.name, self.vector, string))
-            else:
-                # list of values
-                fo.write("%s %s[%d] = {" % (self.type, self.name, self.vector))
-                for i in range(0, len(self.value) - 1):
-                    fo.write("%G," % self.value[i])
-                fo.write("%G};%s" % (self.value[-1], self.comment))
 
 
 class component:
@@ -937,15 +736,19 @@ class component:
         # If any keywords are set in kwargs, update these
         self.set_keyword_input(**kwargs)
 
-        # Type saftey
-        if not hasattr(self, "parameter_types"):
-            self.parameter_types = {}
+        # Parameters should be local to this component instance
+        #  decouple from the parameters of the component class
+        if hasattr(self, "parameters"):
+            self.parameters = copy.deepcopy(self.parameters)
 
-        if not hasattr(self, "instrument_parameters"):
-            self.instrument_parameters = {}
-
-        if not hasattr(self, "instrument_variables"):
-            self.instrument_variables = {}
+        # component objects are usually used as a base class where
+        #  parameter_names and parameters are supplied. This case
+        #  makes it easier to perform basic unit tests on the base
+        #  class itself.
+        if not hasattr(self, "parameter_names"):
+            self.parameter_names = []
+            self.parameters = {}
+            self.line_limit = 117
 
         """
         Could store an option for whether this component should be
@@ -999,7 +802,6 @@ class component:
         
         if "c_code_after" in kwargs:
             self.c_code_after = kwargs["c_code_after"]
-        
 
     def __setattr__(self, key, value):
         if self.__isfrozen and not hasattr(self, key):
@@ -1011,78 +813,12 @@ class component:
                                  + self.component_name
                                  + ".")
 
-        # Type checking when setting a component parameter
-        if self.__isfrozen and 1 == 2: # disable type checking here
-            if key in self.parameter_types:
-                expected_type = self.parameter_types[key]
-
-                if isinstance(value, str):
-                    # check this value is within the data base and has correct type
-
-                    # need to check for arrays
-                    if "[" in value:
-                        value_name = value.split("[")[0]
-                    else:
-                        value_name = value
-
-                    # Prepare list of names for parameters and variables
-                    par_name_list = [par.name for par in self.instrument_parameters]
-                    var_name_list = [var.name for var in self.instrument_variables]
-                    if value_name in par_name_list:
-                        index = par_name_list.index(value_name)
-                        parameter = self.instrument_parameters[index]
-                        given_type = parameter.type
-                        input_exists = True
-                    elif value_name in var_name_list:
-                        index = var_name_list.index(value_name)
-                        variable = self.instrument_variables[index]
-                        given_type = variable.type
-                        input_exists = True
-                    else:
-                        # Given string did not match a parameter or variable
-                        input_exists = False
-
-                    if input_exists:
-                        # If this matches a declared parameter, check type matches
-                        if expected_type != given_type:
-                            # report error to user
-                            msg = ("Component parameter with name "
-                                   + key
-                                   + " has type "
-                                   + expected_type
-                                   + " but the assigned variable named "
-                                   + value
-                                   + " has type "
-                                   + given_type
-                                   + " and is thus incompatible.")
-
-                            raise AttributeError(msg)
-                    else:
-                        # The given parameter has not been declared
-                        if expected_type == "string":
-                            # Convert input to string in instrument file
-                            if '"' not in value:
-                                value = '"' + value + '"'
-
-                        else:
-                            # Check that it is not just an expression
-                            operators = set('+-*/()')
-                            if not any((c in operators) for c in value):
-                                # String is given, but not recognized and not accepted
-                                msg = ("Input " + value + " not recognized as instrument "
-                                       "parameter or declared variable. "
-                                       "The component parameter set, " + key + ", " +
-                                       "requires type: " + expected_type + ".")
-                                raise AttributeError(msg)
-
-                elif isinstance(value, int):
-                    # Given int, check this is allowed
-                    if expected_type not in ["double", "float", "int"]:
-                        raise AttributeError("Type does not match.")
-                elif isinstance(value, float):
-                    # Given float, check this is allowed
-                    if expected_type not in ["double", "float"]:
-                        raise AttributeError("Type does not match.")
+        if hasattr(self, "parameter_names")  and hasattr(self, "parameters"):
+            if key in self.parameter_names:
+                self.parameters[key].set_value(value)
+                self.parameters[key].user_specified = True
+                object.__setattr__(self, key, value)
+                return
 
         object.__setattr__(self, key, value)
 
@@ -1091,6 +827,13 @@ class component:
 
     def _unfreeze(self):
         self.__isfrozen = False
+
+    def set_existing_vars(self, existing_vars):
+        """
+        Sets the existing_vars on all parameters of this component.
+        """
+        for _, par in self.parameters.items():
+            par.set_existing_vars(existing_vars)
 
     def set_AT(self, at_list, RELATIVE=None):
         """Sets AT data, List of 3 floats"""
@@ -1219,7 +962,6 @@ class component:
         # Could use character limit on lines instead
         parameters_written = 0  # internal parameter
 
-
         if len(self.c_code_before) > 0:
             explanation = "From component named " + self.name
             fo.write("%s // %s\n" % (str(self.c_code_before), explanation))
@@ -1235,11 +977,11 @@ class component:
         # Write component name and component type
         fo.write("COMPONENT %s = %s(" % (self.name, self.component_name))
 
-        component_parameters = {}
+        component_parameters = []
         for key in self.parameter_names:
-            val = getattr(self, key)
-            if val is None:
-                if self.parameter_defaults[key] is None:
+            par = self.parameters[key]
+            if par.value is None:
+                if par.required_parameter:
                     raise NameError("Required parameter named "
                                     + key
                                     + " in component named "
@@ -1248,7 +990,8 @@ class component:
                 else:
                     continue
 
-            component_parameters[key] = val
+            if par.user_specified:
+                component_parameters.append(par)
 
         number_of_parameters = len(component_parameters)
 
@@ -1257,19 +1000,20 @@ class component:
         else:
             fo.write("\n")  # If there are parameters, start a new line
 
-        for key, val in component_parameters.items():
-            if isinstance(val, float):  # CHeck if value is a number
+        for par in component_parameters:
+
+            if isinstance(par.value, float):
                 # Small or large numbers written in scientific format
-                fo.write(" %s = %G" % (str(key), val))
+                fo.write(" %s = %G" % (str(par.name), par.value))
             else:
-                fo.write(" %s = %s" % (str(key), str(val)))
+                fo.write(" %s = %s" % (str(par.name), str(par.value)))
             parameters_written = parameters_written + 1
             if parameters_written < number_of_parameters:
                 fo.write(",")  # Comma between parameters
                 if parameters_written % parameters_per_line == 0:
                     fo.write("\n")
             else:
-                fo.write(")\n")  # End paranthesis after last parameter
+                fo.write(")\n")  # End parenthesis after last parameter
 
         # Optional WHEN section
         if not self.WHEN == "":
@@ -1325,20 +1069,20 @@ class component:
         print("COMPONENT", str(self.name),
               "=", str(self.component_name))
         for key in self.parameter_names:
-            val = getattr(self, key)
+            par = self.parameters[key]
             parameter_name = bcolors.BOLD + key + bcolors.ENDC
-            if val is not None:
+            if par.user_specified:
                 unit = ""
-                if key in self.parameter_units:
-                    unit = "[" + self.parameter_units[key] + "]"
+                if par.unit is not None:
+                    unit = "[" + par.unit + "]"
                 value = (bcolors.BOLD
                          + bcolors.OKGREEN
-                         + str(val)
+                         + str(par.value)
                          + bcolors.ENDC
                          + bcolors.ENDC)
                 print(" ", parameter_name, "=", value, unit)
             else:
-                if self.parameter_defaults[key] is None:
+                if par.required_parameter:
                     print("  "
                           + parameter_name
                           + bcolors.FAIL
@@ -1413,27 +1157,27 @@ class component:
               + bcolors.ENDC + "|")
 
         for parameter in self.parameter_names:
+            par = self.parameters[parameter]
             characters_before_comment = 4
             unit = ""
-            if parameter in self.parameter_units:
-                unit = " [" + self.parameter_units[parameter] + "]"
+            if par.unit is not None:
+                unit = " [" + par.unit + "]"
                 characters_before_comment += len(unit)
             comment = ""
-            if parameter in self.parameter_comments:
-                if not self.parameter_comments[parameter] == "":
-                    comment = " // " + self.parameter_comments[parameter]
+            if par.comment != "":
+                comment = " " + par.comment
 
             parameter_name = bcolors.BOLD + parameter + bcolors.ENDC
             characters_before_comment += len(parameter)
 
             value = ""
             characters_from_value = 0
-            if self.parameter_defaults[parameter] is None:
+            if par.value is None:
                 parameter_name = (bcolors.UNDERLINE
                                   + parameter_name
                                   + bcolors.ENDC)
             else:
-                this_default = str(self.parameter_defaults[parameter])
+                this_default = str(par.default_value)
                 value = (" = "
                          + bcolors.BOLD
                          + bcolors.OKBLUE
@@ -1442,8 +1186,8 @@ class component:
                          + bcolors.ENDC)
                 characters_from_value = 3 + len(this_default)
 
-            if getattr(self, parameter) is not None:
-                this_set_value = str(getattr(self, parameter))
+            if par.user_specified:
+                this_set_value = str(par.value)
                 value = (" = "
                          + bcolors.BOLD
                          + bcolors.OKGREEN
@@ -1509,20 +1253,20 @@ class component:
         """
         print("---- Help " + self.component_name + " -----")
         for parameter in self.parameter_names:
+            par = self.parameters[parameter]
             value = ""
-            if self.parameter_defaults[parameter] is not None:
-                value = " = " + str(self.parameter_defaults[parameter])
-            if getattr(self, parameter) is not None:
-                value = " = " + str(getattr(self, parameter))
+            if not par.required_parameter:
+                value = " = " + str(par.default_value)
+            if par.user_specified:
+                value = " = " + str(par.value)
 
             unit = ""
-            if parameter in self.parameter_units:
-                unit = " [" + self.parameter_units[parameter] + "]"
+            if par.unit is not None:
+                unit = " [" + par.unit + "]"
 
             comment = ""
-            if parameter in self.parameter_comments:
-                if self.parameter_comments[parameter] != "":
-                    comment = " // " + self.parameter_comments[parameter]
+            if par.comment != "":
+                comment = " " + par.comment
 
             print(parameter + value + unit + comment)
 

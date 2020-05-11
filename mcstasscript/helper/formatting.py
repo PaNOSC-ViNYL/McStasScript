@@ -53,6 +53,23 @@ def is_legal_filename(name):
 
     return True
 
+def to_number(input):
+    """
+    Converts input to the appropriate python number type
+    """
+
+    if isinstance(input, int) or isinstance(input, float):
+        return input
+
+    try:
+        return int(input)
+    except:
+        try:
+            return float(input)
+        except:
+            pass
+
+    return None
 
 class LegalTypes:
     all_c_types = ["int", "double", "char", "string"]
