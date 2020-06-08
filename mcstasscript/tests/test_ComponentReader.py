@@ -257,7 +257,7 @@ class TestComponentReader(unittest.TestCase):
 
         component_reader = setup_component_reader()
 
-        #  Add elements directly to component_readers library
+        # Add elements directly to component_readers library
         # generate list
         # add list
 

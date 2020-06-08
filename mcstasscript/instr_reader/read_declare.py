@@ -218,8 +218,9 @@ class DeclareReader(SectionReader):
                 else:
                     return_value = to_number(value)
                     if return_value is None:
-                        value = value.replace('"',"\\\"")
-                        return_value = '"' + value + '"'
+                        #value = value.replace('"',"\\\"")
+                        #return_value = '"' + value + '"'
+                        return_value = value
                 
                 kw_args["value"] = return_value
 
