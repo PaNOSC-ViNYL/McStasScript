@@ -7,8 +7,8 @@ import subprocess
 import copy
 
 from mcstasscript.data.data import McStasData
-from mcstasscript.helper.mcstas_objects import declare_variable
-from mcstasscript.helper.mcstas_objects import parameter_variable
+from mcstasscript.helper.mcstas_objects import DeclareVariable
+from mcstasscript.helper.mcstas_objects import Parameter
 from mcstasscript.helper.mcstas_objects import component
 from mcstasscript.helper.component_reader import ComponentReader
 from mcstasscript.helper.managed_mcrun import ManagedMcrun
@@ -39,11 +39,11 @@ class McStas_instr:
     mcrun_path : str
         absolute path of mcrun command, or empty if it is in path
 
-    parameter_list : list of parameter_variable instances
+    parameter_list : list of Parameter instances
         contains all input parameters to be written to file
 
-    declare_list : list of declare_variable instances
-        contains all declare parrameters to be written to file
+    declare_list : list of DeclareVariable instances
+        contains all declare variables to be written to file
 
     initialize_section : str
         string containing entire initialize section to be written
@@ -226,8 +226,10 @@ class McStas_instr:
                             + "for the McStas installation as keyword "
                             + "named mcstas_path or in configuration.yaml")
 
-        self.parameter_list = []
-        self.declare_list = []
+        self.parameter_list = [] # List of all parameters
+        self.declare_list = [] # List of all declare variable
+        self.variable_library = {} # Dict of all parameters and declare variables
+
         #self.declare_section = ""
         self.initialize_section = ("// Start of initialize for generated "
                                    + name + "\n")
@@ -264,8 +266,10 @@ class McStas_instr:
             comment : str
                 Comment displayed next to declaration of parameter
         """
-        # parameter_variable class documented independently
-        self.parameter_list.append(parameter_variable(*args, **kwargs))
+        # Parameter class documented independently
+        new_parameter = Parameter(*args, **kwargs)
+        self.variable_library[new_parameter.name] = new_parameter
+        self.parameter_list.append(new_parameter)
 
     def show_parameters(self, **kwargs):
         """
@@ -306,11 +310,13 @@ class McStas_instr:
         for parameter in self.parameter_list:
             print(str(parameter.type).ljust(longest_type), end=' ')
             print(str(parameter.name).ljust(longest_name), end=' ')
-            if parameter.value is "":
+            if parameter.value is None:
                 print("   ", end=' ')
+                print("".ljust(longest_value + 1), end=' ')
             else:
                 print(" = ", end=' ')
-            print(str(parameter.value).ljust(longest_value+1), end=' ')
+                print(str(parameter.value).ljust(longest_value + 1), end=' ')
+            
             if (length_for_comment < 5
                     or length_for_comment > len(str(parameter.comment))):
                 print(str(parameter.comment))
@@ -376,8 +382,11 @@ class McStas_instr:
                 Comment displayed next to declaration of parameter
 
         """
-        # declare_variable class documented independently
-        self.declare_list.append(declare_variable(*args, **kwargs))
+        kwargs["existing_vars"] = self.variable_library
+        new_variable = DeclareVariable(*args, **kwargs)
+        self.variable_library[new_variable.name] = new_variable
+
+        self.declare_list.append(new_variable)
         
     def append_declare(self, string):
         """
@@ -570,10 +579,9 @@ class McStas_instr:
             input_dict = {}
             input_dict = {key: None for key in comp_info.parameter_names}
             input_dict["parameter_names"] = comp_info.parameter_names
-            input_dict["parameter_defaults"] = comp_info.parameter_defaults
-            input_dict["parameter_types"] = comp_info.parameter_types
-            input_dict["parameter_units"] = comp_info.parameter_units
-            input_dict["parameter_comments"] = comp_info.parameter_comments
+            input_dict["parameters"] = comp_info.parameters
+
+            # Info needed for help functions
             input_dict["category"] = comp_info.category
             input_dict["line_limit"] = self.line_limit
 
@@ -581,7 +589,13 @@ class McStas_instr:
                                                             (component,),
                                                             input_dict)
 
-        return self.component_class_lib[component_name](*args, **kwargs)
+        # Create component instance
+        comp = self.component_class_lib[component_name](*args, **kwargs)
+
+        # Load the variable library into the component instance
+        comp.set_existing_vars(self.variable_library)
+
+        return comp
 
     def add_component(self, *args, **kwargs):
         """

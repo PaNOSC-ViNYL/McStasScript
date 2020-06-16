@@ -1,4 +1,5 @@
 from mcstasscript.instr_reader.util import SectionReader
+from mcstasscript.helper.formatting import to_number
 
 class DeclareReader(SectionReader):
     """
@@ -213,13 +214,13 @@ class DeclareReader(SectionReader):
                     values = value.split(",")
                     return_value = []
                     for val in values:
-                        return_value.append(float(val))
+                        return_value.append(to_number(val))
                 else:
-                    try:
-                        return_value = float(value)
-                    except:
-                        value = value.replace('"',"\\\"")
-                        return_value = '"' + value + '"'
+                    return_value = to_number(value)
+                    if return_value is None:
+                        #value = value.replace('"',"\\\"")
+                        #return_value = '"' + value + '"'
+                        return_value = value
                 
                 kw_args["value"] = return_value
 

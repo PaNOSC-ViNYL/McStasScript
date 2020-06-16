@@ -15,7 +15,7 @@
 * 
 * %Identification
 * Written by: Python McStas Instrument Generator
-* Date: 15:36:48 on May 27, 2019
+* Date: 09:27:25 on June 08, 2020
 * Origin: ESS DMSC
 * %INSTRUMENT_SITE: Generated_instruments
 * 
@@ -26,7 +26,8 @@
 ********************************************************************************/
 
 DEFINE INSTRUMENT test_instrument (
-double theta 
+double theta,
+double has_default = 37 
 )
 
 DECLARE 

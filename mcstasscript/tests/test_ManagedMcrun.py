@@ -38,7 +38,7 @@ class TestManagedMcrun(unittest.TestCase):
                                  foldername="test_folder",
                                  mcrun_path="")
 
-        self.assertEqual(mcrun_obj.mpi, 1)
+        self.assertEqual(mcrun_obj.mpi, None)
         self.assertEqual(mcrun_obj.ncount, 1000000)
         self.assertEqual(mcrun_obj.run_path, ".")
 
@@ -114,7 +114,7 @@ class TestManagedMcrun(unittest.TestCase):
         expected_folder_path = os.path.join(current_directory, "test_folder")
 
         # a double space because of a missing option
-        expected_call = ("path/mcrun -c -n 1000000 --mpi=1 "
+        expected_call = ("path/mcrun -c -n 1000000 "
                          + "-d " + expected_folder_path + "  test.instr")
 
         mock_sub.assert_called_once_with(expected_call,
@@ -138,7 +138,7 @@ class TestManagedMcrun(unittest.TestCase):
         expected_folder_path = os.path.join(current_directory, "test_folder")
 
         # a double space because of a missing option
-        expected_call = ("path/mcrun -c -n 1000000 --mpi=1 "
+        expected_call = ("path/mcrun -c -n 1000000 "
                          + "-d " + expected_folder_path + "  test.instr")
 
         mock_sub.assert_called_once_with(expected_call,

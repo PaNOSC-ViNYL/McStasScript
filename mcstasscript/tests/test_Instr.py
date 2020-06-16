@@ -205,8 +205,7 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_instr_root_path()
 
         instr.add_parameter("double", "theta", comment="test par")
-        instr.add_parameter("single", "theta", comment="test par")
-        instr.add_parameter("float", "theta", value=8, comment="test par")
+        instr.add_parameter("char", "theta2", value="A", comment="test char")
         instr.add_parameter("int", "slits", comment="test par")
         instr.add_parameter("string", "ref",
                             value="string", comment="new string")
@@ -215,11 +214,10 @@ class TestMcStas_instr(unittest.TestCase):
 
         output = mock_stdout.getvalue().split("\n")
 
-        self.assertEqual(output[0], "double  theta             // test par")
-        self.assertEqual(output[1], "single  theta             // test par")
-        self.assertEqual(output[2], "float   theta  =  8       // test par")
-        self.assertEqual(output[3], "int     slits             // test par")
-        self.assertEqual(output[4], "string  ref    =  string  // new string")
+        self.assertEqual(output[0], "double theta                // test par")
+        self.assertEqual(output[1], "char   theta2  =  'A'       // test char")
+        self.assertEqual(output[2], "int    slits                // test par")
+        self.assertEqual(output[3], "string ref     =  \"string\"  // new string")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_show_parameters_line_break(self, mock_stdout):
@@ -232,8 +230,7 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_instr_root_path()
 
         instr.add_parameter("double", "theta", comment="test par")
-        instr.add_parameter("single", "theta", comment="test par")
-        instr.add_parameter("float", "theta", value=8, comment="test par")
+        instr.add_parameter("char", "theta2", value="A", comment="test par")
         instr.add_parameter("int", "slits", comment="test par")
         instr.add_parameter("string", "ref",
                             value="string", comment="new string")
@@ -245,28 +242,27 @@ class TestMcStas_instr(unittest.TestCase):
                            + "it really works.")
 
         instr.add_parameter("double", "value",
-                            value="37", comment=longest_comment)
+                            value=37, comment=longest_comment)
 
         instr.show_parameters(line_length=80)
 
         output = mock_stdout.getvalue().split("\n")
 
-        self.assertEqual(output[0], "double  theta             // test par")
-        self.assertEqual(output[1], "single  theta             // test par")
-        self.assertEqual(output[2], "float   theta  =  8       // test par")
-        self.assertEqual(output[3], "int     slits             // test par")
-        self.assertEqual(output[4], "string  ref    =  string  // new string")
-        comment_line = "This is a very long comment meant for testing "
-        self.assertEqual(output[5], "double  value  =  37      // "
+        self.assertEqual(output[0], "double theta                // test par")
+        self.assertEqual(output[1], "char   theta2  =  'A'       // test par")
+        self.assertEqual(output[2], "int    slits                // test par")
+        self.assertEqual(output[3], "string ref     =  \"string\"  // new string")
+        comment_line = "This is a very long comment meant for "
+        self.assertEqual(output[4], "double value   =  37        // "
                                     + comment_line)
-        comment_line = "the dynamic line breaking that is used in this "
-        self.assertEqual(output[6], "                             "
+        comment_line = "testing the dynamic line breaking that is used "
+        self.assertEqual(output[5], "                               "
                                     + comment_line)
-        comment_line = "method. It needs to have many lines in order to "
-        self.assertEqual(output[7], "                             "
+        comment_line = "in this method. It needs to have many lines in "
+        self.assertEqual(output[6], "                               "
                                     + comment_line)
-        comment_line = "ensure it really works. "
-        self.assertEqual(output[8], "                             "
+        comment_line = "order to ensure it really works. "
+        self.assertEqual(output[7], "                               "
                                     + comment_line)
 
     def test_simple_add_declare_parameter(self):
@@ -279,7 +275,7 @@ class TestMcStas_instr(unittest.TestCase):
         instr.add_declare_var("double", "two_theta", comment="test par")
 
         self.assertEqual(instr.declare_list[0].name, "two_theta")
-        self.assertEqual(instr.declare_list[0].comment, " // test par")
+        self.assertEqual(instr.declare_list[0].comment, "// test par")
         
     def test_simple_append_declare(self):
         """
@@ -313,7 +309,7 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(instr.declare_list[0],
                          "First line of declare")
         self.assertEqual(instr.declare_list[1].name, "two_theta")
-        self.assertEqual(instr.declare_list[1].comment, " // test par")
+        self.assertEqual(instr.declare_list[1].comment, "// test par")
         self.assertEqual(instr.declare_list[2], 
                          "Third line of declare")        
 
@@ -603,13 +599,14 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(comp.radius, None)
         self.assertIn("radius", comp.parameter_names)
-        self.assertEqual(comp.parameter_defaults["radius"], 0.1)
-        self.assertEqual(comp.parameter_types["radius"], "double")
-        self.assertEqual(comp.parameter_units["radius"], "m")
+        self.assertEqual(comp.parameters["radius"].value, 0.1)
+        self.assertFalse(comp.parameters["radius"].user_specified)
+        self.assertEqual(comp.parameters["radius"].type, "double")
+        self.assertEqual(comp.parameters["radius"].unit, "m")
 
-        comment = ("Radius of circle in (x,y,0) plane where "
+        comment = ("// Radius of circle in (x,y,0) plane where "
                    + "neutrons are generated.")
-        self.assertEqual(comp.parameter_comments["radius"], comment)
+        self.assertEqual(comp.parameters["radius"].comment, comment)
         self.assertEqual(comp.category, "Work directory")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
@@ -644,13 +641,13 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(comp.radius, None)
         self.assertIn("radius", comp.parameter_names)
-        self.assertEqual(comp.parameter_defaults["radius"], 0.1)
-        self.assertEqual(comp.parameter_types["radius"], "double")
-        self.assertEqual(comp.parameter_units["radius"], "m")
+        self.assertEqual(comp.parameters["radius"].value, 0.1)
+        self.assertEqual(comp.parameters["radius"].type, "double")
+        self.assertEqual(comp.parameters["radius"].unit, "m")
 
-        comment = ("Radius of circle in (x,y,0) plane where "
+        comment = ("// Radius of circle in (x,y,0) plane where "
                    + "neutrons are generated.")
-        self.assertEqual(comp.parameter_comments["radius"], comment)
+        self.assertEqual(comp.parameters["radius"].comment, comment)
         self.assertEqual(comp.category, "Work directory")
 
         # The keyword arguments of the call should be passed to the
@@ -891,12 +888,12 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr.set_component_parameter("second_component",
                                       {"radius": 5.8,
-                                       "dist": "text"})
+                                       "dist": 2})
 
         comp = instr.get_component("second_component")
 
         self.assertEqual(comp.radius, 5.8)
-        self.assertEqual(comp.dist, "text")
+        self.assertEqual(comp.dist, 2)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_set_component_parameter_error(self, mock_stdout):
@@ -1511,10 +1508,10 @@ class TestMcStas_instr(unittest.TestCase):
         expected_folder_path = os.path.join(current_directory, "test_data_set")
 
         # a double space because of a missing option
-        expected_call = (expected_path + " -c -n 1000000 --mpi=1 "
+        expected_call = (expected_path + " -c -n 1000000 "
                          + "-d " + expected_folder_path
                          + "  test_instrument.instr"
-                         + " has_default=37 theta=1")
+                         + " theta=1 has_default=37")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
@@ -1553,7 +1550,7 @@ class TestMcStas_instr(unittest.TestCase):
         expected_call = (expected_path + " -c -n 48 --mpi=7 "
                          + "-d " + expected_folder_path
                          + " -fo test_instrument.instr "
-                         + "has_default=37 A=2 BC=car theta=\"toy\"")
+                         + "theta=\"toy\" has_default=37 A=2 BC=car")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
@@ -1592,7 +1589,7 @@ class TestMcStas_instr(unittest.TestCase):
         expected_call = (expected_path + " -c -n 48 --mpi=7 "
                          + "-d " + expected_folder_path
                          + " -fo test_instrument.instr "
-                         + "has_default=10 A=2 BC=car theta=\"toy\"")
+                         + "theta=\"toy\" has_default=10 A=2 BC=car")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,

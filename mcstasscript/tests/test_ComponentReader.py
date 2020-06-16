@@ -257,7 +257,7 @@ class TestComponentReader(unittest.TestCase):
 
         component_reader = setup_component_reader()
 
-        #  Add elements directly to component_readers library
+        # Add elements directly to component_readers library
         # generate list
         # add list
 
@@ -292,12 +292,10 @@ class TestComponentReader(unittest.TestCase):
 
         parameter_names = CompInfo_dict[comp_name].parameter_names
         self.assertIn("target_index", parameter_names)
-        parameter_types = CompInfo_dict[comp_name].parameter_types
-        self.assertIn("target_index", parameter_types)
-        parameter_defaults = CompInfo_dict[comp_name].parameter_defaults
-        self.assertIn("target_index", parameter_defaults)
+        parameters = CompInfo_dict[comp_name].parameters
+        self.assertIn("target_index", parameters)
 
-        type_str = CompInfo_dict[comp_name].parameter_types["target_index"]
+        type_str = CompInfo_dict[comp_name].parameters["target_index"].type
         self.assertEqual(type_str, "int")
 
         comp_name = "test_for_structure"
@@ -337,12 +335,11 @@ class TestComponentReader(unittest.TestCase):
         self.assertEqual(CompInfo.name, "test_for_reading")
         self.assertEqual(CompInfo.category, "Work directory")
         self.assertIn("dist", CompInfo.parameter_names)
-        self.assertIn("dist", CompInfo.parameter_defaults)
-        self.assertIn("dist", CompInfo.parameter_types)
-        self.assertEqual(CompInfo.parameter_types["dist"], "double")
-        self.assertIn("dist", CompInfo.parameter_comments)
-        self.assertIn("dist", CompInfo.parameter_units)
-        self.assertEqual(CompInfo.parameter_units["dist"], "m")
+        self.assertIn("dist", CompInfo.parameters)
+        self.assertEqual(CompInfo.parameters["dist"].type, "double")
+        self.assertEqual(CompInfo.parameters["dist"].unit, "m")
+        self.assertFalse(CompInfo.parameters["dist"].comment == "")
+
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_ComponentReader_find_components_names(self, mock_stdout):
@@ -425,18 +422,12 @@ class TestComponentReader(unittest.TestCase):
 
         self.assertIn("xwidth", CompInfo.parameter_names)
 
-        self.assertIn("xwidth", CompInfo.parameter_defaults)
-        self.assertEqual(CompInfo.parameter_defaults["xwidth"], 0.0)
-
-        self.assertIn("xwidth", CompInfo.parameter_types)
-        self.assertEqual(CompInfo.parameter_types["xwidth"], "double")
-
-        self.assertIn("xwidth", CompInfo.parameter_comments)
-        comment = "Width of rectangle test comment"
-        self.assertEqual(CompInfo.parameter_comments["xwidth"], comment)
-
-        self.assertIn("xwidth", CompInfo.parameter_units)
-        self.assertEqual(CompInfo.parameter_units["xwidth"], "m")
+        self.assertIn("xwidth", CompInfo.parameters)
+        self.assertEqual(CompInfo.parameters["xwidth"].value, 0.0)
+        self.assertEqual(CompInfo.parameters["xwidth"].type, "double")
+        comment = "// Width of rectangle test comment"
+        self.assertEqual(CompInfo.parameters["xwidth"].comment, comment)
+        self.assertEqual(CompInfo.parameters["xwidth"].unit, "m")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_ComponentReader_read_component_required(self, mock_stdout):
@@ -453,15 +444,14 @@ class TestComponentReader(unittest.TestCase):
 
         self.assertIn("gauss", CompInfo.parameter_names)
 
-        self.assertIn("gauss", CompInfo.parameter_defaults)
-        self.assertIsNone(CompInfo.parameter_defaults["gauss"])
+        self.assertIn("gauss", CompInfo.parameters)
+        self.assertIsNone(CompInfo.parameters["gauss"].value)
 
-        self.assertIn("gauss", CompInfo.parameter_types)
-        self.assertEqual(CompInfo.parameter_types["gauss"], "double")
+        self.assertEqual(CompInfo.parameters["gauss"].type, "double")
 
-        self.assertNotIn("gauss", CompInfo.parameter_comments)
+        self.assertEqual(CompInfo.parameters["gauss"].comment, "")
 
-        self.assertNotIn("gauss", CompInfo.parameter_units)
+        self.assertEqual(CompInfo.parameters["gauss"].unit, None)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_ComponentReader_read_component_int(self, mock_stdout):
@@ -478,17 +468,17 @@ class TestComponentReader(unittest.TestCase):
 
         self.assertIn("flux", CompInfo.parameter_names)
 
-        self.assertIn("flux", CompInfo.parameter_defaults)
-        self.assertEqual(CompInfo.parameter_defaults["flux"], 1)
+        self.assertIn("flux", CompInfo.parameters)
+        self.assertEqual(CompInfo.parameters["flux"].value, 1)
+        self.assertFalse(CompInfo.parameters["flux"].user_specified)
+        self.assertEqual(CompInfo.parameters["flux"].type, "int")
 
-        self.assertIn("flux", CompInfo.parameter_types)
-        self.assertEqual(CompInfo.parameter_types["flux"], "int")
+        comment = "// flux per energy unit, Angs or meV if flux=0, " \
+                  + "the source emits 1 in 4*PI whole space."
+        self.assertEqual(CompInfo.parameters["flux"].comment, comment)
 
-        self.assertIn("flux", CompInfo.parameter_comments)
-        # Have already tested comments are read
-
-        self.assertIn("flux", CompInfo.parameter_units)
-        # Have already tested units are read
+        self.assertEqual(CompInfo.parameters["flux"].unit,
+                         "1/(s*cm**2*st*energy unit)")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_ComponentReader_read_component_string(self, mock_stdout):
@@ -504,17 +494,18 @@ class TestComponentReader(unittest.TestCase):
         CompInfo = component_reader.read_component_file(path_for_test)
 
         self.assertIn("test_string", CompInfo.parameter_names)
+        self.assertIn("test_string", CompInfo.parameters)
+        self.assertEqual(CompInfo.parameters["test_string"].name, "test_string")
+        self.assertEqual(CompInfo.parameters["test_string"].type, "string")
+        self.assertIsNone(CompInfo.parameters["test_string"].value)
+        self.assertFalse(CompInfo.parameters["test_string"].user_specified)
 
-        self.assertIn("test_string", CompInfo.parameter_defaults)
-        self.assertIsNone(CompInfo.parameter_defaults["test_string"])
 
-        self.assertIn("test_string", CompInfo.parameter_types)
-        self.assertEqual(CompInfo.parameter_types["test_string"], "string")
 
-        self.assertNotIn("test_string", CompInfo.parameter_comments)
+        self.assertEqual(CompInfo.parameters["test_string"].comment, "")
         # Have already tested comments are read
 
-        self.assertNotIn("test_string", CompInfo.parameter_units)
+        self.assertEqual(CompInfo.parameters["test_string"].unit, None)
         # Have already tested units are read
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)

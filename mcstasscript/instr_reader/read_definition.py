@@ -1,5 +1,6 @@
 from mcstasscript.instr_reader.util import SectionReader
 
+
 class DefinitionReader(SectionReader):
     """
     Responsible for reading the defintion section of McStas instrument
@@ -82,9 +83,9 @@ class DefinitionReader(SectionReader):
                 value = parameter.split("=")[1].strip()
                 
                 if parameter_type == "string":
-                    if '"' in value:
-                        value = value.replace('"', "\\\"")
-                        value = "\"" + value + "\""
+                    if '"' not in value:
+                        #value = value.replace('"', "\\\"")
+                        value = '"' + value + '"'
                 else:
                     if parameter_type == "int":
                         value = int(value)

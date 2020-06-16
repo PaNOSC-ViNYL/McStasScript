@@ -67,17 +67,17 @@ class TestInstrReader(unittest.TestCase):
         
         self.assertEqual(Instr.parameter_list[0].name, "stick_displacement")
         # space in type inserted for easier writing by McStas_Instr class
-        self.assertEqual(Instr.parameter_list[0].type, "double ")
+        self.assertEqual(Instr.parameter_list[0].type, "double")
         self.assertEqual(Instr.parameter_list[0].value, 0)
         
         self.assertEqual(Instr.parameter_list[1].name, "test_int")
         # space in type inserted for easier writing by McStas_Instr class
-        self.assertEqual(Instr.parameter_list[1].type, "int ")
+        self.assertEqual(Instr.parameter_list[1].type, "int")
         self.assertEqual(Instr.parameter_list[1].value, 3)
         
         self.assertEqual(Instr.parameter_list[2].name, "test_str")
         # space in type inserted for easier writing by McStas_Instr class
-        self.assertEqual(Instr.parameter_list[2].type, "string ")
+        self.assertEqual(Instr.parameter_list[2].type, "string")
         self.assertEqual(Instr.parameter_list[2].value, "\"\\\"hurray\\\"\"")
 
     def test_read_declare_parameter(self):
@@ -179,10 +179,10 @@ class TestInstrReader(unittest.TestCase):
         self.assertEqual(test_component.component_name, "Union_box")
         
         val = getattr(test_component, "xwidth")
-        self.assertEqual(val, "0.0098")
+        self.assertEqual(val, 0.0098)
         
         val = getattr(test_component, "priority")
-        self.assertEqual(val, "52")
+        self.assertEqual(val, 52)
         
         self.assertEqual(test_component.AT_data, ["0", "-0.03", "-0.03*0.35-0.004"])
         self.assertEqual(test_component.AT_relative, "RELATIVE sample_rod_bottom")
@@ -210,10 +210,10 @@ class TestInstrReader(unittest.TestCase):
         self.assertEqual(test_component.component_name, "Union_cylinder")
         
         val = getattr(test_component, "radius")
-        self.assertEqual(val, "0.09")
+        self.assertEqual(val, 0.09)
         
         val = getattr(test_component, "priority")
-        self.assertEqual(val, "11")
+        self.assertEqual(val, 11)
         
         self.assertEqual(test_component.WHEN, "WHEN (necessary == 1 )")
         
@@ -243,7 +243,7 @@ class TestInstrReader(unittest.TestCase):
         self.assertEqual(test_component.component_name, "Union_master")
         
         val = getattr(test_component, "history_limit")
-        self.assertEqual(val, "1000000")
+        self.assertEqual(val, 1000000)
         
         lines = test_component.EXTEND.split("\n")
         line0 = ("if (scattered_flag[sample_1_index] > 0) scattered_1 = 1;"

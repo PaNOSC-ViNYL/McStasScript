@@ -1,5 +1,6 @@
 from mcstasscript.instr_reader.util import SectionReader
 from mcstasscript.helper import mcstas_objects
+from mcstasscript.helper.formatting import to_number
 
 class TraceReader(SectionReader):
     """
@@ -235,8 +236,18 @@ class TraceReader(SectionReader):
                 if "=" in par_exp:
                     par_name = par_exp.split("=", 1)[0].strip()
                     par_value = par_exp.split("=", 1)[1].strip()
-                    
-                    par_dict[par_name] = par_value
+
+                    """
+                    if isinstance(par_value, int) or isinstance(par_value, float):
+                        par_dict[par_name] = to_number(par_value)
+                    else:
+                        par_dict[par_name] = par_value
+                    """
+                    try:
+                        par_dict[par_name] = float(par_value)
+                    except:
+                        par_dict[par_name] = par_value
+
                     
             
             # Set all found parameters in the component
@@ -425,7 +436,7 @@ class TraceReader(SectionReader):
                             val = val.replace('"','\\\"')
                         val = '"' + val + '"'
 
-                    write_string.append(val)
+                    write_string.append(str(val))
                     write_string.append("\n")
                 
                     self._write_to_file(write_string)
