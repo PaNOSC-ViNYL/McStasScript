@@ -96,6 +96,7 @@ def main(argv):
 
     print("Will attempt to reproduce the following instruments: ")
     print(" "*10 + reproduce.list_to_string(instrument_names, max=5, pad=10))
+    print()
     print("Performing runs!")
 
 

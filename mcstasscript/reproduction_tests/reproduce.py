@@ -3,6 +3,7 @@ import sys
 import os
 import multiprocessing
 import time
+import shutil
 
 import compare_data
 
@@ -18,7 +19,7 @@ class from_reference:
     def __init__(self, instrument_path, log_path, input_path=".",
                  data_folder="data_folder", debug_folder="debug",
                  name=None, mcrun_options=None, show_different=False,
-                 timeout=None):
+                 timeout=None, reuse_ref=False):
         """
         Class for testing the McStasScript python reader tool which
         can read .instr files and create a python file or object
@@ -101,6 +102,7 @@ class from_reference:
                 raise ValueError("Given input_path path is a file!")
                 
         self.timeout = timeout
+        self.reuse_ref = reuse_ref
 
         self.python_filename = os.path.join(self.input_path, self.name + "_generated.py")
         
@@ -422,7 +424,7 @@ class from_reference:
         string = "\n"
         string += "from mcstasscript.interface import instr, functions, plotter, reader\n"
         string += "InstrReader = reader.McStas_file(\"" + self.instrument_path + "\")\n"
-        string += "instrument_object = instr.McStas_instr(\"" + self.name + "_object_debug\")"
+        string += "instrument_object = instr.McStas_instr(\"" + self.name + "_object_debug\")\n"
         string += "InstrReader.add_to_instr(instrument_object)"
         
         with open(self.generate_python_object_filename, "w") as file:
@@ -438,7 +440,10 @@ class from_reference:
         A single parameter is loaded to avoid mcrun asking for parameter values.
         """
         
-        filename = os.path.join("..", self.base_foldername, "ref_data_" + self.instrument_name)
+        path_from_wd = os.path.join(self.base_foldername, "ref_data_" + self.instrument_name)
+        filename = os.path.join("..", path_from_wd)
+        
+        
         option_string = "-n " + str(self.mcrun_options["ncount"]) # Set ncount
         option_string += " -d " + filename
         if "mpi" in self.mcrun_options:
@@ -455,6 +460,12 @@ class from_reference:
             name = self.instrument_object.parameter_list[0].name
             value = self.instrument_object.parameter_list[0].value
             command += " " + name + "=" + str(value)
+        
+        
+        if not self.reuse_ref and os.path.isdir(path_from_wd):
+            # Could check the reference data uses identical parameters before removing
+            print("deleting", path_from_wd)
+            shutil.rmtree(path_from_wd)
         
         self.started_reference_run_p.value = 1
         print(command)
