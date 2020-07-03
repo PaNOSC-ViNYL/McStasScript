@@ -79,7 +79,7 @@ class ManagedMcrun:
 
         self.data_folder_name = ""
         self.ncount = int(1E6)
-        self.mpi = 1
+        self.mpi = None
         self.parameters = {}
         self.custom_flags = ""
         self.mcrun_path = ""
@@ -141,10 +141,14 @@ class ManagedMcrun:
         if self.compile:
             options_string = "-c "
 
+        if self.mpi is not None:
+            mpi_string = " --mpi=" + str(self.mpi) + " " # Set mpi
+        else:
+            mpi_string = " "
+
         option_string = (options_string
                          + "-n " + str(self.ncount)  # Set ncount
-                         + " --mpi=" + str(self.mpi)  # Set mpi
-                         + " ")
+                         + mpi_string)
 
         if self.increment_folder_name and os.path.isdir(self.data_folder_name):
             counter = 0
