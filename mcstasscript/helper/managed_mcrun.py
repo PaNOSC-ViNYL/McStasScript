@@ -79,7 +79,7 @@ class ManagedMcrun:
 
         self.data_folder_name = ""
         self.ncount = int(1E6)
-        self.mpi = 1
+        self.mpi = None
         self.parameters = {}
         self.custom_flags = ""
         self.mcrun_path = ""
@@ -141,10 +141,14 @@ class ManagedMcrun:
         if self.compile:
             options_string = "-c "
 
+        if self.mpi is not None:
+            mpi_string = " --mpi=" + str(self.mpi) + " " # Set mpi
+        else:
+            mpi_string = " "
+
         option_string = (options_string
                          + "-n " + str(self.ncount)  # Set ncount
-                         + " --mpi=" + str(self.mpi)  # Set mpi
-                         + " ")
+                         + mpi_string)
 
         if self.increment_folder_name and os.path.isdir(self.data_folder_name):
             counter = 0
@@ -277,9 +281,10 @@ class ManagedMcrun:
             elif len(metadata.dimension) == 2:
                 xaxis = []  # Assume evenly binned in 2d
                 data_lines = metadata.dimension[1]
-                Intensity = data.T[:, 0:data_lines - 1]
-                Error = data.T[:, data_lines:2*data_lines - 1]
-                Ncount = data.T[:, 2*data_lines:3*data_lines - 1]
+
+                Intensity = data[0:data_lines, :]
+                Error = data[data_lines:2*data_lines, :]
+                Ncount = data[2*data_lines:3*data_lines, :]
             else:
                 raise NameError(
                     "Dimension not read correctly in data set "

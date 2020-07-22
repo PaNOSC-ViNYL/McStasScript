@@ -38,7 +38,7 @@ class TestManagedMcrun(unittest.TestCase):
                                  foldername="test_folder",
                                  mcrun_path="")
 
-        self.assertEqual(mcrun_obj.mpi, 1)
+        self.assertEqual(mcrun_obj.mpi, None)
         self.assertEqual(mcrun_obj.ncount, 1000000)
         self.assertEqual(mcrun_obj.run_path, ".")
 
@@ -114,7 +114,7 @@ class TestManagedMcrun(unittest.TestCase):
         expected_folder_path = os.path.join(current_directory, "test_folder")
 
         # a double space because of a missing option
-        expected_call = ("path/mcrun -c -n 1000000 --mpi=1 "
+        expected_call = ("path/mcrun -c -n 1000000 "
                          + "-d " + expected_folder_path + "  test.instr")
 
         mock_sub.assert_called_once_with(expected_call,
@@ -138,7 +138,7 @@ class TestManagedMcrun(unittest.TestCase):
         expected_folder_path = os.path.join(current_directory, "test_folder")
 
         # a double space because of a missing option
-        expected_call = ("path/mcrun -c -n 1000000 --mpi=1 "
+        expected_call = ("path/mcrun -c -n 1000000 "
                          + "-d " + expected_folder_path + "  test.instr")
 
         mock_sub.assert_called_once_with(expected_call,
@@ -263,9 +263,9 @@ class TestManagedMcrun(unittest.TestCase):
         self.assertEqual(PSD_4PI.metadata.xlabel, "Longitude [deg]")
         self.assertEqual(PSD_4PI.metadata.ylabel, "Lattitude [deg]")
         self.assertEqual(PSD_4PI.metadata.title, "4PI PSD monitor")
-        self.assertEqual(PSD_4PI.Ncount[1][4], 4)
-        self.assertEqual(PSD_4PI.Intensity[1][4], 1.537334562E-10)
-        self.assertEqual(PSD_4PI.Error[1][4], 1.139482296E-10)
+        self.assertEqual(PSD_4PI.Ncount[4][1], 4)
+        self.assertEqual(PSD_4PI.Intensity[4][1], 1.537334562E-10)
+        self.assertEqual(PSD_4PI.Error[4][1], 1.139482296E-10)
 
     def test_ManagedMcrun_load_data_PSD(self):
         """
@@ -295,9 +295,9 @@ class TestManagedMcrun(unittest.TestCase):
         self.assertEqual(PSD.metadata.xlabel, "X position [cm]")
         self.assertEqual(PSD.metadata.ylabel, "Y position [cm]")
         self.assertEqual(PSD.metadata.title, "PSD monitor")
-        self.assertEqual(PSD.Ncount[21][27], 9)
-        self.assertEqual(PSD.Intensity[21][27], 2.623929371e-13)
-        self.assertEqual(PSD.Error[21][27], 2.765467693e-13)
+        self.assertEqual(PSD.Ncount[27][21], 9)
+        self.assertEqual(PSD.Intensity[27][21], 2.623929371e-13)
+        self.assertEqual(PSD.Error[27][21], 2.765467693e-13)
 
     def test_ManagedMcrun_load_data_L_mon(self):
         """

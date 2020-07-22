@@ -256,9 +256,9 @@ class Test_load_data(unittest.TestCase):
         self.assertEqual(PSD_4PI.metadata.xlabel, "Longitude [deg]")
         self.assertEqual(PSD_4PI.metadata.ylabel, "Lattitude [deg]")
         self.assertEqual(PSD_4PI.metadata.title, "4PI PSD monitor")
-        self.assertEqual(PSD_4PI.Ncount[1][4], 4)
-        self.assertEqual(PSD_4PI.Intensity[1][4], 1.537334562E-10)
-        self.assertEqual(PSD_4PI.Error[1][4], 1.139482296E-10)
+        self.assertEqual(PSD_4PI.Ncount[4][1], 4)
+        self.assertEqual(PSD_4PI.Intensity[4][1], 1.537334562E-10)
+        self.assertEqual(PSD_4PI.Error[4][1], 1.139482296E-10)
 
 
 if __name__ == '__main__':
