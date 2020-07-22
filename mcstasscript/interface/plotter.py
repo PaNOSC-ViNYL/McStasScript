@@ -139,10 +139,10 @@ class make_plot:
                                 data.metadata.dimension[0]+1)
                 Y = np.linspace(data.metadata.limits[2]*y_axis_mult,
                                 data.metadata.limits[3]*y_axis_mult,
-                                data.metadata.dimension[1])
+                                data.metadata.dimension[1]+1)
 
                 # Create a meshgrid for both x and y
-                y, x = np.meshgrid(Y, X)
+                x, y = np.meshgrid(X, Y)
 
                 # Generate information on necessary colorrange
                 levels = MaxNLocator(nbins=150).tick_values(min_value,
@@ -159,7 +159,7 @@ class make_plot:
                 if data.plot_options.log:
                     color_norm = matplotlib.colors.LogNorm(vmin=min_value,
                                                            vmax=max_value)
-                    im = ax0.pcolormesh(x, y, to_plot,
+                    im = ax0.pcolormesh(y, x, to_plot,
                                         cmap=cmap, norm=color_norm)
                 else:
                     im = ax0.pcolormesh(x, y, to_plot, cmap=cmap, norm=norm)
@@ -328,10 +328,10 @@ class make_sub_plot:
                                 data.metadata.dimension[0]+1)
                 Y = np.linspace(data.metadata.limits[2]*y_axis_mult,
                                 data.metadata.limits[3]*y_axis_mult,
-                                data.metadata.dimension[1])
+                                data.metadata.dimension[1]+1)
 
                 # Create a meshgrid for both x and y
-                y, x = np.meshgrid(Y, X)
+                x, y = np.meshgrid(X, Y)
 
                 # Generate information on necessary colorrange
                 levels = MaxNLocator(nbins=150).tick_values(min_value,
@@ -348,7 +348,7 @@ class make_sub_plot:
                     norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
 
                 # Create plot
-                im = ax0.pcolormesh(x, y, to_plot, cmap=cmap, norm=norm)
+                im = ax0.pcolormesh(y, x, to_plot, cmap=cmap, norm=norm)
 
                 def fmt(x, pos):
                     a, b = '{:.2e}'.format(x).split('e')
@@ -551,10 +551,10 @@ class make_animation:
                             data.metadata.dimension[0]+1)
             Y = np.linspace(data.metadata.limits[2]*y_axis_mult,
                             data.metadata.limits[3]*y_axis_mult,
-                            data.metadata.dimension[1])
+                            data.metadata.dimension[1]+1)
 
             # Create a meshgrid for both x and y
-            y, x = np.meshgrid(Y, X)
+            x, y = np.meshgrid(X, Y)
 
             # Generate information on necessary colorrange
             levels = MaxNLocator(nbins=150).tick_values(min_value,
@@ -571,7 +571,7 @@ class make_animation:
                 norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
 
             # Create plot
-            im = ax.pcolormesh(x, y, Intensity,
+            im = ax.pcolormesh(y, x, Intensity,
                                cmap=cmap, norm=norm)
 
             def fmt(x, pos):

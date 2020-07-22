@@ -281,9 +281,10 @@ class ManagedMcrun:
             elif len(metadata.dimension) == 2:
                 xaxis = []  # Assume evenly binned in 2d
                 data_lines = metadata.dimension[1]
-                Intensity = data.T[:, 0:data_lines - 1]
-                Error = data.T[:, data_lines:2*data_lines - 1]
-                Ncount = data.T[:, 2*data_lines:3*data_lines - 1]
+
+                Intensity = data[0:data_lines, :]
+                Error = data[data_lines:2*data_lines, :]
+                Ncount = data[2*data_lines:3*data_lines, :]
             else:
                 raise NameError(
                     "Dimension not read correctly in data set "

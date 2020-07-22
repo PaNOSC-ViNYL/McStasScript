@@ -263,9 +263,9 @@ class TestManagedMcrun(unittest.TestCase):
         self.assertEqual(PSD_4PI.metadata.xlabel, "Longitude [deg]")
         self.assertEqual(PSD_4PI.metadata.ylabel, "Lattitude [deg]")
         self.assertEqual(PSD_4PI.metadata.title, "4PI PSD monitor")
-        self.assertEqual(PSD_4PI.Ncount[1][4], 4)
-        self.assertEqual(PSD_4PI.Intensity[1][4], 1.537334562E-10)
-        self.assertEqual(PSD_4PI.Error[1][4], 1.139482296E-10)
+        self.assertEqual(PSD_4PI.Ncount[4][1], 4)
+        self.assertEqual(PSD_4PI.Intensity[4][1], 1.537334562E-10)
+        self.assertEqual(PSD_4PI.Error[4][1], 1.139482296E-10)
 
     def test_ManagedMcrun_load_data_PSD(self):
         """
@@ -295,9 +295,9 @@ class TestManagedMcrun(unittest.TestCase):
         self.assertEqual(PSD.metadata.xlabel, "X position [cm]")
         self.assertEqual(PSD.metadata.ylabel, "Y position [cm]")
         self.assertEqual(PSD.metadata.title, "PSD monitor")
-        self.assertEqual(PSD.Ncount[21][27], 9)
-        self.assertEqual(PSD.Intensity[21][27], 2.623929371e-13)
-        self.assertEqual(PSD.Error[21][27], 2.765467693e-13)
+        self.assertEqual(PSD.Ncount[27][21], 9)
+        self.assertEqual(PSD.Intensity[27][21], 2.623929371e-13)
+        self.assertEqual(PSD.Error[27][21], 2.765467693e-13)
 
     def test_ManagedMcrun_load_data_L_mon(self):
         """
