@@ -159,7 +159,7 @@ class make_plot:
                 if data.plot_options.log:
                     color_norm = matplotlib.colors.LogNorm(vmin=min_value,
                                                            vmax=max_value)
-                    im = ax0.pcolormesh(y, x, to_plot,
+                    im = ax0.pcolormesh(x, y, to_plot,
                                         cmap=cmap, norm=color_norm)
                 else:
                     im = ax0.pcolormesh(x, y, to_plot, cmap=cmap, norm=norm)
@@ -348,7 +348,7 @@ class make_sub_plot:
                     norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
 
                 # Create plot
-                im = ax0.pcolormesh(y, x, to_plot, cmap=cmap, norm=norm)
+                im = ax0.pcolormesh(x, y, to_plot, cmap=cmap, norm=norm)
 
                 def fmt(x, pos):
                     a, b = '{:.2e}'.format(x).split('e')
@@ -571,7 +571,7 @@ class make_animation:
                 norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
 
             # Create plot
-            im = ax.pcolormesh(y, x, Intensity,
+            im = ax.pcolormesh(x, y, Intensity,
                                cmap=cmap, norm=norm)
 
             def fmt(x, pos):
