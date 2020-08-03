@@ -312,6 +312,7 @@ class ComponentReader:
                     or self.line_starts_with(line.strip(),
                                              "SETTING PARAMETERS")):
 
+                line = line.split("//")[0] # Remove comments
                 parts = line.split("(")
                 parameter_parts = parts[1].split(",")
                 
@@ -384,7 +385,8 @@ class ComponentReader:
                     if break_now:
                         break
 
-                    parameter_parts = fo.readline().split(",")
+                    new_line = fo.readline().split("//")[0]
+                    parameter_parts = new_line.split(",")
                     parameter_parts = self.correct_for_brackets(parameter_parts)
 
             if self.line_starts_with(line, "DECLARE"):
