@@ -36,6 +36,8 @@ For a standard McStas installation on Windows, the appropriate configuration can
     my_configurator.set_mcstas_path("\\mcstas-2.6\\lib\\")
 
 ## Instructions for basic use
+This section provides a quick way to get started, a more in depth tutorial using Jupyter Notebooks is available in the tutorial folder.
+
 Import the interface 
 
     from mcstasscript.interface import instr, plotter, functions, reader
