@@ -1549,7 +1549,7 @@ class McStas_instr:
                 executable = "mcdisplay"
 
         full_command = (bin_path + executable + " "
-                        + self.name + ".instr"
+                        + os.path.join(self.input_path, self.name + ".instr")
                         + " " + parameter_string) 
 
         process = subprocess.run(full_command, shell=True,
