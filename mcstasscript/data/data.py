@@ -327,3 +327,32 @@ class McStasData:
 
     def set_plot_options(self, **kwargs):
         self.plot_options.set_options(**kwargs)
+
+    def __str__(self):
+        """
+        Returns string with quick summary of data
+        """
+
+        string = "McStasData: "
+        string += self.name + " "
+        if type(self.metadata.dimension) == int:
+            string += "type: 1D "
+        elif len(self.metadata.dimension) == 2:
+            string += "type: 2D "
+        else:
+            string += "type: other "
+
+        if "values" in self.metadata.info:
+            values = self.metadata.info["values"]
+            values = values.strip()
+            values = values.split(" ")
+            if len(values) == 3:
+                string += " I:" + str(values[0])
+                string += " E:" + str(values[1])
+                string += " N:" + str(values[2])
+
+        return string
+
+    def __repr__(self):
+        return "\n" + self.__str__()
+
