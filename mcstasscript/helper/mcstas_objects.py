@@ -689,7 +689,7 @@ class component:
         # Leave a new line between components for readability
         fo.write("\n")
 
-    def print_long(self):
+    def print_long_depricated(self):
         """
         Prints contained information to Python terminal
 
@@ -741,6 +741,79 @@ class component:
             print("JUMP " + self.JUMP)
         if len(self.c_code_after) > 1:
             print(self.c_code_after)
+
+    def __str__(self):
+        """
+        Returns string of information about the component
+
+        Includes information on required parameters if they are not yet
+        specified. Information on the components are added when the
+        class is used as a superclass for classes describing each
+        McStas component.
+        """
+        string = ""
+
+        if len(self.c_code_before) > 1:
+            string += self.c_code_before + "\n"
+        if len(self.comment) > 1:
+            string += "// " + self.comment + "\n"
+        if self.SPLIT != 0:
+            string += "SPLIT " + str(self.SPLIT) + " "
+        string += "COMPONENT " + str(self.name)
+        string +=  " = " + str(self.component_name) + "\n"
+        for key in self.parameter_names:
+            val = getattr(self, key)
+            parameter_name = bcolors.BOLD + key + bcolors.ENDC
+            if val is not None:
+                unit = ""
+                if key in self.parameter_units:
+                    unit = "[" + self.parameter_units[key] + "]"
+                value = (bcolors.BOLD
+                         + bcolors.OKGREEN
+                         + str(val)
+                         + bcolors.ENDC
+                         + bcolors.ENDC)
+                string += "  " + parameter_name
+                string += " = " + value + " " + unit + "\n"
+            else:
+                if self.parameter_defaults[key] is None:
+                    string += "  " + parameter_name
+                    string += bcolors.FAIL
+                    string += " : Required parameter not yet specified"
+                    string += bcolors.ENDC + "\n"
+
+        if not self.WHEN == "":
+            string += self.WHEN + "\n"
+        string += "AT " + str(self.AT_data) + " "
+        string += str(self.AT_relative) + "\n"
+        if self.ROTATED_specified:
+            string += "ROTATED " + str(self.ROTATED_data)
+            string += " " + self.ROTATED_relative + "\n"
+        if not self.GROUP == "":
+            string += "GROUP " + self.GROUP + "\n"
+        if not self.EXTEND == "":
+            string += "EXTEND %{" + "\n"
+            string += self.EXTEND + "%}" + "\n"
+        if not self.JUMP == "":
+            string += "JUMP " + self.JUMP + "\n"
+        if len(self.c_code_after) > 1:
+            string += self.c_code_after + "\n"
+
+        return string
+
+    def print_long(self):
+        """
+        Prints information about the component
+
+        Includes information on required parameters if they are not yet
+        specified. Information on the components are added when the
+        class is used as a superclass for classes describing each
+        McStas component.
+        """
+        print(self.__str__())
+
+    def __repr__(self):
+        return self.__str__()
 
     def print_short(self, **kwargs):
         """Prints short description of component to list print"""
