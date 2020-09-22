@@ -20,7 +20,7 @@ def setup_instr_root_path():
     """
     Sets up a instrument with root mcstas_path
     """
-    return McStas_instr("test_instrument", mcstas_path="/")
+    return McStas_instr("test_instrument", package_path="/")
 
 
 def setup_instr_with_path():
@@ -35,7 +35,7 @@ def setup_instr_with_path():
     current_work_dir = os.getcwd()
     os.chdir(THIS_DIR)  # Set work directory to test folder
 
-    return McStas_instr("test_instrument", mcstas_path=dummy_path)
+    return McStas_instr("test_instrument", package_path=dummy_path)
 
     os.chdir(current_work_dir)  # Return to previous workdir
 
@@ -53,7 +53,7 @@ def setup_instr_with_input_path():
     os.chdir(THIS_DIR)  # Set work directory to test folder
 
     return McStas_instr("test_instrument",
-                        mcstas_path=dummy_path,
+                        package_path=dummy_path,
                         input_path=input_path)
 
     os.chdir(current_work_dir)  # Return to previous workdir
@@ -70,7 +70,7 @@ def setup_instr_with_input_path_relative():
     os.chdir(THIS_DIR)  # Set work directory to test folder
 
     return McStas_instr("test_instrument",
-                        mcstas_path="dummy_mcstas",
+                        package_path="dummy_mcstas",
                         input_path="test_input_folder")
 
     os.chdir(current_work_dir)  # Return to previous workdir
@@ -137,13 +137,13 @@ class TestMcStas_instr(unittest.TestCase):
         my_instrument = McStas_instr("test_instrument",
                                      author="Mads",
                                      origin="DMSC",
-                                     mcrun_path="/path/to/mcrun",
-                                     mcstas_path="/path/to/mcstas")
+                                     executable_path="/path/to/mcrun",
+                                     package_path="/path/to/mcstas")
 
         self.assertEqual(my_instrument.author, "Mads")
         self.assertEqual(my_instrument.origin, "DMSC")
-        self.assertEqual(my_instrument.mcrun_path, "/path/to/mcrun")
-        self.assertEqual(my_instrument.mcstas_path, "/path/to/mcstas")
+        self.assertEqual(my_instrument.executable_path, "/path/to/mcrun")
+        self.assertEqual(my_instrument.package_path, "/path/to/mcstas")
 
     def test_load_config_file(self):
         """
@@ -181,8 +181,8 @@ class TestMcStas_instr(unittest.TestCase):
         # Check the value matches what is loaded by initialization
         my_instrument = setup_instr_no_path()
 
-        self.assertEqual(my_instrument.mcrun_path, correct_mcrun_path)
-        self.assertEqual(my_instrument.mcstas_path, correct_mcstas_path)
+        self.assertEqual(my_instrument.executable_path, correct_mcrun_path)
+        self.assertEqual(my_instrument.package_path, correct_mcstas_path)
         self.assertEqual(my_instrument.line_limit, correct_n_of_characters)
 
     def test_simple_add_parameter(self):
@@ -1502,7 +1502,7 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_populated_instr()
         instr.run_full_instrument("test_instrument.instr",
                                   foldername="test_data_set",
-                                  mcrun_path="path",
+                                  executable_path="path",
                                   parameters={"theta": 1})
 
         expected_path = os.path.join("path","mcrun")
@@ -1536,7 +1536,7 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_populated_instr()
         instr.run_full_instrument("test_instrument.instr",
                                   foldername="test_data_set",
-                                  mcrun_path="path",
+                                  executable_path="path",
                                   mpi=7,
                                   ncount=48.4,
                                   custom_flags="-fo",
@@ -1574,7 +1574,7 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_populated_instr()
         instr.run_full_instrument("test_instrument.instr",
                                   foldername="test_data_set",
-                                  mcrun_path="path",
+                                  executable_path="path",
                                   mpi=7,
                                   ncount=48.4,
                                   custom_flags="-fo",
