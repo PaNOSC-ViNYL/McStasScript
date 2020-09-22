@@ -174,8 +174,16 @@ class Configurator:
         run = "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/bin/"
         mcstas = "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/"
 
+        mxrun = "/Applications/McXtrace-1.5.app" \
+                   + "/Contents/Resources/mcxtrace/1.5/mxrun"
+        mcxtrace = "/Applications/McXtrace-1.5.app" \
+                   + "/Contents/Resources/mcxtrace/1.5/"
+
         default_paths = {"mcrun_path" : run,
-                         "mcstas_path" : mcstas}
+                         "mcstas_path" : mcstas,
+                         "mxrun_path" : mxrun,
+                         "mcxtrace_path" : mcxtrace}
+
         default_other = {"characters_per_line" : 85}
 
         default_config = {"paths" : default_paths,
@@ -217,6 +225,44 @@ class Configurator:
 
         # update mcstas_path
         config["paths"]["mcrun_path"] = path
+
+        # write new configuration file
+        self._write_yaml(config)
+
+    def set_mcxtrace_path(self, path):
+        """
+        Sets the path to McXtrace
+
+        Parameters
+        ----------
+        path : str
+            Path to the mcxtrace directory containing "sources", "optics", ...
+        """
+
+        # read entire configuration file
+        config = self._read_yaml()
+
+        # update mcxtrace_path
+        config["paths"]["mcxtrace_path"] = path
+
+        # write new configuration file
+        self._write_yaml(config)
+
+    def set_mxrun_path(self, path):
+        """
+        Sets the path to mxrun
+
+        Parameters
+        ----------
+        path : str
+            Path to the mxrun executable
+        """
+
+        # read entire configuration file
+        config = self._read_yaml()
+
+        # update mxrun_path
+        config["paths"]["mxrun_path"] = path
 
         # write new configuration file
         self._write_yaml(config)

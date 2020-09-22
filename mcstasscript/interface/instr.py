@@ -16,7 +16,7 @@ from mcstasscript.helper.formatting import is_legal_filename
 from mcstasscript.helper.formatting import bcolors
 
 
-class McStas_instr:
+class McCode_instr:
     """
     Main class for writing a McStas instrument using McStasScript
 
@@ -36,7 +36,7 @@ class McStas_instr:
     origin : str
         origin of instrument file (affiliation)
 
-    mcrun_path : str
+    executable_path : str
         absolute path of mcrun command, or empty if it is in path
 
     parameter_list : list of parameter_variable instances
@@ -167,7 +167,7 @@ class McStas_instr:
             origin : str
                 Affiliation of author, written in instrument file
 
-            mcrun_path : str
+            executable_path : str
                 Absolute path of mcrun or empty if already in path
 
             input_path : str
@@ -198,33 +198,18 @@ class McStas_instr:
         else:
             self.input_path = "."
 
-        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-        configuration_file_name = os.path.join(THIS_DIR, "..", "configuration.yaml")
-        if not os.path.isfile(configuration_file_name):
-            raise NameError("Could not find configuration file!")
-        with open(configuration_file_name, 'r') as ymlfile:
-            config = yaml.safe_load(ymlfile)
+        self._read_calibration()
 
-        if type(config) is dict:
-            self.mcrun_path = config["paths"]["mcrun_path"]
-            self.mcstas_path = config["paths"]["mcstas_path"]
-            self.line_limit = config["other"]["characters_per_line"]
-        else:
-            # This happens in unit tests that mocks open
-            self.mcrun_path = ""
-            self.mcstas_path = ""
-            self.line_limit = 180
+        if "executable_path" in kwargs:
+            self.executable_path = kwargs["executable_path"]
 
-        if "mcrun_path" in kwargs:
-            self.mcrun_path = kwargs["mcrun_path"]
-
-        if "mcstas_path" in kwargs:
-            self.mcstas_path = kwargs["mcstas_path"]
-        elif self.mcstas_path is "":
+        if "package_path" in kwargs:
+            self.package_path = kwargs["package_path"]
+        elif self.package_path is "":
             raise NameError("At this stage of development "
                             + "McStasScript need the absolute path "
                             + "for the McStas installation as keyword "
-                            + "named mcstas_path or in configuration.yaml")
+                            + "named package_path or in configuration.yaml")
 
         self.parameter_list = []
         self.declare_list = []
@@ -240,9 +225,16 @@ class McStas_instr:
         self.component_name_list = []  # List of component names
 
         # Read info on active McStas components
-        self.component_reader = ComponentReader(self.mcstas_path,
+        self.component_reader = ComponentReader(self.package_path,
                                                 input_path=self.input_path)
         self.component_class_lib = {}
+
+    def _read_calibration(self):
+        """
+        Place holder method that should be overwritten by classes
+        that inherit from McCode_instr.
+        """
+        pass
 
     def add_parameter(self, *args, **kwargs):
         """
@@ -1475,8 +1467,8 @@ class McStas_instr:
         foldername, which can not already exist, if it does data will
         be read from this folder.  If the mcrun command is not in the
         path of the system, the absolute path can be given with the
-        mcrun_path keyword argument.  This path could also already have
-        been set at initialization of the instrument object.
+        executable_path keyword argument.  This path could also already
+        have been set at initialization of the instrument object.
 
         Parameters
         ----------
@@ -1491,12 +1483,15 @@ class McStas_instr:
                 Sets parameters
             custom_flags : str
                 Sets custom_flags passed to mcrun
-            mcrun_path : str
+            executable_path : str
                 Path to mcrun command, "" if already in path
         """
         # Make sure mcrun path is in kwargs
-        if "mcrun_path" not in kwargs:
-            kwargs["mcrun_path"] = self.mcrun_path
+        if "executable_path" not in kwargs:
+            kwargs["executable_path"] = self.executable_path
+
+        if "executable" not in kwargs:
+            kwargs["executable"] = self.executable
 
         if "run_path" not in kwargs:
             # path where mcrun is executed, will load components there
@@ -1540,7 +1535,7 @@ class McStas_instr:
                                 + "="
                                 + str(val))  # parameter value
 
-        bin_path = os.path.join(self.mcstas_path, "bin", "")
+        bin_path = os.path.join(self.package_path, "bin", "")
         executable = "mcdisplay-webgl"
         if "format" in kwargs:
             if kwargs["format"] is "webgl":
@@ -1559,3 +1554,365 @@ class McStas_instr:
         print(process.stderr)
         print(process.stdout)
 
+
+class McStas_instr(McCode_instr):
+    """
+    Main class for writing a McStas instrument using McStasScript
+
+    Initialization of McStas_instr sets the name of the instrument file
+    and its methods are used to add all aspects of the instrument file.
+    The class also holds methods for writing the finished instrument
+    file to disk and to run the simulation.
+
+    Attributes
+    ----------
+    name : str
+        name of instrument file
+
+    author : str
+        name of user of McStasScript, written to the file
+
+    origin : str
+        origin of instrument file (affiliation)
+
+    executable_path : str
+        absolute path of mcrun command, or empty if it is in path
+
+    parameter_list : list of parameter_variable instances
+        contains all input parameters to be written to file
+
+    declare_list : list of declare_variable instances
+        contains all declare parrameters to be written to file
+
+    initialize_section : str
+        string containing entire initialize section to be written
+
+    trace_section : str
+        string containing trace section (OBSOLETE)
+
+    finally_section : str
+        string containing entire finally section to be written
+
+    component_list : list of component instances
+        list of components in the instrument
+
+    component_name_list : list of strings
+        list of names of the components in the instrument
+
+    Methods
+    -------
+    add_parameter(*args, **kwargs)
+        Adds input parameter to the define section
+
+    add_declare_var()
+        Adds declared variable ot the declare section
+
+    append_initialize(string)
+        Appends a string to the initialize section, then adds new line
+
+    append_initialize_no_new_line(string)
+        Appends a string to the initialize section
+
+    append_finally(string)
+        Appends a string to finally section, then adds new line
+
+    append_finally_no_new_line(string)
+        Appends a string to finally section
+
+    append_trace(string)
+        Obsolete method, add components instead (used in write_c_files)
+
+    show_components(string)
+        Shows available components in given category
+
+    add_component(instance_name, component_name, **kwargs)
+        Add a component to the instrument file
+
+    get_component(instance_name)
+        Returns component instance with name instance_name
+
+    get_last_component()
+        Returns component instance of last component
+
+    set_component_parameter(instance_name, dict)
+        Adds parameters as dict to component with instance_name
+
+    set_component_AT(instance_name, AT_data, **kwargs)
+        Sets position of component named instance_name
+
+    set_component_ROTATED(instance_name, ROTATED_data, **kwargs)
+        Sets rotation of component named instance_name
+
+    set_component_RELATIVE(instane_name, string)
+        Sets position and rotation reference for named component
+
+    set_component_WHEN(instance_name, string)
+        Sets WHEN condition of named component, is logical c expression
+
+    set_component_GROUP(instance_name, string)
+        Sets GROUP name of component named instance_name
+
+    append_component_EXTEND(instance_name, string)
+        Appends a line to EXTEND section of named component
+
+    set_component_JUMP(instance_name, string)
+        Sets JUMP code for named component
+
+    set_component_SPLIT(instance_name, string)
+        Sets SPLIT value for named component
+
+    set_component_c_code_before(instance_name, string)
+        Sets c code before the component
+
+    set_component_c_code_after(instance_name, string)
+        Sets c code after the component
+
+    set_component_comment(instance_name, string)
+        Sets comment to be written before named component
+
+    print_component(instance_name)
+        Prints an overview of current state of named component
+
+    print_component_short(instance_name)
+        Prints short overview of current state of named component
+
+    print_components()
+        Prints overview of postion / rotation of all components
+
+    write_c_files()
+        Writes c files for %include in generated_includes folder
+
+    write_full_instrument()
+        Writes full instrument file to current directory
+
+    run_full_instrument(**kwargs)
+        Writes instrument files and runs simulation.
+        Returns list of McStasData
+    """
+    def __init__(self, name, **kwargs):
+        """
+        Initialization of McStas Instrument
+
+        Parameters
+        ----------
+        name : str
+            Name of project, instrument file will be name + ".instr"
+
+        keyword arguments:
+            author : str
+                Name of author, written in instrument file
+
+            origin : str
+                Affiliation of author, written in instrument file
+
+            executable_path : str
+                Absolute path of mcrun or empty if already in path
+
+            input_path : str
+                Work directory, will load components from this folder
+        """
+        self.particle = "neutron"
+        self.executable = "mcrun"
+        self.package_name = "McStas"
+
+        super().__init__(name, **kwargs)
+
+    def _read_calibration(self):
+        this_dir = os.path.dirname(os.path.abspath(__file__))
+        configuration_file_name = os.path.join(this_dir, "..",
+                                               "configuration.yaml")
+        if not os.path.isfile(configuration_file_name):
+            raise NameError("Could not find configuration file!")
+        with open(configuration_file_name, 'r') as ymlfile:
+            config = yaml.safe_load(ymlfile)
+
+        if type(config) is dict:
+            self.executable_path = config["paths"]["mcrun_path"]
+            self.package_path = config["paths"]["mcstas_path"]
+            self.line_limit = config["other"]["characters_per_line"]
+        else:
+            # This happens in unit tests that mocks open
+            self.executable_path = ""
+            self.package_path = ""
+            self.line_limit = 180
+
+class McXtrace_instr(McCode_instr):
+    """
+    Main class for writing a McStas instrument using McStasScript
+
+    Initialization of McStas_instr sets the name of the instrument file
+    and its methods are used to add all aspects of the instrument file.
+    The class also holds methods for writing the finished instrument
+    file to disk and to run the simulation.
+
+    Attributes
+    ----------
+    name : str
+        name of instrument file
+
+    author : str
+        name of user of McStasScript, written to the file
+
+    origin : str
+        origin of instrument file (affiliation)
+
+    executable_path : str
+        absolute path of mcrun command, or empty if it is in path
+
+    parameter_list : list of parameter_variable instances
+        contains all input parameters to be written to file
+
+    declare_list : list of declare_variable instances
+        contains all declare parrameters to be written to file
+
+    initialize_section : str
+        string containing entire initialize section to be written
+
+    trace_section : str
+        string containing trace section (OBSOLETE)
+
+    finally_section : str
+        string containing entire finally section to be written
+
+    component_list : list of component instances
+        list of components in the instrument
+
+    component_name_list : list of strings
+        list of names of the components in the instrument
+
+    Methods
+    -------
+    add_parameter(*args, **kwargs)
+        Adds input parameter to the define section
+
+    add_declare_var()
+        Adds declared variable ot the declare section
+
+    append_initialize(string)
+        Appends a string to the initialize section, then adds new line
+
+    append_initialize_no_new_line(string)
+        Appends a string to the initialize section
+
+    append_finally(string)
+        Appends a string to finally section, then adds new line
+
+    append_finally_no_new_line(string)
+        Appends a string to finally section
+
+    append_trace(string)
+        Obsolete method, add components instead (used in write_c_files)
+
+    show_components(string)
+        Shows available components in given category
+
+    add_component(instance_name, component_name, **kwargs)
+        Add a component to the instrument file
+
+    get_component(instance_name)
+        Returns component instance with name instance_name
+
+    get_last_component()
+        Returns component instance of last component
+
+    set_component_parameter(instance_name, dict)
+        Adds parameters as dict to component with instance_name
+
+    set_component_AT(instance_name, AT_data, **kwargs)
+        Sets position of component named instance_name
+
+    set_component_ROTATED(instance_name, ROTATED_data, **kwargs)
+        Sets rotation of component named instance_name
+
+    set_component_RELATIVE(instane_name, string)
+        Sets position and rotation reference for named component
+
+    set_component_WHEN(instance_name, string)
+        Sets WHEN condition of named component, is logical c expression
+
+    set_component_GROUP(instance_name, string)
+        Sets GROUP name of component named instance_name
+
+    append_component_EXTEND(instance_name, string)
+        Appends a line to EXTEND section of named component
+
+    set_component_JUMP(instance_name, string)
+        Sets JUMP code for named component
+
+    set_component_SPLIT(instance_name, string)
+        Sets SPLIT value for named component
+
+    set_component_c_code_before(instance_name, string)
+        Sets c code before the component
+
+    set_component_c_code_after(instance_name, string)
+        Sets c code after the component
+
+    set_component_comment(instance_name, string)
+        Sets comment to be written before named component
+
+    print_component(instance_name)
+        Prints an overview of current state of named component
+
+    print_component_short(instance_name)
+        Prints short overview of current state of named component
+
+    print_components()
+        Prints overview of postion / rotation of all components
+
+    write_c_files()
+        Writes c files for %include in generated_includes folder
+
+    write_full_instrument()
+        Writes full instrument file to current directory
+
+    run_full_instrument(**kwargs)
+        Writes instrument files and runs simulation.
+        Returns list of McStasData
+    """
+    def __init__(self, name, **kwargs):
+        """
+        Initialization of McStas Instrument
+
+        Parameters
+        ----------
+        name : str
+            Name of project, instrument file will be name + ".instr"
+
+        keyword arguments:
+            author : str
+                Name of author, written in instrument file
+
+            origin : str
+                Affiliation of author, written in instrument file
+
+            executable_path : str
+                Absolute path of mcrun or empty if already in path
+
+            input_path : str
+                Work directory, will load components from this folder
+        """
+        self.particle = "x-ray"
+        self.executable = "mxrun"
+        self.package_name = "McXtrace"
+
+        super().__init__(name, **kwargs)
+
+    def _read_calibration(self):
+        this_dir = os.path.dirname(os.path.abspath(__file__))
+        configuration_file_name = os.path.join(this_dir, "..",
+                                               "configuration.yaml")
+        if not os.path.isfile(configuration_file_name):
+            raise NameError("Could not find configuration file!")
+        with open(configuration_file_name, 'r') as ymlfile:
+            config = yaml.safe_load(ymlfile)
+
+        if type(config) is dict:
+            self.executable_path = config["paths"]["mxrun_path"]
+            self.package_path = config["paths"]["mcxtrace_path"]
+            self.line_limit = config["other"]["characters_per_line"]
+        else:
+            # This happens in unit tests that mocks open
+            self.executable_path = ""
+            self.package_path = ""
+            self.line_limit = 180
