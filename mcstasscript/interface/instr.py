@@ -174,6 +174,13 @@ class McCode_instr:
                 Work directory, will load components from this folder
         """
 
+        # Check required attributes has been set by class that inherits
+        if not (hasattr(self, "particle") or
+                hasattr(self, "executable") or
+                hasattr(self, "package_name")):
+            raise AttributeError("McCode_instr is a base class, use "
+                                 + "McStas_intr or McXtrace_instr instead.")
+
         self.name = name
 
         if not is_legal_filename(self.name + ".instr"):
@@ -186,7 +193,8 @@ class McCode_instr:
         if "author" in kwargs:
             self.author = kwargs["author"]
         else:
-            self.author = "Python McStas Instrument Generator"
+            self.author = "Python " + self.package_name
+            self.author += " Instrument Generator"
 
         if "origin" in kwargs:
             self.origin = kwargs["origin"]
@@ -208,8 +216,9 @@ class McCode_instr:
         elif self.package_path is "":
             raise NameError("At this stage of development "
                             + "McStasScript need the absolute path "
-                            + "for the McStas installation as keyword "
-                            + "named package_path or in configuration.yaml")
+                            + "for the " + self.package_name +
+                            + " installation as keyword named "
+                            + "package_path or in configuration.yaml")
 
         self.parameter_list = []
         self.declare_list = []
@@ -635,7 +644,8 @@ class McCode_instr:
 
         if args[0] in self.component_name_list:
             raise NameError(("Component name \"" + str(args[0])
-                             + "\" used twice, McStas does not allow this."
+                             + "\" used twice, " + self.package_name
+                             + " does not allow this."
                              + " Rename or remove one instance of this"
                              + " name."))
 
@@ -756,14 +766,15 @@ class McCode_instr:
 
         if instance_name in self.component_name_list:
             raise NameError(("Component name \"" + str(args[0])
-                             + "\" used twice, McStas does not allow this."
+                             + "\" used twice, " + self.package_name
+                             + " does not allow this."
                              + " Rename or remove one instance of this"
                              + " name."))
         
         if not args[1] in self.component_name_list:
             raise NameError("Component name \"" + str(args[1])
-                            + "\" was not found in the McStas instrument."
-                            + " and thus can not be copied.")
+                            + "\" was not found in the " + self.package_name
+                            + " instrument. and thus can not be copied.")
         else:
             component_to_copy = self.get_component(args[1])
         
@@ -1738,9 +1749,9 @@ class McStas_instr(McCode_instr):
 
 class McXtrace_instr(McCode_instr):
     """
-    Main class for writing a McStas instrument using McStasScript
+    Main class for writing a McXtrace instrument using McStasScript
 
-    Initialization of McStas_instr sets the name of the instrument file
+    Initialization of McXtrace_instr sets the name of the instrument file
     and its methods are used to add all aspects of the instrument file.
     The class also holds methods for writing the finished instrument
     file to disk and to run the simulation.
@@ -1872,7 +1883,7 @@ class McXtrace_instr(McCode_instr):
     """
     def __init__(self, name, **kwargs):
         """
-        Initialization of McStas Instrument
+        Initialization of McXtrace Instrument
 
         Parameters
         ----------
