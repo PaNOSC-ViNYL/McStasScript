@@ -1,20 +1,34 @@
 # McStasScript
-McStas API for creating and running McStas instruments from python scripting
+[McStas](http://www.mcstas.org) API for creating and running McStas instruments from python scripting
 
 Prototype for an API that allow interaction with McStas through an interface like Jupyter Notebooks created under WP5 of PaNOSC.
 
 ## Installation
-McStasScript does not include the McStas installation, so McStas should be installed separately.
-McStasScript can be installed using pip,
+McStasScript does not include the McStas installation, so McStas should be installed separately, link to instructions [here](https://github.com/McStasMcXtrace/McCode/tree/master/INSTALL-McStas).
+McStasScript can be installed using pip from a terminal,
 
     python3 -m pip install McStasScript --upgrade
 
-After installation it is necessary to configure the package so the McStas installation can be found, here we show how the appropriate code for an Ubuntu system. The configuration is saved permanently, and only needs to be updated when McStas or McStasScript is updated. This has to be done from within python.
+After installation it is necessary to configure the package so the McStas installation can be found, here we show how the appropriate code for an Ubuntu system as an example. The configuration is saved permanently, and only needs to be updated when McStas or McStasScript is updated. This has to be done from a python terminal or from within a python environment.
 
     from mcstasscript.interface import functions
     my_configurator = functions.Configurator()
     my_configurator.set_mcrun_path("/usr/bin/")
     my_configurator.set_mcstas_path("/usr/share/mcstas/2.5/")
+
+To get a python terminal, run the command python in a terminal and then copy, paste and execute the lines above one at a time. Exit with ctrl+D.
+
+For the second case, 
+1. open a text editor (not MS Word but something like Gedit...),
+2. copy and paste the code above,
+3. save the file as a Python script, for example, myMcStasScript_config.py
+4. In a terminal, run it by typing python myMcStasScript_config.py
+    
+On a Mac OS X system, the paths to the mcrun executable and mcstas folder are through the application folder:
+
+    my_configurator.set_mcrun_path("/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/bin/")
+    my_configurator.set_mcstas_path("/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/")
+    
     
 ### Notes on windows installation
 McStasScript was tested on Windows 10 installed using this [guide](https://github.com/McStasMcXtrace/McCode/blob/master/INSTALL-McStas/Windows/README.md), it is necessary to include MPI using MSMpiSetup.exe and msmpisdk.msi located in the extras folder.
@@ -34,9 +48,11 @@ For a standard McStas installation on Windows, the appropriate configuration can
     my_configurator = functions.Configurator()
     my_configurator.set_mcrun_path("\\mcstas-2.6\\bin\\")
     my_configurator.set_mcstas_path("\\mcstas-2.6\\lib\\")
+    
+Double backslashes are necessary since backslash is the escape character in python strings.
 
 ## Instructions for basic use
-This section provides a quick way to get started, a more in depth tutorial using Jupyter Notebooks is available in the tutorial folder.
+This section provides a quick way to get started, a more in depth tutorial using Jupyter Notebooks is available in the tutorial folder. The following commands suppose that you are either typing them in a Python environment from a terminal or in a file to be run as the end of the editing by typing a command like, 'python my_file.py' or in a Jupyter notebook
 
 Import the interface 
 
