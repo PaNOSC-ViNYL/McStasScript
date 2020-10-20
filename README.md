@@ -62,10 +62,35 @@ Now the package can be used. Start with creating a new instrument, just needs a 
 
     my_instrument = instr.McStas_instr("my_instrument_file")
 
-Then McStas components can be added, here we add a source
+Then McStas components can be added, here we add a source and ask for help on the parameters
 
     my_source = my_instrument.add_component("source", "Source_simple")
     my_source.show_parameters() # Can be used to show available parameters for Source simple
+    
+The second line prints help on the Source_simple component and current status of our component object. The output is shown here, but without bold, underline and color which is used to show which parameters are required, default or user specified.
+
+     ___ Help Source_simple _____________________________________________________________
+    |optional parameter|required parameter|default value|user specified value|
+    radius = 0.1 [m] // Radius of circle in (x,y,0) plane where neutrons are 
+                        generated. 
+    yheight = 0.0 [m] // Height of rectangle in (x,y,0) plane where neutrons are 
+                         generated. 
+    xwidth = 0.0 [m] // Width of rectangle in (x,y,0) plane where neutrons are 
+                        generated. 
+    dist = 0.0 [m] // Distance to target along z axis.
+    focus_xw = 0.045 [m] // Width of target
+    focus_yh = 0.12 [m] // Height of target
+    E0 = 0.0 [meV] // Mean energy of neutrons.
+    dE = 0.0 [meV] // Energy half spread of neutrons (flat or gaussian sigma).
+    lambda0 = 0.0 [AA] // Mean wavelength of neutrons.
+    dlambda = 0.0 [AA] // Wavelength half spread of neutrons.
+    flux = 1.0 [1/(s*cm**2*st*energy unit)] // flux per energy unit, Angs or meV if 
+                                               flux=0, the source emits 1 in 4*PI whole 
+                                               space. 
+    gauss = 0.0 [1] // Gaussian (1) or Flat (0) energy/wavelength distribution
+    target_index = 1 [1] // relative index of component to focus at, e.g. next is 
+                            +1 this is used to compute 'dist' automatically. 
+    -------------------------------------------------------------------------------------
 
 The parameters of the source can be adjusted directly as attributes of the python object
 
@@ -76,13 +101,13 @@ The parameters of the source can be adjusted directly as attributes of the pytho
     my_source.focus_xw = 0.05
     my_source.focus_yh = 0.05
     
-A monitor is added as well to get data out of the simulation
+A monitor is added as well to get data out of the simulation (few bins so it is easy to print the results)
 
     PSD = my_instrument.add_component("PSD", "PSD_monitor", AT=[0,0,1], RELATIVE="source") 
     PSD.xwidth = 0.1
     PSD.yheight = 0.1
-    PSD.nx = 200
-    PSD.ny = 200
+    PSD.nx = 5
+    PSD.ny = 5
     PSD.filename = "\"PSD.dat\""
 
 This simple simulation can be executed from the 
@@ -92,6 +117,14 @@ This simple simulation can be executed from the
 Results from the monitors would be stored as a list of McStasData objects in the returned data. The counts are stored as numpy arrays. We can read and change the intensity directly and manipulate the data before plotting.
 
     data[0].Intensity
+    
+In a python terminal this would display the data directly:
+
+    array([[0.        , 0.        , 0.        , 0.        , 0.        ],
+       [0.        , 0.1422463 , 0.19018485, 0.14156196, 0.        ],
+       [0.        , 0.18930076, 0.25112956, 0.18897898, 0.        ],
+       [0.        , 0.14121589, 0.18952508, 0.14098576, 0.        ],
+       [0.        , 0.        , 0.        , 0.        , 0.        ]])
     
 Plotting is usually done in a subplot of all monitors recorded.    
 
@@ -106,7 +139,7 @@ If one wish to work on existing projects using McStasScript, there is a reader i
 It is highly advised to run a check between the output of the generated file and the original to ensure the process was sucessful.
 
 ## Method overview
-Here is a quick overview of the available methods of the main classes in the project. Most have more options from keyword arguments that are explained in the manual, but also in python help, for example help(instr.McStas_instr.show_components).
+Here is a quick overview of the available methods of the main classes in the project. Most have more options from keyword arguments that are explained in the manual, but also in python help. To get more information on for example the show_components method of the McStas_instr class, one can use the python help command help(instr.McStas_instr.show_components).
 
     instr
     └── McStas_instr(str instr_name) # Returns McStas instrument object on initialize
