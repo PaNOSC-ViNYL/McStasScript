@@ -1,4 +1,5 @@
 import os
+import os.path
 import io
 import builtins
 import unittest
@@ -7,6 +8,9 @@ import datetime
 
 from mcstasscript.interface.instr import McStas_instr
 from mcstasscript.helper.formatting import bcolors
+
+
+run_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '.')
 
 
 def setup_instr_no_path():
@@ -1519,7 +1523,8 @@ class TestMcStas_instr(unittest.TestCase):
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
                                          stderr=-1, stdout=-1,
-                                         universal_newlines=True)
+                                         universal_newlines=True,
+                                         cwd=run_path)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch('__main__.__builtins__.open',
@@ -1558,7 +1563,8 @@ class TestMcStas_instr(unittest.TestCase):
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
                                          stderr=-1, stdout=-1,
-                                         universal_newlines=True)
+                                         universal_newlines=True,
+                                         cwd=run_path)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch('__main__.__builtins__.open',
@@ -1597,7 +1603,8 @@ class TestMcStas_instr(unittest.TestCase):
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
                                          stderr=-1, stdout=-1,
-                                         universal_newlines=True)
+                                         universal_newlines=True,
+                                         cwd=run_path)
 
 
 if __name__ == '__main__':
