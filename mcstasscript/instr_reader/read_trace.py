@@ -215,10 +215,10 @@ class TraceReader(SectionReader):
                     quotation_split = par_exp.split('"')
                     while (len(quotation_split) - 1) % 2 != 0:
                         # There is an uneven number of quotation marks
-                        par_exp +=  "," # Add the comma taken by split back
+                        par_exp += ","
                         if "," in par_line:
-                            # include the up to the next comma in par_exp
-                            par_exp += "," + par_line.split(",",1)[0]
+                            # include up to the next comma in par_exp
+                            par_exp += par_line.split(",",1)[0]
                             # remove the part of the par_line added to par_exp
                             par_line = par_line.split(",",1)[1]
                         else:
@@ -236,17 +236,8 @@ class TraceReader(SectionReader):
                     par_name = par_exp.split("=", 1)[0].strip()
                     par_value = par_exp.split("=", 1)[1].strip()
                     
-                    try:
-                        # No problems if the value is a number
-                        float(par_value)
-                    except:
-                        # If the value is a string, it needs quotes
-                        if '"' in par_value:
-                            # If it already has quotes, these need escapes
-                            par_value = par_value.replace('"','\\\"')
-                        par_value = '"' + par_value + '"'
-                    
                     par_dict[par_name] = par_value
+                    
             
             # Set all found parameters in the component
             self.current_component.set_parameters(par_dict)
@@ -357,7 +348,8 @@ class TraceReader(SectionReader):
             line = line.strip()
             
             group_name = line.split(" ", 1)[1].strip()
-            group_name = "\"" + group_name + "\""
+            #group_name = "\"" + group_name + "\""
+            group_name = group_name
             
             line = "" 
             
@@ -423,6 +415,16 @@ class TraceReader(SectionReader):
                     write_string.append(key)
                     write_string.append(" = ")
 
+                    try:
+                        # No problems if the value is a number
+                        float(val)
+                    except:
+                        # If the value is a string, it needs quotes
+                        if '"' in val:
+                            # If it already has quotes, these need escapes
+                            val = val.replace('"','\\\"')
+                        val = '"' + val + '"'
+
                     write_string.append(val)
                     write_string.append("\n")
                 
@@ -470,9 +472,9 @@ class TraceReader(SectionReader):
             if self.current_component.GROUP != "":
                 write_string = []
                 write_string.append(self.current_component.name)
-                write_string.append(".set_GROUP(")
+                write_string.append(".set_GROUP(\"")
                 write_string.append(str(self.current_component.GROUP))
-                write_string.append(")\n")
+                write_string.append("\")\n")
                 
                 self._write_to_file(write_string)
             

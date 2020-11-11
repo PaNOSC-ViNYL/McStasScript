@@ -38,8 +38,9 @@ class TestManagedMcrun(unittest.TestCase):
                                  foldername="test_folder",
                                  mcrun_path="")
 
-        self.assertEqual(mcrun_obj.mpi, 1)
+        self.assertEqual(mcrun_obj.mpi, None)
         self.assertEqual(mcrun_obj.ncount, 1000000)
+        self.assertEqual(mcrun_obj.run_path, ".")
 
     def test_ManagedMcrun_init_set_values(self):
         """
@@ -48,11 +49,13 @@ class TestManagedMcrun(unittest.TestCase):
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
                                  mcrun_path="",
+                                 run_path="test",
                                  mpi=4,
                                  ncount=128)
 
         self.assertEqual(mcrun_obj.mpi, 4)
         self.assertEqual(mcrun_obj.ncount, 128)
+        self.assertEqual(mcrun_obj.run_path, "test")
 
     def test_ManagedMcrun_init_set_parameters(self):
         """
@@ -107,9 +110,12 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj.run_simulation()
 
+        current_directory = os.getcwd()
+        expected_folder_path = os.path.join(current_directory, "test_folder")
+
         # a double space because of a missing option
-        expected_call = ("path/mcrun -c -n 1000000 --mpi=1 "
-                         + "-d test_folder  test.instr")
+        expected_call = ("path/mcrun -c -n 1000000 "
+                         + "-d " + expected_folder_path + "  test.instr")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
@@ -128,9 +134,12 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj.run_simulation()
 
+        current_directory = os.getcwd()
+        expected_folder_path = os.path.join(current_directory, "test_folder")
+
         # a double space because of a missing option
-        expected_call = ("path/mcrun -c -n 1000000 --mpi=1 "
-                         + "-d test_folder  test.instr")
+        expected_call = ("path/mcrun -c -n 1000000 "
+                         + "-d " + expected_folder_path + "  test.instr")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
@@ -152,9 +161,12 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj.run_simulation()
 
+        current_directory = os.getcwd()
+        expected_folder_path = os.path.join(current_directory, "test_folder")
+
         # a double space because of a missing option
         expected_call = ("path/mcrun -c -n 48 --mpi=7 "
-                         + "-d test_folder -fo test.instr")
+                         + "-d " + expected_folder_path + " -fo test.instr")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
@@ -179,9 +191,11 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj.run_simulation()
 
+        current_directory = os.getcwd()
+        expected_folder_path = os.path.join(current_directory, "test_folder")
         # a double space because of a missing option
         expected_call = ("path/mcrun -c -n 48 --mpi=7 "
-                         + "-d test_folder -fo test.instr "
+                         + "-d " + expected_folder_path + " -fo test.instr "
                          + "A=2 BC=car th=\"toy\"")
 
         mock_sub.assert_called_once_with(expected_call,
@@ -208,9 +222,12 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj.run_simulation()
 
+        current_directory = os.getcwd()
+        expected_folder_path = os.path.join(current_directory, "test_folder")
+
         # a double space because of a missing option
         expected_call = ("path/mcrun -n 48 --mpi=7 "
-                         + "-d test_folder -fo test.instr "
+                         + "-d " + expected_folder_path + " -fo test.instr "
                          + "A=2 BC=car th=\"toy\"")
 
         mock_sub.assert_called_once_with(expected_call,
@@ -246,9 +263,9 @@ class TestManagedMcrun(unittest.TestCase):
         self.assertEqual(PSD_4PI.metadata.xlabel, "Longitude [deg]")
         self.assertEqual(PSD_4PI.metadata.ylabel, "Lattitude [deg]")
         self.assertEqual(PSD_4PI.metadata.title, "4PI PSD monitor")
-        self.assertEqual(PSD_4PI.Ncount[1][4], 4)
-        self.assertEqual(PSD_4PI.Intensity[1][4], 1.537334562E-10)
-        self.assertEqual(PSD_4PI.Error[1][4], 1.139482296E-10)
+        self.assertEqual(PSD_4PI.Ncount[4][1], 4)
+        self.assertEqual(PSD_4PI.Intensity[4][1], 1.537334562E-10)
+        self.assertEqual(PSD_4PI.Error[4][1], 1.139482296E-10)
 
     def test_ManagedMcrun_load_data_PSD(self):
         """
@@ -278,9 +295,9 @@ class TestManagedMcrun(unittest.TestCase):
         self.assertEqual(PSD.metadata.xlabel, "X position [cm]")
         self.assertEqual(PSD.metadata.ylabel, "Y position [cm]")
         self.assertEqual(PSD.metadata.title, "PSD monitor")
-        self.assertEqual(PSD.Ncount[21][27], 9)
-        self.assertEqual(PSD.Intensity[21][27], 2.623929371e-13)
-        self.assertEqual(PSD.Error[21][27], 2.765467693e-13)
+        self.assertEqual(PSD.Ncount[27][21], 9)
+        self.assertEqual(PSD.Intensity[27][21], 2.623929371e-13)
+        self.assertEqual(PSD.Error[27][21], 2.765467693e-13)
 
     def test_ManagedMcrun_load_data_L_mon(self):
         """
@@ -329,7 +346,7 @@ class TestManagedMcrun(unittest.TestCase):
         current_work_dir = os.getcwd()
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
-        load_path = THIS_DIR + "/test_data_set"
+        load_path = os.path.join(THIS_DIR, "test_data_set")
         results = mcrun_obj.load_results(load_path)
 
         os.chdir(current_work_dir)  # Reset work directory
@@ -363,7 +380,7 @@ class TestManagedMcrun(unittest.TestCase):
         current_work_dir = os.getcwd()
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
-        load_path = THIS_DIR + "/non_exsistent_dataset"
+        load_path = os.path.join(THIS_DIR, "non_exsistent_dataset")
         with self.assertRaises(NameError):
             results = mcrun_obj.load_results(load_path)
 
@@ -383,7 +400,7 @@ class TestManagedMcrun(unittest.TestCase):
         current_work_dir = os.getcwd()
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
-        load_path = THIS_DIR + "/dummy_mcstas"
+        load_path = os.path.join(THIS_DIR, "/dummy_mcstas")
         with self.assertRaises(NameError):
             results = mcrun_obj.load_results(load_path)
 

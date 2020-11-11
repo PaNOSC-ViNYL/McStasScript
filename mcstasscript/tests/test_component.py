@@ -166,7 +166,6 @@ class Testcomponent(unittest.TestCase):
         """
         Testing set_AT method
         """
-
         comp = component("test_component", "Arm")
 
         comp.set_AT([12.124, 214.0, 2], RELATIVE="monochromator")
@@ -175,6 +174,35 @@ class Testcomponent(unittest.TestCase):
         self.assertEqual(comp.component_name, "Arm")
         self.assertEqual(comp.AT_data, [12.124, 214.0, 2])
         self.assertEqual(comp.AT_relative, "RELATIVE monochromator")
+
+    def test_component_basic_init_set_AT_component(self):
+        """
+        Testing set_AT method using component object
+        """
+
+        prev_component = component("relative_base", "Arm")
+        comp = component("test_component", "Arm")
+
+        comp.set_AT([12.124, 214.0, 2], RELATIVE=prev_component)
+
+        self.assertEqual(comp.name, "test_component")
+        self.assertEqual(comp.component_name, "Arm")
+        self.assertEqual(comp.AT_data, [12.124, 214.0, 2])
+        self.assertEqual(comp.AT_relative, "RELATIVE relative_base")
+
+    def test_component_basic_init_set_AT_component_keyword(self):
+        """
+        Testing set_AT method using component object
+        """
+
+        prev_component = component("relative_base", "Arm")
+        comp = component("test_component", "Arm",
+                         AT=[1, 2, 3.0], AT_RELATIVE=prev_component)
+
+        self.assertEqual(comp.name, "test_component")
+        self.assertEqual(comp.component_name, "Arm")
+        self.assertEqual(comp.AT_data, [1, 2, 3.0])
+        self.assertEqual(comp.AT_relative, "RELATIVE relative_base")
 
     def test_component_basic_init_set_ROTATED(self):
         """
@@ -190,6 +218,35 @@ class Testcomponent(unittest.TestCase):
         self.assertEqual(comp.ROTATED_data, [1204.8, 8490.1, 129])
         self.assertEqual(comp.ROTATED_relative, "RELATIVE analyzer")
 
+    def test_component_basic_init_set_ROTATED_component(self):
+        """
+        Testing set_ROTATED method
+        """
+
+        prev_component = component("relative_base", "Arm")
+        comp = component("test_component", "Arm")
+
+        comp.set_ROTATED([1204.8, 8490.1, 129], RELATIVE=prev_component)
+
+        self.assertEqual(comp.name, "test_component")
+        self.assertEqual(comp.component_name, "Arm")
+        self.assertEqual(comp.ROTATED_data, [1204.8, 8490.1, 129])
+        self.assertEqual(comp.ROTATED_relative, "RELATIVE relative_base")
+
+    def test_component_basic_init_set_ROTATED_component_keyword(self):
+        """
+        Testing set_ROTATED method
+        """
+
+        prev_component = component("relative_base", "Arm")
+        comp = component("test_component", "Arm",
+                         ROTATED=[1, 2, 3.0], ROTATED_RELATIVE=prev_component)
+
+        self.assertEqual(comp.name, "test_component")
+        self.assertEqual(comp.component_name, "Arm")
+        self.assertEqual(comp.ROTATED_data, [1, 2, 3.0])
+        self.assertEqual(comp.ROTATED_relative, "RELATIVE relative_base")
+
     def test_component_basic_init_set_RELATIVE(self):
         """
         Testing set_RELATIVE method
@@ -203,6 +260,21 @@ class Testcomponent(unittest.TestCase):
         self.assertEqual(comp.component_name, "Arm")
         self.assertEqual(comp.AT_relative, "RELATIVE sample")
         self.assertEqual(comp.ROTATED_relative, "RELATIVE sample")
+
+    def test_component_basic_init_set_RELATIVE(self):
+        """
+        Testing set_RELATIVE method
+        """
+
+        prev_component = component("relative_base", "Arm")
+        comp = component("test_component", "Arm")
+
+        comp.set_RELATIVE(prev_component)
+
+        self.assertEqual(comp.name, "test_component")
+        self.assertEqual(comp.component_name, "Arm")
+        self.assertEqual(comp.AT_relative, "RELATIVE relative_base")
+        self.assertEqual(comp.ROTATED_relative, "RELATIVE relative_base")
 
     def test_component_basic_init_set_parameters(self):
         """

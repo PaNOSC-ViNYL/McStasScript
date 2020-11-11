@@ -30,12 +30,48 @@ def setup_instr_with_path():
     """
 
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-    dummy_path = THIS_DIR + "/dummy_mcstas"
+    dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
     current_work_dir = os.getcwd()
     os.chdir(THIS_DIR)  # Set work directory to test folder
 
     return McStas_instr("test_instrument", mcstas_path=dummy_path)
+
+    os.chdir(current_work_dir)  # Return to previous workdir
+
+def setup_instr_with_input_path():
+    """
+    Sets up a instrument with a valid mcstas_path, but it points to
+    the dummy installation in the test folder.
+    """
+
+    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+    dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
+    input_path = os.path.join(THIS_DIR, "test_input_folder")
+
+    current_work_dir = os.getcwd()
+    os.chdir(THIS_DIR)  # Set work directory to test folder
+
+    return McStas_instr("test_instrument",
+                        mcstas_path=dummy_path,
+                        input_path=input_path)
+
+    os.chdir(current_work_dir)  # Return to previous workdir
+
+def setup_instr_with_input_path_relative():
+    """
+    Sets up a instrument with a valid mcstas_path, but it points to
+    the dummy installation in the test folder.
+    """
+
+    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+    current_work_dir = os.getcwd()
+    os.chdir(THIS_DIR)  # Set work directory to test folder
+
+    return McStas_instr("test_instrument",
+                        mcstas_path="dummy_mcstas",
+                        input_path="test_input_folder")
 
     os.chdir(current_work_dir)  # Return to previous workdir
 
@@ -117,7 +153,8 @@ class TestMcStas_instr(unittest.TestCase):
         """
         # Load configuration file and read manually
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-        configuration_file_name = THIS_DIR + "/../configuration.yaml"
+        configuration_file_name = os.path.join(THIS_DIR,
+                                               "..", "configuration.yaml")
 
         if not os.path.isfile(configuration_file_name):
             raise NameError("Could not find configuration file!")
@@ -419,14 +456,16 @@ class TestMcStas_instr(unittest.TestCase):
         output = output.split("\n")
 
         self.assertEqual(output[0],
-                         "Overwriting McStasScript info on component "
-                         + "named test_for_reading.comp because the "
-                         + "component is in the work directory.")
-        self.assertEqual(output[1],
+                         "The following components are found in the "
+                         + "work_directory / input_path:")
+        self.assertEqual(output[1], "     test_for_reading.comp")
+        self.assertEqual(output[2], "These definitions will be used "
+                                    +"instead of the installed versions.")
+        self.assertEqual(output[3],
                          "Here are the available component categories:")
-        self.assertEqual(output[2], " sources")
-        self.assertEqual(output[3], " Work directory")
-        self.assertEqual(output[4], " misc")
+        self.assertEqual(output[4], " sources")
+        self.assertEqual(output[5], " Work directory")
+        self.assertEqual(output[6], " misc")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_show_components_folder(self, mock_stdout):
@@ -441,14 +480,68 @@ class TestMcStas_instr(unittest.TestCase):
         output = output.split("\n")
 
         self.assertEqual(output[0],
-                         "Overwriting McStasScript info on component "
-                         + "named test_for_reading.comp because the "
-                         + "component is in the work directory.")
-        self.assertEqual(output[1],
+                         "The following components are found in the "
+                         + "work_directory / input_path:")
+        self.assertEqual(output[1], "     test_for_reading.comp")
+        self.assertEqual(output[2], "These definitions will be used "
+                         + "instead of the installed versions.")
+        self.assertEqual(output[3],
                          "Here are all components in the Work directory "
                          + "category.")
-        self.assertEqual(output[2], " test_for_reading")
-        self.assertEqual(output[3], "")
+        self.assertEqual(output[4], " test_for_reading")
+        self.assertEqual(output[5], "")
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_show_components_input_path_simple(self, mock_stdout):
+        """
+        Simple test of input_path being recoignized and passed
+        to component_reader so PSDlin_monitor is overwritten
+        """
+        instr = setup_instr_with_input_path()
+
+        instr.show_components()
+
+        output = mock_stdout.getvalue()
+        output = output.split("\n")
+
+        self.assertEqual(output[0],
+                         "The following components are found in the "
+                         + "work_directory / input_path:")
+        self.assertEqual(output[1], "     test_for_structure.comp")
+        self.assertEqual(output[2], "These definitions will be used "
+                                    +"instead of the installed versions.")
+        self.assertEqual(output[3],
+                         "Here are the available component categories:")
+        self.assertEqual(output[4], " sources")
+        self.assertEqual(output[5], " misc")
+        self.assertEqual(output[6], " Work directory")
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_show_components_input_path_simple(self, mock_stdout):
+        """
+        Simple test of input_path being recoignized and passed
+        to component_reader so PSDlin_monitor is overwritten
+        Here dummy_mcstas and input_path is set using relative
+        paths instead of absolute paths.
+        """
+        instr = setup_instr_with_input_path_relative()
+
+        instr.show_components()
+
+        output = mock_stdout.getvalue()
+        output = output.split("\n")
+
+        self.assertEqual(output[0],
+                         "The following components are found in the "
+                         + "work_directory / input_path:")
+        self.assertEqual(output[1], "     test_for_structure.comp")
+        self.assertEqual(output[2], "These definitions will be used "
+                                    +"instead of the installed versions.")
+        self.assertEqual(output[3],
+                         "Here are the available component categories:")
+        self.assertEqual(output[4], " sources")
+        self.assertEqual(output[5], " misc")
+        self.assertEqual(output[6], " Work directory")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_component_help(self, mock_stdout):
@@ -466,7 +559,7 @@ class TestMcStas_instr(unittest.TestCase):
         output = mock_stdout.getvalue()
         output = output.split("\n")
 
-        self.assertEqual(output[1], " ___ Help test_for_reading " + "_"*63)
+        self.assertEqual(output[3], " ___ Help test_for_reading " + "_"*63)
 
         legend = ("|"
                   + bcolors.BOLD + "optional parameter" + bcolors.ENDC
@@ -484,14 +577,14 @@ class TestMcStas_instr(unittest.TestCase):
                   + bcolors.ENDC + bcolors.ENDC
                   + "|")
 
-        self.assertEqual(output[2], legend)
+        self.assertEqual(output[4], legend)
 
         par_name = bcolors.BOLD + "radius" + bcolors.ENDC
         value = (bcolors.BOLD + bcolors.OKBLUE
                  + "0.1" + bcolors.ENDC + bcolors.ENDC)
         comment = ("// Radius of circle in (x,y,0) plane where "
                    + "neutrons are generated.")
-        self.assertEqual(output[3],
+        self.assertEqual(output[5],
                          par_name + " = " + value + " [m] " + comment)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
@@ -1376,7 +1469,7 @@ class TestMcStas_instr(unittest.TestCase):
          my_call("%}\n"),
          my_call("\nEND\n")]
 
-        mock_f.assert_called_with("test_instrument.instr", "w")
+        mock_f.assert_called_with("./test_instrument.instr", "w")
         handle = mock_f()
         handle.write.assert_has_calls(wrts, any_order=False)
 
@@ -1412,9 +1505,15 @@ class TestMcStas_instr(unittest.TestCase):
                                   mcrun_path="path",
                                   parameters={"theta": 1})
 
+        expected_path = os.path.join("path","mcrun")
+
+        current_directory = os.getcwd()
+        expected_folder_path = os.path.join(current_directory, "test_data_set")
+
         # a double space because of a missing option
-        expected_call = ("path/mcrun -c -n 1000000 --mpi=1 "
-                         + "-d test_data_set  test_instrument.instr"
+        expected_call = (expected_path + " -c -n 1000000 "
+                         + "-d " + expected_folder_path
+                         + "  test_instrument.instr"
                          + " has_default=37 theta=1")
 
         mock_sub.assert_called_once_with(expected_call,
@@ -1445,9 +1544,15 @@ class TestMcStas_instr(unittest.TestCase):
                                               "BC": "car",
                                               "theta": "\"toy\""})
 
+        expected_path = os.path.join("path","mcrun")
+
+        current_directory = os.getcwd()
+        expected_folder_path = os.path.join(current_directory, "test_data_set")
+
         # a double space because of a missing option
-        expected_call = ("path/mcrun -c -n 48 --mpi=7 "
-                         + "-d test_data_set -fo test_instrument.instr "
+        expected_call = (expected_path + " -c -n 48 --mpi=7 "
+                         + "-d " + expected_folder_path
+                         + " -fo test_instrument.instr "
                          + "has_default=37 A=2 BC=car theta=\"toy\"")
 
         mock_sub.assert_called_once_with(expected_call,
@@ -1477,10 +1582,16 @@ class TestMcStas_instr(unittest.TestCase):
                                               "BC": "car",
                                               "theta": "\"toy\"",
                                               "has_default": 10})
+        
+        expected_path = os.path.join("path","mcrun")
+
+        current_directory = os.getcwd()
+        expected_folder_path = os.path.join(current_directory, "test_data_set")
 
         # a double space because of a missing option
-        expected_call = ("path/mcrun -c -n 48 --mpi=7 "
-                         + "-d test_data_set -fo test_instrument.instr "
+        expected_call = (expected_path + " -c -n 48 --mpi=7 "
+                         + "-d " + expected_folder_path
+                         + " -fo test_instrument.instr "
                          + "has_default=10 A=2 BC=car theta=\"toy\"")
 
         mock_sub.assert_called_once_with(expected_call,

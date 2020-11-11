@@ -1,4 +1,5 @@
 import os
+import sys
 import unittest
 
 from mcstasscript.interface import instr
@@ -6,12 +7,35 @@ from mcstasscript.instr_reader import control
 from mcstasscript.instr_reader import util
 
 
-def setup_standard(Instr):
-    filename = "Union_demonstration_test.instr"
+# Disable print
+def blockPrint():
+    sys.stdout = open(os.devnull, 'w')
 
+# Restore print
+def enablePrint():
+    sys.stdout = sys.__stdout__
+
+
+def set_dummy_dir():
+    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(os.path.join(THIS_DIR, "dummy_instrument_folder"))
+
+def setup_standard(Instr):
+    set_dummy_dir()
+    filename = "Union_demonstration_test.instr"
     InstrReader = control.InstrumentReader(filename)
     InstrReader.add_to_instr(Instr)
-    return InstrReader 
+    
+    return InstrReader
+
+def setup_standard_auto_instr():
+    set_dummy_dir()
+    
+    blockPrint()
+    Instr = instr.McStas_instr("test_instrument")
+    enablePrint()
+
+    return setup_standard(Instr)
 
 class TestInstrReader(unittest.TestCase):
     
@@ -20,17 +44,25 @@ class TestInstrReader(unittest.TestCase):
         Check if the instrument name is read correctly
         """
 
-        filename = "Union_demonstration_test.instr"
+        set_dummy_dir()
+        
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
 
+        filename = "Union_demonstration_test.instr"
         InstrReader = control.InstrumentReader(filename)
         InstrReader.add_to_instr(Instr)
 
         self.assertEqual(InstrReader.instr_name, "Union_demonstration")
 
     def test_read_input_parameter(self):
+    
+        set_dummy_dir()
         
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         self.assertEqual(Instr.parameter_list[0].name, "stick_displacement")
@@ -50,7 +82,11 @@ class TestInstrReader(unittest.TestCase):
 
     def test_read_declare_parameter(self):
         
+        set_dummy_dir()
+        
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         self.assertEqual(Instr.declare_list[0].name, "sample_1_index")
@@ -77,8 +113,12 @@ class TestInstrReader(unittest.TestCase):
         self.assertEqual(Instr.declare_list[11].value, "\"\\\"test_string\\\"\"")
         
     def test_read_initialize_line(self):
+    
+        set_dummy_dir()
         
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         self.assertEqual(Instr.initialize_section,
@@ -89,7 +129,11 @@ class TestInstrReader(unittest.TestCase):
     # Check a few components are read correctly
     def test_read_component_1(self):
         
+        set_dummy_dir()
+        
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         components = Instr.component_list
@@ -103,10 +147,11 @@ class TestInstrReader(unittest.TestCase):
         self.assertEqual(test_component.component_name, "Union_make_material")
         
         val = getattr(test_component, "my_absorption")
-        self.assertEqual(val, "\"100*4*0.231/66.4\"")
+        #self.assertEqual(val, "\"100*4*0.231/66.4\"")
+        self.assertEqual(val, "100*4*0.231/66.4")
         
         val = getattr(test_component, "process_string")
-        self.assertEqual(val, '"\\\"Al_incoherent,Al_powder\\\""')
+        self.assertEqual(val, "\"Al_incoherent,Al_powder\"")
         
         self.assertEqual(test_component.AT_data, ["0", "0", "0"])
         self.assertEqual(test_component.AT_relative, "ABSOLUTE")
@@ -116,7 +161,11 @@ class TestInstrReader(unittest.TestCase):
         
     def test_read_component_2(self):
         
+        set_dummy_dir()
+        
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         components = Instr.component_list
@@ -142,8 +191,12 @@ class TestInstrReader(unittest.TestCase):
         self.assertEqual(test_component.ROTATED_relative, "RELATIVE sample_rod_bottom")
 
     def test_read_component_WHEN(self):
+    
+        set_dummy_dir()
         
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         components = Instr.component_list
@@ -172,7 +225,11 @@ class TestInstrReader(unittest.TestCase):
         
     def test_read_component_EXTEND(self):
         
+        set_dummy_dir()
+        
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         components = Instr.component_list
@@ -211,7 +268,11 @@ class TestInstrReader(unittest.TestCase):
         
     def test_read_component_GROUP(self):
         
+        set_dummy_dir()
+        
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         components = Instr.component_list
@@ -224,14 +285,18 @@ class TestInstrReader(unittest.TestCase):
         
         self.assertEqual(test_component.component_name, "Arm")
         
-        self.assertEqual(test_component.GROUP, "\"arms\"")
+        self.assertEqual(test_component.GROUP, "arms")
         
         self.assertEqual(test_component.AT_data, ["0", "0", "0"])
         self.assertEqual(test_component.AT_relative, "ABSOLUTE")
         
     def test_read_component_SPLIT(self):
         
+        set_dummy_dir()
+        
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         components = Instr.component_list
@@ -248,8 +313,15 @@ class TestInstrReader(unittest.TestCase):
         self.assertEqual(test_component.AT_relative, "RELATIVE sample_4")     
     
     def test_read_component_JUMP(self):
+        """
+        Check a JUMP and GROUP statement is read correctly
+        """
         
+        set_dummy_dir()
+        
+        blockPrint()
         Instr = instr.McStas_instr("test_instrument")
+        enablePrint()
         InstrReader = setup_standard(Instr)
         
         components = Instr.component_list
@@ -262,20 +334,18 @@ class TestInstrReader(unittest.TestCase):
         
         self.assertEqual(test_component.component_name, "Arm")
         
-        self.assertEqual(test_component.GROUP, "\"arms\"")
+        self.assertEqual(test_component.GROUP, "arms")
         self.assertEqual(test_component.JUMP, "myself 2")
         
         self.assertEqual(test_component.AT_data, ["0", "0", "0"])
         self.assertEqual(test_component.AT_relative, "ABSOLUTE")
 
-    
     def test_comma_split(self):
         """
-        Check if the instrument name is read correctly
+        Test the Tracer_reader._split_func
         """
-
-        Instr = instr.McStas_instr("test_instrument")
-        InstrReader = setup_standard(Instr)
+        
+        InstrReader = setup_standard_auto_instr()
         
         test_string = "A,B,C,D(a,b),E"
         
@@ -286,14 +356,13 @@ class TestInstrReader(unittest.TestCase):
         self.assertEqual(result[2],"C")
         self.assertEqual(result[3],"D(a,b)")
         self.assertEqual(result[4],"E")
-        
+    
     def test_comma_split_limited(self):
         """
-        Check if the instrument name is read correctly
+        Test the Tracer_reader._split_func
         """
-
-        Instr = instr.McStas_instr("test_instrument")
-        InstrReader = setup_standard(Instr)
+        
+        InstrReader = setup_standard_auto_instr()
         
         test_string = "A,B,C,D(a,b),E"
         
@@ -302,14 +371,14 @@ class TestInstrReader(unittest.TestCase):
         self.assertEqual(result[0],"A")
         self.assertEqual(result[1],"B")
         self.assertEqual(result[2],"C,D(a,b),E")
+    
         
     def test_parenthesis_split(self):
         """
-        Check if the instrument name is read correctly
+        Test the Tracer_reader._split_func
         """
-
-        Instr = instr.McStas_instr("test_instrument")
-        InstrReader = setup_standard(Instr)
+        
+        InstrReader = setup_standard_auto_instr()
         
         test_string = "A)B)C)D(a,b))E"
         
@@ -323,11 +392,10 @@ class TestInstrReader(unittest.TestCase):
         
     def test_comma_split_brack(self):
         """
-        Check if the instrument name is read correctly
+        Test the Tracer_reader._split_func
         """
 
-        Instr = instr.McStas_instr("test_instrument")
-        InstrReader = setup_standard(Instr)
+        InstrReader = setup_standard_auto_instr()
         
         test_string = "A,B{C,D(a,b)},E"
         

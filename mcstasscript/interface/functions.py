@@ -146,7 +146,8 @@ class Configurator:
 
         # check configuration file exists
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-        self.configuration_file_name = THIS_DIR + "/../" + name + ".yaml"
+        conf_file = os.path.join(THIS_DIR, ".." , name + ".yaml")
+        self.configuration_file_name = conf_file
         if not os.path.isfile(self.configuration_file_name):
             # no config file found, write default config file
             self._create_new_config_file()
@@ -175,7 +176,7 @@ class Configurator:
 
         default_paths = {"mcrun_path" : run,
                          "mcstas_path" : mcstas}
-        default_other = {"characters_per_line" : 93}
+        default_other = {"characters_per_line" : 85}
 
         default_config = {"paths" : default_paths,
                           "other" : default_other}

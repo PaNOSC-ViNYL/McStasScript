@@ -66,18 +66,26 @@ class ManagedMcrun:
                 Sets custom_flags passed to mcrun
             mcrun_path : str
                 Path to mcrun command, "" if already in path
+            increment_folder_name : bool
+                If True, automaticaly appends foldername to make it unique
+            force_compile : bool
+                If True, forces compile, default is True
+            run_folder : str
+                Path to folder in which to run McStas
+
         """
 
         self.name_of_instrumentfile = instr_name
 
         self.data_folder_name = ""
         self.ncount = int(1E6)
-        self.mpi = 1
+        self.mpi = None
         self.parameters = {}
         self.custom_flags = ""
         self.mcrun_path = ""
         self.increment_folder_name = False
         self.compile = True
+        self.run_path = "."
         # mcrun_path always in kwargs
         if "mcrun_path" in kwargs:
             self.mcrun_path = kwargs["mcrun_path"]
@@ -107,21 +115,40 @@ class ManagedMcrun:
         if "force_compile" in kwargs:
             self.compile = kwargs["force_compile"]
 
+        if "run_path" in kwargs:
+            self.run_path = kwargs["run_path"]
+
     def run_simulation(self, **kwargs):
         """
         Runs McStas simulation described by initializing the object
         """
 
-        # construct command to run
+        # get relevant paths
+        current_directory = os.getcwd()
 
+        if not os.path.isabs(self.data_folder_name):
+            self.data_folder_name = os.path.join(current_directory,
+                                                 self.data_folder_name)
+
+        if not os.path.isabs(self.run_path):
+            self.run_path = os.path.join(current_directory, self.run_path)
+
+        if not os.path.isdir(self.run_path):
+            raise ValueError("Given run_path for McStas not a directory!")
+
+        # construct command to run
         options_string = ""
         if self.compile:
             options_string = "-c "
 
+        if self.mpi is not None:
+            mpi_string = " --mpi=" + str(self.mpi) + " " # Set mpi
+        else:
+            mpi_string = " "
+
         option_string = (options_string
                          + "-n " + str(self.ncount)  # Set ncount
-                         + " --mpi=" + str(self.mpi)  # Set mpi
-                         + " ")
+                         + mpi_string)
 
         if self.increment_folder_name and os.path.isdir(self.data_folder_name):
             counter = 0
@@ -149,7 +176,7 @@ class ManagedMcrun:
         if len(self.mcrun_path) > 1:
             if not (self.mcrun_path[-1] == "\\"
                     or self.mcrun_path[-1] == "/"):
-                mcrun_full_path = self.mcrun_path + "/mcrun"
+                mcrun_full_path = os.path.join(self.mcrun_path, "mcrun")
 
         # Run the mcrun command on the system
         full_command = (mcrun_full_path + " "
@@ -158,11 +185,19 @@ class ManagedMcrun:
                   + self.name_of_instrumentfile
                   + parameter_string)
 
-        #os.system(full_command)
-        process = subprocess.run(full_command, shell=True,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 universal_newlines=True)
+        try:
+            os.chdir(self.run_path)
+
+            process = subprocess.run(full_command, shell=True,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     universal_newlines=True)
+
+            os.chdir(current_directory)
+
+        except:
+            os.chdir(current_directory)
+            raise RuntimeError("Could not run McStas command.")
 
         if "suppress_output" in kwargs:
             if kwargs["suppress_output"] is False:
@@ -193,7 +228,7 @@ class ManagedMcrun:
             raise NameError("No mccode.sim in data folder.")
 
         # Open mccode to read metadata for all datasets written to disk
-        f = open(data_folder_name + "/mccode.sim", "r")
+        f = open(os.path.join(data_folder_name, "mccode.sim"), "r")
 
         # Loop that reads mccode.sim sections
         metadata_list = []
@@ -233,9 +268,8 @@ class ManagedMcrun:
         # Load datasets described in metadata list individually
         for metadata in metadata_list:
             # Load data with numpy
-            data = np.loadtxt(data_folder_name
-                              + "/"
-                              + metadata.filename.rstrip())
+            data = np.loadtxt(os.path.join(data_folder_name,
+                              metadata.filename.rstrip()))
 
             # Split data into intensity, error and ncount
             if type(metadata.dimension) == int:
@@ -247,9 +281,10 @@ class ManagedMcrun:
             elif len(metadata.dimension) == 2:
                 xaxis = []  # Assume evenly binned in 2d
                 data_lines = metadata.dimension[1]
-                Intensity = data.T[:, 0:data_lines - 1]
-                Error = data.T[:, data_lines:2*data_lines - 1]
-                Ncount = data.T[:, 2*data_lines:3*data_lines - 1]
+
+                Intensity = data[0:data_lines, :]
+                Error = data[data_lines:2*data_lines, :]
+                Ncount = data[2*data_lines:3*data_lines, :]
             else:
                 raise NameError(
                     "Dimension not read correctly in data set "
