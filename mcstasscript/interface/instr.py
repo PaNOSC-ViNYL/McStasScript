@@ -395,7 +395,6 @@ class McStas_instr:
         
         #self.declare_section = self.declare_section + string + "\n"
         self.declare_list.append(string)
-        
 
     def append_initialize(self, string):
         """
@@ -1511,7 +1510,11 @@ class McStas_instr:
         kwargs["parameters"] = self._handle_parameters(given_parameters)
 
         # Write the instrument file
-        self.write_full_instrument()
+        compile = True
+        if "force_compile" in kwargs:
+            compile = kwargs["force_compile"]
+        if compile:
+            self.write_full_instrument()
 
         # Set up the simulation
         simulation = ManagedMcrun(self.name + ".instr", **kwargs)

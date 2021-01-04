@@ -274,6 +274,11 @@ def make_plot(data_list, **kwargs):
         fig, ax0 = plt.subplots(figsize=figsize)
         _plot_fig_ax(data, fig, ax0, **kwargs)
 
+    if "filename" in kwargs:
+        fig.savefig(kwargs["filename"])
+    else:
+        plt.show()
+
 def make_sub_plot(data_list, **kwargs):
     """
     make_sub_plot plots contents of McStasData objects given in list
@@ -300,6 +305,11 @@ def make_sub_plot(data_list, **kwargs):
         _plot_fig_ax(data, fig, ax0, **kwargs)
 
     fig.tight_layout()
+
+    if "filename" in kwargs:
+        fig.savefig(kwargs["filename"])
+    else:
+        plt.show()
 
 
 def make_animation(data_list, **kwargs):
@@ -359,6 +369,13 @@ def make_animation(data_list, **kwargs):
 
     maximum_value = np.array(maximum_values).max()
     minimum_value = np.array(minimum_values).min()
+
+    if "orders_of_mag" in kwargs:
+        orders_of_mag = kwargs["orders_of_mag"]
+        mag_diff = np.log10(maximum_value) - np.log10(minimum_value)
+        if mag_diff > orders_of_mag:
+            minimum_value_log10 = np.log10(maximum_value) - orders_of_mag
+            minimum_value = 10**(minimum_value_log10)
 
     kwargs["fixed_minimum_value"] = minimum_value
     kwargs["fixed_maximum_value"] = maximum_value
