@@ -1589,8 +1589,11 @@ class TestMcStas_instr(unittest.TestCase):
                          + "  test_instrument.instr"
                          + " has_default=37 theta=1")
 
+        expected_run_path = os.path.join(current_directory, ".")
+
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
+                                         cwd=expected_run_path,
                                          stderr=-1, stdout=-1,
                                          universal_newlines=True)
 
