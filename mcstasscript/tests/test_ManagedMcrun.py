@@ -120,7 +120,8 @@ class TestManagedMcrun(unittest.TestCase):
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
                                          stderr=-1, stdout=-1,
-                                         universal_newlines=True)
+                                         universal_newlines=True,
+                                         cwd=mcrun_obj.run_path)
 
     @unittest.mock.patch("subprocess.run")
     def test_ManagedMcrun_run_simulation_basic_path(self, mock_sub):
@@ -144,7 +145,8 @@ class TestManagedMcrun(unittest.TestCase):
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
                                          stderr=-1, stdout=-1,
-                                         universal_newlines=True)
+                                         universal_newlines=True,
+                                         cwd=mcrun_obj.run_path)
 
     @unittest.mock.patch("subprocess.run")
     def test_ManagedMcrun_run_simulation_no_standard(self, mock_sub):
@@ -171,7 +173,8 @@ class TestManagedMcrun(unittest.TestCase):
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
                                          stderr=-1, stdout=-1,
-                                         universal_newlines=True)
+                                         universal_newlines=True,
+                                         cwd=mcrun_obj.run_path)
 
     @unittest.mock.patch("subprocess.run")
     def test_ManagedMcrun_run_simulation_parameters(self, mock_sub):
@@ -201,7 +204,8 @@ class TestManagedMcrun(unittest.TestCase):
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
                                          stderr=-1, stdout=-1,
-                                         universal_newlines=True)
+                                         universal_newlines=True,
+                                         cwd=mcrun_obj.run_path)
 
     @unittest.mock.patch("subprocess.run")
     def test_ManagedMcrun_run_simulation_compile(self, mock_sub):
@@ -233,7 +237,8 @@ class TestManagedMcrun(unittest.TestCase):
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
                                          stderr=-1, stdout=-1,
-                                         universal_newlines=True)
+                                         universal_newlines=True,
+                                         cwd=mcrun_obj.run_path)
 
     def test_ManagedMcrun_load_data_PSD4PI(self):
         """
