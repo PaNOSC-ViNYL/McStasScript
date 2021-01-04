@@ -62,9 +62,15 @@ class TestConfigurator(unittest.TestCase):
         
         run = "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/bin/"
         mcstas = "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/"
+        mxrun = "/Applications/McXtrace-1.5.app" \
+                + "/Contents/Resources/mcxtrace/1.5/mxrun"
+        mcxtrace = "/Applications/McXtrace-1.5.app" \
+                   + "/Contents/Resources/mcxtrace/1.5/"
 
         self.assertEqual(default_config["paths"]["mcrun_path"], run)
         self.assertEqual(default_config["paths"]["mcstas_path"], mcstas)
+        self.assertEqual(default_config["paths"]["mxrun_path"], mxrun)
+        self.assertEqual(default_config["paths"]["mcxtrace_path"], mcxtrace)
         self.assertEqual(default_config["other"]["characters_per_line"], 85)
         
         # remove the testing configuration file
@@ -123,6 +129,39 @@ class TestConfigurator(unittest.TestCase):
 
         self.assertEqual(new_config["paths"]["mcstas_path"],
                          "/new/mcstas_path/")
+
+        # remove the testing configuration file
+        setup_expected_file(test_name)
+
+    def test_set_mcrun_path(self):
+        """
+        This test checks that setting the mxrun path works
+        """
+        test_name = "test_configuration"
+        my_configurator = setup_configurator(test_name)
+
+        my_configurator.set_mxrun_path("/new/mxrun_path/")
+
+        new_config = my_configurator._read_yaml()
+
+        self.assertEqual(new_config["paths"]["mxrun_path"], "/new/mxrun_path/")
+
+        # remove the testing configuration file
+        setup_expected_file(test_name)
+
+    def test_set_mcstas_path(self):
+        """
+        This test checks that setting the mcxtrace path works
+        """
+        test_name = "test_configuration"
+        my_configurator = setup_configurator(test_name)
+
+        my_configurator.set_mcxtrace_path("/new/mcxtrace_path/")
+
+        new_config = my_configurator._read_yaml()
+
+        self.assertEqual(new_config["paths"]["mcxtrace_path"],
+                         "/new/mcxtrace_path/")
 
         # remove the testing configuration file
         setup_expected_file(test_name)

@@ -7,6 +7,7 @@ import unittest.mock
 import datetime
 
 from mcstasscript.interface.instr import McStas_instr
+from mcstasscript.interface.instr import McXtrace_instr
 from mcstasscript.helper.formatting import bcolors
 
 
@@ -19,12 +20,23 @@ def setup_instr_no_path():
     """
     return McStas_instr("test_instrument")
 
+def setup_x_ray_instr_no_path():
+    """
+    Sets up a instrument without a mcstas_path
+    """
+    return McXtrace_instr("test_instrument")
 
 def setup_instr_root_path():
     """
     Sets up a instrument with root mcstas_path
     """
-    return McStas_instr("test_instrument", mcstas_path="/")
+    return McStas_instr("test_instrument", package_path="/")
+
+def setup_x_ray_instr_root_path():
+    """
+    Sets up a instrument with root mcstas_path
+    """
+    return McXtrace_instr("test_instrument", package_path="/")
 
 
 def setup_instr_with_path():
@@ -39,7 +51,7 @@ def setup_instr_with_path():
     current_work_dir = os.getcwd()
     os.chdir(THIS_DIR)  # Set work directory to test folder
 
-    return McStas_instr("test_instrument", mcstas_path=dummy_path)
+    return McStas_instr("test_instrument", package_path=dummy_path)
 
     os.chdir(current_work_dir)  # Return to previous workdir
 
@@ -57,7 +69,7 @@ def setup_instr_with_input_path():
     os.chdir(THIS_DIR)  # Set work directory to test folder
 
     return McStas_instr("test_instrument",
-                        mcstas_path=dummy_path,
+                        package_path=dummy_path,
                         input_path=input_path)
 
     os.chdir(current_work_dir)  # Return to previous workdir
@@ -74,7 +86,7 @@ def setup_instr_with_input_path_relative():
     os.chdir(THIS_DIR)  # Set work directory to test folder
 
     return McStas_instr("test_instrument",
-                        mcstas_path="dummy_mcstas",
+                        package_path="dummy_mcstas",
                         input_path="test_input_folder")
 
     os.chdir(current_work_dir)  # Return to previous workdir
@@ -85,6 +97,23 @@ def setup_populated_instr():
     Sets up a instrument with some features used and two components
     """
     instr = setup_instr_root_path()
+
+    instr.add_parameter("double", "theta")
+    instr.add_parameter("double", "has_default", value=37)
+    instr.add_declare_var("double", "two_theta")
+    instr.append_initialize("two_theta = 2.0*theta;")
+
+    comp1 = instr.add_component("first_component", "test_for_reading")
+    comp2 = instr.add_component("second_component", "test_for_reading")
+    comp3 = instr.add_component("third_component", "test_for_reading")
+
+    return instr
+
+def setup_populated_x_ray_instr():
+    """
+    Sets up a instrument with some features used and two components
+    """
+    instr = setup_x_ray_instr_root_path()
 
     instr.add_parameter("double", "theta")
     instr.add_parameter("double", "has_default", value=37)
@@ -141,13 +170,13 @@ class TestMcStas_instr(unittest.TestCase):
         my_instrument = McStas_instr("test_instrument",
                                      author="Mads",
                                      origin="DMSC",
-                                     mcrun_path="/path/to/mcrun",
-                                     mcstas_path="/path/to/mcstas")
+                                     executable_path="/path/to/mcrun",
+                                     package_path="/path/to/mcstas")
 
         self.assertEqual(my_instrument.author, "Mads")
         self.assertEqual(my_instrument.origin, "DMSC")
-        self.assertEqual(my_instrument.mcrun_path, "/path/to/mcrun")
-        self.assertEqual(my_instrument.mcstas_path, "/path/to/mcstas")
+        self.assertEqual(my_instrument.executable_path, "/path/to/mcrun")
+        self.assertEqual(my_instrument.package_path, "/path/to/mcstas")
 
     def test_load_config_file(self):
         """
@@ -185,8 +214,48 @@ class TestMcStas_instr(unittest.TestCase):
         # Check the value matches what is loaded by initialization
         my_instrument = setup_instr_no_path()
 
-        self.assertEqual(my_instrument.mcrun_path, correct_mcrun_path)
-        self.assertEqual(my_instrument.mcstas_path, correct_mcstas_path)
+        self.assertEqual(my_instrument.executable_path, correct_mcrun_path)
+        self.assertEqual(my_instrument.package_path, correct_mcstas_path)
+        self.assertEqual(my_instrument.line_limit, correct_n_of_characters)
+
+    def test_load_config_file_x_ray(self):
+        """
+        Test that configuration file is read correctly. In order to have
+        an independent test, the yaml file is read manually instead of
+        using the yaml package.
+        """
+        # Load configuration file and read manually
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        configuration_file_name = os.path.join(THIS_DIR,
+                                               "..", "configuration.yaml")
+
+        if not os.path.isfile(configuration_file_name):
+            raise NameError("Could not find configuration file!")
+
+        f = open(configuration_file_name, "r")
+
+        lines = f.readlines()
+        for line in lines:
+            line = line.strip()
+            if line.startswith("mxrun_path:"):
+                parts = line.split(" ")
+                correct_mxrun_path = parts[1]
+
+            if line.startswith("mcxtrace_path:"):
+                parts = line.split(" ")
+                correct_mcxtrace_path = parts[1]
+
+            if line.startswith("characters_per_line:"):
+                parts = line.split(" ")
+                correct_n_of_characters = int(parts[1])
+
+        f.close()
+
+        # Check the value matches what is loaded by initialization
+        my_instrument = setup_x_ray_instr_no_path()
+
+        self.assertEqual(my_instrument.executable_path, correct_mxrun_path)
+        self.assertEqual(my_instrument.package_path, correct_mcxtrace_path)
         self.assertEqual(my_instrument.line_limit, correct_n_of_characters)
 
     def test_simple_add_parameter(self):
@@ -1489,14 +1558,48 @@ class TestMcStas_instr(unittest.TestCase):
         with self.assertRaises(NameError):
             instr.run_full_instrument("test_instrument.instr",
                                       foldername="test_data_set",
-                                      mcrun_path="path")
+                                      executable_path="path")
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    @unittest.mock.patch('__main__.__builtins__.open',
+                         new_callable=unittest.mock.mock_open)
+    @unittest.mock.patch("subprocess.run")
+    def test_x_ray_run_full_instrument_basic(self, mock_sub,
+                                       mock_f, mock_stdout,):
+        """
+        Check a simple run performs the correct system call.  Here
+        the target directory is set to the test data set so that some
+        data is loaded even though the system call is not executed.
+        """
+
+        instr = setup_populated_x_ray_instr()
+        instr.run_full_instrument("test_instrument.instr",
+                                  foldername="test_data_set",
+                                  executable_path="path",
+                                  parameters={"theta": 1})
+
+        expected_path = os.path.join("path","mxrun")
+
+        current_directory = os.getcwd()
+        expected_folder_path = os.path.join(current_directory, "test_data_set")
+
+        # a double space because of a missing option
+        expected_call = (expected_path + " -c -n 1000000 "
+                         + "-d " + expected_folder_path
+                         + "  test_instrument.instr"
+                         + " has_default=37 theta=1")
+
+        mock_sub.assert_called_once_with(expected_call,
+                                         shell=True,
+                                         stderr=-1, stdout=-1,
+                                         universal_newlines=True)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
     @unittest.mock.patch("subprocess.run")
     def test_run_full_instrument_basic(self, mock_sub,
-                                       mock_f, mock_stdout,):
+                                       mock_f, mock_stdout, ):
         """
         Check a simple run performs the correct system call.  Here
         the target directory is set to the test data set so that some
@@ -1506,10 +1609,10 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_populated_instr()
         instr.run_full_instrument("test_instrument.instr",
                                   foldername="test_data_set",
-                                  mcrun_path="path",
+                                  executable_path="path",
                                   parameters={"theta": 1})
 
-        expected_path = os.path.join("path","mcrun")
+        expected_path = os.path.join("path", "mcrun")
 
         current_directory = os.getcwd()
         expected_folder_path = os.path.join(current_directory, "test_data_set")
@@ -1541,7 +1644,7 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_populated_instr()
         instr.run_full_instrument("test_instrument.instr",
                                   foldername="test_data_set",
-                                  mcrun_path="path",
+                                  executable_path="path",
                                   mpi=7,
                                   ncount=48.4,
                                   custom_flags="-fo",
@@ -1580,7 +1683,7 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_populated_instr()
         instr.run_full_instrument("test_instrument.instr",
                                   foldername="test_data_set",
-                                  mcrun_path="path",
+                                  executable_path="path",
                                   mpi=7,
                                   ncount=48.4,
                                   custom_flags="-fo",

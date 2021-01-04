@@ -24,11 +24,12 @@ class TestManagedMcrun(unittest.TestCase):
         """
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 mcrun_path="test_path")
+                                 executable_path="test_path",
+                                 executable="mcrun")
 
         self.assertEqual(mcrun_obj.name_of_instrumentfile, "test.instr")
         self.assertEqual(mcrun_obj.data_folder_name, "test_folder")
-        self.assertEqual(mcrun_obj.mcrun_path, "test_path")
+        self.assertEqual(mcrun_obj.executable_path, "test_path")
 
     def test_ManagedMcrun_init_defaults(self):
         """
@@ -36,7 +37,8 @@ class TestManagedMcrun(unittest.TestCase):
         """
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 mcrun_path="")
+                                 executable_path="",
+                                 executable="mcrun",)
 
         self.assertEqual(mcrun_obj.mpi, None)
         self.assertEqual(mcrun_obj.ncount, 1000000)
@@ -48,7 +50,8 @@ class TestManagedMcrun(unittest.TestCase):
         """
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 mcrun_path="",
+                                 executable_path="",
+                                 executable="mcrun",
                                  run_path="test",
                                  mpi=4,
                                  ncount=128)
@@ -69,7 +72,8 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 mcrun_path="",
+                                 executable_path="",
+                                 executable="",
                                  parameters=par_input)
 
         self.assertEqual(mcrun_obj.parameters["A_par"], 5.1)
@@ -86,7 +90,8 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 mcrun_path="",
+                                 executable_path="",
+                                 executable="mcrun",
                                  custom_flags=custom_flag_input)
 
         self.assertEqual(mcrun_obj.custom_flags, custom_flag_input)
@@ -106,7 +111,8 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 mcrun_path="path")
+                                 executable_path="path",
+                                 executable="mcrun",)
 
         mcrun_obj.run_simulation()
 
@@ -131,7 +137,8 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 mcrun_path="path/")
+                                 executable_path="path/",
+                                 executable="mcrun",)
 
         mcrun_obj.run_simulation()
 
@@ -156,7 +163,8 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 mcrun_path="path",
+                                 executable_path="path",
+                                 executable="mcrun",
                                  mpi=7,
                                  ncount=48.4,
                                  custom_flags="-fo")
@@ -184,7 +192,8 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 mcrun_path="path",
+                                 executable_path="path",
+                                 executable="mcrun",
                                  mpi=7,
                                  ncount=48.4,
                                  custom_flags="-fo",
@@ -215,7 +224,8 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 mcrun_path="path",
+                                 executable_path="path",
+                                 executable="mcrun",
                                  mpi=7,
                                  ncount=48.4,
                                  force_compile=False,

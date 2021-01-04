@@ -14,7 +14,7 @@ class ManagedMcrun:
     ManagedMcrun is usually called by the instrument class of
     McStasScript but can be used independently.  It runs the mcrun
     command using the system command, and if this is not in the path,
-    the absolute path can be given in a keyword argument mcrun_path.
+    the absolute path can be given in a keyword argument executable_path.
 
     Attributes
     ----------
@@ -36,7 +36,7 @@ class ManagedMcrun:
     custom_flags : string
         Custom flags that are passed to the mcrun command
 
-    mcrun_path : string
+    executable_path : string
         Path to the mcrun command (can be empty if already in path)
 
     Methods
@@ -64,7 +64,7 @@ class ManagedMcrun:
                 Sets parameters
             custom_flags : str
                 Sets custom_flags passed to mcrun
-            mcrun_path : str
+            executable_path : str
                 Path to mcrun command, "" if already in path
             increment_folder_name : bool
                 If True, automaticaly appends foldername to make it unique
@@ -82,13 +82,17 @@ class ManagedMcrun:
         self.mpi = None
         self.parameters = {}
         self.custom_flags = ""
-        self.mcrun_path = ""
+        self.executable_path = ""
+        self.executable = ""
         self.increment_folder_name = False
         self.compile = True
         self.run_path = "."
-        # mcrun_path always in kwargs
-        if "mcrun_path" in kwargs:
-            self.mcrun_path = kwargs["mcrun_path"]
+        # executable_path always in kwargs
+        if "executable_path" in kwargs:
+            self.executable_path = kwargs["executable_path"]
+
+        if "executable" in kwargs:
+            self.executable = kwargs["executable"]
 
         if "foldername" in kwargs:
             self.data_folder_name = kwargs["foldername"]
@@ -172,11 +176,12 @@ class ManagedMcrun:
                                 + "="
                                 + str(val))  # parameter value
 
-        mcrun_full_path = self.mcrun_path + "mcrun"
-        if len(self.mcrun_path) > 1:
-            if not (self.mcrun_path[-1] == "\\"
-                    or self.mcrun_path[-1] == "/"):
-                mcrun_full_path = os.path.join(self.mcrun_path, "mcrun")
+        mcrun_full_path = self.executable_path + self.executable
+        if len(self.executable_path) > 1:
+            if not (self.executable_path[-1] == "\\"
+                    or self.executable_path[-1] == "/"):
+                mcrun_full_path = os.path.join(self.executable_path,
+                                               self.executable)
 
         # Run the mcrun command on the system
         full_command = (mcrun_full_path + " "
