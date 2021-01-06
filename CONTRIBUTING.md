@@ -1,6 +1,6 @@
 # Guidelines for contributing to McStasScript
 
-This document describes how to contribute to McStasScript. The preferred method is to open a pull request on the GitHub page. The list below act as a checklist of things to consider before creating the pull request. Since the manual is currently on overleaf, there is no way to directly contribute, so a note on the necessary updates to the manual is appreciated.
+This document describes how to contribute to McStasScript. The preferred method is to open a pull request on the GitHub page. The list below acts as a checklist of things to consider before creating the pull request. Since the manual is currently on overleaf, there is no way to directly contribute, so a note on the necessary updates to the manual is appreciated.
 
 * Provide docstrings to new functions / classes
 * Update docstrings as necessary
