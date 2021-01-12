@@ -11,8 +11,17 @@ from mcstasscript.data.data import McStasData
 from mcstasscript.data.data import McStasMetaData
 from mcstasscript.data.data import McStasPlotOptions
 
-
 def set_dummy_MetaData_1d(name):
+    """
+    Sets up a dummy MetaData object for a 1d dataset
+
+    Parameters
+    ----------
+
+    name : str
+        base for filename, .dat will be appended
+    """
+
     meta_data = McStasMetaData()
     meta_data.component_name = name
     meta_data.dimension = 50
@@ -22,6 +31,15 @@ def set_dummy_MetaData_1d(name):
 
 
 def set_dummy_McStasData_1d(name):
+    """
+    Sets up a dummy McStasData object for a 1d dataset
+
+    Parameters
+    ----------
+
+    name : str
+        base for filename, .dat will be appended
+    """
     meta_data = set_dummy_MetaData_1d(name)
 
     intensity = np.arange(20)
@@ -33,6 +51,15 @@ def set_dummy_McStasData_1d(name):
 
 
 def set_dummy_MetaData_2d(name):
+    """
+    Sets up a dummy MetaData object for a 2d dataset
+
+    Parameters
+    ----------
+
+    name : str
+        base for filename, .dat will be appended
+    """
     meta_data = McStasMetaData()
     meta_data.component_name = name
     meta_data.dimension = [50, 100]
@@ -42,6 +69,16 @@ def set_dummy_MetaData_2d(name):
 
 
 def set_dummy_McStasData_2d(name):
+    """
+    Sets up a dummy McStasData object for a 2d dataset
+
+    Parameters
+    ----------
+
+    name : str
+        base for filename, .dat will be appended
+    """
+
     meta_data = set_dummy_MetaData_2d(name)
 
     intensity = np.arange(20).reshape(4, 5)
@@ -52,6 +89,9 @@ def set_dummy_McStasData_2d(name):
 
 
 def setup_McStasData_array():
+    """
+    Sets up an list of McStasData objects, similar to simulation output
+    """
 
     data_list = []
 
@@ -74,6 +114,11 @@ def setup_McStasData_array():
 
 
 def setup_McStasData_array_repeat():
+    """
+    Sets up an list of McStasData objects, similar to simulation output
+
+    Have Hero twice in naming, testing search capability
+    """
 
     data_list = []
 
@@ -104,7 +149,9 @@ class Test_name_search(unittest.TestCase):
 
     def test_name_search_read(self):
         """
-        Test simple case
+        Test that Hero object can be found and check the unique dimension
+
+        Here the name is used
         """
 
         data_list = setup_McStasData_array()
@@ -115,7 +162,9 @@ class Test_name_search(unittest.TestCase):
         
     def test_name_search_filename_read(self):
         """
-        Test simple case
+        Test that Hero object can be found and check the unique dimension
+
+        Here the name of the datafile is used
         """
 
         data_list = setup_McStasData_array()
@@ -126,7 +175,10 @@ class Test_name_search(unittest.TestCase):
 
     def test_name_search_read_repeat(self):
         """
-        Test simple case with repeat name
+        Test that Hero object can be found and check the unique dimension
+        Here the used data set has two monitors with Hero in the name
+
+        Here the name of the monitor is used
         """
 
         data_list = setup_McStasData_array_repeat()
@@ -135,29 +187,34 @@ class Test_name_search(unittest.TestCase):
 
         self.assertEqual(hero_object.metadata.dimension, 123)
         
-    def test_name_search_read_dubplicate(self):
+    def test_name_search_read_duplicate(self):
         """
-        Test simple case with duplicated name, should return list
+        Test simple case with duplicated name, search should return list
         """
 
         data_list = setup_McStasData_array_repeat()
-        
+
+        # Adds another dataset with a name already in the data_list
         hero_object = set_dummy_McStasData_2d("Big_Hero")
         hero_object.metadata.dimension = 321
         hero_object.plot_options.colormap = "very hot"
 
         data_list.append(hero_object)
-        
+
+        # Now two McStasData objects match the Big_Hero name
         results = name_search("Big_Hero", data_list)
 
+        self.assertEqual(type(results), list)
+        # Check two results are returned
         self.assertEqual(len(results), 2)
 
+        # Check they have the correct dimensions
         self.assertEqual(results[0].metadata.dimension, 123)
         self.assertEqual(results[1].metadata.dimension, 321)
 
     def test_name_search_read_error(self):
         """
-        Test simple case
+        Check an NameError is returned when no match is found
         """
 
         data_list = setup_McStasData_array()
@@ -167,22 +224,23 @@ class Test_name_search(unittest.TestCase):
 
     def test_name_search_type_error_not_list(self):
         """
-        Test simple case
+        Check error is given even when data list is just single object
         """
 
         data_list = set_dummy_McStasData_2d("Last_object_2d")
 
-        with self.assertRaises(NameError):
+        with self.assertRaises(RuntimeError):
             hero_object = name_search("Hero", data_list)
 
     def test_name_search_type_error_not_McStasData(self):
         """
-        Test simple case
+        Checks that an error is returned if the given dataset contains
+        non McStasData objects
         """
 
         data_list = [1, 2, 3]
 
-        with self.assertRaises(NameError):
+        with self.assertRaises(RuntimeError):
             hero_object = name_search(1, data_list)
 
 
@@ -196,7 +254,7 @@ class Test_name_plot_options(unittest.TestCase):
 
     def test_name_plot_options_simple(self):
         """
-        Test simple case
+        Check set_plot_options can modify given attribute
         """
 
         data_list = setup_McStasData_array()
@@ -206,7 +264,8 @@ class Test_name_plot_options(unittest.TestCase):
         
     def test_name_plot_options_duplicate(self):
         """
-        Test case where several datasets are modified
+        Test case where several McStasData objects are modified since
+        the internal name_search finds multiple matches
         """
 
         data_list = setup_McStasData_array()

@@ -13,23 +13,23 @@ def name_search(name, data_list):
     McStasData objects are returned.
 
     The index of certain datasets in the data_list can change if
-    additional monitors are added so it is more convinient to access
+    additional monitors are added so it is more convenient to access
     the data files using their names.
 
     Parameters
     ----------
     name : string
-        Name of the dataset to be retrived (component_name)
+        Name of the dataset to be retrieved (component_name)
 
     data_list : List of McStasData instances
         List of datasets to search
     """
     if type(data_list) is not list:
-        raise InputError(
+        raise RuntimeError(
             "name_search function needs list of McStasData as input")
 
     if not type(data_list[0]) == McStasData:
-        raise InputError(
+        raise RuntimeError(
             "name_search function needs objects of type McStasData as input.")
 
     # Search by component name
@@ -92,6 +92,10 @@ def load_data(foldername):
         foldername : string
             Name of the folder from which to load data
     """
+    if not os.path.isdir(foldername):
+        raise RuntimeError("Could not find specified foldername for"
+                           + "load_data:" + str(foldername))
+
     return managed_mcrun.load_results(foldername)
 
 
@@ -111,6 +115,12 @@ class Configurator:
         
     set_mcrun_path(string)
         sets mcrun path
+
+    set_mcxtrace_path(string)
+        sets mcxtrace path
+
+    set_mxrun_path(string)
+        sets mxrun path
         
     set_line_length(int)
         sets maximum line length to given int
@@ -200,6 +210,9 @@ class Configurator:
             Path to the mcstas directory containing "sources", "optics", ...
         """
 
+        if not os.path.isdir(path):
+            raise RuntimeError("Invalid path given to set_mcstas_path:" + str(path))
+
         # read entire configuration file 
         config = self._read_yaml()
 
@@ -218,6 +231,9 @@ class Configurator:
         path : str
             Path to the mcrun executable
         """
+
+        if not os.path.isdir(path):
+            raise RuntimeError("Invalid path given to set_mcrun_path:" + str(path))
 
         # read entire configuration file 
         config = self._read_yaml()
@@ -238,6 +254,9 @@ class Configurator:
             Path to the mcxtrace directory containing "sources", "optics", ...
         """
 
+        if not os.path.isdir(path):
+            raise RuntimeError("Invalid path given to set_mcxtrace_path:" + str(path))
+
         # read entire configuration file
         config = self._read_yaml()
 
@@ -257,6 +276,10 @@ class Configurator:
             Path to the mxrun executable
         """
 
+        if not os.path.isdir(path):
+            raise RuntimeError("Invalid path given to set_mxrun_path: "
+                               + str(path))
+
         # read entire configuration file
         config = self._read_yaml()
 
@@ -275,6 +298,15 @@ class Configurator:
         line_length : int
             maximum line length for output
         """
+
+        if not isinstance(line_length, int):
+            raise ValueError("Given line length in set_line_length not an "
+                             + "integer.")
+
+        if line_length < 1:
+            raise ValueError("Line length specified in set_line_length must"
+                             + " be positve, given length: "
+                             + str(line_length))
 
         # read entire configuration file 
         config = self._read_yaml()

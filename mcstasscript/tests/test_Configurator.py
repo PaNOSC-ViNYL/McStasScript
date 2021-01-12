@@ -105,13 +105,16 @@ class TestConfigurator(unittest.TestCase):
         This test checks that setting the mcrun path works
         """
         test_name = "test_configuration"
-        my_configurator = setup_configurator(test_name) 
+        my_configurator = setup_configurator(test_name)
 
-        my_configurator.set_mcrun_path("/new/mcrun_path/")
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        dummy_mcstas_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        my_configurator.set_mcrun_path(dummy_mcstas_path)
 
         new_config = my_configurator._read_yaml()
 
-        self.assertEqual(new_config["paths"]["mcrun_path"], "/new/mcrun_path/")
+        self.assertEqual(new_config["paths"]["mcrun_path"], dummy_mcstas_path)
 
         # remove the testing configuration file
         setup_expected_file(test_name)
@@ -121,14 +124,17 @@ class TestConfigurator(unittest.TestCase):
         This test checks that setting the mcstas path works
         """
         test_name = "test_configuration"
-        my_configurator = setup_configurator(test_name) 
+        my_configurator = setup_configurator(test_name)
 
-        my_configurator.set_mcstas_path("/new/mcstas_path/")
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        dummy_mcstas_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        my_configurator.set_mcstas_path(dummy_mcstas_path)
 
         new_config = my_configurator._read_yaml()
 
         self.assertEqual(new_config["paths"]["mcstas_path"],
-                         "/new/mcstas_path/")
+                         dummy_mcstas_path)
 
         # remove the testing configuration file
         setup_expected_file(test_name)
@@ -140,11 +146,14 @@ class TestConfigurator(unittest.TestCase):
         test_name = "test_configuration"
         my_configurator = setup_configurator(test_name)
 
-        my_configurator.set_mxrun_path("/new/mxrun_path/")
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        dummy_mcstas_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        my_configurator.set_mxrun_path(dummy_mcstas_path)
 
         new_config = my_configurator._read_yaml()
 
-        self.assertEqual(new_config["paths"]["mxrun_path"], "/new/mxrun_path/")
+        self.assertEqual(new_config["paths"]["mxrun_path"], dummy_mcstas_path)
 
         # remove the testing configuration file
         setup_expected_file(test_name)
@@ -156,12 +165,15 @@ class TestConfigurator(unittest.TestCase):
         test_name = "test_configuration"
         my_configurator = setup_configurator(test_name)
 
-        my_configurator.set_mcxtrace_path("/new/mcxtrace_path/")
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        dummy_mcstas_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        my_configurator.set_mcxtrace_path(dummy_mcstas_path)
 
         new_config = my_configurator._read_yaml()
 
         self.assertEqual(new_config["paths"]["mcxtrace_path"],
-                         "/new/mcxtrace_path/")
+                         dummy_mcstas_path)
 
         # remove the testing configuration file
         setup_expected_file(test_name)
