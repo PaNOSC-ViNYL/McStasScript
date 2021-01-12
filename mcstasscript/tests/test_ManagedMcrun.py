@@ -1,6 +1,7 @@
 import os
 import io
 import unittest
+from unittest import mock
 import numpy as np
 
 from mcstasscript.data.data import McStasMetaData
@@ -22,48 +23,87 @@ class TestManagedMcrun(unittest.TestCase):
         """
         Check shortest possible initialization works
         """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 executable_path="test_path",
+                                 executable_path=executable_path,
                                  executable="mcrun")
 
+        os.chdir(current_work_dir)
+
         self.assertEqual(mcrun_obj.name_of_instrumentfile, "test.instr")
-        self.assertEqual(mcrun_obj.data_folder_name, "test_folder")
-        self.assertEqual(mcrun_obj.executable_path, "test_path")
+
+        expected_data_folder = os.path.join(THIS_DIR, "test_folder")
+        self.assertEqual(mcrun_obj.data_folder_name, expected_data_folder)
+
+        expected_executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+        self.assertEqual(mcrun_obj.executable_path, expected_executable_path)
 
     def test_ManagedMcrun_init_defaults(self):
         """
         Check default values are set up correctly
         """
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 executable_path="",
-                                 executable="mcrun",)
+                                 executable_path=executable_path,
+                                 executable="mcrun")
+
+        os.chdir(current_work_dir)
 
         self.assertEqual(mcrun_obj.mpi, None)
         self.assertEqual(mcrun_obj.ncount, 1000000)
-        self.assertEqual(mcrun_obj.run_path, ".")
+        expected_run_path = os.path.join(THIS_DIR, ".")
+        self.assertEqual(mcrun_obj.run_path, expected_run_path)
 
     def test_ManagedMcrun_init_set_values(self):
         """
-        Check default values are set up correctly
+        Check values given to ManagedMcrun are internalized
+
+        run_path set to an existing folder in the test directory
         """
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 executable_path="",
                                  executable="mcrun",
-                                 run_path="test",
+                                 executable_path=executable_path,
+                                 run_path="test_data_set",
                                  mpi=4,
                                  ncount=128)
 
+        os.chdir(current_work_dir)
+
         self.assertEqual(mcrun_obj.mpi, 4)
         self.assertEqual(mcrun_obj.ncount, 128)
-        self.assertEqual(mcrun_obj.run_path, "test")
+        expected_run_path = os.path.join(THIS_DIR, "test_data_set")
+        self.assertEqual(mcrun_obj.run_path, expected_run_path)
 
     def test_ManagedMcrun_init_set_parameters(self):
         """
-        Check default values are set up correctly
+        Check parameters can be given as dictionary
         """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
 
         par_input = {"A_par": 5.1,
                      "int_par": 1,
@@ -72,9 +112,11 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 executable_path="",
+                                 executable_path=executable_path,
                                  executable="",
                                  parameters=par_input)
+
+        os.chdir(current_work_dir)
 
         self.assertEqual(mcrun_obj.parameters["A_par"], 5.1)
         self.assertEqual(mcrun_obj.parameters["int_par"], 1)
@@ -83,16 +125,24 @@ class TestManagedMcrun(unittest.TestCase):
 
     def test_ManagedMcrun_init_set_custom_flags(self):
         """
-        Check default values are set up correctly
+        Check custom_flags can be given by user
         """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
 
         custom_flag_input = "-p"
 
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 executable_path="",
                                  executable="mcrun",
+                                 executable_path=executable_path,
                                  custom_flags=custom_flag_input)
+
+        os.chdir(current_work_dir)
 
         self.assertEqual(mcrun_obj.custom_flags, custom_flag_input)
 
@@ -103,24 +153,63 @@ class TestManagedMcrun(unittest.TestCase):
         with self.assertRaises(NameError):
             mcrun_obj = ManagedMcrun("test.instr", mcrun_path="")
 
+    def test_ManagedMcrun_init_invalid_ncount_error(self):
+        """
+        An error should occur if negative ncount is given
+        """
+        with self.assertRaises(ValueError):
+            mcrun_obj = ManagedMcrun("test.instr",
+                                     foldername="test_folder",
+                                     mcrun_path="",
+                                     ncount=-8)
+
+    def test_ManagedMcrun_init_invalid_mpi_error(self):
+        """
+        An error should occur if negative mpi is given
+        """
+        with self.assertRaises(ValueError):
+            mcrun_obj = ManagedMcrun("test.instr",
+                                     foldername="test_folder",
+                                     mcrun_path="",
+                                     mpi=-8)
+
+    def test_ManagedMcrun_init_invalid_parameters_error(self):
+        """
+        An error should occur if parameters is given as non dict
+        """
+        with self.assertRaises(RuntimeError):
+            mcrun_obj = ManagedMcrun("test.instr",
+                                     foldername="test_folder",
+                                     mcrun_path="",
+                                     parameters=[1, 2, 3])
+
     @unittest.mock.patch("subprocess.run")
     def test_ManagedMcrun_run_simulation_basic(self, mock_sub):
         """
         Check a basic system call is correct
         """
 
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 executable_path="path",
+                                 executable_path=executable_path,
                                  executable="mcrun",)
+
+        os.chdir(current_work_dir)
 
         mcrun_obj.run_simulation()
 
         current_directory = os.getcwd()
-        expected_folder_path = os.path.join(current_directory, "test_folder")
+        expected_folder_path = os.path.join(THIS_DIR, "test_folder")
 
         # a double space because of a missing option
-        expected_call = ("path/mcrun -c -n 1000000 "
+        executable = os.path.join(executable_path, "mcrun")
+        expected_call = (executable + " -c -n 1000000 "
                          + "-d " + expected_folder_path + "  test.instr")
 
         mock_sub.assert_called_once_with(expected_call,
@@ -135,18 +224,27 @@ class TestManagedMcrun(unittest.TestCase):
         Check a basic system call is correct, with different path format
         """
 
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas", "")
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 executable_path="path/",
+                                 executable_path=executable_path,
                                  executable="mcrun",)
+
+        os.chdir(current_work_dir)
 
         mcrun_obj.run_simulation()
 
         current_directory = os.getcwd()
-        expected_folder_path = os.path.join(current_directory, "test_folder")
+        expected_folder_path = os.path.join(THIS_DIR, "test_folder")
 
+        executable = os.path.join(executable_path, "mcrun")
         # a double space because of a missing option
-        expected_call = ("path/mcrun -c -n 1000000 "
+        expected_call = (executable + " -c -n 1000000 "
                          + "-d " + expected_folder_path + "  test.instr")
 
         mock_sub.assert_called_once_with(expected_call,
@@ -159,23 +257,34 @@ class TestManagedMcrun(unittest.TestCase):
     def test_ManagedMcrun_run_simulation_no_standard(self, mock_sub):
         """
         Check a non standard system call is correct
+
+        Here multiple options are used and ncount is a float that should
+        be rounded by the class.
         """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
 
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 executable_path="path",
+                                 executable_path=executable_path,
                                  executable="mcrun",
                                  mpi=7,
                                  ncount=48.4,
                                  custom_flags="-fo")
 
+        os.chdir(current_work_dir)
+
         mcrun_obj.run_simulation()
 
-        current_directory = os.getcwd()
-        expected_folder_path = os.path.join(current_directory, "test_folder")
+        expected_folder_path = os.path.join(THIS_DIR, "test_folder")
 
         # a double space because of a missing option
-        expected_call = ("path/mcrun -c -n 48 --mpi=7 "
+        executable = os.path.join(executable_path, "mcrun")
+        expected_call = (executable + " -c -n 48 --mpi=7 "
                          + "-d " + expected_folder_path + " -fo test.instr")
 
         mock_sub.assert_called_once_with(expected_call,
@@ -190,9 +299,15 @@ class TestManagedMcrun(unittest.TestCase):
         Check a run with parameters is correct
         """
 
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 executable_path="path",
+                                 executable_path=executable_path,
                                  executable="mcrun",
                                  mpi=7,
                                  ncount=48.4,
@@ -201,12 +316,15 @@ class TestManagedMcrun(unittest.TestCase):
                                              "BC": "car",
                                              "th": "\"toy\""})
 
+        os.chdir(current_work_dir)  # Reset work directory
+
         mcrun_obj.run_simulation()
 
-        current_directory = os.getcwd()
-        expected_folder_path = os.path.join(current_directory, "test_folder")
+        expected_folder_path = os.path.join(THIS_DIR, "test_folder")
         # a double space because of a missing option
-        expected_call = ("path/mcrun -c -n 48 --mpi=7 "
+        executable = os.path.join(executable_path, "mcrun")
+
+        expected_call = (executable + " -c -n 48 --mpi=7 "
                          + "-d " + expected_folder_path + " -fo test.instr "
                          + "A=2 BC=car th=\"toy\"")
 
@@ -219,12 +337,18 @@ class TestManagedMcrun(unittest.TestCase):
     @unittest.mock.patch("subprocess.run")
     def test_ManagedMcrun_run_simulation_compile(self, mock_sub):
         """
-        Check a run with parameters is correct
+        Check run with force_compile set to False works
         """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
 
         mcrun_obj = ManagedMcrun("test.instr",
                                  foldername="test_folder",
-                                 executable_path="path",
+                                 executable_path=executable_path,
                                  executable="mcrun",
                                  mpi=7,
                                  ncount=48.4,
@@ -234,13 +358,16 @@ class TestManagedMcrun(unittest.TestCase):
                                              "BC": "car",
                                              "th": "\"toy\""})
 
+        os.chdir(current_work_dir)
+
         mcrun_obj.run_simulation()
 
         current_directory = os.getcwd()
-        expected_folder_path = os.path.join(current_directory, "test_folder")
+        expected_folder_path = os.path.join(THIS_DIR, "test_folder")
 
+        executable = os.path.join(executable_path, "mcrun")
         # a double space because of a missing option
-        expected_call = ("path/mcrun -n 48 --mpi=7 "
+        expected_call = (executable + " -n 48 --mpi=7 "
                          + "-d " + expected_folder_path + " -fo test.instr "
                          + "A=2 BC=car th=\"toy\"")
 
@@ -253,23 +380,30 @@ class TestManagedMcrun(unittest.TestCase):
     def test_ManagedMcrun_load_data_PSD4PI(self):
         """
         Use test_data_set to test load_data for PSD_4PI
+
+        test_data_set contains three data files and some junk, the mccode.sim
+        file contains names of the data files so only these are loaded.
         """
 
-        mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_data_set",
-                                 mcrun_path="path")
-
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
         current_work_dir = os.getcwd()
         os.chdir(THIS_DIR)  # Set work directory to test folder
+
+        mcrun_obj = ManagedMcrun("test.instr",
+                                 foldername="test_data_set",
+                                 executable_path=executable_path,
+                                 mcrun_path="path")
 
         results = mcrun_obj.load_results()
 
         os.chdir(current_work_dir)  # Reset work directory
 
+        # Check three data objects are loaded
         self.assertEqual(len(results), 3)
 
+        # Check properties of PSD_4PI data
         PSD_4PI = results[0]
 
         self.assertEqual(PSD_4PI.name, "PSD_4PI")
@@ -287,21 +421,25 @@ class TestManagedMcrun(unittest.TestCase):
         Use test_data_set to test load_data for PSD
         """
 
-        mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_data_set",
-                                 mcrun_path="path")
-
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
         current_work_dir = os.getcwd()
         os.chdir(THIS_DIR)  # Set work directory to test folder
+
+        mcrun_obj = ManagedMcrun("test.instr",
+                                 foldername="test_data_set",
+                                 executable_path=executable_path,
+                                 mcrun_path="path")
 
         results = mcrun_obj.load_results()
 
         os.chdir(current_work_dir)  # Reset work directory
 
-        # Check other properties
+        # Check three data objects are loaded
+        self.assertEqual(len(results), 3)
 
+        # Check properties of PSD data
         PSD = results[1]
 
         self.assertEqual(PSD.name, "PSD")
@@ -319,21 +457,25 @@ class TestManagedMcrun(unittest.TestCase):
         Use test_data_set to test load_data for L_mon
         """
 
-        mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_data_set",
-                                 mcrun_path="path")
-
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
         current_work_dir = os.getcwd()
         os.chdir(THIS_DIR)  # Set work directory to test folder
+
+        mcrun_obj = ManagedMcrun("test.instr",
+                                 foldername="test_data_set",
+                                 executable_path=executable_path,
+                                 mcrun_path="path")
 
         results = mcrun_obj.load_results()
 
         os.chdir(current_work_dir)  # Reset work directory
 
-        # Check other properties
+        # Check three data objects are loaded
+        self.assertEqual(len(results), 3)
 
+        # Check properties of L_mon
         L_mon = results[2]
 
         self.assertEqual(L_mon.name, "L_mon")
@@ -352,22 +494,23 @@ class TestManagedMcrun(unittest.TestCase):
         Use test_data_set to test load_data for L_mon with direct path
         """
 
-        mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_data_set",
-                                 mcrun_path="path")
-
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
         current_work_dir = os.getcwd()
         os.chdir(THIS_DIR)  # Set work directory to test folder
+
+        mcrun_obj = ManagedMcrun("test.instr",
+                                 foldername="test_data_set",
+                                 executable_path=executable_path,
+                                 mcrun_path="path")
 
         load_path = os.path.join(THIS_DIR, "test_data_set")
         results = mcrun_obj.load_results(load_path)
 
         os.chdir(current_work_dir)  # Reset work directory
 
-        # Check other properties
-
+        # Check properties of L_mon
         L_mon = results[2]
 
         self.assertEqual(L_mon.name, "L_mon")
@@ -386,16 +529,18 @@ class TestManagedMcrun(unittest.TestCase):
         Check an error occurs when directory has no mccode.sim
         """
 
-        mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_data_set",
-                                 mcrun_path="path")
-
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
         current_work_dir = os.getcwd()
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
-        load_path = os.path.join(THIS_DIR, "non_exsistent_dataset")
+        mcrun_obj = ManagedMcrun("test.instr",
+                                 foldername="test_data_set",
+                                 executable_path=executable_path,
+                                 mcrun_path="path")
+
+        load_path = os.path.join(THIS_DIR, "non_existent_dataset")
         with self.assertRaises(NameError):
             results = mcrun_obj.load_results(load_path)
 
@@ -406,14 +551,16 @@ class TestManagedMcrun(unittest.TestCase):
         Check an error occurs when pointed to empty directory
         """
 
-        mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_data_set",
-                                 mcrun_path="path")
-
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
         current_work_dir = os.getcwd()
         os.chdir(THIS_DIR)  # Set work directory to test folder
+
+        mcrun_obj = ManagedMcrun("test.instr",
+                                 foldername="test_data_set",
+                                 executable_path=executable_path,
+                                 mcrun_path="path")
 
         load_path = os.path.join(THIS_DIR, "/dummy_mcstas")
         with self.assertRaises(NameError):

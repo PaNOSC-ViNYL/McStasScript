@@ -1901,7 +1901,7 @@ class McXtrace_instr(McCode_instr):
                 Affiliation of author, written in instrument file
 
             executable_path : str
-                Absolute path of mcrun or empty if already in path
+                Absolute path of mxrun or empty if already in path
 
             input_path : str
                 Work directory, will load components from this folder

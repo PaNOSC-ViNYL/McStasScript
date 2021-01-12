@@ -1572,16 +1572,24 @@ class TestMcStas_instr(unittest.TestCase):
         data is loaded even though the system call is not executed.
         """
 
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         instr = setup_populated_x_ray_instr()
         instr.run_full_instrument("test_instrument.instr",
                                   foldername="test_data_set",
-                                  executable_path="path",
+                                  executable_path=executable_path,
                                   parameters={"theta": 1})
 
-        expected_path = os.path.join("path","mxrun")
+        os.chdir(current_work_dir)
+
+        expected_path = os.path.join(executable_path, "mxrun")
 
         current_directory = os.getcwd()
-        expected_folder_path = os.path.join(current_directory, "test_data_set")
+        expected_folder_path = os.path.join(THIS_DIR, "test_data_set")
 
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 1000000 "
@@ -1589,7 +1597,7 @@ class TestMcStas_instr(unittest.TestCase):
                          + "  test_instrument.instr"
                          + " has_default=37 theta=1")
 
-        expected_run_path = os.path.join(current_directory, ".")
+        expected_run_path = os.path.join(THIS_DIR, ".")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
@@ -1609,16 +1617,24 @@ class TestMcStas_instr(unittest.TestCase):
         data is loaded even though the system call is not executed.
         """
 
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         instr = setup_populated_instr()
         instr.run_full_instrument("test_instrument.instr",
                                   foldername="test_data_set",
-                                  executable_path="path",
+                                  executable_path=executable_path,
                                   parameters={"theta": 1})
 
-        expected_path = os.path.join("path", "mcrun")
+        os.chdir(current_work_dir)
+
+        expected_path = os.path.join(executable_path, "mcrun")
 
         current_directory = os.getcwd()
-        expected_folder_path = os.path.join(current_directory, "test_data_set")
+        expected_folder_path = os.path.join(THIS_DIR, "test_data_set")
 
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 1000000 "
@@ -1644,10 +1660,16 @@ class TestMcStas_instr(unittest.TestCase):
         data is loaded even though the system call is not executed.
         """
 
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         instr = setup_populated_instr()
         instr.run_full_instrument("test_instrument.instr",
                                   foldername="test_data_set",
-                                  executable_path="path",
+                                  executable_path=executable_path,
                                   mpi=7,
                                   ncount=48.4,
                                   custom_flags="-fo",
@@ -1655,10 +1677,12 @@ class TestMcStas_instr(unittest.TestCase):
                                               "BC": "car",
                                               "theta": "\"toy\""})
 
-        expected_path = os.path.join("path","mcrun")
+        os.chdir(current_work_dir)
+
+        expected_path = os.path.join(executable_path, "mcrun")
 
         current_directory = os.getcwd()
-        expected_folder_path = os.path.join(current_directory, "test_data_set")
+        expected_folder_path = os.path.join(THIS_DIR, "test_data_set")
 
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 48 --mpi=7 "
@@ -1683,10 +1707,16 @@ class TestMcStas_instr(unittest.TestCase):
         parameters.
         """
 
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         instr = setup_populated_instr()
         instr.run_full_instrument("test_instrument.instr",
                                   foldername="test_data_set",
-                                  executable_path="path",
+                                  executable_path=executable_path,
                                   mpi=7,
                                   ncount=48.4,
                                   custom_flags="-fo",
@@ -1694,11 +1724,13 @@ class TestMcStas_instr(unittest.TestCase):
                                               "BC": "car",
                                               "theta": "\"toy\"",
                                               "has_default": 10})
-        
-        expected_path = os.path.join("path","mcrun")
+
+        os.chdir(current_work_dir)
+
+        expected_path = os.path.join(executable_path, "mcrun")
 
         current_directory = os.getcwd()
-        expected_folder_path = os.path.join(current_directory, "test_data_set")
+        expected_folder_path = os.path.join(THIS_DIR, "test_data_set")
 
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 48 --mpi=7 "

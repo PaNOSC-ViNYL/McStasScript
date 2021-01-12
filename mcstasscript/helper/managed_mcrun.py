@@ -54,22 +54,22 @@ class ManagedMcrun:
             Name of instrument file to be simulated
 
         kwargs : keyword arguments
-            foldername : str
+            foldername : str, required
                 Sets data_folder_name
-            ncount : int
+            ncount : int, default 1E6
                 Sets ncount
-            mpi : int
-                Sets thread count
+            mpi : int, default None
+                Sets thread count, None to disable mpi
             parameters : dict
                 Sets parameters
-            custom_flags : str
+            custom_flags : str, default ""
                 Sets custom_flags passed to mcrun
             executable_path : str
                 Path to mcrun command, "" if already in path
-            increment_folder_name : bool
-                If True, automaticaly appends foldername to make it unique
-            force_compile : bool
-                If True, forces compile, default is True
+            increment_folder_name : bool, default False
+                If True, automatically appends foldername to make it unique
+            force_compile : bool, default True
+                If True, forces compile. If False no new instrument is written
             run_folder : str
                 Path to folder in which to run McStas
 
@@ -104,14 +104,36 @@ class ManagedMcrun:
         if "ncount" in kwargs:
             self.ncount = int(kwargs["ncount"])
 
+            if self.ncount < 1:
+                raise ValueError("ncount should be a positive integer, was "
+                                 + str(self.ncount))
+
         if "mpi" in kwargs:
             self.mpi = kwargs["mpi"]
+            try:
+                self.mpi = int(self.mpi)
+            except ValueError:
+                if self.mpi is not None:
+                    raise RuntimeError("MPI should be an integer, was "
+                                       + str(self.mpi))
+
+            if self.mpi is not None:
+                if self.mpi < 1:
+                    raise ValueError("MPI should be an integer larger than"
+                                     + " 0, was " + str(self.mpi))
 
         if "parameters" in kwargs:
             self.parameters = kwargs["parameters"]
 
+            if not isinstance(self.parameters, dict):
+                raise RuntimeError("Parameters should be given as dict.")
+
         if "custom_flags" in kwargs:
             self.custom_flags = kwargs["custom_flags"]
+
+            if not isinstance(self.custom_flags, str):
+                raise RuntimeError("ManagedMcrun detected given customf_flags"
+                                   + " was not a string.")
 
         if "increment_folder_name" in kwargs:
             self.increment_folder_name = kwargs["increment_folder_name"]
@@ -122,35 +144,50 @@ class ManagedMcrun:
         if "run_path" in kwargs:
             self.run_path = kwargs["run_path"]
 
-    def run_simulation(self, **kwargs):
-        """
-        Runs McStas simulation described by initializing the object
-        """
-
-        # get relevant paths
+        # get relevant paths and check their validity
         current_directory = os.getcwd()
 
         if not os.path.isabs(self.data_folder_name):
             self.data_folder_name = os.path.join(current_directory,
                                                  self.data_folder_name)
+        else:
+            split_data_path = os.path.split(self.data_folder_name)
+            if not os.path.isdir(split_data_path[0]):
+                raise RuntimeError("Parent folder for datafolder invalid: "
+                                   + str(split_data_path[0]))
 
         if not os.path.isabs(self.run_path):
             self.run_path = os.path.join(current_directory, self.run_path)
+        else:
+            split_run_path = os.path.split(self.run_path)
+            if not os.path.isdir(split_run_path[0]):
+                raise RuntimeError("Parent folder for run_path invalid: "
+                                   + str(split_run_path[0]))
 
         if not os.path.isdir(self.run_path):
-            raise ValueError("Given run_path for McStas not a directory!")
+            raise RuntimeError("ManagedMcrun found run_path to "
+                               + "be invalid: " + str(self.run_path))
+
+        if not os.path.isdir(self.executable_path):
+            raise RuntimeError("ManagedMcrun found executable_path to "
+                               + "be invalid: " + str(self.executable_path))
+
+    def run_simulation(self, **kwargs):
+        """
+        Runs McStas simulation described by initializing the object
+        """
 
         # construct command to run
-        options_string = ""
+        option_string = ""
         if self.compile:
-            options_string = "-c "
+            option_string = "-c "
 
         if self.mpi is not None:
             mpi_string = " --mpi=" + str(self.mpi) + " " # Set mpi
         else:
             mpi_string = " "
 
-        option_string = (options_string
+        option_string = (option_string
                          + "-n " + str(self.ncount)  # Set ncount
                          + mpi_string)
 
@@ -176,7 +213,7 @@ class ManagedMcrun:
                                 + "="
                                 + str(val))  # parameter value
 
-        mcrun_full_path = self.executable_path + self.executable
+        mcrun_full_path = os.path.join(self.executable_path, self.executable)
         if len(self.executable_path) > 1:
             if not (self.executable_path[-1] == "\\"
                     or self.executable_path[-1] == "/"):
@@ -207,28 +244,58 @@ class ManagedMcrun:
             print(process.stderr)
             print(process.stdout)
 
-
     def load_results(self, *args):
+        """
+        Method for loading data from a mcstas simulation
+
+        Loads data on all monitors in a McStas data folder, and returns these
+        as a list of McStasData objects.
+
+        Parameters
+        ----------
+
+        optional first argument : str
+            path to folder from which data should be loaded
+
+        """
 
         if len(args) == 0:
             data_folder_name = self.data_folder_name
         elif len(args) == 1:
             data_folder_name = args[0]
         else:
-            raise InputError("load_results can be called with 0 or 1 arguments")
+            raise RuntimeError("load_results can be called with 0 or 1 arguments")
 
-        if not os.path.isdir(data_folder_name):
-            raise NameError("Given data directory does not exist.")
+        return load_results(data_folder_name)
 
-        # Find all data files in generated folder
-        files_in_folder = os.listdir(data_folder_name)
 
-        # Raise an error if mccode.sim is not available
-        if "mccode.sim" not in files_in_folder:
-            raise NameError("No mccode.sim in data folder.")
+def load_results(data_folder_name):
+    """
+    Function for loading data from a mcstas simulation
 
-        # Open mccode to read metadata for all datasets written to disk
-        f = open(os.path.join(data_folder_name, "mccode.sim"), "r")
+    Loads data on all monitors in a McStas data folder, and returns these
+    as a list of McStasData objects.
+
+    Parameters
+    ----------
+
+    first argument : str
+        path to folder from which data should be loaded
+
+    """
+
+    if not os.path.isdir(data_folder_name):
+        raise NameError("Given data directory does not exist.")
+
+    # Find all data files in generated folder
+    files_in_folder = os.listdir(data_folder_name)
+
+    # Raise an error if mccode.sim is not available
+    if "mccode.sim" not in files_in_folder:
+        raise NameError("No mccode.sim in data folder.")
+
+    # Open mccode to read metadata for all datasets written to disk
+    with open(os.path.join(data_folder_name, "mccode.sim"), "r") as f:
 
         # Loop that reads mccode.sim sections
         metadata_list = []
@@ -259,48 +326,45 @@ class ManagedMcrun:
                 # Start recording data to metadata object
                 in_data = True
 
-        # Close mccode.sim
+    # Create a list for McStasData instances to return
+    results = []
+
+    # Load datasets described in metadata list individually
+    for metadata in metadata_list:
+        # Load data with numpy
+        data = np.loadtxt(os.path.join(data_folder_name,
+                          metadata.filename.rstrip()))
+
+        # Split data into intensity, error and ncount
+        if type(metadata.dimension) == int:
+            xaxis = data.T[0, :]
+            Intensity = data.T[1, :]
+            Error = data.T[2, :]
+            Ncount = data.T[3, :]
+
+        elif len(metadata.dimension) == 2:
+            xaxis = []  # Assume evenly binned in 2d
+            data_lines = metadata.dimension[1]
+
+            Intensity = data[0:data_lines, :]
+            Error = data[data_lines:2*data_lines, :]
+            Ncount = data[2*data_lines:3*data_lines, :]
+        else:
+            raise NameError(
+                "Dimension not read correctly in data set "
+                + "connected to monitor named "
+                + metadata.component_name)
+
+        # The data is saved as a McStasData object
+        result = McStasData(metadata, Intensity,
+                            Error, Ncount,
+                            xaxis=xaxis)
+
+        # Add this result to the results list
+        results.append(result)
+
+        # Close the current datafile
         f.close()
 
-        # Create a list for McStasData instances to return
-        results = []
-
-        # Load datasets described in metadata list individually
-        for metadata in metadata_list:
-            # Load data with numpy
-            data = np.loadtxt(os.path.join(data_folder_name,
-                              metadata.filename.rstrip()))
-
-            # Split data into intensity, error and ncount
-            if type(metadata.dimension) == int:
-                xaxis = data.T[0, :]
-                Intensity = data.T[1, :]
-                Error = data.T[2, :]
-                Ncount = data.T[3, :]
-
-            elif len(metadata.dimension) == 2:
-                xaxis = []  # Assume evenly binned in 2d
-                data_lines = metadata.dimension[1]
-
-                Intensity = data[0:data_lines, :]
-                Error = data[data_lines:2*data_lines, :]
-                Ncount = data[2*data_lines:3*data_lines, :]
-            else:
-                raise NameError(
-                    "Dimension not read correctly in data set "
-                    + "connected to monitor named "
-                    + metadata.component_name)
-
-            # The data is saved as a McStasData object
-            result = McStasData(metadata, Intensity,
-                                Error, Ncount,
-                                xaxis=xaxis)
-
-            # Add this result to the results list
-            results.append(result)
-
-            # Close the current datafile
-            f.close()
-
-        # Return list of McStasData objects
-        return results
+    # Return list of McStasData objects
+    return results

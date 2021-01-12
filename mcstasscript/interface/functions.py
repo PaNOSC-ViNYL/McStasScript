@@ -2,7 +2,7 @@ import yaml
 import os
 
 from mcstasscript.data.data import McStasData
-from mcstasscript.helper.managed_mcrun import ManagedMcrun
+import mcstasscript.helper.managed_mcrun as managed_mcrun
 
 
 def name_search(name, data_list):
@@ -92,8 +92,7 @@ def load_data(foldername):
         foldername : string
             Name of the folder from which to load data
     """
-    managed_mcrun = ManagedMcrun("dummy", foldername=foldername)
-    return managed_mcrun.load_results()
+    return managed_mcrun.load_results(foldername)
 
 
 class Configurator:
