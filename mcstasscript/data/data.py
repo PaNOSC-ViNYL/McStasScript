@@ -1,4 +1,5 @@
 import matplotlib
+import numpy as np
 
 class McStasMetaData:
     """
@@ -389,6 +390,13 @@ class McStasData:
         # get name from metadata
         self.name = self.metadata.component_name
         # three basic arrays from positional arguments
+        if not isinstance(intensity, np.ndarray):
+            raise ValueError("intensity should be numpy array!")
+        if not isinstance(error, np.ndarray):
+            raise ValueError("error should be numpy array!")
+        if not isinstance(ncount, np.ndarray):
+            raise ValueError("ncount should be numpy array!")
+
         self.Intensity = intensity
         self.Error = error
         self.Ncount = ncount
