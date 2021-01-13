@@ -258,9 +258,9 @@ class Test_name_plot_options(unittest.TestCase):
         """
 
         data_list = setup_McStasData_array()
-        name_plot_options("Hero", data_list, colormap="very hot")
+        name_plot_options("Hero", data_list, colormap="Oranges")
         hero_object = name_search("Hero", data_list)
-        self.assertEqual(hero_object.plot_options.colormap, "very hot")
+        self.assertEqual(hero_object.plot_options.colormap, "Oranges")
         
     def test_name_plot_options_duplicate(self):
         """
@@ -276,13 +276,13 @@ class Test_name_plot_options(unittest.TestCase):
 
         data_list.append(hero_object)
         
-        name_plot_options("Hero", data_list, colormap="cold")
+        name_plot_options("Hero", data_list, colormap="Blues")
         
         results = name_search("Hero", data_list)
         
         self.assertEqual(len(results), 2)
-        self.assertEqual(results[0].plot_options.colormap, "cold")
-        self.assertEqual(results[1].plot_options.colormap, "cold")
+        self.assertEqual(results[0].plot_options.colormap, "Blues")
+        self.assertEqual(results[1].plot_options.colormap, "Blues")
 
 
 class Test_load_data(unittest.TestCase):

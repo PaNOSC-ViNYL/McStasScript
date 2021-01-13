@@ -1,3 +1,5 @@
+import matplotlib
+
 class McStasMetaData:
     """
     Class for holding metadata for McStas dataset, is to be read from
@@ -20,10 +22,10 @@ class McStasMetaData:
 
     limits : List
         Limits for monitor, length=2 for 1d data and length=4 for 2d
-        data
+        data, for example spatial or time limits for monitor
 
     title : str
-        Title of monitor when plotting
+        Title of monitor when plotting, placed above plot
 
     xlabel : str
         Text for xlabel when plotting
@@ -34,7 +36,7 @@ class McStasMetaData:
     Methods
     -------
     add_info(key,value)
-        Adds a element to the info dictionary
+        Adds an element to the info dictionary
 
     extract_info()
         Unpacks the information in info to class attributes
@@ -87,9 +89,7 @@ class McStasMetaData:
         if "filename" in self.info:
             self.filename = self.info["filename"].rstrip()
         else:
-            # Monitors without output files does exist
-            #raise NameError(
-            #    "No filename found in mccode data section!")
+            # Monitors without output files do exist
             print("The component named \"" + self.component_name
                   + "\" had no data file and will not be loaded.")
             self.filename = ""
@@ -97,14 +97,14 @@ class McStasMetaData:
         # Extract limits
         self.limits = []
         if "xylimits" in self.info:
-            # find the four numbers
+            # find the four numbers xmin, xmax, ymin, ymax
             temp_str = self.info["xylimits"]
             limits_string = temp_str.split()
             for limit in limits_string:
                 self.limits.append(float(limit))
 
         if "xlimits" in self.info:
-            # find the two numbers
+            # find the two numbers, xmin, xmax
             temp_str = self.info["xlimits"]
             limits_string = temp_str.split()
             for limit in limits_string:
@@ -137,15 +137,42 @@ class McStasPlotOptions:
 
     Attributes
     ----------
-    log : bool
+    log : bool, default False
         To plot on logarithmic or not, standard is linear
 
-    orders_of_mag : float
+    orders_of_mag : float, default 300
         If plotting on log scale, restrict max range to orders_of_mag
         below maximum value
 
-    colormap : string
+    colormap : string, default jet
         Chosen colormap for 2d data, should be available in matplotlib
+
+    show_colorbar : bool, default True
+        Selects if colorbar should be shown or not
+
+    cut_max : float, default 1
+        Factor multiplied onto maximum data value to set upper plot limit
+
+    cut_min : float, default 0
+        Removes given fraction of the plot range from the lower limit
+
+    x_limit_multiplier : float, default 1
+        Multiplies x axis limits with factor, useful for unit changes
+
+    y_limit_multiplier : float, default 1
+        Multiplies y axis limits with factor, useful for unit changes
+
+    custom_ylim_bottom : bool, default False
+        Indicates whether a manual lower limit for y axis has been set
+
+    custom_ylim_top : bool, default False
+        Indicates whether a manual upper limit for y axis has been set
+
+    custom_xlim_left : bool, default False
+        Indicates whether a manual lower limit for x axis has been set
+
+    custom_xlim_right : bool, default False
+        Indicates whether a manual upper limit for x axis has been set
 
     Methods
     -------
@@ -164,64 +191,128 @@ class McStasPlotOptions:
         self.cut_min = 0
         self.x_limit_multiplier = 1
         self.y_limit_multiplier = 1
-        
-        self.custom_ylim_top = False
+
         self.custom_ylim_bottom = False
+        self.custom_ylim_top = False
         self.custom_xlim_left = False
         self.custom_xlim_right = False
 
     def set_options(self, **kwargs):
-        """Set custom values for plotting preferences"""
+        """
+        Set custom values for plotting preferences
+
+        Keyword arguments
+        -----------------
+
+        log : bool, default False
+            To plot on logarithmic or not, standard is linear
+
+        orders_of_mag : float, default 300
+            If plotting on log scale, restrict max range to orders_of_mag
+            below maximum value
+
+        colormap : string, default jet
+            Chosen colormap for 2d data, should be available in matplotlib
+
+        show_colorbar : bool, default True
+            Selects if colorbar should be shown or not
+
+        cut_max : float, default 1
+            Factor multiplied onto maximum data value to set upper plot limit
+
+        cut_min : float, default 0
+            Removes given fraction of the plot range from the lower limit
+
+        x_limit_multiplier : float, default 1
+            Multiplies x axis limits with factor, useful for unit changes
+
+        y_limit_multiplier : float, default 1
+            Multiplies y axis limits with factor, useful for unit changes
+
+        bottom_lim : float
+            Set manual lower limit for y axis
+
+        top_lim : float
+            Set manual upper limit for y axis
+
+        left_lim : float
+            Set manual lower limit for x axis
+
+        right_lim : float
+            Set manual upper limit for x axis
+
+        """
         if "log" in kwargs:
-            log_input = kwargs["log"]
-            if type(log_input) == int:
-                if log_input == 0:
-                    self.log = False
-                else:
-                    self.log = True
-            elif type(log_input) == bool:
-                self.log = log_input
-            else:
-                raise NameError(
-                    "Log input must be either Int or Bool.")
+            self.log = bool(kwargs["log"])
 
         if "orders_of_mag" in kwargs:
             self.orders_of_mag = kwargs["orders_of_mag"]
+            if not isinstance(self.orders_of_mag, (float, int)):
+                raise ValueError("orders_of_mag must be a number, got: "
+                                 + str(self.orders_of_mag))
 
         if "colormap" in kwargs:
+            all_colormaps = matplotlib.pyplot.colormaps()
             self.colormap = kwargs["colormap"]
+            if self.colormap not in all_colormaps:
+                raise ValueError("Chosen colormap not available in "
+                                 + "matplotlib, was: "
+                                 + str(self.colormap))
             
         if "show_colorbar" in kwargs:
-            self.show_colorbar = kwargs["show_colorbar"]
+            self.show_colorbar = bool(kwargs["show_colorbar"])
             
         if "cut_max" in kwargs:
             self.cut_max = kwargs["cut_max"]
+            if not isinstance(self.cut_max, (float, int)):
+                raise ValueError("cut_max has to be a number, was given: "
+                                 + str(self.cut_max))
             
         if "cut_min" in kwargs:
             self.cut_min = kwargs["cut_min"]
+            if not isinstance(self.cut_min, (float, int)):
+                raise ValueError("cut_min has to be a number, was given: "
+                                 + str(self.cut_min))
             
         if "x_axis_multiplier" in kwargs:
             self.x_limit_multiplier = kwargs["x_axis_multiplier"]
+            if not isinstance(self.x_limit_multiplier, (float, int)):
+                raise ValueError("x_limit_multiplier has to be a number, was "
+                                 + "given: " + str(self.x_limit_multiplier))
         
         if "y_axis_multiplier" in kwargs:
             self.y_limit_multiplier = kwargs["y_axis_multiplier"]
+            if not isinstance(self.y_limit_multiplier, (float, int)):
+                raise ValueError("y_limit_multiplier has to be a number, was "
+                                 + "given: " + str(self.y_limit_multiplier))
             
         if "top_lim" in kwargs:
             self.top_lim = kwargs["top_lim"]
             self.custom_ylim_top = True
+            if not isinstance(self.top_lim, (float, int)):
+                raise ValueError("top_lim has to be a number, was "
+                                 + "given: " + str(self.top_lim))
             
         if "bottom_lim" in kwargs:
             self.bottom_lim = kwargs["bottom_lim"]
             self.custom_ylim_bottom = True
-            
+            if not isinstance(self.bottom_lim, (float, int)):
+                raise ValueError("bottom_lim has to be a number, was "
+                                 + "given: " + str(self.bottom_lim))
+
         if "left_lim" in kwargs:
             self.left_lim = kwargs["left_lim"]
             self.custom_xlim_left = True
+            if not isinstance(self.left_lim, (float, int)):
+                raise ValueError("left_lim has to be a number, was "
+                                 + "given: " + str(self.left_lim))
             
         if "right_lim" in kwargs:
             self.right_lim = kwargs["right_lim"]
             self.custom_xlim_right = True
-            
+            if not isinstance(self.right_lim, (float, int)):
+                raise ValueError("right_lim has to be a number, was "
+                                 + "given: " + str(self.right_lim))
 
 
 class McStasData:
@@ -238,11 +329,11 @@ class McStasData:
         Name of component, extracted from metadata
 
     Intensity : numpy array
-        Intensity data [n/s] in 1d or 2d numpy array, dimension in
+        Intensity data [neutrons/s] in 1d or 2d numpy array, dimension in
         metadata
 
     Error : numpy array
-        Error data [n/s] in 1d or 2d numpy array, same dimensions as
+        Error data [neutrons/s] in 1d or 2d numpy array, same dimensions as
         Intensity
 
     Ncount : numpy array
@@ -263,7 +354,7 @@ class McStasData:
     set_title : string
         sets title of data for plotting
 
-    set_optons : keyword arguments
+    set_options : keyword arguments
         sets plot options, keywords passed to McStasPlotOptions method
     """
 
@@ -277,26 +368,23 @@ class McStasData:
         metadata : McStasMetaData instance
             Holds the metadata for the dataset
 
-        name : str
-            Name of component, extracted from metadata
-
         intensity : numpy array
-            Intensity data [n/s] in 1d or 2d numpy array, dimension in
+            Intensity data [neutrons/s] in 1d or 2d numpy array, dimension in
             metadata
 
         error : numpy array
-            Error data [n/s] in 1d or 2d numpy array, same dimensions
+            Error data [neutrons/s] in 1d or 2d numpy array, same dimensions
             as Intensity
 
         ncount : numpy array
-            Number of rays in bin, 1d or 2d numpy array, same
-            dimensions as Intensity
+            Number of rays in bin, 1d or 2d numpy array, same dimensions as
+            Intensity
 
         kwargs : keyword arguments
             xaxis is required for 1d data
         """
 
-        # attatch meta data
+        # attach meta data
         self.metadata = metadata
         # get name from metadata
         self.name = self.metadata.component_name

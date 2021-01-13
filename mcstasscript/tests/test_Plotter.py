@@ -394,7 +394,7 @@ class TestPlotterHelpers(unittest.TestCase):
 
         test_value = {"log": True, "orders_of_mag": 15,
                       "cut_min": 0.25, "cut_max": 0.8,
-                      "colormap": "hot", "show_colorbar": "False",
+                      "colormap": "hot", "show_colorbar": False,
                       "x_limit_multiplier": 2.8, "y_limit_multiplier": 0.8}
 
         for option in known_plot:
