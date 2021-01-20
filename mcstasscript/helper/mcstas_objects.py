@@ -2,7 +2,7 @@ from mcstasscript.helper.formatting import bcolors
 from mcstasscript.helper.formatting import is_legal_parameter
 
 
-class parameter_variable:
+class ParameterVariable:
     """
     Class describing an input parameter in McStas instrument
 
@@ -39,13 +39,13 @@ class parameter_variable:
         --------
 
         Creates a parameter with name wavelength and associated comment
-        A = parameter_variable("wavelength", comment="wavelength in [AA]")
+        A = ParameterVariable("wavelength", comment="wavelength in [AA]")
 
         Creates a parameter with name A3 and default value
-        A = parameter_variable("A3", value=30, comment="A3 angle in [deg]")
+        A = ParameterVariable("A3", value=30, comment="A3 angle in [deg]")
 
         Creates a parameter with type string and name sample_name
-        A = parameter_variable("string", "sample_name")
+        A = ParameterVariable("string", "sample_name")
 
         Parameters
         ----------
@@ -124,7 +124,7 @@ class parameter_variable:
         fo.write("\n")
 
 
-class declare_variable:
+class DeclareVariable:
     """
     Class describing a declared variable in McStas instrument
 
@@ -163,13 +163,13 @@ class declare_variable:
         --------
 
         Creates a variable with name A3 and default value
-        A = declare_variable("double", "A3", value=30)
+        A = DeclareVariable("double", "A3", value=30)
 
         Creates a variable with type integer and name sample_number
-        A = declare_variable("int", "sample_number")
+        A = DeclareVariable("int", "sample_number")
 
         Creates an array variable called m_values
-        A = declare_variable("double", "m_values", array=3,
+        A = DeclareVariable("double", "m_values", array=3,
                              value=[2, 2.5, 2])
 
         Parameters
@@ -194,7 +194,7 @@ class declare_variable:
 
         self.type = type
         if not isinstance(self.type, str):
-            raise RuntimeError("Given type of declare_variable should be a "
+            raise RuntimeError("Given type of DeclareVariable should be a "
                                + "string.")
 
         self.name = str(name)
@@ -266,7 +266,7 @@ class declare_variable:
                 
 
 
-class component:
+class Component:
     """
     A class describing a McStas component to be written to an instrument
 
@@ -570,12 +570,12 @@ class component:
     def set_AT_RELATIVE(self, relative):
         """Sets AT RELATIVE with string or component instance"""
 
-        # Extract name if component instance is given
-        if isinstance(relative, component):
+        # Extract name if Component instance is given
+        if isinstance(relative, Component):
             relative = relative.name
         elif not isinstance(relative, str):
             raise ValueError("Relative must be either string or "
-                             + "component object.")
+                             + "Component object.")
 
         # Set AT relative
         if relative == "ABSOLUTE":
@@ -600,15 +600,15 @@ class component:
             self.set_ROTATED_RELATIVE(RELATIVE)
 
     def set_ROTATED_RELATIVE(self, relative):
-        """Sets ROTATED RELATIVE with string or component instance"""
+        """Sets ROTATED RELATIVE with string or Component instance"""
 
         self.ROTATED_specified = True
-        # Extract name if a component instance is given
-        if isinstance(relative, component):
+        # Extract name if a Component instance is given
+        if isinstance(relative, Component):
             relative = relative.name
         elif not isinstance(relative, str):
             raise ValueError("Relative must be either string or "
-                             + "component object.")
+                             + "Component object.")
 
         # Set ROTATED relative
         if relative == "ABSOLUTE":
@@ -618,12 +618,12 @@ class component:
 
     def set_RELATIVE(self, relative):
         """Sets both AT_relative and ROTATED_relative"""
-        # Extract name if a component instance is given
-        if isinstance(relative, component):
+        # Extract name if a Component instance is given
+        if isinstance(relative, Component):
             relative = relative.name
         elif not isinstance(relative, str):
             raise ValueError("Relative must be either string or "
-                             + "component object.")
+                             + "Component object.")
 
         if relative == "ABSOLUTE":
             self.AT_relative = "ABSOLUTE"
@@ -634,10 +634,10 @@ class component:
 
     def set_parameters(self, dict_input):
         """
-        Set component parameters from dictionary input
+        Set Component parameters from dictionary input
 
         Relies on attributes added when McStas_Instr creates a subclass from
-        the component class where each component parameter is added as an
+        the Component class where each component parameter is added as an
         attribute.
 
         An error is raised if trying to set a parameter that does not exist
