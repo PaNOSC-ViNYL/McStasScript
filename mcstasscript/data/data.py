@@ -1,4 +1,4 @@
-import matplotlib
+import matplotlib.pyplot
 import numpy as np
 
 class McStasMetaData:

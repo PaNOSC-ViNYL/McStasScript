@@ -64,7 +64,7 @@ class TestMcStasMetaData(unittest.TestCase):
 
     def test_McStasMetaData_long_read_1d(self):
         """
-        Test that extact_info can read appropriate info, 1d case
+        Test that extract_info can read appropriate info, 1d case
         """
         meta_data = McStasMetaData()
         meta_data.add_info("type", "array_1d(500)")
@@ -90,7 +90,7 @@ class TestMcStasMetaData(unittest.TestCase):
 
     def test_McStasMetaData_long_read_2d(self):
         """
-        Test that extact_info can read appropriate info, 2d case
+        Test that extract_info can read appropriate info, 2d case
         """
         meta_data = McStasMetaData()
         meta_data.add_info("type", "array_2d(500, 12)")
