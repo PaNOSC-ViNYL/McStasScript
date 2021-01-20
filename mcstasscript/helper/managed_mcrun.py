@@ -363,8 +363,5 @@ def load_results(data_folder_name):
         # Add this result to the results list
         results.append(result)
 
-        # Close the current datafile
-        f.close()
-
     # Return list of McStasData objects
     return results

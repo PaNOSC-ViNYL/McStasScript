@@ -410,7 +410,7 @@ class TestManagedMcrun(unittest.TestCase):
         self.assertEqual(PSD_4PI.metadata.dimension, [300, 300])
         self.assertEqual(PSD_4PI.metadata.limits, [-180, 180, -90, 90])
         self.assertEqual(PSD_4PI.metadata.xlabel, "Longitude [deg]")
-        self.assertEqual(PSD_4PI.metadata.ylabel, "Lattitude [deg]")
+        self.assertEqual(PSD_4PI.metadata.ylabel, "Latitude [deg]")
         self.assertEqual(PSD_4PI.metadata.title, "4PI PSD monitor")
         self.assertEqual(PSD_4PI.Ncount[4][1], 4)
         self.assertEqual(PSD_4PI.Intensity[4][1], 1.537334562E-10)
