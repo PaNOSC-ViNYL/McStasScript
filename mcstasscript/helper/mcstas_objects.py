@@ -65,7 +65,6 @@ class ParameterVariable:
             comment : str
                 sets comment displayed next to declaration
 
-
         """
         if len(args) == 1:
             self.type = ""
@@ -79,7 +78,6 @@ class ParameterVariable:
                                    + "\" which is not among the allowed types "
                                    + str(allowed_types) + ".")
 
-            #self.type = specified_type + " "
             self.type = specified_type
             self.name = str(args[1])
 
