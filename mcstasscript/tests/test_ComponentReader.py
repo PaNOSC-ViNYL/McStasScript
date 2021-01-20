@@ -8,6 +8,11 @@ from mcstasscript.helper.component_reader import ComponentReader
 
 
 def setup_component_reader():
+    """
+    Sets up a component_reader instance with dummy mcstas
+    installation located in the tests directory
+    """
+
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
@@ -21,6 +26,11 @@ def setup_component_reader():
     return component_reader
 
 def setup_component_reader_input_path():
+    """
+    Sets up a component_reader instance with dummy mcstas
+    installation located in the tests directory, and specifies
+    a input_path which is also located in the test directory.
+    """
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
     input_path = os.path.join(THIS_DIR, "test_input_folder")
@@ -40,13 +50,14 @@ class TestComponentReader(unittest.TestCase):
     """
     Testing the ComponenReader class. As this class reads information
     from McStas, a dummy McStas install is made in the test folder to
-    avoid the test results changeing with updates of McStas.
+    avoid the test results changing with updates of McStas.
     """
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_ComponentReader_init_overwrite_message(self, mock_stdout):
         """
         Test that ComponentReader reports overwritten components
+        Here using default input path, which is current folder
         """
 
         component_reader = setup_component_reader()
@@ -62,6 +73,7 @@ class TestComponentReader(unittest.TestCase):
     def test_ComponentReader_init_overwrite_message_input(self, mock_stdout):
         """
         Test that ComponentReader reports overwritten components
+        Here using user defined input path, a directory in tests
         """
 
         component_reader = setup_component_reader_input_path()
@@ -466,7 +478,7 @@ class TestComponentReader(unittest.TestCase):
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_ComponentReader_read_component_int(self, mock_stdout):
         """
-        Test that a integer parameter is read correctly when reading a
+        Test that a integer parameter is read correctly when reading an
         component file.
         Has default, is int type (comments and unit checked already)
         """
@@ -516,50 +528,6 @@ class TestComponentReader(unittest.TestCase):
 
         self.assertNotIn("test_string", CompInfo.parameter_units)
         # Have already tested units are read
-
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_ComponentReader_line_start_long(self, mock_stdout):
-        """
-        Helper function that should return true when certain string is
-        the start of another string.
-
-        """
-
-        component_reader = setup_component_reader()
-
-        test_string = "monkey wants banana"
-
-        return_val = component_reader.line_starts_with(test_string, "mo")
-        self.assertIsInstance(return_val, bool)
-        self.assertTrue(return_val)
-
-        return_val = component_reader.line_starts_with(test_string, "on")
-        self.assertIsInstance(return_val, bool)
-        self.assertFalse(return_val)
-
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_ComponentReader_line_start_short(self, mock_stdout):
-        """
-        Helper function that should return true when certain string is
-        the start of another string. Here checked with short test_string
-
-        """
-
-        component_reader = setup_component_reader()
-
-        test_string = "m"
-
-        return_val = component_reader.line_starts_with(test_string, "m")
-        self.assertIsInstance(return_val, bool)
-        self.assertTrue(return_val)
-
-        return_val = component_reader.line_starts_with(test_string, "mo")
-        self.assertIsInstance(return_val, bool)
-        self.assertFalse(return_val)
-
-        return_val = component_reader.line_starts_with(test_string, "on")
-        self.assertIsInstance(return_val, bool)
-        self.assertFalse(return_val)
 
 
 if __name__ == '__main__':

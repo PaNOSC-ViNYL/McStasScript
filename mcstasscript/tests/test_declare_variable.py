@@ -21,7 +21,7 @@ class Test_declare_variable(unittest.TestCase):
         var = declare_variable("double", "test")
 
         self.assertEqual(var.name, "test")
-        self.assertEqual(var.type, "double")  # space for easier writing
+        self.assertEqual(var.type, "double")
 
     def test_declare_variable_init_basic_type_value(self):
         """
@@ -31,7 +31,7 @@ class Test_declare_variable(unittest.TestCase):
         var = declare_variable("double", "test", value=518)
 
         self.assertEqual(var.name, "test")
-        self.assertEqual(var.type, "double")  # space for easier writing
+        self.assertEqual(var.type, "double")
         self.assertEqual(var.value, 518)
 
     def test_declare_variable_init_basic_type_vector(self):
@@ -82,7 +82,7 @@ class Test_declare_variable(unittest.TestCase):
                          new_callable=unittest.mock.mock_open)
     def test_declare_variable_write_complex_float(self, mock_f):
         """
-        Testing that write to file is correct. Here a line is in a
+        Testing that write to file is correct. Here a line is in an
         instrument declare section. The write file operation is
         mocked and check using a patch. Here a declare with a value
         is used. (float value)
@@ -106,7 +106,7 @@ class Test_declare_variable(unittest.TestCase):
                          new_callable=unittest.mock.mock_open)
     def test_declare_variable_write_complex_int(self, mock_f):
         """
-        Testing that write to file is correct. Here a line is in a
+        Testing that write to file is correct. Here a line is in an
         instrument declare section. The write file operation is
         mocked and check using a patch. Here a declare with a value
         is used. (integer value)
@@ -130,7 +130,7 @@ class Test_declare_variable(unittest.TestCase):
                          new_callable=unittest.mock.mock_open)
     def test_declare_variable_write_simple_array(self, mock_f):
         """
-        Testing that write to file is correct. Here a line is in a
+        Testing that write to file is correct. Here a line is in an
         instrument declare section. The write file operation is
         mocked and check using a patch. Here an array is declared.
         """
@@ -153,9 +153,9 @@ class Test_declare_variable(unittest.TestCase):
                          new_callable=unittest.mock.mock_open)
     def test_declare_variable_write_complex_array(self, mock_f):
         """
-        Testing that write to file is correct. Here a line is in a
+        Testing that write to file is correct. Here a line is in an
         instrument declare section. The write file operation is
-        mocked and check using a patch. Here an array is decalred and
+        mocked and check using a patch. Here an array is declared and
         populated with the selected values.
         """
 

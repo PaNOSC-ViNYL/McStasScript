@@ -29,7 +29,7 @@ class Test_parameter_variable(unittest.TestCase):
         par = parameter_variable("double", "test")
 
         self.assertEqual(par.name, "test")
-        self.assertEqual(par.type, "double ")  # space for easier writing
+        self.assertEqual(par.type, "double")
 
     def test_parameter_variable_init_basic_type_value(self):
         """
@@ -39,7 +39,7 @@ class Test_parameter_variable(unittest.TestCase):
         par = parameter_variable("double", "test", value=518)
 
         self.assertEqual(par.name, "test")
-        self.assertEqual(par.type, "double ")  # space for easier writing
+        self.assertEqual(par.type, "double")
         self.assertEqual(par.value, 518)
 
     def test_parameter_variable_init_basic_type_value_comment(self):
@@ -51,7 +51,7 @@ class Test_parameter_variable(unittest.TestCase):
                                  value=518, comment="test comment /")
 
         self.assertEqual(par.name, "test")
-        self.assertEqual(par.type, "double ")  # space for easier writing
+        self.assertEqual(par.type, "double")
         self.assertEqual(par.value, 518)
         self.assertEqual(par.comment, "// test comment /")
 
@@ -72,7 +72,7 @@ class Test_parameter_variable(unittest.TestCase):
                          new_callable=unittest.mock.mock_open)
     def test_parameter_variable_write_basic(self, mock_f):
         """
-        Testing that write to file is correct. Here a line is in a
+        Testing that write to file is correct. Here a line is in an
         instrument parameter section. The write file operation is
         mocked and check using a patch. Here a simple parameter is
         used.
@@ -95,7 +95,7 @@ class Test_parameter_variable(unittest.TestCase):
                          new_callable=unittest.mock.mock_open)
     def test_parameter_variable_write_complex_float(self, mock_f):
         """
-        Testing that write to file is correct. Here a line is in a
+        Testing that write to file is correct. Here a line is in an
         instrument parameter section. The write file operation is
         mocked and check using a patch. Here a parameter with a value
         is used. (float value)
@@ -123,7 +123,7 @@ class Test_parameter_variable(unittest.TestCase):
                          new_callable=unittest.mock.mock_open)
     def test_parameter_variable_write_complex_int(self, mock_f):
         """
-        Testing that write to file is correct. Here a line is in a
+        Testing that write to file is correct. Here a line is in an
         instrument parameter section. The write file operation is
         mocked and check using a patch. Here a parameter with a value
         is used. (integer value)
@@ -151,7 +151,7 @@ class Test_parameter_variable(unittest.TestCase):
                          new_callable=unittest.mock.mock_open)
     def test_parameter_variable_write_complex_string(self, mock_f):
         """
-        Testing that write to file is correct. Here a line is in a
+        Testing that write to file is correct. Here a line is in an
         instrument parameter section. The write file operation is
         mocked and check using a patch. Here a parameter with a value
         is used. (string value)

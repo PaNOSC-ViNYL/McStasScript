@@ -105,7 +105,6 @@ class Testcomponent(unittest.TestCase):
     def test_component_basic_init_defaults(self):
         """
         Testing basic initialization sets the correct defaults
-
         """
 
         comp = component("test_component", "Arm")
@@ -162,6 +161,7 @@ class Testcomponent(unittest.TestCase):
         self.assertEqual(comp.SPLIT, 7)
         self.assertEqual(comp.comment, "test comment")
 
+
     def test_component_basic_init_set_AT(self):
         """
         Testing set_AT method
@@ -175,9 +175,31 @@ class Testcomponent(unittest.TestCase):
         self.assertEqual(comp.AT_data, [12.124, 214.0, 2])
         self.assertEqual(comp.AT_relative, "RELATIVE monochromator")
 
+    def test_component_freeze(self):
+        """
+        Testing frozen component cant have new attributes, and that
+        _unfreeze / _freeze works correctly.
+        """
+        comp = component("test_component", "Arm")
+
+        with self.assertRaises(AttributeError):
+            comp.new_parameter = 5
+
+        self.assertEqual(comp.name, "test_component")
+        self.assertEqual(comp.component_name, "Arm")
+
+        comp._unfreeze()
+        comp.new_parameter = 5
+
+        self.assertEqual(comp.new_parameter, 5)
+
+        comp._freeze()
+        with self.assertRaises(AttributeError):
+            comp.another_parameter = 5
+
     def test_component_basic_init_set_AT_component(self):
         """
-        Testing set_AT method using component object
+        Testing set_AT method using component object and method
         """
 
         prev_component = component("relative_base", "Arm")
@@ -192,7 +214,7 @@ class Testcomponent(unittest.TestCase):
 
     def test_component_basic_init_set_AT_component_keyword(self):
         """
-        Testing set_AT method using component object
+        Testing set_AT method using component object and keyword argument
         """
 
         prev_component = component("relative_base", "Arm")
@@ -206,7 +228,7 @@ class Testcomponent(unittest.TestCase):
 
     def test_component_basic_init_set_ROTATED(self):
         """
-        Testing set_ROTATED method
+        Testing set_ROTATED method med relative as string
         """
 
         comp = component("test_component", "Arm")
@@ -220,7 +242,7 @@ class Testcomponent(unittest.TestCase):
 
     def test_component_basic_init_set_ROTATED_component(self):
         """
-        Testing set_ROTATED method
+        Testing set_ROTATED method with relative as component object
         """
 
         prev_component = component("relative_base", "Arm")
@@ -235,7 +257,7 @@ class Testcomponent(unittest.TestCase):
 
     def test_component_basic_init_set_ROTATED_component_keyword(self):
         """
-        Testing set_ROTATED method
+        Testing setting ROTATION with keyword and component object input
         """
 
         prev_component = component("relative_base", "Arm")
@@ -249,7 +271,7 @@ class Testcomponent(unittest.TestCase):
 
     def test_component_basic_init_set_RELATIVE(self):
         """
-        Testing set_RELATIVE method
+        Testing set_RELATIVE method with string
         """
 
         comp = component("test_component", "Arm")
@@ -263,7 +285,7 @@ class Testcomponent(unittest.TestCase):
 
     def test_component_basic_init_set_RELATIVE(self):
         """
-        Testing set_RELATIVE method
+        Testing set_RELATIVE method with component object input
         """
 
         prev_component = component("relative_base", "Arm")
@@ -525,6 +547,59 @@ class Testcomponent(unittest.TestCase):
 
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
+    def test_component_write_to_file_complex_SPLIT_string(self, mock_f):
+        """
+        Testing that a component can be written to file with the
+        expected output. Here with complex input, and a string as
+        given for split.
+        """
+
+        comp = setup_component_with_parameters()
+        comp.set_SPLIT("VAR")
+
+        # This setup has a required parameter.
+        # If this parameter is not set, an error should be returned,
+        # this will be tested in the next test.
+
+        comp.new_par3 = "1.25"
+
+        with mock_f('test.txt', 'w') as m_fo:
+            comp.write_component(m_fo)
+
+        my_call = unittest.mock.call
+        expected_writes = [my_call("SPLIT VAR "),
+                           my_call("COMPONENT test_component = Arm("),
+                           my_call("\n"),
+                           my_call(" new_par1 = 1.5"),
+                           my_call(","),
+                           my_call(" new_par2 = 3"),
+                           my_call(","),
+                           my_call("\n"),
+                           my_call(" new_par3 = 1.25"),
+                           my_call(","),
+                           my_call(" this_par = test_val"),
+                           my_call(","),
+                           my_call("\n"),
+                           my_call(" that_par = \"txt_string\""),
+                           my_call(")\n"),
+                           my_call("WHEN (1==2)\n"),
+                           my_call("AT (0.124,183.9,157)"),
+                           my_call(" RELATIVE home\n"),
+                           my_call("ROTATED (482,1240.2,0.185)"),
+                           my_call(" RELATIVE etc\n"),
+                           my_call("GROUP developers\n"),
+                           my_call("EXTEND %{\n"),
+                           my_call("nscat = 8;\n"),
+                           my_call("%}\n"),
+                           my_call("JUMP myself 37\n"),
+                           my_call("\n")]
+
+        mock_f.assert_called_with('test.txt', 'w')
+        handle = mock_f()
+        handle.write.assert_has_calls(expected_writes, any_order=False)
+
+    @unittest.mock.patch('__main__.__builtins__.open',
+                         new_callable=unittest.mock.mock_open)
     def test_component_write_component_required_parameter_error(self, mock_f):
         """
         Test an error occurs if the component is asked to write to disk
@@ -619,7 +694,7 @@ class Testcomponent(unittest.TestCase):
     def test_component_print_short_longest_name(self, mock_stdout):
         """
         Test print_short that prints name, type and location of the
-        component to the console.
+        component to the console. Here with specified longest_name.
         """
 
         comp = setup_component_with_parameters()
@@ -639,18 +714,19 @@ class Testcomponent(unittest.TestCase):
     def test_component_show_parameters(self, mock_stdout):
         """
         Test print_short that prints name, type and location of the
-        component to the console.
+        component to the console. An extra parameter was added.
+        This test also checks for specific formatting.
         """
 
         comp = setup_component_with_parameters()
 
-        comp._unfreeze
+        comp._unfreeze()
 
         # This is now not set by the user, but has default
         # This results in different formatting in show_parameters
         comp.new_par2 = None
 
-        comp._freeze
+        comp._freeze()
 
         comp.show_parameters()
 
@@ -720,13 +796,13 @@ class Testcomponent(unittest.TestCase):
 
         comp = setup_component_with_parameters()
 
-        comp._unfreeze
+        comp._unfreeze()
 
         # This is now not set by the user, but has default
         # This results in different formatting in show_parameters
         comp.new_par2 = None
 
-        comp._freeze
+        comp._freeze()
 
         comp.show_parameters_simple()
 

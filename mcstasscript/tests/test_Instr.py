@@ -278,8 +278,8 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_instr_root_path()
 
         instr.add_parameter("double", "theta", comment="test par")
-        instr.add_parameter("single", "theta", comment="test par")
-        instr.add_parameter("float", "theta", value=8, comment="test par")
+        instr.add_parameter("double", "theta", comment="test par")
+        instr.add_parameter("int", "theta", value=8, comment="test par")
         instr.add_parameter("int", "slits", comment="test par")
         instr.add_parameter("string", "ref",
                             value="string", comment="new string")
@@ -288,11 +288,11 @@ class TestMcStas_instr(unittest.TestCase):
 
         output = mock_stdout.getvalue().split("\n")
 
-        self.assertEqual(output[0], "double  theta             // test par")
-        self.assertEqual(output[1], "single  theta             // test par")
-        self.assertEqual(output[2], "float   theta  =  8       // test par")
-        self.assertEqual(output[3], "int     slits             // test par")
-        self.assertEqual(output[4], "string  ref    =  string  // new string")
+        self.assertEqual(output[0], "double theta             // test par")
+        self.assertEqual(output[1], "double theta             // test par")
+        self.assertEqual(output[2], "int    theta  =  8       // test par")
+        self.assertEqual(output[3], "int    slits             // test par")
+        self.assertEqual(output[4], "string ref    =  string  // new string")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_show_parameters_line_break(self, mock_stdout):
@@ -305,8 +305,8 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_instr_root_path()
 
         instr.add_parameter("double", "theta", comment="test par")
-        instr.add_parameter("single", "theta", comment="test par")
-        instr.add_parameter("float", "theta", value=8, comment="test par")
+        instr.add_parameter("double", "theta", comment="test par")
+        instr.add_parameter("int", "theta", value=8, comment="test par")
         instr.add_parameter("int", "slits", comment="test par")
         instr.add_parameter("string", "ref",
                             value="string", comment="new string")
@@ -324,22 +324,22 @@ class TestMcStas_instr(unittest.TestCase):
 
         output = mock_stdout.getvalue().split("\n")
 
-        self.assertEqual(output[0], "double  theta             // test par")
-        self.assertEqual(output[1], "single  theta             // test par")
-        self.assertEqual(output[2], "float   theta  =  8       // test par")
-        self.assertEqual(output[3], "int     slits             // test par")
-        self.assertEqual(output[4], "string  ref    =  string  // new string")
+        self.assertEqual(output[0], "double theta             // test par")
+        self.assertEqual(output[1], "double theta             // test par")
+        self.assertEqual(output[2], "int    theta  =  8       // test par")
+        self.assertEqual(output[3], "int    slits             // test par")
+        self.assertEqual(output[4], "string ref    =  string  // new string")
         comment_line = "This is a very long comment meant for testing "
-        self.assertEqual(output[5], "double  value  =  37      // "
+        self.assertEqual(output[5], "double value  =  37      // "
                                     + comment_line)
         comment_line = "the dynamic line breaking that is used in this "
-        self.assertEqual(output[6], "                             "
+        self.assertEqual(output[6], "                            "
                                     + comment_line)
         comment_line = "method. It needs to have many lines in order to "
-        self.assertEqual(output[7], "                             "
+        self.assertEqual(output[7], "                            "
                                     + comment_line)
         comment_line = "ensure it really works. "
-        self.assertEqual(output[8], "                             "
+        self.assertEqual(output[8], "                            "
                                     + comment_line)
 
     def test_simple_add_declare_parameter(self):
@@ -567,7 +567,7 @@ class TestMcStas_instr(unittest.TestCase):
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_show_components_input_path_simple(self, mock_stdout):
         """
-        Simple test of input_path being recoignized and passed
+        Simple test of input_path being recognized and passed
         to component_reader so PSDlin_monitor is overwritten
         """
         instr = setup_instr_with_input_path()
@@ -590,9 +590,9 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[6], " Work directory")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_show_components_input_path_simple(self, mock_stdout):
+    def test_show_components_input_path_custom(self, mock_stdout):
         """
-        Simple test of input_path being recoignized and passed
+        Simple test of input_path being recognized and passed
         to component_reader so PSDlin_monitor is overwritten
         Here dummy_mcstas and input_path is set using relative
         paths instead of absolute paths.
