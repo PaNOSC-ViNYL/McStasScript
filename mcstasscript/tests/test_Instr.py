@@ -18,25 +18,53 @@ def setup_instr_no_path():
     """
     Sets up a neutron instrument without a package_path
     """
+    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+    current_work_dir = os.getcwd()
+    os.chdir(THIS_DIR)  # Set work directory to test folder
+
     return McStas_instr("test_instrument")
+
+    os.chdir(current_work_dir)
 
 def setup_x_ray_instr_no_path():
     """
     Sets up a X-ray instrument without a package_path
     """
+    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+    current_work_dir = os.getcwd()
+    os.chdir(THIS_DIR)  # Set work directory to test folder
+
     return McXtrace_instr("test_instrument")
+
+    os.chdir(current_work_dir)
 
 def setup_instr_root_path():
     """
     Sets up a neutron instrument with root package_path
     """
+    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+    current_work_dir = os.getcwd()
+    os.chdir(THIS_DIR)  # Set work directory to test folder
+
     return McStas_instr("test_instrument", package_path="/")
+
+    os.chdir(current_work_dir)
 
 def setup_x_ray_instr_root_path():
     """
     Sets up a X-ray instrument with root package_path
     """
+    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+    current_work_dir = os.getcwd()
+    os.chdir(THIS_DIR)  # Set work directory to test folder
+
     return McXtrace_instr("test_instrument", package_path="/")
+
+    os.chdir(current_work_dir)
 
 def setup_instr_with_path():
     """
@@ -225,6 +253,10 @@ class TestMcStas_instr(unittest.TestCase):
     """
     Tests of the main class in McStasScript called McStas_instr.
     """
+
+    #def test_show_test_folder(self):
+    #    os.system("tree")
+
 
     def test_simple_initialize(self):
         """
@@ -600,9 +632,17 @@ class TestMcStas_instr(unittest.TestCase):
         """
         Simple test of show components to show component categories
         """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         instr = setup_instr_with_path()
 
         instr.show_components()
+
+        os.chdir(current_work_dir)
 
         output = mock_stdout.getvalue()
         output = output.split("\n")
@@ -627,7 +667,14 @@ class TestMcStas_instr(unittest.TestCase):
         """
         instr = setup_instr_with_path()
 
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         instr.show_components("Work directory")
+
+        os.chdir(current_work_dir)
 
         output = mock_stdout.getvalue()
         output = output.split("\n")
@@ -751,7 +798,14 @@ class TestMcStas_instr(unittest.TestCase):
         case the same component type is requested again.
         """
 
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         instr = setup_instr_with_path()
+
+        os.chdir(current_work_dir)
 
         comp = instr._create_component_instance("test_component",
                                                 "test_for_reading")
@@ -779,7 +833,14 @@ class TestMcStas_instr(unittest.TestCase):
         case the same component type is requested again.
         """
 
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         instr = setup_instr_with_path()
+
+        os.chdir(current_work_dir)
 
         # Setting relative to home, should be passed to component
         comp = instr._create_component_instance("test_component",
