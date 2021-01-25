@@ -1019,6 +1019,17 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(comp.AT_data[1], 0)
         self.assertEqual(comp.AT_data[2], 2)
 
+    def test_copy_component_simple_fail(self):
+        """
+        Checks a NameError is raised if trying to copy a component that does
+        not exist
+        """
+
+        instr = setup_populated_with_some_options_instr()
+
+        with self.assertRaises(NameError):
+            comp = instr.copy_component("copy_of_second_comp", "unknown_component")
+
     def test_copy_component_simple_object(self):
         """
         Checks that a component can be copied using the object
@@ -1938,6 +1949,39 @@ class TestMcStas_instr(unittest.TestCase):
                                          stderr=-1, stdout=-1,
                                          universal_newlines=True,
                                          cwd=run_path)
+
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    @unittest.mock.patch("subprocess.run")
+    def test_show_instrument_basic(self, mock_sub, mock_stdout):
+        """
+        Test show_instrument methods makes correct system calls
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
+        instr = setup_populated_instr_with_dummy_path()
+
+        instr.show_instrument(parameters={"theta": 1.2})
+
+        os.chdir(current_work_dir)
+
+        expected_path = os.path.join(executable_path, "bin", "mcdisplay-webgl")
+
+        # a double space because of a missing option
+        expected_call = (expected_path
+                         + " ./test_instrument.instr"
+                         + "  has_default=37 theta=1.2")
+
+        mock_sub.assert_called_once_with(expected_call,
+                                         shell=True,
+                                         stderr=-1, stdout=-1,
+                                         universal_newlines=True,
+                                         cwd=".")
 
 
 if __name__ == '__main__':

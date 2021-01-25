@@ -1673,7 +1673,8 @@ class McCode_instr:
         process = subprocess.run(full_command, shell=True,
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE,
-                                 universal_newlines=True)
+                                 universal_newlines=True,
+                                 cwd=self.input_path)
         print(process.stderr)
         print(process.stdout)
 
