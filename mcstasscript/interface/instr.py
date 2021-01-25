@@ -18,23 +18,39 @@ from mcstasscript.helper.formatting import bcolors
 
 class McCode_instr:
     """
-    Main class for writing a McStas instrument using McStasScript
+    Main class for writing a McCode instrument using McStasScript
 
-    Initialization of McStas_instr sets the name of the instrument file
+    Initialization of McCode_instr sets the name of the instrument file
     and its methods are used to add all aspects of the instrument file.
     The class also holds methods for writing the finished instrument
-    file to disk and to run the simulation.
+    file to disk and to run the simulation. This is meant as a base class
+    that McStas_instr and McXtrace_instr inherits from, these have to provide
+    some attributes.
+
+    Required attributes in superclass
+    ---------------------------------
+    executable : str
+        Name of executable, mcrun or mxrun
+
+    particle : str
+        Name of probe particle, "neutron" or "x-ray"
+
+    package_name : str
+        Name of package, "McStas" or "McXtrace"
 
     Attributes
     ----------
     name : str
         name of instrument file
 
-    author : str
+    author : str, default "Python Instrument Generator"
         name of user of McStasScript, written to the file
 
-    origin : str
+    origin : str, default "ESS DMSC"
         origin of instrument file (affiliation)
+
+    input_path : str, default "."
+        directory in which simulation is executed, uses components found there
 
     executable_path : str
         absolute path of mcrun command, or empty if it is in path
@@ -43,7 +59,7 @@ class McCode_instr:
         contains all input parameters to be written to file
 
     declare_list : list of declare_variable instances
-        contains all declare parrameters to be written to file
+        contains all declare parameters to be written to file
 
     initialize_section : str
         string containing entire initialize section to be written
@@ -60,13 +76,25 @@ class McCode_instr:
     component_name_list : list of strings
         list of names of the components in the instrument
 
+    component_class_lib : dict
+        dict of custom Component classes made at run time
+
+    component_reader : ComponentReader
+        ComponentReader instance for reading component files
+
+    package_path : str
+        Path to mccode package containing component folders
+
     Methods
     -------
     add_parameter(*args, **kwargs)
         Adds input parameter to the define section
 
-    add_declare_var()
-        Adds declared variable ot the declare section
+    add_declare_var(type, name)
+        Add declared variable called name of given type to the declare section
+
+    append_declare(string)
+        Appends to the declare section
 
     append_initialize(string)
         Appends a string to the initialize section, then adds new line
@@ -83,11 +111,20 @@ class McCode_instr:
     append_trace(string)
         Obsolete method, add components instead (used in write_c_files)
 
+    append_trace_no_new_line(string)
+        Obsolete method, add components instead (used in write_c_files)
+
     show_components(string)
         Shows available components in given category
 
+    component_help(name)
+        Shows help on component of given name
+
     add_component(instance_name, component_name, **kwargs)
         Add a component to the instrument file
+
+    copy_component(new_component_name, original_component, **kwargs)
+        Makes a copy of original_component with new_component_name
 
     get_component(instance_name)
         Returns component instance with name instance_name
@@ -146,6 +183,9 @@ class McCode_instr:
     write_full_instrument()
         Writes full instrument file to current directory
 
+    show_instrument()
+        Shows instrument using mcdisplay
+
     run_full_instrument(**kwargs)
         Writes instrument files and runs simulation.
         Returns list of McStasData
@@ -191,28 +231,39 @@ class McCode_instr:
                             + "\" which is not a legal filename")
 
         if "author" in kwargs:
-            self.author = kwargs["author"]
+            self.author = str(kwargs["author"])
         else:
             self.author = "Python " + self.package_name
             self.author += " Instrument Generator"
 
         if "origin" in kwargs:
-            self.origin = kwargs["origin"]
+            self.origin = str(kwargs["origin"])
         else:
             self.origin = "ESS DMSC"
 
         if "input_path" in kwargs:
-            self.input_path = kwargs["input_path"]
+            self.input_path = str(kwargs["input_path"])
+            if not os.path.isdir(self.input_path):
+                raise RuntimeError("Given input_path does not point to a "
+                                   + "folder:\"" + self.input_path + '"')
         else:
             self.input_path = "."
 
         self._read_calibration()
 
         if "executable_path" in kwargs:
-            self.executable_path = kwargs["executable_path"]
+            self.executable_path = str(kwargs["executable_path"])
+            if not os.path.isdir(self.executable_path):
+                raise RuntimeError("Given executable_path does not point to "
+                                   + "a folder:\"" + self.executable_path
+                                   + '"')
 
         if "package_path" in kwargs:
-            self.package_path = kwargs["package_path"]
+            self.package_path = str(kwargs["package_path"])
+            if not os.path.isdir(self.package_path):
+                raise RuntimeError("Given package_path does not point to "
+                                   + "a folder:\"" + self.package_path + '"')
+
         elif self.package_path is "":
             raise NameError("At this stage of development "
                             + "McStasScript need the absolute path "
@@ -248,6 +299,20 @@ class McCode_instr:
     def add_parameter(self, *args, **kwargs):
         """
         Method for adding input parameter to instrument
+
+        Type does not need to be specified, McStas considers that a floating
+        point value with the type double.
+
+        Examples
+        --------
+        Creates a parameter with name wavelength and associated comment
+        add_parameter("wavelength", comment="wavelength in [AA]")
+
+        Creates a parameter with name A3 and default value
+        add_parameter("A3", value=30, comment="A3 angle in [deg]")
+
+        Creates a parameter with type string and name sample_name
+        add_parameter("string", "sample_name")
 
         Parameters
         ----------
@@ -299,6 +364,7 @@ class McCode_instr:
         longest_type = len(max(types, key=len))
         longest_name = len(max(names, key=len))
         longest_value = len(max(values, key=len))
+        # In addition to the data 11 characters are added before the comment
         comment_start_point = longest_type + longest_name + longest_value + 11
         longest_comment = len(max(comments, key=len))
         length_for_comment = line_limit - comment_start_point
@@ -379,7 +445,7 @@ class McCode_instr:
         """
         # declare_variable class documented independently
         self.declare_list.append(declare_variable(*args, **kwargs))
-        
+
     def append_declare(self, string):
         """
         Method for appending code to the declare section directly
@@ -393,15 +459,15 @@ class McCode_instr:
         string : str
             code to be added to declare section
         """
-        
+
         #self.declare_section = self.declare_section + string + "\n"
         self.declare_list.append(string)
 
     def append_initialize(self, string):
         """
-        Method for appending code to the intialize section
+        Method for appending code to the initialize section
 
-        The intialize section consists of c code and will be compiled,
+        The initialize section consists of c code and will be compiled,
         thus any syntax errors will crash the simulation. Code is added
         on a new line for each call to this method.
 
@@ -410,14 +476,14 @@ class McCode_instr:
         string : str
             code to be added to initialize section
         """
-        
+
         self.initialize_section = self.initialize_section + string + "\n"
 
     def append_initialize_no_new_line(self, string):
         """
-        Method for appending code to the intialize section, no new line
+        Method for appending code to the initialize section, no new line
 
-        The intialize section consists of c code and will be compiled,
+        The initialize section consists of c code and will be compiled,
         thus any syntax errors will crash the simulation. Code is added
         to the current line.
 
@@ -549,20 +615,15 @@ class McCode_instr:
         dummy_instance = self._create_component_instance("dummy", name)
         dummy_instance.show_parameters(**kwargs)
 
-    def _create_component_instance(self, *args, **kwargs):
+    def _create_component_instance(self, name, component_name, **kwargs):
         """
         Dynamically creates a class for the requested component type
 
-        Created classses kept in dictionary, if the same component type
+        Created classes kept in dictionary, if the same component type
         is requested again, the class in the dictionary is used.  The
         method returns an instance of the created class that was
-        initialized with the paramters passed to this function.
+        initialized with the parameters passed to this function.
         """
-
-        if len(args) < 2:
-            raise NameError("Attempting to create component without name")
-
-        component_name = args[1]
 
         if component_name not in self.component_class_lib:
             comp_info = self.component_reader.read_name(component_name)
@@ -581,9 +642,10 @@ class McCode_instr:
                                                             (component,),
                                                             input_dict)
 
-        return self.component_class_lib[component_name](*args, **kwargs)
+        return self.component_class_lib[component_name](name, component_name,
+                                                        **kwargs)
 
-    def add_component(self, *args, **kwargs):
+    def add_component(self, name, component_name, **kwargs):
         """
         Method for adding a new component instance to the instrument
 
@@ -593,14 +655,14 @@ class McCode_instr:
         used.  The component is placed at the end of the instrument file
         unless otherwise specified with the after and before keywords.
         The component may be initialized using other keyword arguments,
-        but all attributes can be set with approrpiate methods.
+        but all attributes can be set with appropriate methods.
 
         Parameters
         ----------
-        First positional argument : str
+        name : str
             Unique name of component instance
 
-        Second positional argument : str
+        component_name : str
             Name of McStas component to create instance of
 
         Keyword arguments:
@@ -641,8 +703,8 @@ class McCode_instr:
                 Comment that will be displayed before the component
         """
 
-        if args[0] in self.component_name_list:
-            raise NameError(("Component name \"" + str(args[0])
+        if name in self.component_name_list:
+            raise NameError(("Component name \"" + str(name)
                              + "\" used twice, " + self.package_name
                              + " does not allow this."
                              + " Rename or remove one instance of this"
@@ -658,10 +720,11 @@ class McCode_instr:
 
             new_index = self.component_name_list.index(kwargs["after"])
 
-            new_component = self._create_component_instance(*args, **kwargs)
+            new_component = self._create_component_instance(name, component_name,
+                                                            **kwargs)
             self.component_list.insert(new_index + 1, new_component)
 
-            self.component_name_list.insert(new_index+1, args[0])
+            self.component_name_list.insert(new_index+1, name)
 
         # Insert component after component with this name
         elif "before" in kwargs:
@@ -674,20 +737,22 @@ class McCode_instr:
 
             new_index = self.component_name_list.index(kwargs["before"])
 
-            new_component = self._create_component_instance(*args, **kwargs)
+            new_component = self._create_component_instance(name, component_name,
+                                                            **kwargs)
             self.component_list.insert(new_index, new_component)
 
-            self.component_name_list.insert(new_index, args[0])
+            self.component_name_list.insert(new_index, name)
 
         # If after or before keywords absent, place component at the end
         else:
-            new_component = self._create_component_instance(*args, **kwargs)
+            new_component = self._create_component_instance(name, component_name,
+                                                            **kwargs)
             self.component_list.append(new_component)
-            self.component_name_list.append(args[0])
+            self.component_name_list.append(name)
 
         return new_component
-    
-    def copy_component(self, *args, **kwargs):
+
+    def copy_component(self, name, original_component, **kwargs):
         """
         Method for adding a copy of a component instance to the instrument
 
@@ -701,10 +766,10 @@ class McCode_instr:
 
         Parameters
         ----------
-        First positional argument : str
+        name : str
             Unique name of component instance
 
-        Second positional argument : str
+        original_component : str
             Name of component instance to create copy of
 
         Keyword arguments:
@@ -744,16 +809,14 @@ class McCode_instr:
             comment : str
                 Comment that will be displayed before the component
         """
-
-        # could also allow input of a component object        
-        
-        instance_name = args[0]
+        if isinstance(original_component, component): # Update to CammelCase
+            original_component = original_component.name
         """
         If the name starts with COPY, use unique naming as described in the
         McStas manual.
         """
-        if instance_name.startswith("COPY("):
-            target_name = instance_name.split("(", 1)[1]
+        if name.startswith("COPY("):
+            target_name = name.split("(", 1)[1]
             target_name = target_name.split(")", 1)[0]
             instance_name = target_name
 
@@ -763,20 +826,20 @@ class McCode_instr:
                 instance_name = target_name + "_" + str(label)
                 label += 1
 
-        if instance_name in self.component_name_list:
-            raise NameError(("Component name \"" + str(args[0])
+        if name in self.component_name_list:
+            raise NameError(("Component name \"" + str(name)
                              + "\" used twice, " + self.package_name
                              + " does not allow this."
                              + " Rename or remove one instance of this"
                              + " name."))
-        
-        if not args[1] in self.component_name_list:
-            raise NameError("Component name \"" + str(args[1])
+
+        if original_component not in self.component_name_list:
+            raise NameError("Component name \"" + str(original_component)
                             + "\" was not found in the " + self.package_name
                             + " instrument. and thus can not be copied.")
         else:
-            component_to_copy = self.get_component(args[1])
-        
+            component_to_copy = self.get_component(original_component)
+
         # Insert component after component with this name
         if "after" in kwargs:
             if kwargs["after"] not in self.component_name_list:
@@ -788,10 +851,10 @@ class McCode_instr:
             new_index = self.component_name_list.index(kwargs["after"])
 
             new_component = copy.deepcopy(component_to_copy)
-            new_component.name = instance_name
+            new_component.name = name
             self.component_list.insert(new_index+1, new_component)
 
-            self.component_name_list.insert(new_index+1, instance_name)
+            self.component_name_list.insert(new_index+1, name)
 
         # Insert component after component with this name
         elif "before" in kwargs:
@@ -805,20 +868,20 @@ class McCode_instr:
             new_index = self.component_name_list.index(kwargs["before"])
 
             new_component = copy.deepcopy(component_to_copy)
-            new_component.name = instance_name
+            new_component.name = name
             self.component_list.insert(new_index, new_component)
 
-            self.component_name_list.insert(new_index, instance_name)
+            self.component_name_list.insert(new_index, name)
 
         # If after or before keywords absent, place component at the end
         else:
             new_component = copy.deepcopy(component_to_copy)
-            new_component.name = instance_name
+            new_component.name = name
             self.component_list.append(new_component)
-            self.component_name_list.append(instance_name)
-        
+            self.component_name_list.append(name)
+
         # Set the new name of the instance
-        new_component.name = instance_name
+        new_component.name = name
         # Run set_keyword_input again for keyword arguments to take effect
         new_component.set_keyword_input(**kwargs)
 
@@ -836,7 +899,7 @@ class McCode_instr:
         Parameters
         ----------
         name : str
-            Unique name of component whos instance should be returned
+            Unique name of component whose instance should be returned
         """
 
         if name in self.component_name_list:
@@ -996,7 +1059,7 @@ class McCode_instr:
 
         component = self.get_component(name)
         component.set_JUMP(JUMP)
-        
+
     def set_component_SPLIT(self, name, SPLIT):
         """
         Method for setting SPLIT value of named component
@@ -1012,7 +1075,7 @@ class McCode_instr:
 
         component = self.get_component(name)
         component.set_SPLIT(SPLIT)
-        
+
     def set_component_c_code_before(self, name, code):
         """
         Method for setting c code before component
@@ -1028,7 +1091,7 @@ class McCode_instr:
 
         component = self.get_component(name)
         component.set_c_code_before(code)
-        
+
     def set_component_c_code_after(self, name, code):
         """
         Method for setting c code before component
@@ -1043,7 +1106,7 @@ class McCode_instr:
         """
 
         component = self.get_component(name)
-        component.set_c_code_after(code)        
+        component.set_c_code_after(code)
 
     def set_component_comment(self, name, string):
         """
@@ -1107,7 +1170,7 @@ class McCode_instr:
 
         longest_name = len(max(self.component_name_list, key=len))
 
-        # Investigate how this could have been done in a better way
+        # todo Investigate how this could have been done in a better way
         # Find longest field for each type of data printed
         component_type_list = []
         at_xyz_list = []
@@ -1138,6 +1201,10 @@ class McCode_instr:
         AT_pad = 6  # requires (, , ) in addition to data length
         RELATIVE_pad = 0
         ROTATED_pad = 6  # requires (, , ) in addition to data length
+        ROTATED_characters = 7 # ROTATED is 7 characters
+        AT_characters = 2 # AT is 2 characters
+        SPACING_between_strings = 7 # combining 8 strings, 7 spaces
+
 
         # Check if longest line length exceeded
         longest_line_length = (longest_name + name_pad
@@ -1145,7 +1212,10 @@ class McCode_instr:
                                + longest_at_xyz_name + AT_pad
                                + longest_at_relative_name + RELATIVE_pad
                                + longest_rotated_xyz_name + ROTATED_pad
-                               + longest_rotated_relative_name + 8 + 9)
+                               + longest_rotated_relative_name
+                               + ROTATED_characters
+                               + AT_characters
+                               + SPACING_between_strings)
 
         def coordinates_to_string(data):
             return ("("
@@ -1159,12 +1229,15 @@ class McCode_instr:
         configuration file, attempt to split the output over an
         additional line. This is hardcoded up to 3 lines.
         """
+
         if longest_line_length > line_limit:
             n_lines = 2
             longest_at_xyz_name = max([longest_at_xyz_name,
                                        longest_rotated_xyz_name])
             longest_rotated_xyz_name = longest_at_xyz_name
             RELATIVE_pad = 0
+
+            SPACING_between_strings = 4 # combining 5 strings, 4 spaces
 
             longest_line_length_at = (longest_name
                                       + comp_name_pad
@@ -1173,7 +1246,8 @@ class McCode_instr:
                                       + longest_at_xyz_name
                                       + AT_pad
                                       + longest_at_relative_name
-                                      + 7 + 6)
+                                      + ROTATED_characters
+                                      + SPACING_between_strings)
             longest_line_length_rotated = (longest_name
                                            + comp_name_pad
                                            + longest_component_name
@@ -1181,7 +1255,8 @@ class McCode_instr:
                                            + longest_rotated_xyz_name
                                            + ROTATED_pad
                                            + longest_rotated_relative_name
-                                           + 7 + 6)
+                                           + ROTATED_characters
+                                           + SPACING_between_strings)
 
             if (longest_line_length_at > line_limit
                     or longest_line_length_rotated > line_limit):
@@ -1242,7 +1317,7 @@ class McCode_instr:
                                             + ROTATED_pad)
 
                 p_ROTATED_RELATIVE = str(component.ROTATED_relative)
-                
+
                 if component.ROTATED_specified:
                     print(p_name, p_comp_name,
                           "AT     ", p_AT, p_AT_RELATIVE, "\n",
@@ -1295,42 +1370,40 @@ class McCode_instr:
                 print("Creation of the directory %s failed" % path)
 
         file_path = os.path.join(".", "generated_includes",
-                                self.name + "_declare.c") 
-        fo = open(file_path, "w")
-        fo.write("// declare section for %s \n" % self.name)
-        fo.close()
-        
-        file_path = os.path.join(".", "generated_includes",
-                                 self.name + "_declare.c") 
-        fo = open(file_path, "a")
-        #fo.write(self.declare_section)
-        for dec_line in self.declare_list:
-            if isinstance(dec_line, str):
-                # append declare section parts written here
-                fo.write(dec_line)
-            else:
-                dec_line.write_line(fo)
-            fo.write("\n")
-        fo.close()
+                                self.name + "_declare.c")
+        with open(file_path, "w") as fo:
+            fo.write("// declare section for %s \n" % self.name)
 
-        file_path = os.path.join(".", "generated_includes",
-                                 self.name + "_initialize.c")
-        fo = open(file_path, "w")
-        fo.write(self.initialize_section)
-        fo.close()
 
-        file_path = os.path.join(".", "generated_includes",
-                                 self.name + "_trace.c")
-        fo = open(file_path, "w")
-        fo.write(self.trace_section)
-        fo.close()
+            file_path = os.path.join(".", "generated_includes",
+                                     self.name + "_declare.c")
+        with open(file_path, "a") as fo:
+            for dec_line in self.declare_list:
+                if isinstance(dec_line, str):
+                    # append declare section parts written here
+                    fo.write(dec_line)
+                else:
+                    dec_line.write_line(fo)
+                fo.write("\n")
+            fo.close()
 
-        file_path = os.path.join(".", "generated_includes",
-                                 self.name + "_component_trace.c")
-        fo = open(file_path, "w")
-        for component in self.component_list:
-            component.write_component(fo)
-        fo.close()
+            file_path = os.path.join(".", "generated_includes",
+                                     self.name + "_initialize.c")
+            fo = open(file_path, "w")
+            fo.write(self.initialize_section)
+            fo.close()
+
+            file_path = os.path.join(".", "generated_includes",
+                                     self.name + "_trace.c")
+            fo = open(file_path, "w")
+            fo.write(self.trace_section)
+            fo.close()
+
+            file_path = os.path.join(".", "generated_includes",
+                                     self.name + "_component_trace.c")
+            fo = open(file_path, "w")
+            for component in self.component_list:
+                component.write_component(fo)
 
     def write_full_instrument(self):
         """
@@ -1421,11 +1494,15 @@ class McCode_instr:
         fo.write("\nEND\n")
 
         fo.close()
-        
+
     def _handle_parameters(self, given_parameters):
         """
         Internal helper function that handles which parameters to pass
-        when givne a certain set of parameters and values.
+        when given a certain set of parameters and values.
+
+        Adds the given parameters to the default parameters, and ensures all
+        required parameters are provided. Also checks all given parameters
+        match an existing parameter.
         
         Parameters
         ----------
@@ -1433,19 +1510,36 @@ class McCode_instr:
             Parameters given by the user for simulation run
         
         """
-        
+
+        if not isinstance(given_parameters, dict):
+            raise RuntimeError("Given parameters must be a dict.")
+
         # Find required parameters
         required_parameters = []
         default_parameters = {}
 
-        for index in range(0, len(self.parameter_list)):
+        for index in range(len(self.parameter_list)):
             if self.parameter_list[index].value == "":
                 required_parameters.append(self.parameter_list[index].name)
             else:
                 default_parameters.update({self.parameter_list[index].name:
                                            self.parameter_list[index].value})
 
-        # Check if parameters are given
+        # Check if all given parameters correspond to legal parameters
+        for given_par in given_parameters:
+            if not isinstance(given_par, str):
+                raise NameError("Given parameter must be a string.")
+            if (given_par not in required_parameters
+                    and given_par not in default_parameters):
+                raise NameError("Given parameter: \"" + str(given_par)
+                                + "\" did not match any in instrument. "
+                                + "Currently available parameters: \n"
+                                + "  Required parameters:"
+                                + str(required_parameters) + "\n"
+                                + "  Default parameters: "
+                                + str(list(default_parameters.keys())))
+
+        # Check if required parameters are provided
         if len(given_parameters) is 0:
             if len(required_parameters) > 0:
                 # print required parameters and raise error
@@ -1460,13 +1554,13 @@ class McCode_instr:
             for name in required_parameters:
                 if name not in given_parameters:
                     raise NameError("The required instrument parameter "
-                                    + name
+                                    + str(name)
                                     + " was not provided.")
             # Overwrite default parameters with given parameters
             default_parameters.update(given_parameters)
             return default_parameters
 
-    def run_full_instrument(self, *args, **kwargs):
+    def run_full_instrument(self, **kwargs):
         """
         Runs McStas instrument described by this class, returns list of
         McStasData
@@ -1496,18 +1590,33 @@ class McCode_instr:
             executable_path : str
                 Path to mcrun command, "" if already in path
         """
-        # Make sure mcrun path is in kwargs
+        # Make sure executable path is in kwargs
         if "executable_path" not in kwargs:
             kwargs["executable_path"] = self.executable_path
+        else:
+            if not os.path.isdir(str(kwargs["executable_path"])):
+                raise RuntimeError("The executable_path provided to "
+                                   + "run_full_instrument does not point to a"
+                                   + "directory: \""
+                                   + str(kwargs["executable_path"]) + "\"")
 
         if "executable" not in kwargs:
-            kwargs["executable"] = self.executable
+            kwargs["executable"] = str(self.executable)
+        else:
+            # check provided executable can be converted to string
+            str(kwargs["executable"])
 
         if "run_path" not in kwargs:
             # path where mcrun is executed, will load components there
             # if not set, use input_folder given
             kwargs["run_path"] = self.input_path
-                    
+        else:
+            if not os.path.isdir(str(kwargs["run_path"])):
+                raise RuntimeError("The run_path provided to "
+                                   + "run_full_instrument does not point to a"
+                                   + "directory: \""
+                                   + str(kwargs["run_path"]) + "\"")
+
         if "parameters" in kwargs:
             given_parameters = kwargs["parameters"]
         else:
@@ -1528,12 +1637,12 @@ class McCode_instr:
         # Run the simulation and return data
         simulation.run_simulation(**kwargs)
         return simulation.load_results()
-    
+
     def show_instrument(self, *args, **kwargs):
         """
-        Uses mcdisplay to show the instrument in webbroser
+        Uses mcdisplay to show the instrument in web browser
         """
-        
+
         if "parameters" in kwargs:
             given_parameters = kwargs["parameters"]
         else:
@@ -1559,7 +1668,7 @@ class McCode_instr:
 
         full_command = (bin_path + executable + " "
                         + os.path.join(self.input_path, self.name + ".instr")
-                        + " " + parameter_string) 
+                        + " " + parameter_string)
 
         process = subprocess.run(full_command, shell=True,
                                  stdout=subprocess.PIPE,
@@ -1583,11 +1692,23 @@ class McStas_instr(McCode_instr):
     name : str
         name of instrument file
 
-    author : str
+    author : str, default "Python Instrument Generator"
         name of user of McStasScript, written to the file
 
-    origin : str
+    origin : str, default "ESS DMSC"
         origin of instrument file (affiliation)
+
+    executable : str
+        Name of executable, mcrun or mxrun
+
+    particle : str
+        Name of probe particle, "neutron" or "x-ray"
+
+    package_name : str
+        Name of package, "McStas" or "McXtrace"
+
+    input_path : str, default "."
+        directory in which simulation is executed, uses components found there
 
     executable_path : str
         absolute path of mcrun command, or empty if it is in path
@@ -1596,7 +1717,7 @@ class McStas_instr(McCode_instr):
         contains all input parameters to be written to file
 
     declare_list : list of declare_variable instances
-        contains all declare parrameters to be written to file
+        contains all declare parameters to be written to file
 
     initialize_section : str
         string containing entire initialize section to be written
@@ -1613,13 +1734,25 @@ class McStas_instr(McCode_instr):
     component_name_list : list of strings
         list of names of the components in the instrument
 
+    component_class_lib : dict
+        dict of custom Component classes made at run time
+
+    component_reader : ComponentReader
+        ComponentReader instance for reading component files
+
+    package_path : str
+        Path to mccode package containing component folders
+
     Methods
     -------
     add_parameter(*args, **kwargs)
         Adds input parameter to the define section
 
-    add_declare_var()
-        Adds declared variable ot the declare section
+    add_declare_var(type, name)
+        Add declared variable called name of given type to the declare section
+
+    append_declare(string)
+        Appends to the declare section
 
     append_initialize(string)
         Appends a string to the initialize section, then adds new line
@@ -1636,11 +1769,20 @@ class McStas_instr(McCode_instr):
     append_trace(string)
         Obsolete method, add components instead (used in write_c_files)
 
+    append_trace_no_new_line(string)
+        Obsolete method, add components instead (used in write_c_files)
+
     show_components(string)
         Shows available components in given category
 
+    component_help(name)
+        Shows help on component of given name
+
     add_component(instance_name, component_name, **kwargs)
         Add a component to the instrument file
+
+    copy_component(new_component_name, original_component, **kwargs)
+        Makes a copy of original_component with new_component_name
 
     get_component(instance_name)
         Returns component instance with name instance_name
@@ -1698,6 +1840,9 @@ class McStas_instr(McCode_instr):
 
     write_full_instrument()
         Writes full instrument file to current directory
+
+    show_instrument()
+        Shows instrument using mcdisplay
 
     run_full_instrument(**kwargs)
         Writes instrument files and runs simulation.
@@ -1750,6 +1895,7 @@ class McStas_instr(McCode_instr):
             self.package_path = ""
             self.line_limit = 180
 
+
 class McXtrace_instr(McCode_instr):
     """
     Main class for writing a McXtrace instrument using McStasScript
@@ -1764,11 +1910,23 @@ class McXtrace_instr(McCode_instr):
     name : str
         name of instrument file
 
-    author : str
+    author : str, default "Python Instrument Generator"
         name of user of McStasScript, written to the file
 
-    origin : str
+    origin : str, default "ESS DMSC"
         origin of instrument file (affiliation)
+
+    executable : str
+        Name of executable, mcrun or mxrun
+
+    particle : str
+        Name of probe particle, "neutron" or "x-ray"
+
+    package_name : str
+        Name of package, "McStas" or "McXtrace"
+
+    input_path : str, default "."
+        directory in which simulation is executed, uses components found there
 
     executable_path : str
         absolute path of mcrun command, or empty if it is in path
@@ -1777,7 +1935,7 @@ class McXtrace_instr(McCode_instr):
         contains all input parameters to be written to file
 
     declare_list : list of declare_variable instances
-        contains all declare parrameters to be written to file
+        contains all declare parameters to be written to file
 
     initialize_section : str
         string containing entire initialize section to be written
@@ -1794,13 +1952,25 @@ class McXtrace_instr(McCode_instr):
     component_name_list : list of strings
         list of names of the components in the instrument
 
+    component_class_lib : dict
+        dict of custom Component classes made at run time
+
+    component_reader : ComponentReader
+        ComponentReader instance for reading component files
+
+    package_path : str
+        Path to mccode package containing component folders
+
     Methods
     -------
     add_parameter(*args, **kwargs)
         Adds input parameter to the define section
 
-    add_declare_var()
-        Adds declared variable ot the declare section
+    add_declare_var(type, name)
+        Add declared variable called name of given type to the declare section
+
+    append_declare(string)
+        Appends to the declare section
 
     append_initialize(string)
         Appends a string to the initialize section, then adds new line
@@ -1817,11 +1987,20 @@ class McXtrace_instr(McCode_instr):
     append_trace(string)
         Obsolete method, add components instead (used in write_c_files)
 
+    append_trace_no_new_line(string)
+        Obsolete method, add components instead (used in write_c_files)
+
     show_components(string)
         Shows available components in given category
 
+    component_help(name)
+        Shows help on component of given name
+
     add_component(instance_name, component_name, **kwargs)
         Add a component to the instrument file
+
+    copy_component(new_component_name, original_component, **kwargs)
+        Makes a copy of original_component with new_component_name
 
     get_component(instance_name)
         Returns component instance with name instance_name
@@ -1879,6 +2058,9 @@ class McXtrace_instr(McCode_instr):
 
     write_full_instrument()
         Writes full instrument file to current directory
+
+    show_instrument()
+        Shows instrument using mcdisplay
 
     run_full_instrument(**kwargs)
         Writes instrument files and runs simulation.
