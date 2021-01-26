@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
      name='McStasScript',
-     version='0.0.24',
+     version='0.0.25',
      author="Mads Bertelsen",
      author_email="Mads.Bertelsen@ess.eu",
      description="A python scripting interface for McStas",
@@ -19,5 +19,6 @@ setuptools.setup(
          "Programming Language :: Python :: 3",
          "License :: OSI Approved :: GNU General Public License (GPL)",
          "Operating System :: OS Independent",
+         "Topic :: Scientific/Engineering"
      ],
  )
