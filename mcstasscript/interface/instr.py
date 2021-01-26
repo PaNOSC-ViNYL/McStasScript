@@ -7,9 +7,9 @@ import subprocess
 import copy
 
 from mcstasscript.data.data import McStasData
-from mcstasscript.helper.mcstas_objects import declare_variable
-from mcstasscript.helper.mcstas_objects import parameter_variable
-from mcstasscript.helper.mcstas_objects import component
+from mcstasscript.helper.mcstas_objects import DeclareVariable
+from mcstasscript.helper.mcstas_objects import ParameterVariable
+from mcstasscript.helper.mcstas_objects import Component
 from mcstasscript.helper.component_reader import ComponentReader
 from mcstasscript.helper.managed_mcrun import ManagedMcrun
 from mcstasscript.helper.formatting import is_legal_filename
@@ -39,10 +39,10 @@ class McCode_instr:
     executable_path : str
         absolute path of mcrun command, or empty if it is in path
 
-    parameter_list : list of parameter_variable instances
+    parameter_list : list of ParameterVariable instances
         contains all input parameters to be written to file
 
-    declare_list : list of declare_variable instances
+    declare_list : list of DeclareVariable instances
         contains all declare parrameters to be written to file
 
     initialize_section : str
@@ -265,8 +265,8 @@ class McCode_instr:
             comment : str
                 Comment displayed next to declaration of parameter
         """
-        # parameter_variable class documented independently
-        self.parameter_list.append(parameter_variable(*args, **kwargs))
+        # ParameterVariable class documented independently
+        self.parameter_list.append(ParameterVariable(*args, **kwargs))
 
     def show_parameters(self, **kwargs):
         """
@@ -377,8 +377,8 @@ class McCode_instr:
                 Comment displayed next to declaration of parameter
 
         """
-        # declare_variable class documented independently
-        self.declare_list.append(declare_variable(*args, **kwargs))
+        # DeclareVariable class documented independently
+        self.declare_list.append(DeclareVariable(*args, **kwargs))
         
     def append_declare(self, string):
         """
@@ -578,21 +578,21 @@ class McCode_instr:
             input_dict["line_limit"] = self.line_limit
 
             self.component_class_lib[component_name] = type(component_name,
-                                                            (component,),
+                                                            (Component,),
                                                             input_dict)
 
         return self.component_class_lib[component_name](*args, **kwargs)
 
     def add_component(self, *args, **kwargs):
         """
-        Method for adding a new component instance to the instrument
+        Method for adding a new Component instance to the instrument
 
-        Creates a new component instance in the instrument.  This
+        Creates a new Component instance in the instrument.  This
         requires a unique instance name of the component to be used for
         future reference and the name of the McStas component to be
         used.  The component is placed at the end of the instrument file
         unless otherwise specified with the after and before keywords.
-        The component may be initialized using other keyword arguments,
+        The Component may be initialized using other keyword arguments,
         but all attributes can be set with approrpiate methods.
 
         Parameters
@@ -689,9 +689,9 @@ class McCode_instr:
     
     def copy_component(self, *args, **kwargs):
         """
-        Method for adding a copy of a component instance to the instrument
+        Method for adding a copy of a Component instance to the instrument
 
-        Creates a copy of component instance in the instrument.  This
+        Creates a copy of Component instance in the instrument.  This
         requires a unique instance name of the component to be used for
         future reference and the name of the McStas component to be
         used.  The component is placed at the end of the instrument file
@@ -1592,10 +1592,10 @@ class McStas_instr(McCode_instr):
     executable_path : str
         absolute path of mcrun command, or empty if it is in path
 
-    parameter_list : list of parameter_variable instances
+    parameter_list : list of ParameterVariable instances
         contains all input parameters to be written to file
 
-    declare_list : list of declare_variable instances
+    declare_list : list of DeclareVariable instances
         contains all declare parrameters to be written to file
 
     initialize_section : str
@@ -1773,10 +1773,10 @@ class McXtrace_instr(McCode_instr):
     executable_path : str
         absolute path of mcrun command, or empty if it is in path
 
-    parameter_list : list of parameter_variable instances
+    parameter_list : list of ParameterVariable instances
         contains all input parameters to be written to file
 
-    declare_list : list of declare_variable instances
+    declare_list : list of DeclareVariable instances
         contains all declare parrameters to be written to file
 
     initialize_section : str
@@ -1788,7 +1788,7 @@ class McXtrace_instr(McCode_instr):
     finally_section : str
         string containing entire finally section to be written
 
-    component_list : list of component instances
+    component_list : list of Component instances
         list of components in the instrument
 
     component_name_list : list of strings
