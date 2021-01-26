@@ -99,7 +99,7 @@ class TestSimpleInstrument(unittest.TestCase):
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_simple_instrument(self, mock_stdout):
         """
-        Test that an instrument can run and that the results matches
+        Test that an instrument can run and that the results match
         expectations. Here beam in small area in the middle of the
         detector.
         """
@@ -127,7 +127,7 @@ class TestSimpleInstrument(unittest.TestCase):
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_simple_instrument_input(self, mock_stdout):
         """
-        Test that an instrument can run and that the results matches
+        Test that an instrument can run and that the results match
         expectations. Here beam in small area in the middle of the
         detector.
         """
@@ -187,7 +187,7 @@ class TestSimpleInstrument(unittest.TestCase):
     def test_slit_instrument(self, mock_stdout):
         """
         Test parameters can be controlled through McStasScript.  Here
-        a slit is can be moved, but the default value of 0 should be
+        a slit can be moved, but the default value of 0 should be
         used.
         """
         CURRENT_DIR = os.getcwd()

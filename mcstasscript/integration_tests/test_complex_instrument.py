@@ -13,7 +13,7 @@ def setup_complex_instrument():
     Sets up guide system with two guides that are placed next to one
     another with separate entrances but converge at the end.
 
-    It attempts to use as McStas keywords and features as possible.
+    It attempts to use as many McStas keywords and features as possible.
     """
     Instr = instr.McStas_instr("integration_test_complex",
                                author="test_suite",
