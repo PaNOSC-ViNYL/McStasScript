@@ -810,7 +810,7 @@ class McCode_instr:
             comment : str
                 Comment that will be displayed before the component
         """
-        if isinstance(original_component, component): # Update to CammelCase
+        if isinstance(original_component, Component):
             original_component = original_component.name
         """
         If the name starts with COPY, use unique naming as described in the
