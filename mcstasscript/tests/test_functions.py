@@ -291,7 +291,7 @@ class Test_load_data(unittest.TestCase):
     tested elsewhere. Since the load data is tested elsewhere, this
     function has just a single test to check the interface.
     """
-    def test_crun_load_data_PSD4PI(self):
+    def test_mcrun_load_data_PSD4PI(self):
         """
         Use test_data_set to test load_data for PSD_4PI
         """
