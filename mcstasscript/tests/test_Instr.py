@@ -1950,7 +1950,6 @@ class TestMcStas_instr(unittest.TestCase):
                                          universal_newlines=True,
                                          cwd=run_path)
 
-
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch("subprocess.run")
     def test_show_instrument_basic(self, mock_sub, mock_stdout):
