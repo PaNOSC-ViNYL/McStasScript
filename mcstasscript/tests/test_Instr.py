@@ -1,7 +1,6 @@
 import os
 import os.path
 import io
-import builtins
 import unittest
 import unittest.mock
 import datetime
@@ -23,9 +22,12 @@ def setup_instr_no_path():
     current_work_dir = os.getcwd()
     os.chdir(THIS_DIR)  # Set work directory to test folder
 
-    return McStas_instr("test_instrument")
+    instrument = McStas_instr("test_instrument")
 
     os.chdir(current_work_dir)
+
+    return instrument
+
 
 def setup_x_ray_instr_no_path():
     """
@@ -36,9 +38,12 @@ def setup_x_ray_instr_no_path():
     current_work_dir = os.getcwd()
     os.chdir(THIS_DIR)  # Set work directory to test folder
 
-    return McXtrace_instr("test_instrument")
+    instrument = McXtrace_instr("test_instrument")
 
     os.chdir(current_work_dir)
+
+    return instrument
+
 
 def setup_instr_root_path():
     """
@@ -49,9 +54,12 @@ def setup_instr_root_path():
     current_work_dir = os.getcwd()
     os.chdir(THIS_DIR)  # Set work directory to test folder
 
-    return McStas_instr("test_instrument", package_path="/")
+    instrument = McStas_instr("test_instrument", package_path="/")
 
     os.chdir(current_work_dir)
+
+    return instrument
+
 
 def setup_x_ray_instr_root_path():
     """
@@ -62,9 +70,12 @@ def setup_x_ray_instr_root_path():
     current_work_dir = os.getcwd()
     os.chdir(THIS_DIR)  # Set work directory to test folder
 
-    return McXtrace_instr("test_instrument", package_path="/")
+    instrument = McXtrace_instr("test_instrument", package_path="/")
 
     os.chdir(current_work_dir)
+
+    return instrument
+
 
 def setup_instr_with_path():
     """
@@ -78,9 +89,12 @@ def setup_instr_with_path():
     current_work_dir = os.getcwd()
     os.chdir(THIS_DIR)  # Set work directory to test folder
 
+    instrument = McStas_instr("test_instrument", package_path=dummy_path)
+
     os.chdir(current_work_dir)  # Return to previous workdir
 
-    return McStas_instr("test_instrument", package_path=dummy_path)
+    return instrument
+
 
 def setup_x_ray_instr_with_path():
     """
@@ -94,9 +108,12 @@ def setup_x_ray_instr_with_path():
     current_work_dir = os.getcwd()
     os.chdir(THIS_DIR)  # Set work directory to test folder
 
+    instrument = McXtrace_instr("test_instrument", package_path=dummy_path)
+
     os.chdir(current_work_dir)  # Return to previous workdir
 
-    return McXtrace_instr("test_instrument", package_path=dummy_path)
+    return instrument
+
 
 def setup_instr_with_input_path():
     """
@@ -104,7 +121,6 @@ def setup_instr_with_input_path():
     the dummy installation in the test folder. In addition the input_path
     is set to a folder in the test directory using an absolute path.
     """
-
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
     input_path = os.path.join(THIS_DIR, "test_input_folder")
@@ -112,11 +128,14 @@ def setup_instr_with_input_path():
     current_work_dir = os.getcwd()
     os.chdir(THIS_DIR)  # Set work directory to test folder
 
+    instrument = McStas_instr("test_instrument",
+                              package_path=dummy_path,
+                              input_path=input_path)
+
     os.chdir(current_work_dir)  # Return to previous workdir
 
-    return McStas_instr("test_instrument",
-                        package_path=dummy_path,
-                        input_path=input_path)
+    return instrument
+
 
 def setup_instr_with_input_path_relative():
     """
@@ -124,17 +143,18 @@ def setup_instr_with_input_path_relative():
     the dummy installation in the test folder. In addition the input_path
     is set to a folder in the test directory using a relative path.
     """
-
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
     current_work_dir = os.getcwd()
     os.chdir(THIS_DIR)  # Set work directory to test folder
 
+    instrument = McStas_instr("test_instrument",
+                              package_path="dummy_mcstas",
+                              input_path="test_input_folder")
+
     os.chdir(current_work_dir)  # Return to previous workdir
 
-    return McStas_instr("test_instrument",
-                        package_path="dummy_mcstas",
-                        input_path="test_input_folder")
+    return instrument
 
 
 def setup_populated_instr():
@@ -148,11 +168,12 @@ def setup_populated_instr():
     instr.add_declare_var("double", "two_theta")
     instr.append_initialize("two_theta = 2.0*theta;")
 
-    comp1 = instr.add_component("first_component", "test_for_reading")
-    comp2 = instr.add_component("second_component", "test_for_reading")
-    comp3 = instr.add_component("third_component", "test_for_reading")
+    instr.add_component("first_component", "test_for_reading")
+    instr.add_component("second_component", "test_for_reading")
+    instr.add_component("third_component", "test_for_reading")
 
     return instr
+
 
 def setup_populated_instr_with_dummy_path():
     """
@@ -192,11 +213,12 @@ def setup_populated_x_ray_instr():
     instr.add_declare_var("double", "two_theta")
     instr.append_initialize("two_theta = 2.0*theta;")
 
-    comp1 = instr.add_component("first_component", "test_for_reading")
-    comp2 = instr.add_component("second_component", "test_for_reading")
-    comp3 = instr.add_component("third_component", "test_for_reading")
+    instr.add_component("first_component", "test_for_reading")
+    instr.add_component("second_component", "test_for_reading")
+    instr.add_component("third_component", "test_for_reading")
 
     return instr
+
 
 def setup_populated_x_ray_instr_with_dummy_path():
     """
@@ -237,14 +259,14 @@ def setup_populated_with_some_options_instr():
     instr.append_initialize("two_theta = 2.0*theta;")
 
     comp1 = instr.add_component("first_component", "test_for_reading")
-    comp1.set_AT([0,0,1])
+    comp1.set_AT([0, 0, 1])
     comp1.set_GROUP("Starters")
     comp2 = instr.add_component("second_component", "test_for_reading")
-    comp2.set_AT([0,0,2], RELATIVE="first_component")
-    comp2.set_ROTATED([0,30,0])
+    comp2.set_AT([0, 0, 2], RELATIVE="first_component")
+    comp2.set_ROTATED([0, 30, 0])
     comp2.set_WHEN("1==1")
-    comp2.yheight=1.23
-    comp3 = instr.add_component("third_component", "test_for_reading")
+    comp2.yheight = 1.23
+    instr.add_component("third_component", "test_for_reading")
 
     return instr
 
@@ -253,10 +275,6 @@ class TestMcStas_instr(unittest.TestCase):
     """
     Tests of the main class in McStasScript called McStas_instr.
     """
-
-    #def test_show_test_folder(self):
-    #    os.system("tree")
-
 
     def test_simple_initialize(self):
         """
@@ -278,8 +296,10 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(my_instrument.author, "Mads")
         self.assertEqual(my_instrument.origin, "DMSC")
-        self.assertEqual(my_instrument.executable_path, "./dummy_mcstas/contrib")
-        self.assertEqual(my_instrument.package_path, "./dummy_mcstas/misc")
+        self.assertEqual(my_instrument.executable_path,
+                         "./dummy_mcstas/contrib")
+        self.assertEqual(my_instrument.package_path,
+                         "./dummy_mcstas/misc")
 
     def test_load_config_file(self):
         """
@@ -460,7 +480,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(instr.declare_list[0].name, "two_theta")
         self.assertEqual(instr.declare_list[0].comment, " // test par")
-        
+
     def test_simple_append_declare(self):
         """
         Appending to declare adds an object to the declare list, and the
@@ -475,11 +495,11 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(instr.declare_list[0],
                          "First line of declare")
-        self.assertEqual(instr.declare_list[1], 
+        self.assertEqual(instr.declare_list[1],
                          "Second line of declare")
-        self.assertEqual(instr.declare_list[2], 
+        self.assertEqual(instr.declare_list[2],
                          "Third line of declare")
-        
+
     def test_simple_append_declare_var_mix(self):
         """
         Appending to declare adds an object to the declare list, and the
@@ -496,8 +516,8 @@ class TestMcStas_instr(unittest.TestCase):
                          "First line of declare")
         self.assertEqual(instr.declare_list[1].name, "two_theta")
         self.assertEqual(instr.declare_list[1].comment, " // test par")
-        self.assertEqual(instr.declare_list[2], 
-                         "Third line of declare")        
+        self.assertEqual(instr.declare_list[2],
+                         "Third line of declare")
 
     def test_simple_append_initialize(self):
         """
@@ -652,7 +672,7 @@ class TestMcStas_instr(unittest.TestCase):
                          + "work_directory / input_path:")
         self.assertEqual(output[1], "     test_for_reading.comp")
         self.assertEqual(output[2], "These definitions will be used "
-                                    +"instead of the installed versions.")
+                         + "instead of the installed versions.")
         self.assertEqual(output[3],
                          "Here are the available component categories:")
         self.assertEqual(output[4], " sources")
@@ -709,7 +729,7 @@ class TestMcStas_instr(unittest.TestCase):
                          + "work_directory / input_path:")
         self.assertEqual(output[1], "     test_for_structure.comp")
         self.assertEqual(output[2], "These definitions will be used "
-                                    +"instead of the installed versions.")
+                         + "instead of the installed versions.")
         self.assertEqual(output[3],
                          "Here are the available component categories:")
         self.assertEqual(output[4], " sources")
@@ -736,7 +756,7 @@ class TestMcStas_instr(unittest.TestCase):
                          + "work_directory / input_path:")
         self.assertEqual(output[1], "     test_for_structure.comp")
         self.assertEqual(output[2], "These definitions will be used "
-                                    +"instead of the installed versions.")
+                         + "instead of the installed versions.")
         self.assertEqual(output[3],
                          "Here are the available component categories:")
         self.assertEqual(output[4], " sources")
@@ -902,9 +922,9 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_instr_with_path()
 
-        comp = instr.add_component("test_component",
-                                   "test_for_reading",
-                                   WHEN="1<2")
+        instr.add_component("test_component",
+                            "test_for_reading",
+                            WHEN="1<2")
 
         self.assertEqual(len(instr.component_list), 1)
         self.assertEqual(instr.component_list[0].name, "test_component")
@@ -926,9 +946,9 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_populated_instr()
 
-        comp = instr.add_component("test_component",
-                                   "test_for_reading",
-                                   before="first_component")
+        instr.add_component("test_component",
+                            "test_for_reading",
+                            before="first_component")
 
         self.assertEqual(len(instr.component_list), 4)
         self.assertEqual(instr.component_list[0].name, "test_component")
@@ -947,9 +967,9 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_populated_instr()
 
-        comp = instr.add_component("test_component",
-                                   "test_for_reading",
-                                   after="first_component")
+        instr.add_component("test_component",
+                            "test_for_reading",
+                            after="first_component")
 
         self.assertEqual(len(instr.component_list), 4)
         self.assertEqual(instr.component_list[1].name, "test_component")
@@ -970,9 +990,9 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_populated_instr()
 
         with self.assertRaises(NameError):
-            comp = instr.add_component("test_component",
-                                       "test_for_reading",
-                                       after="non_existent_component")
+            instr.add_component("test_component",
+                                "test_for_reading",
+                                after="non_existent_component")
 
     def test_add_component_simple_before_error(self):
         """
@@ -989,9 +1009,9 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_populated_instr()
 
         with self.assertRaises(NameError):
-            comp = instr.add_component("test_component",
-                                       "test_for_reading",
-                                       before="non_existent_component")
+            instr.add_component("test_component",
+                                "test_for_reading",
+                                before="non_existent_component")
 
     def test_add_component_simple_double_naming_error(self):
         """
@@ -1002,7 +1022,7 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_populated_instr()
 
         with self.assertRaises(NameError):
-            comp = instr.add_component("first_component", "test_for_reading")
+            instr.add_component("first_component", "test_for_reading")
 
     def test_copy_component_simple(self):
         """
@@ -1010,7 +1030,7 @@ class TestMcStas_instr(unittest.TestCase):
         """
 
         instr = setup_populated_with_some_options_instr()
-        
+
         comp = instr.copy_component("copy_of_second_comp", "second_component")
 
         self.assertEqual(comp.name, "copy_of_second_comp")
@@ -1028,7 +1048,7 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_populated_with_some_options_instr()
 
         with self.assertRaises(NameError):
-            comp = instr.copy_component("copy_of_second_comp", "unknown_component")
+            instr.copy_component("copy_of_second_comp", "unknown_component")
 
     def test_copy_component_simple_object(self):
         """
@@ -1051,14 +1071,14 @@ class TestMcStas_instr(unittest.TestCase):
         """
         Checks that a component can be copied and that keyword
         arguments given under copy operation is successfully
-        applied to the new component. A check is also made to 
+        applied to the new component. A check is also made to
         ensure that the original component was not modified.
         """
 
         instr = setup_populated_with_some_options_instr()
 
         comp = instr.copy_component("copy_of_second_comp", "second_component",
-                                    AT=[1,2,3], SPLIT=10)
+                                    AT=[1, 2, 3], SPLIT=10)
 
         self.assertEqual(comp.name, "copy_of_second_comp")
         self.assertEqual(comp.yheight, 1.23)
@@ -1066,7 +1086,7 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(comp.AT_data[1], 2)
         self.assertEqual(comp.AT_data[2], 3)
         self.assertEqual(comp.SPLIT, 10)
-        
+
         # ensure original component was not changed
         original = instr.get_component("second_component")
         self.assertEqual(original.name, "second_component")
@@ -1098,7 +1118,7 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_populated_instr()
 
         with self.assertRaises(NameError):
-            comp = instr.get_component("non_existing_component")
+            instr.get_component("non_existing_component")
 
     def test_get_last_component_simple(self):
         """
@@ -1294,7 +1314,8 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_populated_instr()
 
-        instr.set_component_c_code_before("second_component", "%include before.instr")
+        instr.set_component_c_code_before("second_component",
+                                          "%include before.instr")
 
         comp = instr.get_component("second_component")
 
@@ -1308,7 +1329,8 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_populated_instr()
 
-        instr.set_component_c_code_after("second_component", "%include after.instr")
+        instr.set_component_c_code_after("second_component",
+                                         "%include after.instr")
 
         comp = instr.get_component("second_component")
 
@@ -1350,8 +1372,6 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[3], "  " + par_name + warning)
 
         self.assertEqual(output[4], "AT [0, 0, 0] ABSOLUTE")
-        # Rotation not printed since it was never specified
-        #self.assertEqual(output[5], "ROTATED [0, 0, 0] ABSOLUTE")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_print_component_short(self, mock_stdout):
@@ -1512,7 +1532,7 @@ class TestMcStas_instr(unittest.TestCase):
                     + " ")
         self.assertEqual(output[0], expected)
 
-        expected = ("  AT      (-0.1, 12, dist) RELATIVE home")
+        expected = "  AT      (-0.1, 12, dist) RELATIVE home"
         self.assertEqual(output[1], expected)
 
         expected = (bcolors.BOLD
@@ -1525,10 +1545,10 @@ class TestMcStas_instr(unittest.TestCase):
                     + " ")
         self.assertEqual(output[2], expected)
 
-        expected = ("  AT      (0, 0, 0) ABSOLUTE ")
+        expected = "  AT      (0, 0, 0) ABSOLUTE "
         self.assertEqual(output[3], expected)
 
-        expected = ("  ROTATED (-4, 0.001, theta) RELATIVE etc")
+        expected = "  ROTATED (-4, 0.001, theta) RELATIVE etc"
         self.assertEqual(output[4], expected)
 
         expected = (bcolors.BOLD
@@ -1541,7 +1561,7 @@ class TestMcStas_instr(unittest.TestCase):
                     + " ")
         self.assertEqual(output[5], expected)
 
-        expected = ("  AT      (0, 0, 0) ABSOLUTE")
+        expected = "  AT      (0, 0, 0) ABSOLUTE"
         self.assertEqual(output[6], expected)
 
     @unittest.mock.patch('__main__.__builtins__.open',
@@ -1581,7 +1601,6 @@ class TestMcStas_instr(unittest.TestCase):
         call = unittest.mock.call
         wrts = [
          call("// declare section for test_instrument \n"),
-         #call(""),
          call("double two_theta;"),
          call("\n"),
          call("// Start of initialize for generated test_instrument\n"
@@ -1666,7 +1685,6 @@ class TestMcStas_instr(unittest.TestCase):
          my_call(")\n"),
          my_call("\n"),
          my_call("DECLARE \n%{\n"),
-         #my_call(""),
          my_call("double two_theta;"),
          my_call("\n"),
          my_call("%}\n\n"),
@@ -1862,7 +1880,8 @@ class TestMcStas_instr(unittest.TestCase):
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch("subprocess.run")
-    def test_run_full_instrument_overwrite_default(self, mock_sub, mock_stdout):
+    def test_run_full_instrument_overwrite_default(self, mock_sub,
+                                                   mock_stdout):
         """
         Check that default parameters are overwritten by given
         parameters in run_full_instrument.
@@ -1894,7 +1913,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         expected_path = os.path.join(executable_path, "mcrun")
 
-        current_directory = os.getcwd()
+        os.getcwd()
         expected_folder_path = os.path.join(THIS_DIR, "test_data_set")
 
         # a double space because of a missing option

@@ -1,5 +1,4 @@
 import io
-import builtins
 import unittest
 import unittest.mock
 
@@ -161,7 +160,6 @@ class TestComponent(unittest.TestCase):
         self.assertEqual(comp.SPLIT, 7)
         self.assertEqual(comp.comment, "test comment")
 
-
     def test_Component_basic_init_set_AT(self):
         """
         Testing set_AT method
@@ -283,7 +281,7 @@ class TestComponent(unittest.TestCase):
         self.assertEqual(comp.AT_relative, "RELATIVE sample")
         self.assertEqual(comp.ROTATED_relative, "RELATIVE sample")
 
-    def test_Component_basic_init_set_RELATIVE(self):
+    def test_Component_basic_object_ref_init_set_RELATIVE(self):
         """
         Testing set_RELATIVE method with Component object input
         """
@@ -364,7 +362,7 @@ class TestComponent(unittest.TestCase):
         self.assertEqual(comp.name, "test_component")
         self.assertEqual(comp.component_name, "Arm")
         self.assertEqual(comp.JUMP, "test jump")
-        
+
     def test_Component_basic_init_set_SPLIT(self):
         """
         Testing set_SPLIT method
@@ -454,18 +452,17 @@ class TestComponent(unittest.TestCase):
         handle.write.assert_has_calls(expected_writes, any_order=False)
 
     @unittest.mock.patch('__main__.__builtins__.open',
-                         new_callable=unittest.mock.mock_open)    
+                         new_callable=unittest.mock.mock_open)
     def test_Component_write_to_file_include(self, mock_f):
         """
         Testing that a Component can be written to file with the
         expected output. Here with simple input.
         """
-
         comp = Component("test_component", "Arm",
                          c_code_before="%include \"test.instr\"")
-        
+
         comp.set_c_code_after("%include \"after.instr\"")
-        
+
         comp._unfreeze()
         # Need to set up attribute parameters
         # Also need to categorize them as when created
@@ -514,7 +511,7 @@ class TestComponent(unittest.TestCase):
             comp.write_component(m_fo)
 
         my_call = unittest.mock.call
-        expected_writes = [my_call("SPLIT 7 "), 
+        expected_writes = [my_call("SPLIT 7 "),
                            my_call("COMPONENT test_component = Arm("),
                            my_call("\n"),
                            my_call(" new_par1 = 1.5"),

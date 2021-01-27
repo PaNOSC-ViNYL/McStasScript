@@ -1,5 +1,3 @@
-import io
-import builtins
 import unittest
 import unittest.mock
 
@@ -154,7 +152,7 @@ class Test_ParameterVariable(unittest.TestCase):
         """
 
         par = ParameterVariable("double", "test", value="\"Al\"",
-                                 comment="test comment")
+                                comment="test comment")
 
         with mock_f('test.txt', 'w') as m_fo:
             par.write_parameter(m_fo, ",")

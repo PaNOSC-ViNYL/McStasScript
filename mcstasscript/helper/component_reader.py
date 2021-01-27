@@ -84,7 +84,7 @@ class ComponentReader:
             raise ValueError("Can't find given input_path,"
                              + " directory must exist.")
         """
-        If components are present both in the McStas install and the 
+        If components are present both in the McStas install and the
         work directory, the version in the work directory is used. The user
         is informed of this behavior when the instrument object is created.
         """
@@ -109,7 +109,6 @@ class ComponentReader:
 
             print("These definitions will be used instead of the installed "
                   + "versions.")
-
 
     def show_categories(self):
         """
@@ -316,13 +315,10 @@ class ComponentReader:
             if (line.strip().startswith("DEFINITION PARAMETERS")
                     or line.strip().startswith("SETTING PARAMETERS")):
 
-
-                line = line.split("//")[0] # Remove comments
+                line = line.split("//")[0]  # Remove comments
                 parts = line.split("(")
                 parameter_parts = parts[1].split(",")
-                
                 parameter_parts = self.correct_for_brackets(parameter_parts)
-
                 parameter_parts = list(filter(("\n").__ne__, parameter_parts))
 
                 break_now = False
@@ -374,13 +370,13 @@ class ComponentReader:
                             par_name = name_value[0].strip()
                             par_value = name_value[1].strip()
 
-                            if temp_par_type is "double":
+                            if temp_par_type == "double":
                                 try:
                                     par_value = float(par_value)
                                 except:
                                     # Could change the type
                                     par_value = par_value
-                            elif temp_par_type is "int":
+                            elif temp_par_type == "int":
                                 par_value = int(par_value)
 
                             result.parameter_names.append(par_name)
@@ -391,8 +387,9 @@ class ComponentReader:
                         break
 
                     new_line = file_o.readline().split("//")[0]
-                    parameter_parts = new_line.split(",")
-                    parameter_parts = self.correct_for_brackets(parameter_parts)
+                    new_line = new_line.split(",")
+                    new_line = self.correct_for_brackets(new_line)
+                    parameter_parts = new_line
 
             if line.startswith("DECLARE"):
                 break
@@ -406,7 +403,7 @@ class ComponentReader:
         file_o.close()
 
         result.name = os.path.split(absolute_path)[1].split(".")[-2]
-        
+
         tail = os.path.split(absolute_path)[0]
         result.category = os.path.split(tail)[1]
 
@@ -416,7 +413,7 @@ class ComponentReader:
         """
 
         return result
-    
+
     def correct_for_brackets(self, parameter_parts):
         """
         Given list of string elements, correct for brackets will
@@ -431,22 +428,21 @@ class ComponentReader:
         corrected_parts = []
         index = 0
         while True:
-            
+
             current_part = parameter_parts[index]
             inner_index = 0
-            while True: 
+            while True:
                 if current_part.count("{") == current_part.count("}"):
                     corrected_parts.append(current_part)
                     index += inner_index
-                    break                          
+                    break
                 else:
-                    inner_index +=1
+                    inner_index += 1
                     current_part += "," + parameter_parts[index+inner_index]
 
             index += 1
-            
+
             if index >= len(parameter_parts):
                 break
-            
-        return corrected_parts
 
+        return corrected_parts

@@ -9,7 +9,7 @@ from mcstasscript.interface.functions import name_plot_options
 from mcstasscript.interface.functions import load_data
 from mcstasscript.data.data import McStasData
 from mcstasscript.data.data import McStasMetaData
-from mcstasscript.data.data import McStasPlotOptions
+
 
 def set_dummy_MetaData_1d(name):
     """
@@ -159,7 +159,7 @@ class Test_name_search(unittest.TestCase):
         hero_object = name_search("Hero", data_list)
 
         self.assertEqual(hero_object.metadata.dimension, 123)
-        
+
     def test_name_search_filename_read(self):
         """
         Test that Hero object can be found and check the unique dimension
@@ -186,7 +186,7 @@ class Test_name_search(unittest.TestCase):
         hero_object = name_search("Big_Hero", data_list)
 
         self.assertEqual(hero_object.metadata.dimension, 123)
-        
+
     def test_name_search_read_duplicate(self):
         """
         Test simple case with duplicated name, search should return list
@@ -220,7 +220,7 @@ class Test_name_search(unittest.TestCase):
         data_list = setup_McStasData_array()
 
         with self.assertRaises(NameError):
-            hero_object = name_search("Hero8", data_list)
+            name_search("Hero8", data_list)
 
     def test_name_search_type_error_not_list(self):
         """
@@ -230,7 +230,7 @@ class Test_name_search(unittest.TestCase):
         data_list = set_dummy_McStasData_2d("Last_object_2d")
 
         with self.assertRaises(RuntimeError):
-            hero_object = name_search("Hero", data_list)
+            name_search("Hero", data_list)
 
     def test_name_search_type_error_not_McStasData(self):
         """
@@ -241,7 +241,7 @@ class Test_name_search(unittest.TestCase):
         data_list = [1, 2, 3]
 
         with self.assertRaises(RuntimeError):
-            hero_object = name_search(1, data_list)
+            name_search(1, data_list)
 
 
 class Test_name_plot_options(unittest.TestCase):
@@ -261,7 +261,7 @@ class Test_name_plot_options(unittest.TestCase):
         name_plot_options("Hero", data_list, colormap="Oranges")
         hero_object = name_search("Hero", data_list)
         self.assertEqual(hero_object.plot_options.colormap, "Oranges")
-        
+
     def test_name_plot_options_duplicate(self):
         """
         Test case where several McStasData objects are modified since
@@ -269,17 +269,17 @@ class Test_name_plot_options(unittest.TestCase):
         """
 
         data_list = setup_McStasData_array()
-        
+
         hero_object = set_dummy_McStasData_2d("Hero")
         hero_object.metadata.dimension = 321
         hero_object.plot_options.colormap = "absurdly hot"
 
         data_list.append(hero_object)
-        
+
         name_plot_options("Hero", data_list, colormap="Blues")
-        
+
         results = name_search("Hero", data_list)
-        
+
         self.assertEqual(len(results), 2)
         self.assertEqual(results[0].plot_options.colormap, "Blues")
         self.assertEqual(results[1].plot_options.colormap, "Blues")

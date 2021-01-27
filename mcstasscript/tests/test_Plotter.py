@@ -21,6 +21,7 @@ def get_dummy_MetaData_1d():
 
     return meta_data
 
+
 def get_dummy_McStasData_1d():
     meta_data = get_dummy_MetaData_1d()
 
@@ -30,6 +31,7 @@ def get_dummy_McStasData_1d():
     axis = np.arange(20)*5.0
 
     return McStasData(meta_data, intensity, error, ncount, xaxis=axis)
+
 
 def get_dummy_MetaData_2d():
     meta_data = McStasMetaData()
@@ -41,6 +43,7 @@ def get_dummy_MetaData_2d():
     meta_data.ylabel = "test y"
 
     return meta_data
+
 
 def get_dummy_McStasData_2d():
     meta_data = get_dummy_MetaData_2d()
@@ -237,7 +240,7 @@ class TestPlotterHelpers(unittest.TestCase):
         """
 
         dummy_data = get_dummy_McStasData_2d()
-        dummy_data.Intensity[2,2] = 0
+        dummy_data.Intensity[2, 2] = 0
         dummy_data.set_plot_options(log=True)
         found_min, found_max = _find_min_max_I(dummy_data)
 
@@ -286,7 +289,7 @@ class TestPlotterHelpers(unittest.TestCase):
         """
 
         dummy_data = get_dummy_McStasData_2d()
-        dummy_data.Intensity[2,2] = 10**6
+        dummy_data.Intensity[2, 2] = 10**6
         dummy_data.set_plot_options(log=True, orders_of_mag=3)
         found_min, found_max = _find_min_max_I(dummy_data)
 
@@ -303,8 +306,8 @@ class TestPlotterHelpers(unittest.TestCase):
         """
 
         dummy_data = get_dummy_McStasData_2d()
-        dummy_data.Intensity[2,2] = 10**6
-        dummy_data.Intensity[2,3] = 0
+        dummy_data.Intensity[2, 2] = 10**6
+        dummy_data.Intensity[2, 3] = 0
         dummy_data.set_plot_options(log=True, orders_of_mag=3)
         found_min, found_max = _find_min_max_I(dummy_data)
 
@@ -407,23 +410,32 @@ class TestPlotterHelpers(unittest.TestCase):
             default_value = defaults[kw_option]
 
             dummy_data1 = get_dummy_McStasData_2d()
-            dummy_data2 = get_dummy_McStasData_2d()
+            data1_value = dummy_data1.plot_options.__getattribute__(kw_option)
+            self.assertEqual(data1_value, default_value)
 
-            self.assertEqual(dummy_data1.plot_options.__getattribute__(kw_option), default_value)
-            self.assertEqual(dummy_data2.plot_options.__getattribute__(kw_option), default_value)
+            dummy_data2 = get_dummy_McStasData_2d()
+            data2_value = dummy_data2.plot_options.__getattribute__(kw_option)
+            self.assertEqual(data2_value, default_value)
 
             data_list = [dummy_data1, dummy_data2]
 
             set_value = test_value[kw_option]
             given_option = {option: set_value}
             _handle_kwargs(data_list, **given_option)
-            self.assertEqual(dummy_data1.plot_options.__getattribute__(kw_option), set_value)
-            self.assertEqual(dummy_data2.plot_options.__getattribute__(kw_option), set_value)
+
+            data1_value = dummy_data1.plot_options.__getattribute__(kw_option)
+            self.assertEqual(data1_value, set_value)
+
+            data2_value = dummy_data2.plot_options.__getattribute__(kw_option)
+            self.assertEqual(data2_value, set_value)
 
             given_option = {option: [set_value, default_value]}
             _handle_kwargs(data_list, **given_option)
-            self.assertEqual(dummy_data1.plot_options.__getattribute__(kw_option), set_value)
-            self.assertEqual(dummy_data2.plot_options.__getattribute__(kw_option), default_value)
+
+            data_1_value = dummy_data1.plot_options.__getattribute__(kw_option)
+            self.assertEqual(data_1_value, set_value)
+            data_2_value = dummy_data2.plot_options.__getattribute__(kw_option)
+            self.assertEqual(data_2_value, default_value)
 
     def test_handle_kwargs_left_lim(self):
         """
@@ -541,8 +553,8 @@ class TestPlotterHelpers(unittest.TestCase):
         """
 
         dummy_data = get_dummy_McStasData_2d()
-        retrived_figsize, data_list = _handle_kwargs(dummy_data, figsize=(5,9))
-        self.assertEqual(retrived_figsize, (5, 9))
+        found_figsize, data_list = _handle_kwargs(dummy_data, figsize=(5, 9))
+        self.assertEqual(found_figsize, (5, 9))
 
     def test_handle_kwargs_figsize_list(self):
         """
@@ -551,8 +563,8 @@ class TestPlotterHelpers(unittest.TestCase):
         """
 
         dummy_data = get_dummy_McStasData_2d()
-        retrived_figsize, data_list = _handle_kwargs(dummy_data, figsize=[5,9])
-        self.assertEqual(retrived_figsize, (5, 9))
+        found_figsize, data_list = _handle_kwargs(dummy_data, figsize=[5, 9])
+        self.assertEqual(found_figsize, (5, 9))
 
     def test_handle_kwargs_single_element_to_list(self):
         """

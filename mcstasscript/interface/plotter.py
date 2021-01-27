@@ -7,8 +7,6 @@ import matplotlib.animation as animation
 from matplotlib.colors import BoundaryNorm
 from matplotlib.ticker import MaxNLocator
 
-from mcstasscript.data.data import McStasMetaData
-from mcstasscript.data.data import McStasPlotOptions
 from mcstasscript.data.data import McStasData
 
 
@@ -73,6 +71,7 @@ def _find_min_max_I(data):
         max_value = 10.0 ** max_value
 
     return min_value, max_value
+
 
 def _plot_fig_ax(data, fig, ax, **kwargs):
     """
@@ -257,6 +256,7 @@ def _handle_kwargs(data_list, **kwargs):
 
     return figsize, data_list
 
+
 def make_plot(data_list, **kwargs):
     """
     make_plot plots contents of McStasData objects given in list
@@ -278,6 +278,7 @@ def make_plot(data_list, **kwargs):
         fig.savefig(kwargs["filename"])
     else:
         plt.show()
+
 
 def make_sub_plot(data_list, **kwargs):
     """
@@ -360,11 +361,11 @@ def make_animation(data_list, **kwargs):
             maximum_values.append(max_value)
 
     if is_1D and is_2D:
-        raise InputError(
+        raise ValueError(
             "Both 1D and 2D data in animation, only one allowed.")
 
     if len(minimum_values) == 0:
-        raise InputError(
+        raise ValueError(
             "No data found for animation!")
 
     maximum_value = np.array(maximum_values).max()

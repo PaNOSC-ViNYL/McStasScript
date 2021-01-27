@@ -1,11 +1,10 @@
 import io
 import os
-import time
 import unittest
 import unittest.mock
 import matplotlib as plt
 
-from mcstasscript.interface import instr, functions, plotter
+from mcstasscript.interface import instr, functions
 
 
 def setup_complex_instrument():
@@ -91,10 +90,10 @@ def setup_complex_instrument():
     guide2.l = "guide_length"
     guide2.m = 4
     guide2.G = -9.82
-    
+
     guide2.set_SPLIT = 2
 
-    done = Instr.add_component("done", "Arm", RELATIVE="after_guide")
+    Instr.add_component("done", "Arm", RELATIVE="after_guide")
 
     PSD1 = Instr.add_component("PSD_1D_1", "PSDlin_monitor")
     PSD1.set_AT([0, 0, 0.2], RELATIVE="after_guide")
@@ -174,6 +173,7 @@ class TestComplexInstrument(unittest.TestCase):
         # plotter.make_sub_plot(data)
         # time.sleep(10)
         # plt.close()
+
 
 if __name__ == '__main__':
     unittest.main()

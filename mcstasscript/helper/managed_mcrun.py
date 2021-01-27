@@ -183,7 +183,7 @@ class ManagedMcrun:
             option_string = "-c "
 
         if self.mpi is not None:
-            mpi_string = " --mpi=" + str(self.mpi) + " " # Set mpi
+            mpi_string = " --mpi=" + str(self.mpi) + " "  # Set mpi
         else:
             mpi_string = " "
 
@@ -222,10 +222,10 @@ class ManagedMcrun:
 
         # Run the mcrun command on the system
         full_command = (mcrun_full_path + " "
-                  + option_string + " "
-                  + self.custom_flags + " "
-                  + self.name_of_instrumentfile
-                  + parameter_string)
+                        + option_string + " "
+                        + self.custom_flags + " "
+                        + self.name_of_instrumentfile
+                        + parameter_string)
 
         try:
             process = subprocess.run(full_command, shell=True,
@@ -264,7 +264,8 @@ class ManagedMcrun:
         elif len(args) == 1:
             data_folder_name = args[0]
         else:
-            raise RuntimeError("load_results can be called with 0 or 1 arguments")
+            raise RuntimeError("load_results can be called "
+                               + "with 0 or 1 arguments")
 
         return load_results(data_folder_name)
 

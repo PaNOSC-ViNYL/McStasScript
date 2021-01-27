@@ -1,6 +1,7 @@
 import matplotlib.pyplot
 import numpy as np
 
+
 class McStasMetaData:
     """
     Class for holding metadata for McStas dataset, is to be read from
@@ -259,41 +260,41 @@ class McStasPlotOptions:
                 raise ValueError("Chosen colormap not available in "
                                  + "matplotlib, was: "
                                  + str(self.colormap))
-            
+
         if "show_colorbar" in kwargs:
             self.show_colorbar = bool(kwargs["show_colorbar"])
-            
+
         if "cut_max" in kwargs:
             self.cut_max = kwargs["cut_max"]
             if not isinstance(self.cut_max, (float, int)):
                 raise ValueError("cut_max has to be a number, was given: "
                                  + str(self.cut_max))
-            
+
         if "cut_min" in kwargs:
             self.cut_min = kwargs["cut_min"]
             if not isinstance(self.cut_min, (float, int)):
                 raise ValueError("cut_min has to be a number, was given: "
                                  + str(self.cut_min))
-            
+
         if "x_axis_multiplier" in kwargs:
             self.x_limit_multiplier = kwargs["x_axis_multiplier"]
             if not isinstance(self.x_limit_multiplier, (float, int)):
                 raise ValueError("x_limit_multiplier has to be a number, was "
                                  + "given: " + str(self.x_limit_multiplier))
-        
+
         if "y_axis_multiplier" in kwargs:
             self.y_limit_multiplier = kwargs["y_axis_multiplier"]
             if not isinstance(self.y_limit_multiplier, (float, int)):
                 raise ValueError("y_limit_multiplier has to be a number, was "
                                  + "given: " + str(self.y_limit_multiplier))
-            
+
         if "top_lim" in kwargs:
             self.top_lim = kwargs["top_lim"]
             self.custom_ylim_top = True
             if not isinstance(self.top_lim, (float, int)):
                 raise ValueError("top_lim has to be a number, was "
                                  + "given: " + str(self.top_lim))
-            
+
         if "bottom_lim" in kwargs:
             self.bottom_lim = kwargs["bottom_lim"]
             self.custom_ylim_bottom = True
@@ -307,7 +308,7 @@ class McStasPlotOptions:
             if not isinstance(self.left_lim, (float, int)):
                 raise ValueError("left_lim has to be a number, was "
                                  + "given: " + str(self.left_lim))
-            
+
         if "right_lim" in kwargs:
             self.right_lim = kwargs["right_lim"]
             self.custom_xlim_right = True
@@ -451,4 +452,3 @@ class McStasData:
 
     def __repr__(self):
         return "\n" + self.__str__()
-

@@ -204,7 +204,7 @@ class DeclareVariable:
         elif "&" in par_name[0]:
             # Remove the first & indicating the variable is an address
             par_name = par_name[1:]
-            
+
         if not is_legal_parameter(par_name):
             raise NameError("The given parameter name: \""
                             + self.name
@@ -252,16 +252,14 @@ class DeclareVariable:
             if isinstance(self.value, str):
                 # value is a string
                 string = self.value
-                #string = string.replace('"',"\\\"")
-                fo.write("%s %s[%d] = %s;" % (self.type, self.name, self.vector, string))
+                fo.write("%s %s[%d] = %s;" % (self.type, self.name,
+                                              self.vector, string))
             else:
                 # list of values
                 fo.write("%s %s[%d] = {" % (self.type, self.name, self.vector))
                 for i in range(0, len(self.value) - 1):
                     fo.write("%G," % self.value[i])
                 fo.write("%G};%s" % (self.value[-1], self.comment))
-                
-                
 
 
 class Component:
@@ -445,7 +443,7 @@ class Component:
 
             JUMP : str, default ""
                 Sets JUMP str
-                
+
             SPLIT : int, default 0 (disabled)
                 Sets SPLIT value
 
@@ -471,7 +469,7 @@ class Component:
         self.JUMP = ""
         self.SPLIT = 0
         self.comment = ""
-        self.c_code_before = "" 
+        self.c_code_before = ""
         self.c_code_after = ""
 
         # If any keywords are set in kwargs, update these
@@ -485,7 +483,7 @@ class Component:
 
         # Do not allow addition of attributes after init
         self._freeze()
-    
+
     def set_keyword_input(self, **kwargs):
         # Allow addition of attributes in init
         self._unfreeze()
@@ -517,16 +515,16 @@ class Component:
 
         if "JUMP" in kwargs:
             self.set_JUMP(kwargs["JUMP"])
-            
+
         if "SPLIT" in kwargs:
             self.set_SPLIT(kwargs["SPLIT"])
 
         if "comment" in kwargs:
             self.set_comment(kwargs["comment"])
-            
+
         if "c_code_before" in kwargs:
             self.set_c_code_before(kwargs["c_code_before"])
-        
+
         if "c_code_after" in kwargs:
             self.set_c_code_after(kwargs["c_code_after"])
 
@@ -672,7 +670,7 @@ class Component:
             raise RuntimeError("set_JUMP expect a string, but was "
                                + "given " + str(type(string)))
         self.JUMP = string
-        
+
     def set_SPLIT(self, value):
         """Sets SPLIT value, needs to be an integer"""
         if not isinstance(value, (int, str)):
@@ -682,7 +680,8 @@ class Component:
         if isinstance(value, int):
             if value < 0:
                 raise RuntimeError("set_SPLIT got a negative value, this is "
-                                   + "meaningless, has to be a positive value.")
+                                   + "meaningless, has to be a "
+                                   + "positive value.")
 
         self.SPLIT = value
 
@@ -699,14 +698,14 @@ class Component:
             raise RuntimeError("set_comment expect a string, but was "
                                + "given " + str(type(string)))
         self.comment = string
-        
+
     def set_c_code_before(self, string):
         """Method that sets c code to be written before the component"""
         if not isinstance(string, str):
             raise RuntimeError("set_c_code_before expect a string, but was "
                                + "given " + str(type(string)))
         self.c_code_before = string
-        
+
     def set_c_code_after(self, string):
         """Method that sets c code to be written after the component"""
         if not isinstance(string, str):
@@ -736,7 +735,7 @@ class Component:
             fo.write("// %s\n" % (str(self.comment)))
 
         if self.SPLIT != 0:
-            fo.write("SPLIT " + str(self.SPLIT) + " ") 
+            fo.write("SPLIT " + str(self.SPLIT) + " ")
 
         # Write component name and component type
         fo.write("COMPONENT %s = %s(" % (self.name, self.component_name))
@@ -786,7 +785,7 @@ class Component:
                                     str(self.AT_data[1]),
                                     str(self.AT_data[2])))
         fo.write(" %s\n" % self.AT_relative)
-        
+
         if self.ROTATED_specified:
             fo.write("ROTATED (%s,%s,%s)" % (str(self.ROTATED_data[0]),
                                              str(self.ROTATED_data[1]),
@@ -804,7 +803,7 @@ class Component:
 
         if not self.JUMP == "":
             fo.write("JUMP %s\n" % self.JUMP)
-            
+
         if len(self.c_code_after) > 0:
             fo.write("\n")
             explanation = "From component named " + self.name
@@ -884,7 +883,7 @@ class Component:
         if self.SPLIT != 0:
             string += "SPLIT " + str(self.SPLIT) + " "
         string += "COMPONENT " + str(self.name)
-        string +=  " = " + str(self.component_name) + "\n"
+        string += " = " + str(self.component_name) + "\n"
         for key in self.parameter_names:
             val = getattr(self, key)
             parameter_name = bcolors.BOLD + key + bcolors.ENDC
@@ -945,7 +944,7 @@ class Component:
             print_rotate_rel = self.ROTATED_relative
         else:
             print_rotate_rel = self.AT_relative
-        
+
         if "longest_name" in kwargs:
             number_of_spaces = 3+kwargs["longest_name"]-len(self.name)
             print(str(self.name) + " "*number_of_spaces, end='')

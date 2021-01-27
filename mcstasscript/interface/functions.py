@@ -43,7 +43,7 @@ def name_search(name, data_list):
         for check in data_list:
             if check.metadata.filename == name:
                 list_result.append(check)
-    
+
     if len(list_result) == 0:
         raise NameError("No dataset with name: \""
                         + name
@@ -76,7 +76,7 @@ def name_plot_options(name, data_list, **kwargs):
         McStasPlotOptions
     """
     object_to_modify = name_search(name, data_list)
-    if type(object_to_modify) is not list:                     
+    if type(object_to_modify) is not list:
         object_to_modify.set_plot_options(**kwargs)
     else:
         for data_object in object_to_modify:
@@ -102,17 +102,17 @@ def load_data(foldername):
 class Configurator:
     """
     Class for setting the configuration file for McStasScript.
-    
+
     Attributes
     ----------
     configuration_file_name : str
         absolute path of configuration file
-        
+
     Methods
     -------
     set_mcstas_path(string)
         sets mcstas path
-        
+
     set_mcrun_path(string)
         sets mcrun path
 
@@ -121,16 +121,16 @@ class Configurator:
 
     set_mxrun_path(string)
         sets mxrun path
-        
+
     set_line_length(int)
         sets maximum line length to given int
-    
+
     _write_yaml(dict)
         internal method, writes a configuration yaml file with dict content
-        
+
     _read_yaml()
         internal method, reads a configuration yaml file and returns a dict
-    
+
     _create_new_config_file()
         internal method, creates default configuration file
 
@@ -141,7 +141,7 @@ class Configurator:
         Initialization of configurator, checks that the configuration file
         actually exists, and if it does not, creates a default configuration
         file.
-        
+
         Parameters
         ----------
         (optional) custom name : str
@@ -155,7 +155,7 @@ class Configurator:
 
         # check configuration file exists
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-        conf_file = os.path.join(THIS_DIR, ".." , name + ".yaml")
+        conf_file = os.path.join(THIS_DIR, "..", name + ".yaml")
         self.configuration_file_name = conf_file
         if not os.path.isfile(self.configuration_file_name):
             # no config file found, write default config file
@@ -166,7 +166,7 @@ class Configurator:
         Writes a dictionary as the new configuration file
         """
         with open(self.configuration_file_name, 'w') as yaml_file:
-            yaml.dump(dictionary, yaml_file, default_flow_style=False)   
+            yaml.dump(dictionary, yaml_file, default_flow_style=False)
 
     def _read_yaml(self):
         """
@@ -184,19 +184,18 @@ class Configurator:
         mcstas = "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/"
 
         mxrun = "/Applications/McXtrace-1.5.app" \
-                   + "/Contents/Resources/mcxtrace/1.5/mxrun"
+                + "/Contents/Resources/mcxtrace/1.5/mxrun"
         mcxtrace = "/Applications/McXtrace-1.5.app" \
                    + "/Contents/Resources/mcxtrace/1.5/"
 
-        default_paths = {"mcrun_path" : run,
-                         "mcstas_path" : mcstas,
-                         "mxrun_path" : mxrun,
-                         "mcxtrace_path" : mcxtrace}
+        default_paths = {"mcrun_path": run,
+                         "mcstas_path": mcstas,
+                         "mxrun_path": mxrun,
+                         "mcxtrace_path": mcxtrace}
 
-        default_other = {"characters_per_line" : 85}
+        default_other = {"characters_per_line": 85}
 
-        default_config = {"paths" : default_paths,
-                          "other" : default_other}
+        default_config = {"paths": default_paths, "other": default_other}
 
         self._write_yaml(default_config)
 
@@ -211,9 +210,10 @@ class Configurator:
         """
 
         if not os.path.isdir(path):
-            raise RuntimeError("Invalid path given to set_mcstas_path:" + str(path))
+            raise RuntimeError("Invalid path given to set_mcstas_path:"
+                               + str(path))
 
-        # read entire configuration file 
+        # read entire configuration file
         config = self._read_yaml()
 
         # update mcstas_path
@@ -233,9 +233,10 @@ class Configurator:
         """
 
         if not os.path.isdir(path):
-            raise RuntimeError("Invalid path given to set_mcrun_path:" + str(path))
+            raise RuntimeError("Invalid path given to set_mcrun_path:"
+                               + str(path))
 
-        # read entire configuration file 
+        # read entire configuration file
         config = self._read_yaml()
 
         # update mcstas_path
@@ -255,7 +256,8 @@ class Configurator:
         """
 
         if not os.path.isdir(path):
-            raise RuntimeError("Invalid path given to set_mcxtrace_path:" + str(path))
+            raise RuntimeError("Invalid path given to set_mcxtrace_path:"
+                               + str(path))
 
         # read entire configuration file
         config = self._read_yaml()
@@ -308,7 +310,7 @@ class Configurator:
                              + " be positve, given length: "
                              + str(line_length))
 
-        # read entire configuration file 
+        # read entire configuration file
         config = self._read_yaml()
 
         # update mcstas_path
@@ -316,5 +318,3 @@ class Configurator:
 
         # write new configuration file
         self._write_yaml(config)
-
-

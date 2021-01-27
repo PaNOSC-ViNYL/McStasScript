@@ -1,11 +1,6 @@
 import os
-import io
 import unittest
-from unittest import mock
-import numpy as np
 
-from mcstasscript.data.data import McStasMetaData
-from mcstasscript.data.data import McStasData
 from mcstasscript.helper.managed_mcrun import ManagedMcrun
 
 
@@ -151,37 +146,37 @@ class TestManagedMcrun(unittest.TestCase):
         An error should occur if no filename is given
         """
         with self.assertRaises(NameError):
-            mcrun_obj = ManagedMcrun("test.instr", mcrun_path="")
+            ManagedMcrun("test.instr", mcrun_path="")
 
     def test_ManagedMcrun_init_invalid_ncount_error(self):
         """
         An error should occur if negative ncount is given
         """
         with self.assertRaises(ValueError):
-            mcrun_obj = ManagedMcrun("test.instr",
-                                     foldername="test_folder",
-                                     mcrun_path="",
-                                     ncount=-8)
+            ManagedMcrun("test.instr",
+                         foldername="test_folder",
+                         mcrun_path="",
+                         ncount=-8)
 
     def test_ManagedMcrun_init_invalid_mpi_error(self):
         """
         An error should occur if negative mpi is given
         """
         with self.assertRaises(ValueError):
-            mcrun_obj = ManagedMcrun("test.instr",
-                                     foldername="test_folder",
-                                     mcrun_path="",
-                                     mpi=-8)
+            ManagedMcrun("test.instr",
+                         foldername="test_folder",
+                         mcrun_path="",
+                         mpi=-8)
 
     def test_ManagedMcrun_init_invalid_parameters_error(self):
         """
         An error should occur if parameters is given as non dict
         """
         with self.assertRaises(RuntimeError):
-            mcrun_obj = ManagedMcrun("test.instr",
-                                     foldername="test_folder",
-                                     mcrun_path="",
-                                     parameters=[1, 2, 3])
+            ManagedMcrun("test.instr",
+                         foldername="test_folder",
+                         mcrun_path="",
+                         parameters=[1, 2, 3])
 
     @unittest.mock.patch("subprocess.run")
     def test_ManagedMcrun_run_simulation_basic(self, mock_sub):
@@ -204,7 +199,6 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj.run_simulation()
 
-        current_directory = os.getcwd()
         expected_folder_path = os.path.join(THIS_DIR, "test_folder")
 
         # a double space because of a missing option
@@ -239,7 +233,6 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj.run_simulation()
 
-        current_directory = os.getcwd()
         expected_folder_path = os.path.join(THIS_DIR, "test_folder")
 
         executable = os.path.join(executable_path, "mcrun")
@@ -362,7 +355,6 @@ class TestManagedMcrun(unittest.TestCase):
 
         mcrun_obj.run_simulation()
 
-        current_directory = os.getcwd()
         expected_folder_path = os.path.join(THIS_DIR, "test_folder")
 
         executable = os.path.join(executable_path, "mcrun")
@@ -542,7 +534,7 @@ class TestManagedMcrun(unittest.TestCase):
 
         load_path = os.path.join(THIS_DIR, "non_existent_dataset")
         with self.assertRaises(NameError):
-            results = mcrun_obj.load_results(load_path)
+            mcrun_obj.load_results(load_path)
 
         os.chdir(current_work_dir)  # Reset work directory
 
@@ -564,7 +556,7 @@ class TestManagedMcrun(unittest.TestCase):
 
         load_path = os.path.join(THIS_DIR, "/dummy_mcstas")
         with self.assertRaises(NameError):
-            results = mcrun_obj.load_results(load_path)
+            mcrun_obj.load_results(load_path)
 
         os.chdir(current_work_dir)  # Reset work directory
 

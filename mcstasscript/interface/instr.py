@@ -6,7 +6,6 @@ import yaml
 import subprocess
 import copy
 
-from mcstasscript.data.data import McStasData
 from mcstasscript.helper.mcstas_objects import DeclareVariable
 from mcstasscript.helper.mcstas_objects import ParameterVariable
 from mcstasscript.helper.mcstas_objects import Component
@@ -158,13 +157,13 @@ class McCode_instr:
 
     set_component_SPLIT(instance_name, string)
         Sets SPLIT value for named component
-        
+
     set_component_c_code_before(instance_name, string)
         Sets c code before the component
-        
+
     set_component_c_code_after(instance_name, string)
         Sets c code after the component
-        
+
     set_component_comment(instance_name, string)
         Sets comment to be written before named component
 
@@ -264,7 +263,7 @@ class McCode_instr:
                 raise RuntimeError("Given package_path does not point to "
                                    + "a folder:\"" + self.package_path + '"')
 
-        elif self.package_path is "":
+        elif self.package_path == "":
             raise NameError("At this stage of development "
                             + "McStasScript need the absolute path "
                             + "for the " + self.package_name +
@@ -273,7 +272,6 @@ class McCode_instr:
 
         self.parameter_list = []
         self.declare_list = []
-        #self.declare_section = ""
         self.initialize_section = ("// Start of initialize for generated "
                                    + name + "\n")
         self.trace_section = ("// Start of trace section for generated "
@@ -373,7 +371,7 @@ class McCode_instr:
         for parameter in self.parameter_list:
             print(str(parameter.type).ljust(longest_type), end=' ')
             print(str(parameter.name).ljust(longest_name), end=' ')
-            if parameter.value is "":
+            if parameter.value == "":
                 print("   ", end=' ')
             else:
                 print(" = ", end=' ')
@@ -450,18 +448,17 @@ class McCode_instr:
     def append_declare(self, string):
         """
         Method for appending code to the declare section directly
-        
+
         This method is not meant for declaring simple variables which
         should be done using add_declare_var. This method can be used
         to declare functions, structures and unions directly.
-        
+
         Parameters
         ----------
         string : str
             code to be added to declare section
         """
 
-        #self.declare_section = self.declare_section + string + "\n"
         self.declare_list.append(string)
 
     def append_initialize(self, string):
@@ -721,7 +718,8 @@ class McCode_instr:
 
             new_index = self.component_name_list.index(kwargs["after"])
 
-            new_component = self._create_component_instance(name, component_name,
+            new_component = self._create_component_instance(name,
+                                                            component_name,
                                                             **kwargs)
             self.component_list.insert(new_index + 1, new_component)
 
@@ -738,7 +736,8 @@ class McCode_instr:
 
             new_index = self.component_name_list.index(kwargs["before"])
 
-            new_component = self._create_component_instance(name, component_name,
+            new_component = self._create_component_instance(name,
+                                                            component_name,
                                                             **kwargs)
             self.component_list.insert(new_index, new_component)
 
@@ -746,7 +745,8 @@ class McCode_instr:
 
         # If after or before keywords absent, place component at the end
         else:
-            new_component = self._create_component_instance(name, component_name,
+            new_component = self._create_component_instance(name,
+                                                            component_name,
                                                             **kwargs)
             self.component_list.append(new_component)
             self.component_name_list.append(name)
@@ -1085,7 +1085,7 @@ class McCode_instr:
         ----------
         name : str
             Unique name of component to modify
-            
+
         code : str
             Code to be pasted before component
         """
@@ -1101,7 +1101,7 @@ class McCode_instr:
         ----------
         name : str
             Unique name of component to modify
-        
+
         code : str
             Code to be pasted after component
         """
@@ -1202,10 +1202,9 @@ class McCode_instr:
         AT_pad = 6  # requires (, , ) in addition to data length
         RELATIVE_pad = 0
         ROTATED_pad = 6  # requires (, , ) in addition to data length
-        ROTATED_characters = 7 # ROTATED is 7 characters
-        AT_characters = 2 # AT is 2 characters
-        SPACING_between_strings = 7 # combining 8 strings, 7 spaces
-
+        ROTATED_characters = 7  # ROTATED is 7 characters
+        AT_characters = 2  # AT is 2 characters
+        SPACING_between_strings = 7  # combining 8 strings, 7 spaces
 
         # Check if longest line length exceeded
         longest_line_length = (longest_name + name_pad
@@ -1238,7 +1237,7 @@ class McCode_instr:
             longest_rotated_xyz_name = longest_at_xyz_name
             RELATIVE_pad = 0
 
-            SPACING_between_strings = 4 # combining 5 strings, 4 spaces
+            SPACING_between_strings = 4  # combining 5 strings, 4 spaces
 
             longest_line_length_at = (longest_name
                                       + comp_name_pad
@@ -1350,7 +1349,7 @@ class McCode_instr:
                           " ROTATED", p_ROTATED, p_ROTATED_RELATIVE)
                 else:
                     print(p_name + " ", p_comp_name, "\n",
-                      " AT     ", p_AT, p_AT_RELATIVE)
+                          " AT     ", p_AT, p_AT_RELATIVE)
 
     def write_c_files(self):
         """
@@ -1371,13 +1370,12 @@ class McCode_instr:
                 print("Creation of the directory %s failed" % path)
 
         file_path = os.path.join(".", "generated_includes",
-                                self.name + "_declare.c")
+                                 self.name + "_declare.c")
         with open(file_path, "w") as fo:
             fo.write("// declare section for %s \n" % self.name)
 
-
-            file_path = os.path.join(".", "generated_includes",
-                                     self.name + "_declare.c")
+        file_path = os.path.join(".", "generated_includes",
+                                 self.name + "_declare.c")
         with open(file_path, "a") as fo:
             for dec_line in self.declare_list:
                 if isinstance(dec_line, str):
@@ -1460,7 +1458,6 @@ class McCode_instr:
 
         # Write declare
         fo.write("DECLARE \n%{\n")
-        #fo.write(self.declare_section)
         for dec_line in self.declare_list:
             if isinstance(dec_line, str):
                 # append declare section parts written here
@@ -1504,12 +1501,11 @@ class McCode_instr:
         Adds the given parameters to the default parameters, and ensures all
         required parameters are provided. Also checks all given parameters
         match an existing parameter.
-        
+
         Parameters
         ----------
         given_parameters: dict
             Parameters given by the user for simulation run
-        
         """
 
         if not isinstance(given_parameters, dict):
@@ -1541,7 +1537,7 @@ class McCode_instr:
                                 + str(list(default_parameters.keys())))
 
         # Check if required parameters are provided
-        if len(given_parameters) is 0:
+        if len(given_parameters) == 0:
             if len(required_parameters) > 0:
                 # print required parameters and raise error
                 print("Required instrument parameters:")
@@ -1662,9 +1658,9 @@ class McCode_instr:
         bin_path = os.path.join(self.package_path, "bin", "")
         executable = "mcdisplay-webgl"
         if "format" in kwargs:
-            if kwargs["format"] is "webgl":
+            if kwargs["format"] == "webgl":
                 executable = "mcdisplay-webgl"
-            elif kwargs["format"] is "window":
+            elif kwargs["format"] == "window":
                 executable = "mcdisplay"
 
         full_command = (bin_path + executable + " "

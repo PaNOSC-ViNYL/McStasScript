@@ -1,5 +1,3 @@
-import io
-import builtins
 import unittest
 import unittest.mock
 
@@ -40,7 +38,7 @@ class Test_DeclareVariable(unittest.TestCase):
         """
 
         var = DeclareVariable("double", "test",
-                               array=6, value=[1, 2.2, 3, 3.3, 4, 4.4])
+                              array=6, value=[1, 2.2, 3, 3.3, 4, 4.4])
 
         self.assertEqual(var.name, "test")
         self.assertEqual(var.type, "double")  # space for easier writing
@@ -53,7 +51,7 @@ class Test_DeclareVariable(unittest.TestCase):
         """
 
         var = DeclareVariable("double", "test",
-                               value=518, comment="test comment /")
+                              value=518, comment="test comment /")
 
         self.assertEqual(var.name, "test")
         self.assertEqual(var.type, "double")  # Space for easier writing
@@ -89,9 +87,9 @@ class Test_DeclareVariable(unittest.TestCase):
         """
 
         var = DeclareVariable("double",
-                               "test",
-                               value=5.4,
-                               comment="test comment")
+                              "test",
+                              value=5.4,
+                              comment="test comment")
 
         with mock_f('test.txt', 'w') as m_fo:
             var.write_line(m_fo)
@@ -113,9 +111,9 @@ class Test_DeclareVariable(unittest.TestCase):
         """
 
         var = DeclareVariable("double",
-                               "test",
-                               value=5,
-                               comment="test comment")
+                              "test",
+                              value=5,
+                              comment="test comment")
 
         with mock_f('test.txt', 'w') as m_fo:
             var.write_line(m_fo)
@@ -136,9 +134,9 @@ class Test_DeclareVariable(unittest.TestCase):
         """
 
         var = DeclareVariable("double",
-                               "test",
-                               array=29,
-                               comment="test comment")
+                              "test",
+                              array=29,
+                              comment="test comment")
 
         with mock_f('test.txt', 'w') as m_fo:
             var.write_line(m_fo)
@@ -160,10 +158,10 @@ class Test_DeclareVariable(unittest.TestCase):
         """
 
         var = DeclareVariable("double",
-                               "test",
-                               array=3,
-                               value=[5, 4, 3.1],
-                               comment="test comment")
+                              "test",
+                              array=3,
+                              value=[5, 4, 3.1],
+                              comment="test comment")
 
         with mock_f('test.txt', 'w') as m_fo:
             var.write_line(m_fo)

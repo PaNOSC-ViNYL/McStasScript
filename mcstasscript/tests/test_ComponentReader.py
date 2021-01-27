@@ -1,9 +1,7 @@
 import os
 import io
-import unittest
 import unittest.mock
 
-from mcstasscript.helper.component_reader import ComponentInfo
 from mcstasscript.helper.component_reader import ComponentReader
 
 
@@ -24,6 +22,7 @@ def setup_component_reader():
     os.chdir(current_work_dir)  # Reset work directory
 
     return component_reader
+
 
 def setup_component_reader_input_path():
     """
@@ -60,7 +59,7 @@ class TestComponentReader(unittest.TestCase):
         Here using default input path, which is current folder
         """
 
-        component_reader = setup_component_reader()
+        setup_component_reader()
 
         message = ("The following components are found in the work_directory "
                    + "/ input_path:\n     test_for_reading.comp\n"
@@ -76,7 +75,7 @@ class TestComponentReader(unittest.TestCase):
         Here using user defined input path, a directory in tests
         """
 
-        component_reader = setup_component_reader_input_path()
+        setup_component_reader_input_path()
 
         message = ("The following components are found in the work_directory "
                    + "/ input_path:\n     test_for_structure.comp\n"
@@ -115,27 +114,31 @@ class TestComponentReader(unittest.TestCase):
         self.assertEqual(n_components_found, 3)
 
         expected_path = os.path.join(THIS_DIR, "test_for_reading.comp")
-        self.assertIn("test_for_reading", component_reader.component_path)
-        self.assertEqual(component_reader.component_path["test_for_reading"],
-                         expected_path)
-        self.assertEqual(component_reader.component_category["test_for_reading"],
-                         "Work directory")
+        path = component_reader.component_path["test_for_reading"]
+        self.assertEqual(path, expected_path)
+
+        category = component_reader.component_category["test_for_reading"]
+        self.assertEqual(category, "Work directory")
 
         expected_path = os.path.join(dummy_path, "misc",
                                      "test_for_structure.comp")
         self.assertIn("test_for_structure", component_reader.component_path)
-        self.assertEqual(component_reader.component_path["test_for_structure"],
-                         expected_path)
-        self.assertEqual(component_reader.component_category["test_for_structure"],
-                         "misc")
 
+        path = component_reader.component_path["test_for_structure"]
+        self.assertEqual(path, expected_path)
+
+        category = component_reader.component_category["test_for_structure"]
+        self.assertEqual(category, "misc")
+
+        self.assertIn("test_for_structure2", component_reader.component_path)
+
+        path = component_reader.component_path["test_for_structure2"]
         expected_path = os.path.join(dummy_path, "sources",
                                      "test_for_structure2.comp")
-        self.assertIn("test_for_structure2", component_reader.component_path)
-        self.assertEqual(component_reader.component_path["test_for_structure2"],
-                         expected_path)
-        self.assertEqual(component_reader.component_category["test_for_structure2"],
-                         "sources")
+        self.assertEqual(path, expected_path)
+
+        category = component_reader.component_category["test_for_structure2"]
+        self.assertEqual(category, "sources")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_ComponentReader_init_component_paths_input(self, mock_stdout):
@@ -154,29 +157,34 @@ class TestComponentReader(unittest.TestCase):
         n_components_found = len(component_reader.component_path)
         self.assertEqual(n_components_found, 3)
 
+        self.assertIn("test_for_reading", component_reader.component_path)
+
         expected_path = os.path.join(dummy_path, "misc",
                                      "test_for_reading.comp")
-        self.assertIn("test_for_reading", component_reader.component_path)
-        self.assertEqual(component_reader.component_path["test_for_reading"],
-                         expected_path)
-        self.assertEqual(component_reader.component_category["test_for_reading"],
-                         "misc")
+        path = component_reader.component_path["test_for_reading"]
+        self.assertEqual(path, expected_path)
+
+        category = component_reader.component_category["test_for_reading"]
+        self.assertEqual(category, "misc")
 
         expected_path = os.path.join(input_path, "test_for_structure.comp")
         self.assertIn("test_for_structure", component_reader.component_path)
-        self.assertEqual(component_reader.component_path["test_for_structure"],
-                         expected_path)
-        self.assertEqual(component_reader.component_category["test_for_structure"],
-                         "Work directory")
 
+        path = component_reader.component_path["test_for_structure"]
+        self.assertEqual(path, expected_path)
 
+        category = component_reader.component_category["test_for_structure"]
+        self.assertEqual(category, "Work directory")
+
+        self.assertIn("test_for_structure2", component_reader.component_path)
+
+        path = component_reader.component_path["test_for_structure2"]
         expected_path = os.path.join(dummy_path, "sources",
                                      "test_for_structure2.comp")
-        self.assertIn("test_for_structure2", component_reader.component_path)
-        self.assertEqual(component_reader.component_path["test_for_structure2"],
-                         expected_path)
-        self.assertEqual(component_reader.component_category["test_for_structure2"],
-                         "sources")
+        self.assertEqual(path, expected_path)
+
+        category = component_reader.component_category["test_for_structure2"]
+        self.assertEqual(category, "sources")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_ComponentReader_init_categories(self, mock_stdout):
@@ -332,7 +340,7 @@ class TestComponentReader(unittest.TestCase):
         component_reader = setup_component_reader()
 
         with self.assertRaises(NameError):
-            CompInfo = component_reader.read_name("no_such_comp")
+            component_reader.read_name("no_such_comp")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_ComponentReader_read_name_success(self, mock_stdout):

@@ -18,7 +18,7 @@ def is_legal_parameter(name):
     parameter in the c programming language.
     """
 
-    if name is "":
+    if name == "":
         return False
 
     if " " in name:
@@ -39,7 +39,7 @@ def is_legal_filename(name):
     filename
     """
 
-    if name is "":
+    if name == "":
         return False
 
     if " " in name:
