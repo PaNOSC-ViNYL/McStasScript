@@ -288,11 +288,18 @@ class TestMcStas_instr(unittest.TestCase):
         """
         Tests all keywords work in initialization
         """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         my_instrument = McStas_instr("test_instrument",
                                      author="Mads",
                                      origin="DMSC",
                                      executable_path="./dummy_mcstas/contrib",
                                      package_path="./dummy_mcstas/misc")
+
+        os.chdir(current_work_dir)
 
         self.assertEqual(my_instrument.author, "Mads")
         self.assertEqual(my_instrument.origin, "DMSC")
@@ -1728,9 +1735,12 @@ class TestMcStas_instr(unittest.TestCase):
         """
         instr = setup_populated_instr()
 
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
         with self.assertRaises(NameError):
             instr.run_full_instrument(foldername="test_data_set",
-                                      executable_path="dummy_mcstas")
+                                      executable_path=executable_path)
 
     def test_run_full_instrument_junk_par_error(self):
         """
