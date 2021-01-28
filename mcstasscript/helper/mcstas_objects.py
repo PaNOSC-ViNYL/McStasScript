@@ -242,7 +242,8 @@ class DeclareVariable:
                 try:
                     fo.write("%s %s = %G;%s" % (self.type, self.name,
                                                 self.value, self.comment))
-                except:
+                except TypeError:
+                    # Value could not be converted to float, write as string
                     fo.write("%s %s = %s;%s" % (self.type, self.name,
                                                 self.value, self.comment))
         if self.value == "" and self.vector != 0:

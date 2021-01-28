@@ -227,14 +227,11 @@ class ManagedMcrun:
                         + self.name_of_instrumentfile
                         + parameter_string)
 
-        try:
-            process = subprocess.run(full_command, shell=True,
-                                     stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE,
-                                     universal_newlines=True,
-                                     cwd=self.run_path)
-        except:
-            raise RuntimeError("Could not run McStas command.")
+        process = subprocess.run(full_command, shell=True,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 universal_newlines=True,
+                                 cwd=self.run_path)
 
         if "suppress_output" in kwargs:
             if kwargs["suppress_output"] is False:
@@ -300,6 +297,7 @@ def load_results(data_folder_name):
 
         # Loop that reads mccode.sim sections
         metadata_list = []
+        current_object = None
         in_data = False
         for lines in f:
             # Could read other details about run

@@ -373,8 +373,8 @@ class ComponentReader:
                             if temp_par_type == "double":
                                 try:
                                     par_value = float(par_value)
-                                except:
-                                    # Could change the type
+                                except ValueError:
+                                    # value could be parameter name
                                     par_value = par_value
                             elif temp_par_type == "int":
                                 par_value = int(par_value)
