@@ -86,8 +86,10 @@ class DefinitionReader(SectionReader):
 
                 if parameter_type == "string":
                     if '"' in value:
-                        value = value.replace('"', "\\\"")
-                        value = "\"" + value + "\""
+                        pass
+                        # Value has to be normal for object version
+                        #value = value.replace('"', "\\\"")
+                        #value = "\"" + value + "\""
                 else:
                     if parameter_type == "int":
                         value = int(value)
@@ -103,6 +105,12 @@ class DefinitionReader(SectionReader):
 
             # Add this parameter to the object
             self.Instr.add_parameter(parameter_type, parameter_name, **kw_args)
+
+            # Fix values for script version
+            if parameter_type == "string" and "value" in kw_args:
+                if isinstance(kw_args["value"], str):
+                    kw_args["value"] = kw_args["value"].replace('"', '\\\"')
+                    kw_args["value"] = "\"" + kw_args["value"] + "\""
 
             # Also write it to a file?
             write_string = []

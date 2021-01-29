@@ -223,7 +223,8 @@ class DeclareReader(SectionReader):
                         return_value = float(value)
                     except:
                         value = value.replace('"', "\\\"")
-                        return_value = '"' + value + '"'
+                        #return_value = '"' + value + '"'
+                        return_value = value
 
                 kw_args["value"] = return_value
 
