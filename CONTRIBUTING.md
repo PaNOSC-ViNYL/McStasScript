@@ -9,3 +9,4 @@ This document describes how to contribute to McStasScript. The preferred method 
 * Note for updates required to manual 
 * Clear Jupyter Notebooks before committing
 * Check CI tests passes
+* Use flake8 to check code quality, reduce to reasonable number of issues
