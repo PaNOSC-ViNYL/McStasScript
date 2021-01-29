@@ -1587,7 +1587,15 @@ class TestMcStas_instr(unittest.TestCase):
         """
 
         instr = setup_populated_instr()
-        instr.write_c_files()
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        current_directory = os.getcwd()
+        os.chdir(THIS_DIR)
+
+        try:
+            instr.write_c_files()
+        finally:
+            os.chdir(current_directory)
 
         mock_f.assert_any_call("./generated_includes/"
                                + "test_instrument_declare.c", "w")
