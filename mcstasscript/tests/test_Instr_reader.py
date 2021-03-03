@@ -85,7 +85,7 @@ class TestInstrReader(unittest.TestCase):
         self.assertEqual(Instr.parameter_list[2].name, "test_str")
         # space in type inserted for easier writing by McStas_Instr class
         self.assertEqual(Instr.parameter_list[2].type, "string")
-        self.assertEqual(Instr.parameter_list[2].value, "\"\\\"hurray\\\"\"")
+        self.assertEqual(Instr.parameter_list[2].value, "\"hurray\"")
 
     def test_read_declare_parameter(self):
 
@@ -118,7 +118,7 @@ class TestInstrReader(unittest.TestCase):
         self.assertEqual(Instr.declare_list[11].type, "char")
         self.assertEqual(Instr.declare_list[11].vector, 20)
         self.assertEqual(Instr.declare_list[11].value,
-                         "\"\\\"test_string\\\"\"")
+                         "\\\"test_string\\\"")
 
     def test_read_initialize_line(self):
 

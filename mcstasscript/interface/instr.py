@@ -1663,8 +1663,13 @@ class McCode_instr:
             elif kwargs["format"] == "window":
                 executable = "mcdisplay"
 
+        self.write_full_instrument()
+
+        instr_path = os.path.join(self.input_path, self.name + ".instr")
+        instr_path = os.path.abspath(instr_path)
+
         full_command = (bin_path + executable + " "
-                        + os.path.join(self.input_path, self.name + ".instr")
+                        + instr_path
                         + " " + parameter_string)
 
         process = subprocess.run(full_command, shell=True,

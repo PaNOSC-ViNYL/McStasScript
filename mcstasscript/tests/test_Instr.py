@@ -2007,10 +2007,11 @@ class TestMcStas_instr(unittest.TestCase):
         os.chdir(current_work_dir)
 
         expected_path = os.path.join(executable_path, "bin", "mcdisplay-webgl")
+        expected_instr_path = os.path.join(THIS_DIR, "test_instrument.instr")
 
         # a double space because of a missing option
         expected_call = (expected_path
-                         + " ./test_instrument.instr"
+                         + " " + expected_instr_path
                          + "  has_default=37 theta=1.2")
 
         mock_sub.assert_called_once_with(expected_call,
