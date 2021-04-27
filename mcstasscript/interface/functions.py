@@ -98,6 +98,38 @@ def load_data(foldername):
 
     return managed_mcrun.load_results(foldername)
 
+def load_metadata(data_folder_name):
+    """
+    Function that loads metadata from a mcstas simulation
+
+    Returns list of metadata objects corresponding to each monitor, all
+    information is taken from mccode.sim file.
+
+    Parameters
+    ----------
+
+    first argument : str
+        path to folder from which metadata should be loaded
+    """
+    return managed_mcrun.load_metadata(data_folder_name)
+
+def load_monitor(metadata, data_folder_name):
+    """
+    Function that loads data given metadata and name of data folder
+
+    Loads data for single monitor and returns a McStasData object
+
+    Parameters
+    ----------
+
+    metadata : McStasMetaData object
+        McStasMetaData object corresponding to the monitor to be loaded
+
+    data_folder_name : str
+        path to folder from which metadata should be loaded
+    """
+    return managed_mcrun.load_monitor(metadata, data_folder_name)
+
 
 class Configurator:
     """

@@ -277,9 +277,32 @@ def load_results(data_folder_name):
     Parameters
     ----------
 
-    first argument : str
+    data_folder_name : str
         path to folder from which data should be loaded
 
+    """
+
+    metadata_list = load_metadata(data_folder_name)
+
+    results = []
+    for metadata in metadata_list:
+        results.append(load_monitor(metadata, data_folder_name))
+
+    return results
+
+
+def load_metadata(data_folder_name):
+    """
+    Function that loads metadata from a mcstas simulation
+
+    Returns list of metadata objects corresponding to each monitor, all
+    information is taken from mccode.sim file.
+
+    Parameters
+    ----------
+
+    first argument : str
+        path to folder from which metadata should be loaded
     """
 
     if not os.path.isdir(data_folder_name):
@@ -325,42 +348,47 @@ def load_results(data_folder_name):
                 # Start recording data to metadata object
                 in_data = True
 
-    # Create a list for McStasData instances to return
-    results = []
+    return metadata_list
 
-    # Load datasets described in metadata list individually
-    for metadata in metadata_list:
-        # Load data with numpy
-        data = np.loadtxt(os.path.join(data_folder_name,
-                          metadata.filename.rstrip()))
 
-        # Split data into intensity, error and ncount
-        if type(metadata.dimension) == int:
-            xaxis = data.T[0, :]
-            Intensity = data.T[1, :]
-            Error = data.T[2, :]
-            Ncount = data.T[3, :]
+def load_monitor(metadata, data_folder_name):
+    """
+    Function that loads data given metadata and name of data folder
 
-        elif len(metadata.dimension) == 2:
-            xaxis = []  # Assume evenly binned in 2d
-            data_lines = metadata.dimension[1]
+    Loads data for single monitor and returns a McStasData object
 
-            Intensity = data[0:data_lines, :]
-            Error = data[data_lines:2*data_lines, :]
-            Ncount = data[2*data_lines:3*data_lines, :]
-        else:
-            raise NameError(
-                "Dimension not read correctly in data set "
-                + "connected to monitor named "
-                + metadata.component_name)
+    Parameters
+    ----------
 
-        # The data is saved as a McStasData object
-        result = McStasData(metadata, Intensity,
-                            Error, Ncount,
-                            xaxis=xaxis)
+    metadata : McStasMetaData object
+        McStasMetaData object corresponding to the monitor to be loaded
 
-        # Add this result to the results list
-        results.append(result)
+    data_folder_name : str
+        path to folder from which metadata should be loaded
+    """
+    # Load data with numpy
+    data = np.loadtxt(os.path.join(data_folder_name,
+                                   metadata.filename.rstrip()))
 
-    # Return list of McStasData objects
-    return results
+    # Split data into intensity, error and ncount
+    if type(metadata.dimension) == int:
+        xaxis = data.T[0, :]
+        Intensity = data.T[1, :]
+        Error = data.T[2, :]
+        Ncount = data.T[3, :]
+
+    elif len(metadata.dimension) == 2:
+        xaxis = []  # Assume evenly binned in 2d
+        data_lines = metadata.dimension[1]
+
+        Intensity = data[0:data_lines, :]
+        Error = data[data_lines:2 * data_lines, :]
+        Ncount = data[2 * data_lines:3 * data_lines, :]
+    else:
+        raise NameError(
+            "Dimension not read correctly in data set "
+            + "connected to monitor named "
+            + metadata.component_name)
+
+    # The data is saved as a McStasData object
+    return McStasData(metadata, Intensity, Error, Ncount, xaxis=xaxis)

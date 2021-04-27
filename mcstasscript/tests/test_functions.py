@@ -7,6 +7,8 @@ import numpy as np
 from mcstasscript.interface.functions import name_search
 from mcstasscript.interface.functions import name_plot_options
 from mcstasscript.interface.functions import load_data
+from mcstasscript.interface.functions import load_metadata
+from mcstasscript.interface.functions import load_monitor
 from mcstasscript.data.data import McStasData
 from mcstasscript.data.data import McStasMetaData
 
@@ -318,6 +320,68 @@ class Test_load_data(unittest.TestCase):
         self.assertEqual(PSD_4PI.Ncount[4][1], 4)
         self.assertEqual(PSD_4PI.Intensity[4][1], 1.537334562E-10)
         self.assertEqual(PSD_4PI.Error[4][1], 1.139482296E-10)
+
+
+class Test_load_metadata(unittest.TestCase):
+    """
+    Testing the load metadata function which calls ManagedMcrun, which
+    was tested elsewhere. Since the load metadata is tested elsewhere,
+    this function has just a single test to check the interface.
+    """
+    def test_mcrun_load_metadata_PSD4PI(self):
+        """
+        Use test_data_set to test load_metadata for PSD_4PI
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
+        metadata = load_metadata("test_data_set")
+
+        os.chdir(current_work_dir)  # Reset work directory
+
+        self.assertEqual(len(metadata), 3)
+
+        PSD_4PI = metadata[0]
+        self.assertEqual(PSD_4PI.dimension, [300, 300])
+        self.assertEqual(PSD_4PI.limits, [-180, 180, -90, 90])
+        self.assertEqual(PSD_4PI.xlabel, "Longitude [deg]")
+        self.assertEqual(PSD_4PI.ylabel, "Latitude [deg]")
+        self.assertEqual(PSD_4PI.title, "4PI PSD monitor")
+
+class Test_load_monitor(unittest.TestCase):
+    """
+    Testing the load monitor function which calls ManagedMcrun, which
+    was tested elsewhere. Since the load monitor is tested elsewhere, this
+    function has just a single test to check the interface.
+    """
+    def test_mcrun_load_monitor_PSD4PI(self):
+        """
+        Use test_data_set to test load_monitor for PSD_4PI
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
+        metadata = load_metadata("test_data_set")
+        PSD_4PI = metadata[0]
+        monitor = load_monitor(PSD_4PI, "test_data_set")
+
+        os.chdir(current_work_dir)  # Reset work directory
+
+        self.assertEqual(monitor.name, "PSD_4PI")
+        self.assertEqual(monitor.metadata.dimension, [300, 300])
+        self.assertEqual(monitor.metadata.limits, [-180, 180, -90, 90])
+        self.assertEqual(monitor.metadata.xlabel, "Longitude [deg]")
+        self.assertEqual(monitor.metadata.ylabel, "Latitude [deg]")
+        self.assertEqual(monitor.metadata.title, "4PI PSD monitor")
+        self.assertEqual(monitor.Ncount[4][1], 4)
+        self.assertEqual(monitor.Intensity[4][1], 1.537334562E-10)
+        self.assertEqual(monitor.Error[4][1], 1.139482296E-10)
 
 
 if __name__ == '__main__':
