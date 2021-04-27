@@ -2,6 +2,9 @@ import os
 import unittest
 
 from mcstasscript.helper.managed_mcrun import ManagedMcrun
+from mcstasscript.helper.managed_mcrun import load_results
+from mcstasscript.helper.managed_mcrun import load_metadata
+from mcstasscript.helper.managed_mcrun import load_monitor
 
 
 class TestManagedMcrun(unittest.TestCase):
@@ -560,6 +563,168 @@ class TestManagedMcrun(unittest.TestCase):
 
         os.chdir(current_work_dir)  # Reset work directory
 
+class Test_load_functions(unittest.TestCase):
+    """
+    Testing the load functions in managed_mcrun.
+    load_results loads all data in folder
+    load_metadata loads all metadata in folder
+    load_monitor loads one monitor given metadata and folder
+    These are used in ManagedMcrun
+    """
+    def test_mcrun_load_data_PSD4PI(self):
+        """
+        Use test_data_set to test load_data for PSD_4PI
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
+        results = load_results("test_data_set")
+
+        os.chdir(current_work_dir)  # Reset work directory
+
+        self.assertEqual(len(results), 3)
+
+        PSD_4PI = results[0]
+
+        self.assertEqual(PSD_4PI.name, "PSD_4PI")
+        self.assertEqual(PSD_4PI.metadata.dimension, [300, 300])
+        self.assertEqual(PSD_4PI.metadata.limits, [-180, 180, -90, 90])
+        self.assertEqual(PSD_4PI.metadata.xlabel, "Longitude [deg]")
+        self.assertEqual(PSD_4PI.metadata.ylabel, "Latitude [deg]")
+        self.assertEqual(PSD_4PI.metadata.title, "4PI PSD monitor")
+        self.assertEqual(PSD_4PI.Ncount[4][1], 4)
+        self.assertEqual(PSD_4PI.Intensity[4][1], 1.537334562E-10)
+        self.assertEqual(PSD_4PI.Error[4][1], 1.139482296E-10)
+
+    def test_mcrun_load_data_PSD(self):
+        """
+        Use test_data_set to test load_data for PSD
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
+        results = load_results("test_data_set")
+
+        os.chdir(current_work_dir)  # Reset work directory
+
+        self.assertEqual(len(results), 3)
+
+        PSD = results[1]
+
+        self.assertEqual(PSD.name, "PSD")
+        self.assertEqual(PSD.metadata.dimension, [200, 200])
+        self.assertEqual(PSD.metadata.limits, [-5, 5, -5, 5])
+        self.assertEqual(PSD.metadata.xlabel, "X position [cm]")
+        self.assertEqual(PSD.metadata.ylabel, "Y position [cm]")
+        self.assertEqual(PSD.metadata.title, "PSD monitor")
+        self.assertEqual(PSD.Ncount[27][21], 9)
+        self.assertEqual(PSD.Intensity[27][21], 2.623929371e-13)
+        self.assertEqual(PSD.Error[27][21], 2.765467693e-13)
+
+    def test_mcrun_load_metadata_PSD4PI(self):
+        """
+        Use test_data_set to test load_metadata for PSD_4PI
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
+        metadata = load_metadata("test_data_set")
+
+        os.chdir(current_work_dir)  # Reset work directory
+
+        self.assertEqual(len(metadata), 3)
+
+        PSD_4PI = metadata[0]
+        self.assertEqual(PSD_4PI.dimension, [300, 300])
+        self.assertEqual(PSD_4PI.limits, [-180, 180, -90, 90])
+        self.assertEqual(PSD_4PI.xlabel, "Longitude [deg]")
+        self.assertEqual(PSD_4PI.ylabel, "Latitude [deg]")
+        self.assertEqual(PSD_4PI.title, "4PI PSD monitor")
+
+    def test_mcrun_load_metadata_L_mon(self):
+        """
+        Use test_data_set to test load_metadata for PSD_4PI
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
+        metadata = load_metadata("test_data_set")
+
+        os.chdir(current_work_dir)  # Reset work directory
+
+        self.assertEqual(len(metadata), 3)
+
+        L_mon = metadata[2]
+        self.assertEqual(L_mon.dimension, 150)
+        self.assertEqual(L_mon.limits, [0.7, 1.3])
+        self.assertEqual(L_mon.xlabel, "Wavelength [AA]")
+        self.assertEqual(L_mon.ylabel, "Intensity")
+        self.assertEqual(L_mon.title, "Wavelength monitor")
+
+    def test_mcrun_load_monitor_PSD4PI(self):
+        """
+        Use test_data_set to test load_monitor for PSD_4PI
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
+        metadata = load_metadata("test_data_set")
+        PSD_4PI = metadata[0]
+        monitor = load_monitor(PSD_4PI, "test_data_set")
+
+        os.chdir(current_work_dir)  # Reset work directory
+
+        self.assertEqual(monitor.name, "PSD_4PI")
+        self.assertEqual(monitor.metadata.dimension, [300, 300])
+        self.assertEqual(monitor.metadata.limits, [-180, 180, -90, 90])
+        self.assertEqual(monitor.metadata.xlabel, "Longitude [deg]")
+        self.assertEqual(monitor.metadata.ylabel, "Latitude [deg]")
+        self.assertEqual(monitor.metadata.title, "4PI PSD monitor")
+        self.assertEqual(monitor.Ncount[4][1], 4)
+        self.assertEqual(monitor.Intensity[4][1], 1.537334562E-10)
+        self.assertEqual(monitor.Error[4][1], 1.139482296E-10)
+
+    def test_mcrun_load_monitor_L_mon(self):
+        """
+        Use test_data_set to test load_monitor for PSD_4PI
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
+        metadata = load_metadata("test_data_set")
+        L_mon = metadata[2]
+        monitor = load_monitor(L_mon, "test_data_set")
+
+        os.chdir(current_work_dir)  # Reset work directory
+
+        self.assertEqual(monitor.name, "L_mon")
+        self.assertEqual(monitor.metadata.dimension, 150)
+        self.assertEqual(monitor.metadata.limits, [0.7, 1.3])
+        self.assertEqual(monitor.metadata.xlabel, "Wavelength [AA]")
+        self.assertEqual(monitor.metadata.ylabel, "Intensity")
+        self.assertEqual(monitor.metadata.title, "Wavelength monitor")
+        self.assertEqual(monitor.xaxis[53], 0.914)
+        self.assertEqual(monitor.Ncount[53], 37111)
+        self.assertEqual(monitor.Intensity[53], 6.990299315e-06)
+        self.assertEqual(monitor.Error[53], 6.215308587e-08)
 
 if __name__ == '__main__':
     unittest.main()
