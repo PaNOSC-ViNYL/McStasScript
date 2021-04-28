@@ -64,7 +64,10 @@ class PlotInterface:
             self.ax.text(0.4, 0.5, "No data available")
             return
 
-        print("current monitor in update_plot:", self.current_monitor)
+        if self.current_monitor is None:
+            self.ax.text(0.4, 0.5, "Select a monitor to plot")
+            return
+
         monitor = name_search(self.current_monitor, self.data)
         plot_options = {"show_colorbar": False, "log": self.log_mode}
         if self.orders_of_mag != "disabled":
