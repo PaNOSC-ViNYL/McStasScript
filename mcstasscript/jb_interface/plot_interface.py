@@ -24,6 +24,7 @@ class PlotInterface:
 
         self.fig = None
         self.ax = None
+        self.colorbar_ax = None
 
     def set_data(self, data):
         self.data = data
@@ -46,7 +47,7 @@ class PlotInterface:
         Sets up original plot with fig and ax
         """
         # fig, ax = plt.subplots(constrained_layout=True, figsize=(6, 4))
-        self.fig, self.ax = plt.subplots()
+        self.fig, (self.ax, self.colorbar_ax) = plt.subplots(ncols=2, gridspec_kw={'width_ratios': [4, 1]})
 
         self.fig.canvas.toolbar_position = 'bottom'
         self.ax.grid(True)
@@ -59,6 +60,9 @@ class PlotInterface:
         """
 
         self.ax.cla()
+        self.colorbar_ax.cla()
+        self.colorbar_ax.xaxis.set_ticks([])
+        self.colorbar_ax.yaxis.set_ticks([])
 
         if self.data is None:
             self.ax.text(0.4, 0.5, "No data available")
@@ -69,16 +73,18 @@ class PlotInterface:
             return
 
         monitor = name_search(self.current_monitor, self.data)
-        plot_options = {"show_colorbar": False, "log": self.log_mode}
+        plot_options = {"show_colorbar": True, "log": self.log_mode}
         if self.orders_of_mag != "disabled":
             plot_options["orders_of_mag"] = self.orders_of_mag
         else:
             plot_options["orders_of_mag"] = 300 # Default value in McStasPlotOptions
 
-        print("Plotting with: ", plot_options)
+        #print("Plotting with: ", plot_options)
         monitor.set_plot_options(**plot_options)
         with HiddenPrints():
-            plotter._plot_fig_ax(monitor, self.fig, self.ax)
+            plotter._plot_fig_ax(monitor, self.fig, self.ax, colorbar_axes=self.colorbar_ax)
+
+        self.colorbar_ax.set_aspect(20)
 
         plt.tight_layout()
 

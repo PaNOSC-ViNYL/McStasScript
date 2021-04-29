@@ -164,8 +164,13 @@ def _plot_fig_ax(data, fig, ax, **kwargs):
 
         # Add the colorbar
         if data.plot_options.show_colorbar:
-            fig.colorbar(im, ax=ax,
+            cax = None
+            if "colorbar_axes" in kwargs:
+                cax = kwargs["colorbar_axes"]
+                print("colorbar axes set")
+            fig.colorbar(im, ax=ax, cax=cax,
                          format=matplotlib.ticker.FuncFormatter(_fmt))
+            cax.set_aspect(20)
 
         # Add a title
         ax.set_title(data.metadata.title)
