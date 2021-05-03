@@ -13,6 +13,7 @@ from mcstasscript.helper.component_reader import ComponentReader
 from mcstasscript.helper.managed_mcrun import ManagedMcrun
 from mcstasscript.helper.formatting import is_legal_filename
 from mcstasscript.helper.formatting import bcolors
+from mcstasscript.jb_interface.simulation_interface import SimInterface
 
 
 class McCode_instr:
@@ -188,6 +189,9 @@ class McCode_instr:
     run_full_instrument(**kwargs)
         Writes instrument files and runs simulation.
         Returns list of McStasData
+
+    interface()
+        Shows interface with jupyter notebook widgets
     """
 
     def __init__(self, name, **kwargs):
@@ -1680,6 +1684,14 @@ class McCode_instr:
         print(process.stderr)
         print(process.stdout)
 
+    def interface(self):
+        """
+        Shows simulation interface in jupyter notebook interface
+
+        Needs "%matplotlib widget" in notebook to work correctly
+        """
+        interface = SimInterface(self)
+        return interface.show_interface()
 
 class McStas_instr(McCode_instr):
     """
@@ -1850,6 +1862,9 @@ class McStas_instr(McCode_instr):
     run_full_instrument(**kwargs)
         Writes instrument files and runs simulation.
         Returns list of McStasData
+
+    interface()
+        Shows interface with jupyter notebook widgets
     """
     def __init__(self, name, **kwargs):
         """
@@ -2068,6 +2083,9 @@ class McXtrace_instr(McCode_instr):
     run_full_instrument(**kwargs)
         Writes instrument files and runs simulation.
         Returns list of McStasData
+
+    interface()
+        Shows interface with jupyter notebook widgets
     """
     def __init__(self, name, **kwargs):
         """

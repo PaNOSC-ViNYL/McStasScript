@@ -82,7 +82,6 @@ def name_plot_options(name, data_list, **kwargs):
         for data_object in object_to_modify:
             data_object.set_plot_options(**kwargs)
 
-
 def load_data(foldername):
     """
     Loads data from a McStas data folder including mccode.sim

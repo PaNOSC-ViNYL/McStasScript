@@ -8,6 +8,7 @@ from matplotlib.colors import BoundaryNorm
 from matplotlib.ticker import MaxNLocator
 
 from mcstasscript.data.data import McStasData
+from mcstasscript.jb_interface.plot_interface import PlotInterface
 
 
 def _fmt(x, pos):
@@ -412,3 +413,15 @@ def make_animation(data_list, **kwargs):
         # check if imagemagick available?
         print("Saving animation with filename : \"" + filename + "\"")
         anim.save(filename, writer="imagemagick")
+
+def interface(data):
+    """
+    Shows plot interface to explore data
+
+    Parameters
+    ----------
+
+    data : List of McStasData objects
+    """
+    interface = PlotInterface(data)
+    return interface.show_interface()

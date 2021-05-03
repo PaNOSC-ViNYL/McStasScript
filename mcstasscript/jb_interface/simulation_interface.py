@@ -14,8 +14,31 @@ from mcstasscript.jb_interface.widget_helpers import parameter_has_default
 from mcstasscript.jb_interface.widget_helpers import get_parameter_default
 
 
-class ParameterTextbox:
+class ParameterWidget:
+    """
+    Widget for parameter object from McStasScript instrument
+    """
     def __init__(self, parameter, parameters):
+        """
+        Describes a widget for a parameter object given all parameters
+
+        When no options are given in ParameterVariable object, the widget will
+        be a textfield where the user can input the value. If the options
+        attribute is used, the widget will be a dropdown menu with available
+        options. The make_widget method returns the widget, and the update
+        function is called whenever the user interacts with the widget.
+
+        The widget shows parameter name, the interactive widget and a comment
+
+        Parameters
+        ----------
+
+        parameter: McStasScript ParameterVariable object
+            The parameter this widget should represent
+
+        parameters: dict of McStasScript ParameterVariable objects
+            Dict with all parameter objects of the instrument
+        """
 
         self.parameter = parameter
         self.parameters = parameters
@@ -29,19 +52,49 @@ class ParameterTextbox:
         self.comment = parameter.comment
 
     def make_widget(self):
+        """
+        Returns widget with parameter name, interactive widget and comment
+        """
         label = widgets.Label(value=self.name,
                               layout=widgets.Layout(width='15%', height='32px'))
-        textbox = widgets.Text(value=str(self.default_value),
-                               layout=widgets.Layout(width='10%', height='32px'))
+        if self.parameter.options is not None:
+            par_widget = widgets.Dropdown(options=self.parameter.options,
+                                          layout=widgets.Layout(width='10%', height='32px'))
+            if self.default_value != "":
+                if self.default_value in self.parameter.options:
+                    par_widget.value = self.default_value
+                elif self.default_value.strip("'") in self.parameter.options:
+                    par_widget.value = self.default_value.strip("'")
+                elif self.default_value.strip('"') in self.parameter.options:
+                    par_widget.value = self.default_value.strip('"')
+                else:
+                    raise KeyError("default value not found in options for parameter: "
+                                   + str(self.parameter.name))
+
+        else:
+            par_widget = widgets.Text(value=str(self.default_value),
+                                      layout=widgets.Layout(width='10%', height='32px'))
         comment = widgets.Label(value=self.comment,
                                 layout=widgets.Layout(width='75%', height='32px'))
 
-        textbox.observe(self.update, "value")
+        par_widget.observe(self.update, "value")
 
-        return widgets.HBox([label, textbox, comment])
+        return widgets.HBox([label, par_widget, comment])
 
     def update(self, change):
-        self.parameters[self.name] = change.new
+        """
+        Update function called whenever the user updates the widget
+
+        When strings parameters are used, this function adds the necessary
+        quotation marks if none are provided.
+        """
+        new_value = change.new
+        if self.parameter.type == "string":
+            if type(new_value) is str:
+                if not (new_value[0] == '"' or new_value[0] == "'"):
+                    new_value = '"' + new_value + '"'
+
+        self.parameters[self.name] = new_value
 
 
 class SimInterface:
@@ -96,7 +149,7 @@ class SimInterface:
         parameter_widgets = []
         for parameter in self.instrument.parameter_list:
             if True: #parameter.type != "":
-                par_widget = ParameterTextbox(parameter, self.parameters)
+                par_widget = ParameterWidget(parameter, self.parameters)
             else:
                 raise RuntimeError("Unknown parameter type '"
                                    + parameter.type + "' of par named '"
@@ -130,9 +183,16 @@ class SimInterface:
             run_arguments["mpi"] = self.mpi
 
         self.run_button.icon = "hourglass"
-        print("Running with:", run_arguments)
-        with HiddenPrints():
-            data = self.instrument.run_full_instrument(**run_arguments)
+        #print("Running with:", run_arguments)
+
+        try:
+            with HiddenPrints():
+                data = self.instrument.run_full_instrument(**run_arguments)
+            #data = self.instrument.run_full_instrument(**run_arguments)
+        except NameError:
+            print("McStas run failed.")
+            data = []
+
         self.run_button.icon = "calculator"
 
         self.plot_interface.set_data(data)
@@ -161,7 +221,7 @@ class SimInterface:
                                             display="flex",
                                             justify_content="flex-end")
         description = widgets.Label(value="ncount", layout=description_layout)
-        textbox = widgets.Text(value=str(self.ncount), layout=widgets.Layout(width='100px', height='32px'))
+        textbox = widgets.Text(value=str(self.ncount), layout=widgets.Layout(width='100px', height='36px'))
         textbox.observe(self.update_ncount, "value")
 
         return widgets.HBox([description, textbox])
@@ -192,7 +252,7 @@ class SimInterface:
                                             display="flex",
                                             justify_content="flex-end")
         description = widgets.Label(value="mpi", layout=description_layout)
-        textbox = widgets.Text(value=str(self.mpi), layout=widgets.Layout(width='70px', height='32px'))
+        textbox = widgets.Text(value=str(self.mpi), layout=widgets.Layout(width='70px', height='36px'))
         textbox.observe(self.update_mpi, "value")
 
         return widgets.HBox([description, textbox])
@@ -228,8 +288,8 @@ class SimInterface:
         ncount_field = self.make_ncount_field()
         mpi_field = self.make_mpi_field()
 
-        simulation_widget = widgets.HBox([self.run_button, ncount_field, mpi_field],
-                                         layout=widgets.Layout(border="solid"))
+        simulation_widget = widgets.HBox([self.run_button, ncount_field, mpi_field])
+                                         #layout=widgets.Layout(border="solid"))
 
         self.plot_interface = plot_interface.PlotInterface()
         plot_widget = self.plot_interface.show_interface()
