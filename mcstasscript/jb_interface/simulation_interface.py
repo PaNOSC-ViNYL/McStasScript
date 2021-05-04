@@ -140,21 +140,13 @@ class SimInterface:
 
     def make_parameter_widgets(self):
         """
-        Creates widgets for parameters using dedicated class ParameterTextbox
-        Preliminary check for parameter type disabled as the ParameterVariable
-        class does not set type for default case, will be fixed.
+        Creates widgets for parameters using dedicated class ParameterWidget
 
         returns widget including all parameters
         """
         parameter_widgets = []
         for parameter in self.instrument.parameter_list:
-            if True: #parameter.type != "":
-                par_widget = ParameterWidget(parameter, self.parameters)
-            else:
-                raise RuntimeError("Unknown parameter type '"
-                                   + parameter.type + "' of par named '"
-                                   + parameter.name + "'.")
-
+            par_widget = ParameterWidget(parameter, self.parameters)
             parameter_widgets.append(par_widget.make_widget())
 
         return widgets.VBox(parameter_widgets)

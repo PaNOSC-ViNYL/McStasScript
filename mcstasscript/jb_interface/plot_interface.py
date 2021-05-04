@@ -103,15 +103,15 @@ class PlotInterface:
 
         # Clear plot first
         self.ax.cla()
-        self.ax.xaxis.set_ticks([])
-        self.ax.yaxis.set_ticks([])
+        #self.ax.xaxis.set_ticks([])
+        #self.ax.yaxis.set_ticks([])
         self.colorbar_ax.cla()
         self.colorbar_ax.xaxis.set_ticks([])
         self.colorbar_ax.yaxis.set_ticks([])
 
         # Display message if not data can be plotted
         if self.data is None:
-            self.ax.text(0.32, 0.5, "No data available")
+            self.ax.text(0.3, 0.5, "No data available yet")
             return
 
         if len(self.data) == 0:

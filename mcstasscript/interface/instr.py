@@ -291,6 +291,8 @@ class McCode_instr:
                                                 input_path=self.input_path)
         self.component_class_lib = {}
 
+        self.widget_interface = None
+
     def _read_calibration(self):
         """
         Place holder method that should be overwritten by classes
@@ -1690,8 +1692,23 @@ class McCode_instr:
 
         Needs "%matplotlib widget" in notebook to work correctly
         """
-        interface = SimInterface(self)
-        return interface.show_interface()
+        self.widget_interface = SimInterface(self)
+        return self.widget_interface.show_interface()
+
+    def get_interface_data(self):
+        """
+        Returns data from last run performed with the widget interface
+        """
+
+        if self.widget_interface is None:
+            print("No widget interface initialized, use interface method.")
+            return []
+
+        if self.widget_interface.plot_interface.data is None:
+            print("No run has been performed with the interface widget yet")
+            return []
+
+        return self.widget_interface.plot_interface.data
 
 class McStas_instr(McCode_instr):
     """

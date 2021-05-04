@@ -171,7 +171,7 @@ def _plot_fig_ax(data, fig, ax, **kwargs):
 
             fig.colorbar(im, ax=ax, cax=cax,
                          format=matplotlib.ticker.FuncFormatter(_fmt))
-            
+
             if "colorbar_axes" in kwargs:
                 cax.set_aspect(20)
 
