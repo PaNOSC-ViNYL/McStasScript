@@ -90,7 +90,7 @@ class ParameterVariable:
         self.value = ""
         if "value" in kwargs:
             if not isinstance(kwargs["value"], (str, int, float)):
-                raise RuntimeError("Given value for parameter has to be of"
+                raise RuntimeError("Given value for parameter has to be of "
                                    + "type str, int or float.")
             self.value = kwargs["value"]
 
@@ -101,6 +101,16 @@ class ParameterVariable:
                 raise RuntimeError("Tried to create a parameter with a "
                                    + "comment that was not a string.")
             self.comment = "// " + self.comment
+
+        self.options = None
+        if "options" in kwargs:
+            self.options = kwargs["options"]
+            if self.value != "":
+                if (self.value not in self.options
+                        and self.value.strip("'") not in self.options
+                        and self.value.strip('"') not in self.options):
+                    raise RuntimeError("When giving both options and default, "
+                                       "the value has to be an option.")
 
     def write_parameter(self, fo, stop_character):
         """Writes input parameter to file"""

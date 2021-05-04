@@ -26,7 +26,10 @@ def name_search(name, data_list):
     """
     if type(data_list) is not list:
         raise RuntimeError(
-            "name_search function needs list of McStasData as input")
+            "name_search function needs list of McStasData as input.")
+
+    if len(data_list) == 0:
+        raise RuntimeError("Given data list empty.")
 
     if not type(data_list[0]) == McStasData:
         raise RuntimeError(
@@ -81,7 +84,6 @@ def name_plot_options(name, data_list, **kwargs):
     else:
         for data_object in object_to_modify:
             data_object.set_plot_options(**kwargs)
-
 
 def load_data(foldername):
     """

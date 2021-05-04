@@ -8,6 +8,7 @@ from matplotlib.colors import BoundaryNorm
 from matplotlib.ticker import MaxNLocator
 
 from mcstasscript.data.data import McStasData
+from mcstasscript.jb_interface.plot_interface import PlotInterface
 
 
 def _fmt(x, pos):
@@ -164,8 +165,15 @@ def _plot_fig_ax(data, fig, ax, **kwargs):
 
         # Add the colorbar
         if data.plot_options.show_colorbar:
-            fig.colorbar(im, ax=ax,
+            cax = None
+            if "colorbar_axes" in kwargs:
+                cax = kwargs["colorbar_axes"]
+
+            fig.colorbar(im, ax=ax, cax=cax,
                          format=matplotlib.ticker.FuncFormatter(_fmt))
+
+            if "colorbar_axes" in kwargs:
+                cax.set_aspect(20)
 
         # Add a title
         ax.set_title(data.metadata.title)
@@ -407,3 +415,15 @@ def make_animation(data_list, **kwargs):
         # check if imagemagick available?
         print("Saving animation with filename : \"" + filename + "\"")
         anim.save(filename, writer="imagemagick")
+
+def interface(data):
+    """
+    Shows plot interface to explore data
+
+    Parameters
+    ----------
+
+    data : List of McStasData objects
+    """
+    interface = PlotInterface(data)
+    return interface.show_interface()
