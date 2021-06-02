@@ -1590,6 +1590,8 @@ class McCode_instr:
                 Sets parameters
             custom_flags : str
                 Sets custom_flags passed to mcrun
+            force_compile : bool
+                If True (default) new instrument file is written, otherwise not
             executable_path : str
                 Path to mcrun command, "" if already in path
         """
@@ -1692,6 +1694,7 @@ class McCode_instr:
 
         Needs "%matplotlib widget" in notebook to work correctly
         """
+        self.write_full_instrument()
         self.widget_interface = SimInterface(self)
         return self.widget_interface.show_interface()
 

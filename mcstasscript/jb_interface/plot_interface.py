@@ -1,10 +1,11 @@
 import sys
 import os
+import threading
 
 from collections import OrderedDict
 
 import ipywidgets as widgets
-from IPython.display import display
+from IPython.display import display, clear_output
 
 import matplotlib.pyplot as plt
 
@@ -28,6 +29,8 @@ class PlotInterface:
             Optional to set the data, otherwise use set_data method
         """
         self.data = data
+
+        output = None
 
         # Variables related to monitor choice
         self.monitor_dropdown = None
@@ -99,45 +102,52 @@ class PlotInterface:
     def update_plot(self):
         """
         Updates the plot with current data, monitor and plot options
+
+        Threading lock is used as this method is used in a threading context
+        and can easily fail if new data is written while plotting. The lock
+        prevents this from happening.
         """
+        lock = threading.Lock()
 
-        # Clear plot first
-        self.ax.cla()
-        #self.ax.xaxis.set_ticks([])
-        #self.ax.yaxis.set_ticks([])
-        self.colorbar_ax.cla()
-        self.colorbar_ax.xaxis.set_ticks([])
-        self.colorbar_ax.yaxis.set_ticks([])
+        with lock:
+            # Clear plot first
+            self.ax.cla()
+            #self.ax.xaxis.set_ticks([])
+            #self.ax.yaxis.set_ticks([])
+            self.colorbar_ax.cla()
+            self.colorbar_ax.xaxis.set_ticks([])
+            self.colorbar_ax.yaxis.set_ticks([])
 
-        # Display message if not data can be plotted
-        if self.data is None:
-            self.ax.text(0.3, 0.5, "No data available yet")
-            return
+            # Display message if not data can be plotted
+            if self.data is None:
+                self.ax.text(0.3, 0.5, "No data available yet")
+                return
 
-        if len(self.data) == 0:
-            self.ax.text(0.25, 0.5, "Simulation returned no data")
-            return
+            if len(self.data) == 0:
+                self.ax.text(0.25, 0.5, "Simulation returned no data")
+                return
 
-        if self.current_monitor is None:
-            self.ax.text(0.3, 0.5, "Select a monitor to plot")
-            return
+            if self.current_monitor is None:
+                self.ax.text(0.3, 0.5, "Select a monitor to plot")
+                return
 
-        # Get monitor and establish plot options
-        monitor = name_search(self.current_monitor, self.data)
-        plot_options = {"show_colorbar": True, "log": self.log_mode, "colormap": self.colormap}
-        if self.orders_of_mag != "disabled":
-            plot_options["orders_of_mag"] = self.orders_of_mag
-        else:
-            plot_options["orders_of_mag"] = 300 # Default value in McStasPlotOptions
+            # Get monitor and establish plot options
+            monitor = name_search(self.current_monitor, self.data)
+            plot_options = {"show_colorbar": True, "log": self.log_mode, "colormap": self.colormap}
+            if self.orders_of_mag != "disabled":
+                plot_options["orders_of_mag"] = self.orders_of_mag
+            else:
+                plot_options["orders_of_mag"] = 300 # Default value in McStasPlotOptions
 
-        #print("Plotting with: ", plot_options)
-        monitor.set_plot_options(**plot_options)
-        with HiddenPrints():
-            plotter._plot_fig_ax(monitor, self.fig, self.ax, colorbar_axes=self.colorbar_ax)
+            #print("Plotting with: ", plot_options)
+            monitor.set_plot_options(**plot_options)
+            with HiddenPrints():
+                plotter._plot_fig_ax(monitor, self.fig, self.ax, colorbar_axes=self.colorbar_ax)
 
-        self.colorbar_ax.set_aspect(20)
+            self.colorbar_ax.set_aspect(20)
 
-        plt.tight_layout()
+            plt.tight_layout()
+            self.fig.canvas.draw()
 
     def show_interface(self):
         """
@@ -305,6 +315,14 @@ class MonitorDropdown:
 
         monitor_names = []
         for data in self.data:
+
+            # Ensure data names are unique
+            original_name = data.name
+            index = 1
+            while data.name in monitor_names:
+                data.name = original_name + "_" + str(index)
+                index += 1
+
             monitor_names.append(data.name)
 
         self.widget.options = monitor_names

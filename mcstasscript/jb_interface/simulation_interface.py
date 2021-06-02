@@ -1,5 +1,8 @@
 import sys
 import os
+import numpy as np
+import threading
+import copy
 
 import ipywidgets as widgets
 from IPython.display import display
@@ -12,6 +15,262 @@ from mcstasscript.jb_interface import plot_interface
 from mcstasscript.jb_interface.widget_helpers import HiddenPrints
 from mcstasscript.jb_interface.widget_helpers import parameter_has_default
 from mcstasscript.jb_interface.widget_helpers import get_parameter_default
+
+
+class SimInterface:
+    """
+    Class for setting up widget that controls McStasScript instrument and plot
+    """
+    def __init__(self, instrument):
+        """
+        Sets up widget where the user can input instrument parameters, run the
+        simulation, see plotted results and adjust the plots.
+
+        The parameters of the instrument model are displayed with name, default
+        value and comment. Can be adjusted with free text.
+
+        A run button starts a simulation, and basic settings can be adjusted.
+
+        A dropdown menu is available for selecting what monitor to view results
+        from, and basic settings related to the plot can be adjusted.
+
+        Show the interface with the show_interface method.
+
+        Parameters
+        ----------
+
+        instrument: McStas_instr or McXtrace_instr
+            instrument for which a widget should be created
+        """
+
+        self.instrument = instrument
+
+        self.plot_interface = None
+
+        self.run_button = None
+        self.live_widget = None
+        self.progress_bar = None
+        self.sim_steps = 5
+
+        self.ncount = "1E6"
+        self.mpi = "disabled"
+
+        self.thread_data = None
+        self.thread = None
+        self.run_arguments = None
+
+        self.parameters = {}
+        # get default parameters from instrument
+        for parameter in self.instrument.parameter_list:
+            if parameter_has_default(parameter):
+                self.parameters[parameter.name] = get_parameter_default(parameter)
+
+    def make_parameter_widgets(self):
+        """
+        Creates widgets for parameters using dedicated class ParameterWidget
+
+        returns widget including all parameters
+        """
+        parameter_widgets = []
+        for parameter in self.instrument.parameter_list:
+            par_widget = ParameterWidget(parameter, self.parameters)
+            parameter_widgets.append(par_widget.make_widget())
+
+        return widgets.VBox(parameter_widgets)
+
+    def run_simulation_thread(self, change):
+        """
+        Runs simulation as thread, allowing user to update plots simultaneously
+
+        Parameters
+        ----------
+
+        change: widget change
+            Not used
+        """
+
+        thread = threading.Thread(target=self.run_simulation_live)
+        thread.start()
+
+    def run_simulation_live(self):
+        """
+        Performs the simulation with current parameters and settings.
+
+        When live mode is used, updates plot as more data is added.
+
+        Changes icon on button to hourglass while simulation is running, then
+        returns to calculator icon.
+        """
+
+        lock = threading.Lock()
+
+        if self.live_widget.value:
+            sim_parts = self.sim_steps
+        else:
+            sim_parts = 1
+
+        part_ncount = int(float(self.ncount)/sim_parts)
+
+        run_arguments = {"foldername": "interface_" + self.instrument.name,
+                         "increment_folder_name": True,
+                         "parameters": self.parameters,
+                         "ncount": part_ncount,
+                         "force_compile": False}
+        if self.mpi != "disabled":
+            run_arguments["mpi"] = self.mpi
+
+        self.run_button.icon = "hourglass"
+        #print("Running with:", run_arguments)
+
+        if self.live_widget.value:
+            self.progress_bar.layout.visibility = 'visible'
+        else:
+            self.progress_bar.layout.visibility = 'hidden'
+
+        self.progress_bar.value = 0
+        plot_data = None
+        for index in range(sim_parts):
+            try:
+                with HiddenPrints():
+                    data = self.instrument.run_full_instrument(**run_arguments)
+            except NameError:
+                print("McStas run failed.")
+                data = []
+
+            self.progress_bar.value = index + 1
+
+            if plot_data is None:
+                plot_data = data
+            else:
+                add_data(plot_data, data)
+
+            with lock:
+                sent_data = copy.deepcopy(plot_data)
+                self.plot_interface.set_data(sent_data)
+
+        self.run_button.icon = "calculator"
+
+    def make_run_button(self):
+        """
+        Creates a run button which perform the simulation
+        """
+        button = widgets.Button(
+            description='Run',
+            disabled=False,
+            button_style='',  # 'success', 'info', 'warning', 'danger' or ''
+            tooltip='Runs the simulation with current parameters',
+            icon='calculator'  # (FontAwesome names without the `fa-` prefix)
+        )
+        button.on_click(self.run_simulation_thread)
+
+        return button
+
+    def make_ncount_field(self):
+        """
+        Creates field for ncount, links to update_ncount
+
+        The field supports scientific notation
+        """
+        description_layout = widgets.Layout(width='70px', height='32px',
+                                            display="flex",
+                                            justify_content="flex-end")
+        description = widgets.Label(value="ncount", layout=description_layout)
+        textbox = widgets.Text(value=str(self.ncount), layout=widgets.Layout(width='100px', height='36px'))
+        textbox.observe(self.update_ncount, "value")
+
+        return widgets.HBox([description, textbox])
+
+    def update_ncount(self, change):
+        """
+        Updates ncount variable from textbox input
+
+        Only updates when usable input is entered. Supports scientific
+        notation in input through conversion to float
+
+        Parameters
+        ----------
+
+        change: widget change
+            state change of widget
+        """
+        try:
+            self.ncount = int(float(change.new))
+        except ValueError:
+            pass
+
+    def make_mpi_field(self):
+        """
+        Creates field for mpi, links to update_mpi
+        """
+        description_layout = widgets.Layout(width='40px', height='32px',
+                                            display="flex",
+                                            justify_content="flex-end")
+        description = widgets.Label(value="mpi", layout=description_layout)
+        textbox = widgets.Text(value=str(self.mpi), layout=widgets.Layout(width='70px', height='36px'))
+        textbox.observe(self.update_mpi, "value")
+
+        return widgets.HBox([description, textbox])
+
+    def update_mpi(self, change):
+        """
+        Updates mpi value when integer or the word 'disabled' is given
+
+        Parameters
+        ----------
+
+        change: widget change
+            state change of widget
+        """
+        if change.new == "disabled":
+            self.mpi = change.new
+
+        try:
+            self.mpi = int(change.new)
+        except ValueError:
+            pass
+
+    def make_live_checkmark(self):
+        """
+        Makes widget for choosing live simulations on / off
+        """
+        widget = widgets.Checkbox(value=False, description="Live results")
+
+        return widget
+
+    def make_progress_bar(self):
+        """
+        Makes a progress bar for live simulations
+        """
+        widget = widgets.IntProgress(value=0, min=0, max=self.sim_steps,
+                                     description="Sim progress",
+                                     orientation="horizontal")
+
+        return widget
+
+    def show_interface(self):
+        """
+        Builds and shows widget interface
+        """
+
+        # Make parameter controls
+        parameter_widgets = self.make_parameter_widgets()
+
+        # Make simulation controls
+        self.live_widget = self.make_live_checkmark()
+        self.progress_bar = self.make_progress_bar()
+        self.progress_bar.layout.visibility = "hidden"
+        self.run_button = self.make_run_button()
+        ncount_field = self.make_ncount_field()
+        mpi_field = self.make_mpi_field()
+
+        simulation_widget = widgets.HBox([self.run_button, ncount_field, mpi_field,
+                                          self.live_widget, self.progress_bar])
+                                         #layout=widgets.Layout(border="solid"))
+
+        self.plot_interface = plot_interface.PlotInterface()
+        plot_widget = self.plot_interface.show_interface()
+
+        return widgets.VBox([parameter_widgets, simulation_widget, plot_widget])
 
 
 class ParameterWidget:
@@ -97,196 +356,30 @@ class ParameterWidget:
         self.parameters[self.name] = new_value
 
 
-class SimInterface:
+def add_data(initial, new_data):
     """
-    Class for setting up widget that controls McStasScript instrument and plot
+    Method for adding new data to a data set
+
+    Updates Intensity, Error and Ncount
+
+    Updates all data except metadata info
     """
-    def __init__(self, instrument):
-        """
-        Sets up widget where the user can input instrument parameters, run the
-        simulation, see plotted results and adjust the plots.
 
-        The parameters of the instrument model are displayed with name, default
-        value and comment. Can be adjusted with free text.
+    for monitor in initial:
+        ref_ncount = float(monitor.metadata.info["Ncount"])
 
-        A run button starts a simulation, and basic settings can be adjusted.
+        new_monitor = name_search(monitor.name, new_data)
+        new_ncount = float(new_monitor.metadata.info["Ncount"])
 
-        A dropdown menu is available for selecting what monitor to view results
-        from, and basic settings related to the plot can be adjusted.
+        total_ncount = ref_ncount + new_ncount
 
-        Show the interface with the show_interface method.
+        scale_old = ref_ncount / total_ncount
+        scale_new = new_ncount / total_ncount
 
-        Parameters
-        ----------
+        monitor.Intensity = scale_old*monitor.Intensity + scale_new*new_monitor.Intensity
+        monitor.Error = np.sqrt(scale_old**2*monitor.Error**2+scale_new**2*new_monitor.Error**2)
+        monitor.Ncount = monitor.Ncount + new_monitor.Ncount
 
-        instrument: McStas_instr or McXtrace_instr
-            instrument for which a widget should be created
-        """
-
-        self.instrument = instrument
-
-        self.plot_interface = None
-
-        self.run_button = None
-
-        self.ncount = "1E6"
-        self.mpi = "disabled"
-
-        self.parameters = {}
-        # get default parameters from instrument
-        for parameter in self.instrument.parameter_list:
-            if parameter_has_default(parameter):
-                self.parameters[parameter.name] = get_parameter_default(parameter)
-
-    def make_parameter_widgets(self):
-        """
-        Creates widgets for parameters using dedicated class ParameterWidget
-
-        returns widget including all parameters
-        """
-        parameter_widgets = []
-        for parameter in self.instrument.parameter_list:
-            par_widget = ParameterWidget(parameter, self.parameters)
-            parameter_widgets.append(par_widget.make_widget())
-
-        return widgets.VBox(parameter_widgets)
-
-    def run_simulation(self, change):
-        """
-        Performs the simulation with current parameters and settings.
-
-        Changes icon on button to hourglass while simulation is running, then
-        returns to calculator icon.
-
-        Has dummy parameter change to allow the method to be used in on_click
-        method of the run button.
-
-        Parameters
-        ----------
-
-        change: widget change
-            Not used
-        """
-        run_arguments = {"foldername": "interface",
-                         "increment_folder_name": True,
-                         "parameters": self.parameters,
-                         "ncount": int(float(self.ncount))}
-        if self.mpi != "disabled":
-            run_arguments["mpi"] = self.mpi
-
-        self.run_button.icon = "hourglass"
-        #print("Running with:", run_arguments)
-
-        try:
-            with HiddenPrints():
-                data = self.instrument.run_full_instrument(**run_arguments)
-            #data = self.instrument.run_full_instrument(**run_arguments)
-        except NameError:
-            print("McStas run failed.")
-            data = []
-
-        self.run_button.icon = "calculator"
-
-        self.plot_interface.set_data(data)
-
-    def make_run_button(self):
-        """
-        Creates a run button which perform the simulation
-        """
-        button = widgets.Button(
-            description='Run',
-            disabled=False,
-            button_style='',  # 'success', 'info', 'warning', 'danger' or ''
-            tooltip='Runs the simulation with current parameters',
-            icon='calculator'  # (FontAwesome names without the `fa-` prefix)
-        )
-        button.on_click(self.run_simulation)
-        return button
-
-    def make_ncount_field(self):
-        """
-        Creates field for ncount, links to update_ncount
-
-        The field supports scientific notation
-        """
-        description_layout = widgets.Layout(width='70px', height='32px',
-                                            display="flex",
-                                            justify_content="flex-end")
-        description = widgets.Label(value="ncount", layout=description_layout)
-        textbox = widgets.Text(value=str(self.ncount), layout=widgets.Layout(width='100px', height='36px'))
-        textbox.observe(self.update_ncount, "value")
-
-        return widgets.HBox([description, textbox])
-
-    def update_ncount(self, change):
-        """
-        Updates ncount variable from textbox input
-
-        Only updates when usable input is entered. Supports scientific
-        notation in input through conversion to float
-
-        Parameters
-        ----------
-
-        change: widget change
-            state change of widget
-        """
-        try:
-            self.ncount = int(float(change.new))
-        except ValueError:
-            pass
-
-    def make_mpi_field(self):
-        """
-        Creates field for mpi, links to update_mpi
-        """
-        description_layout = widgets.Layout(width='40px', height='32px',
-                                            display="flex",
-                                            justify_content="flex-end")
-        description = widgets.Label(value="mpi", layout=description_layout)
-        textbox = widgets.Text(value=str(self.mpi), layout=widgets.Layout(width='70px', height='36px'))
-        textbox.observe(self.update_mpi, "value")
-
-        return widgets.HBox([description, textbox])
-
-    def update_mpi(self, change):
-        """
-        Updates mpi value when integer or the word 'disabled' is given
-
-        Parameters
-        ----------
-
-        change: widget change
-            state change of widget
-        """
-        if change.new == "disabled":
-            self.mpi = change.new
-
-        try:
-            self.mpi = int(change.new)
-        except ValueError:
-            pass
-
-    def show_interface(self):
-        """
-        Builds and shows widget interface
-        """
-
-        # Make parameter controls
-        parameter_widgets = self.make_parameter_widgets()
-
-        # Make simulation controls
-        self.run_button = self.make_run_button()
-        ncount_field = self.make_ncount_field()
-        mpi_field = self.make_mpi_field()
-
-        simulation_widget = widgets.HBox([self.run_button, ncount_field, mpi_field])
-                                         #layout=widgets.Layout(border="solid"))
-
-        self.plot_interface = plot_interface.PlotInterface()
-        plot_widget = self.plot_interface.show_interface()
-
-        return widgets.VBox([parameter_widgets, simulation_widget, plot_widget])
-
+        monitor.metadata.info["Ncount"] = total_ncount
 
 
