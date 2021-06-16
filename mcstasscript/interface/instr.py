@@ -192,6 +192,9 @@ class McCode_instr:
 
     interface()
         Shows interface with jupyter notebook widgets
+
+    get_interface_data()
+        Returns data set from latest simulation in widget
     """
 
     def __init__(self, name, **kwargs):
@@ -1885,6 +1888,9 @@ class McStas_instr(McCode_instr):
 
     interface()
         Shows interface with jupyter notebook widgets
+
+    get_interface_data()
+        Returns data set from latest simulation in widget
     """
     def __init__(self, name, **kwargs):
         """
@@ -2106,6 +2112,9 @@ class McXtrace_instr(McCode_instr):
 
     interface()
         Shows interface with jupyter notebook widgets
+
+    get_interface_data()
+        Returns data set from latest simulation in widget
     """
     def __init__(self, name, **kwargs):
         """
