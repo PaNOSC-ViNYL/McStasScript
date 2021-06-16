@@ -3,9 +3,16 @@ import os
 import unittest
 import unittest.mock
 import matplotlib as plt
+import threading
 
 from mcstasscript.interface import instr, functions
+from mcstasscript.jb_interface.simulation_interface import SimInterface
 
+class FakeChange:
+    def __init__(self, new=None, old=None, name=None):
+        self.new = new
+        self.old = old
+        self.name = name
 
 def setup_complex_instrument():
     """
@@ -133,7 +140,7 @@ class TestComplexInstrument(unittest.TestCase):
     correctly in order for these tests to succeed.
     """
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_complex_instrument(self, mock_stdout):
+    def test_complex_instrument_run(self, mock_stdout):
         """
         Test parameters can be controlled through McStasScript.  Here
         a slit is moved to one side and the result is verified.
@@ -173,6 +180,51 @@ class TestComplexInstrument(unittest.TestCase):
         # plotter.make_sub_plot(data)
         # time.sleep(10)
         # plt.close()
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_complex_instrument_interface(self, mock_stdout):
+        """
+        Test that a simulation can be performed through the simulation
+        interface, or as close as I can through scripting.
+        Need to join the simulation thread to the main thread in order
+        to wait for the completion as it is performed in a new thread.
+        """
+        CURRENT_DIR = os.getcwd()
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        os.chdir(THIS_DIR)
+
+        Instr = setup_complex_instrument()
+
+        interface = SimInterface(Instr)
+        interface.show_interface()
+
+        change = FakeChange()
+
+        interface.run_simulation_thread(change)
+
+        for thread in threading.enumerate():
+            if thread.name != "MainThread":
+                thread.join()
+
+        data = interface.plot_interface.data
+
+        os.chdir(CURRENT_DIR)
+
+        intensity_data_pos = functions.name_search("PSD_1D_1", data).Intensity
+        sum_outside_beam = sum(intensity_data_pos[0:50])
+        sum_inside_beam = sum(intensity_data_pos[51:99])
+        self.assertTrue(1000 * sum_outside_beam < sum_inside_beam)
+
+        intensity_data_neg = functions.name_search("PSD_1D_2", data).Intensity
+        sum_outside_beam = sum(intensity_data_neg[51:99])
+        sum_inside_beam = sum(intensity_data_neg[0:50])
+        self.assertTrue(1000 * sum_outside_beam < sum_inside_beam)
+
+        intensity_data_all = functions.name_search("PSD_1D", data).Intensity
+        sum_outside_beam = sum(intensity_data_all[49:51])
+        sum_inside_beam = (sum(intensity_data_all[0:45])
+                           + sum(intensity_data_all[56:99]))
+        self.assertTrue(1000 * sum_outside_beam < sum_inside_beam)
 
 
 if __name__ == '__main__':

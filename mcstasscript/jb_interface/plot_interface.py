@@ -10,7 +10,7 @@ from IPython.display import display, clear_output
 import matplotlib.pyplot as plt
 
 from mcstasscript.interface.functions import name_search
-from mcstasscript.interface import plotter
+from mcstasscript.helper.plot_helper import _plot_fig_ax
 
 from mcstasscript.jb_interface.widget_helpers import HiddenPrints
 
@@ -29,8 +29,6 @@ class PlotInterface:
             Optional to set the data, otherwise use set_data method
         """
         self.data = data
-
-        output = None
 
         # Variables related to monitor choice
         self.monitor_dropdown = None
@@ -71,7 +69,7 @@ class PlotInterface:
         """
         Sets log mode for plotting, True or False
         """
-        self.log_mode = log_mode
+        self.log_mode = bool(log_mode)
         self.update_plot()
 
     def set_orders_of_mag(self, orders_of_mag):
@@ -93,7 +91,7 @@ class PlotInterface:
         Sets up original plot with fig, ax and ax for colorbar
         """
         # fig, ax = plt.subplots(constrained_layout=True, figsize=(6, 4))
-        self.fig, (self.ax, self.colorbar_ax) = plt.subplots(ncols=2, gridspec_kw={'width_ratios': [4, 1]})
+        self.fig, (self.ax, self.colorbar_ax) = plt.subplots(ncols=2, gridspec_kw={'width_ratios': [6, 1]})
 
         self.fig.canvas.toolbar_position = 'bottom'
 
@@ -142,7 +140,8 @@ class PlotInterface:
             #print("Plotting with: ", plot_options)
             monitor.set_plot_options(**plot_options)
             with HiddenPrints():
-                plotter._plot_fig_ax(monitor, self.fig, self.ax, colorbar_axes=self.colorbar_ax)
+                #plotter._plot_fig_ax(monitor, self.fig, self.ax, colorbar_axes=self.colorbar_ax)
+                _plot_fig_ax(monitor, self.fig, self.ax, colorbar_axes=self.colorbar_ax)
 
             self.colorbar_ax.set_aspect(20)
 

@@ -381,5 +381,3 @@ def add_data(initial, new_data):
         monitor.Ncount = monitor.Ncount + new_monitor.Ncount
 
         monitor.metadata.info["Ncount"] = total_ncount
-
-
