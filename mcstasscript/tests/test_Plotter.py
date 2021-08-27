@@ -3,14 +3,14 @@ import unittest
 import numpy as np
 import matplotlib.pyplot as plt
 
-from mcstasscript.data.data import McStasData
+from mcstasscript.data.data import McStasDataBinned
 from mcstasscript.data.data import McStasMetaData
 from mcstasscript.interface.plotter import _find_min_max_I
 from mcstasscript.interface.plotter import _handle_kwargs
 from mcstasscript.interface.plotter import _plot_fig_ax
 
 
-def get_dummy_MetaData_1d():
+def get_dummy_MetaDataBinned_1d():
     meta_data = McStasMetaData()
     meta_data.component_name = "component for 1d"
     meta_data.dimension = 50
@@ -22,18 +22,18 @@ def get_dummy_MetaData_1d():
     return meta_data
 
 
-def get_dummy_McStasData_1d():
-    meta_data = get_dummy_MetaData_1d()
+def get_dummy_McStasDataBinned_1d():
+    meta_data = get_dummy_MetaDataBinned_1d()
 
     intensity = np.arange(20) + 5
     error = 0.5 * np.arange(20)
     ncount = 2 * np.arange(20)
     axis = np.arange(20)*5.0
 
-    return McStasData(meta_data, intensity, error, ncount, xaxis=axis)
+    return McStasDataBinned(meta_data, intensity, error, ncount, xaxis=axis)
 
 
-def get_dummy_MetaData_2d():
+def get_dummy_MetaDataBinned_2d():
     meta_data = McStasMetaData()
     meta_data.component_name = "test a component"
     meta_data.dimension = [5, 4]
@@ -45,14 +45,14 @@ def get_dummy_MetaData_2d():
     return meta_data
 
 
-def get_dummy_McStasData_2d():
-    meta_data = get_dummy_MetaData_2d()
+def get_dummy_McStasDataBinned_2d():
+    meta_data = get_dummy_MetaDataBinned_2d()
 
     intensity = np.arange(20).reshape(4, 5) + 5
     error = 0.5 * np.arange(20).reshape(4, 5)
     ncount = 2 * np.arange(20).reshape(4, 5)
 
-    return McStasData(meta_data, intensity, error, ncount)
+    return McStasDataBinned(meta_data, intensity, error, ncount)
 
 
 class TestPlotterHelpers(unittest.TestCase):
@@ -66,7 +66,7 @@ class TestPlotterHelpers(unittest.TestCase):
         and maximum value to plot for a given McStasData set
         """
 
-        dummy_data = get_dummy_McStasData_1d()
+        dummy_data = get_dummy_McStasDataBinned_1d()
         found_min, found_max = _find_min_max_I(dummy_data)
 
         # np.arange(20) + 5: min = 5, max = 5+19 = 24
@@ -80,7 +80,7 @@ class TestPlotterHelpers(unittest.TestCase):
         Here cut_max is used to limit the maximum plotted.
         """
 
-        dummy_data = get_dummy_McStasData_1d()
+        dummy_data = get_dummy_McStasDataBinned_1d()
         dummy_data.set_plot_options(cut_max=0.8)
         found_min, found_max = _find_min_max_I(dummy_data)
 
@@ -95,7 +95,7 @@ class TestPlotterHelpers(unittest.TestCase):
         Here cut_min is used to limit the minimum plotted.
         """
 
-        dummy_data = get_dummy_McStasData_1d()
+        dummy_data = get_dummy_McStasDataBinned_1d()
         dummy_data.set_plot_options(cut_min=0.2)
         found_min, found_max = _find_min_max_I(dummy_data)
 
@@ -112,7 +112,7 @@ class TestPlotterHelpers(unittest.TestCase):
         ignored.
         """
 
-        dummy_data = get_dummy_McStasData_1d()
+        dummy_data = get_dummy_McStasDataBinned_1d()
         dummy_data.Intensity[5] = 0
         dummy_data.set_plot_options(log=True)
         found_min, found_max = _find_min_max_I(dummy_data)
@@ -129,7 +129,7 @@ class TestPlotterHelpers(unittest.TestCase):
         log mode is enabled.
         """
 
-        dummy_data = get_dummy_McStasData_1d()
+        dummy_data = get_dummy_McStasDataBinned_1d()
         dummy_data.set_plot_options(cut_max=0.8, log=True)
         found_min, found_max = _find_min_max_I(dummy_data)
 
@@ -145,7 +145,7 @@ class TestPlotterHelpers(unittest.TestCase):
         log mode is enabled.
         """
 
-        dummy_data = get_dummy_McStasData_1d()
+        dummy_data = get_dummy_McStasDataBinned_1d()
         dummy_data.set_plot_options(cut_min=0.2, log=True)
         found_min, found_max = _find_min_max_I(dummy_data)
 
@@ -161,7 +161,7 @@ class TestPlotterHelpers(unittest.TestCase):
         while log mode is enabled.
         """
 
-        dummy_data = get_dummy_McStasData_1d()
+        dummy_data = get_dummy_McStasDataBinned_1d()
         dummy_data.Intensity[5] = 10**6
         dummy_data.set_plot_options(log=True, orders_of_mag=3)
         found_min, found_max = _find_min_max_I(dummy_data)
@@ -178,7 +178,7 @@ class TestPlotterHelpers(unittest.TestCase):
         zero intensity, which should be ignored.
         """
 
-        dummy_data = get_dummy_McStasData_1d()
+        dummy_data = get_dummy_McStasDataBinned_1d()
         dummy_data.Intensity[5] = 10**6
         dummy_data.Intensity[6] = 0
         dummy_data.set_plot_options(log=True, orders_of_mag=3)
@@ -193,7 +193,7 @@ class TestPlotterHelpers(unittest.TestCase):
         and maximum value to plot for a given McStasData set
         """
 
-        dummy_data = get_dummy_McStasData_2d()
+        dummy_data = get_dummy_McStasDataBinned_2d()
         found_min, found_max = _find_min_max_I(dummy_data)
 
         # np.arange(20) + 5: min = 5, max = 5+19 = 24
@@ -207,7 +207,7 @@ class TestPlotterHelpers(unittest.TestCase):
         Here cut_max is used to limit the maximum plotted.
         """
 
-        dummy_data = get_dummy_McStasData_2d()
+        dummy_data = get_dummy_McStasDataBinned_2d()
         dummy_data.set_plot_options(cut_max=0.8)
         found_min, found_max = _find_min_max_I(dummy_data)
 
@@ -222,7 +222,7 @@ class TestPlotterHelpers(unittest.TestCase):
         Here cut_min is used to limit the minimum plotted.
         """
 
-        dummy_data = get_dummy_McStasData_2d()
+        dummy_data = get_dummy_McStasDataBinned_2d()
         dummy_data.set_plot_options(cut_min=0.2)
         found_min, found_max = _find_min_max_I(dummy_data)
 
@@ -239,7 +239,7 @@ class TestPlotterHelpers(unittest.TestCase):
         ignored.
         """
 
-        dummy_data = get_dummy_McStasData_2d()
+        dummy_data = get_dummy_McStasDataBinned_2d()
         dummy_data.Intensity[2, 2] = 0
         dummy_data.set_plot_options(log=True)
         found_min, found_max = _find_min_max_I(dummy_data)
@@ -256,7 +256,7 @@ class TestPlotterHelpers(unittest.TestCase):
         log mode is enabled.
         """
 
-        dummy_data = get_dummy_McStasData_2d()
+        dummy_data = get_dummy_McStasDataBinned_2d()
         dummy_data.set_plot_options(cut_max=0.8, log=True)
         found_min, found_max = _find_min_max_I(dummy_data)
 
@@ -272,7 +272,7 @@ class TestPlotterHelpers(unittest.TestCase):
         log mode is enabled.
         """
 
-        dummy_data = get_dummy_McStasData_2d()
+        dummy_data = get_dummy_McStasDataBinned_2d()
         dummy_data.set_plot_options(cut_min=0.2, log=True)
         found_min, found_max = _find_min_max_I(dummy_data)
 
@@ -288,7 +288,7 @@ class TestPlotterHelpers(unittest.TestCase):
         while log mode is enabled.
         """
 
-        dummy_data = get_dummy_McStasData_2d()
+        dummy_data = get_dummy_McStasDataBinned_2d()
         dummy_data.Intensity[2, 2] = 10**6
         dummy_data.set_plot_options(log=True, orders_of_mag=3)
         found_min, found_max = _find_min_max_I(dummy_data)
@@ -305,7 +305,7 @@ class TestPlotterHelpers(unittest.TestCase):
         zero intensity, which should be ignored.
         """
 
-        dummy_data = get_dummy_McStasData_2d()
+        dummy_data = get_dummy_McStasDataBinned_2d()
         dummy_data.Intensity[2, 2] = 10**6
         dummy_data.Intensity[2, 3] = 0
         dummy_data.set_plot_options(log=True, orders_of_mag=3)
@@ -323,7 +323,7 @@ class TestPlotterHelpers(unittest.TestCase):
         zero intensity, which should be ignored.
         """
 
-        dummy_data = get_dummy_McStasData_2d()
+        dummy_data = get_dummy_McStasDataBinned_2d()
         dummy_data.Intensity = np.zeros((5, 5))
         dummy_data.set_plot_options(log=True, orders_of_mag=3)
         found_min, found_max = _find_min_max_I(dummy_data)
@@ -338,8 +338,8 @@ class TestPlotterHelpers(unittest.TestCase):
         Keyword args can be set for all by normal use, or individual
         data sets by using a list. Both are checked here.
         """
-        dummy_data1 = get_dummy_McStasData_2d()
-        dummy_data2 = get_dummy_McStasData_2d()
+        dummy_data1 = get_dummy_McStasDataBinned_2d()
+        dummy_data2 = get_dummy_McStasDataBinned_2d()
         self.assertEqual(dummy_data1.plot_options.log, False)
         self.assertEqual(dummy_data2.plot_options.log, False)
 
@@ -359,8 +359,8 @@ class TestPlotterHelpers(unittest.TestCase):
         Keyword args can be set for all by normal use, or individual
         data sets by using a list. Both are checked here.
         """
-        dummy_data1 = get_dummy_McStasData_2d()
-        dummy_data2 = get_dummy_McStasData_2d()
+        dummy_data1 = get_dummy_McStasDataBinned_2d()
+        dummy_data2 = get_dummy_McStasDataBinned_2d()
         self.assertEqual(dummy_data1.plot_options.orders_of_mag, 300)
         self.assertEqual(dummy_data2.plot_options.orders_of_mag, 300)
 
@@ -409,11 +409,11 @@ class TestPlotterHelpers(unittest.TestCase):
 
             default_value = defaults[kw_option]
 
-            dummy_data1 = get_dummy_McStasData_2d()
+            dummy_data1 = get_dummy_McStasDataBinned_2d()
             data1_value = dummy_data1.plot_options.__getattribute__(kw_option)
             self.assertEqual(data1_value, default_value)
 
-            dummy_data2 = get_dummy_McStasData_2d()
+            dummy_data2 = get_dummy_McStasDataBinned_2d()
             data2_value = dummy_data2.plot_options.__getattribute__(kw_option)
             self.assertEqual(data2_value, default_value)
 
@@ -444,8 +444,8 @@ class TestPlotterHelpers(unittest.TestCase):
         Keyword args can be set for all by normal use, or individual
         data sets by using a list. Both are checked here.
         """
-        dummy_data1 = get_dummy_McStasData_2d()
-        dummy_data2 = get_dummy_McStasData_2d()
+        dummy_data1 = get_dummy_McStasDataBinned_2d()
+        dummy_data2 = get_dummy_McStasDataBinned_2d()
         self.assertEqual(dummy_data1.plot_options.custom_xlim_left, False)
         self.assertEqual(dummy_data2.plot_options.custom_xlim_left, False)
 
@@ -469,8 +469,8 @@ class TestPlotterHelpers(unittest.TestCase):
         Keyword args can be set for all by normal use, or individual
         data sets by using a list. Both are checked here.
         """
-        dummy_data1 = get_dummy_McStasData_2d()
-        dummy_data2 = get_dummy_McStasData_2d()
+        dummy_data1 = get_dummy_McStasDataBinned_2d()
+        dummy_data2 = get_dummy_McStasDataBinned_2d()
         self.assertEqual(dummy_data1.plot_options.custom_xlim_right, False)
         self.assertEqual(dummy_data2.plot_options.custom_xlim_right, False)
 
@@ -494,8 +494,8 @@ class TestPlotterHelpers(unittest.TestCase):
         Keyword args can be set for all by normal use, or individual
         data sets by using a list. Both are checked here.
         """
-        dummy_data1 = get_dummy_McStasData_2d()
-        dummy_data2 = get_dummy_McStasData_2d()
+        dummy_data1 = get_dummy_McStasDataBinned_2d()
+        dummy_data2 = get_dummy_McStasDataBinned_2d()
         self.assertEqual(dummy_data1.plot_options.custom_ylim_top, False)
         self.assertEqual(dummy_data2.plot_options.custom_ylim_top, False)
 
@@ -519,8 +519,8 @@ class TestPlotterHelpers(unittest.TestCase):
         Keyword args can be set for all by normal use, or individual
         data sets by using a list. Both are checked here.
         """
-        dummy_data1 = get_dummy_McStasData_2d()
-        dummy_data2 = get_dummy_McStasData_2d()
+        dummy_data1 = get_dummy_McStasDataBinned_2d()
+        dummy_data2 = get_dummy_McStasDataBinned_2d()
         self.assertEqual(dummy_data1.plot_options.custom_ylim_bottom, False)
         self.assertEqual(dummy_data2.plot_options.custom_ylim_bottom, False)
 
@@ -542,7 +542,7 @@ class TestPlotterHelpers(unittest.TestCase):
         Tests handle_kwargs delivers default figsize
         """
 
-        dummy_data = get_dummy_McStasData_2d()
+        dummy_data = get_dummy_McStasDataBinned_2d()
         retrived_figsize, data_list = _handle_kwargs(dummy_data)
         self.assertEqual(retrived_figsize, (13, 7))
 
@@ -552,7 +552,7 @@ class TestPlotterHelpers(unittest.TestCase):
         using tuple as input
         """
 
-        dummy_data = get_dummy_McStasData_2d()
+        dummy_data = get_dummy_McStasDataBinned_2d()
         found_figsize, data_list = _handle_kwargs(dummy_data, figsize=(5, 9))
         self.assertEqual(found_figsize, (5, 9))
 
@@ -562,7 +562,7 @@ class TestPlotterHelpers(unittest.TestCase):
         using tuple as input
         """
 
-        dummy_data = get_dummy_McStasData_2d()
+        dummy_data = get_dummy_McStasDataBinned_2d()
         found_figsize, data_list = _handle_kwargs(dummy_data, figsize=[5, 9])
         self.assertEqual(found_figsize, (5, 9))
 
@@ -572,7 +572,7 @@ class TestPlotterHelpers(unittest.TestCase):
         and turn it into a list.
         """
 
-        dummy_data = get_dummy_McStasData_2d()
+        dummy_data = get_dummy_McStasDataBinned_2d()
         self.assertFalse(isinstance(dummy_data, list))
         figsize, data_list = _handle_kwargs(dummy_data)
         self.assertTrue(isinstance(data_list, list))
@@ -583,7 +583,7 @@ class TestPlotterHelpers(unittest.TestCase):
         result.
 
         """
-        dummy_data = get_dummy_McStasData_1d()
+        dummy_data = get_dummy_McStasDataBinned_1d()
 
         fig, ax0 = plt.subplots()
         _plot_fig_ax(dummy_data, fig, ax0)
@@ -594,7 +594,7 @@ class TestPlotterHelpers(unittest.TestCase):
         result. Here with logarithmic y axis.
 
         """
-        dummy_data = get_dummy_McStasData_1d()
+        dummy_data = get_dummy_McStasDataBinned_1d()
 
         fig, ax0 = plt.subplots()
         _plot_fig_ax(dummy_data, fig, ax0, log=True)
@@ -605,7 +605,7 @@ class TestPlotterHelpers(unittest.TestCase):
         result.
 
         """
-        dummy_data = get_dummy_McStasData_2d()
+        dummy_data = get_dummy_McStasDataBinned_2d()
 
         fig, ax0 = plt.subplots()
         _plot_fig_ax(dummy_data, fig, ax0)
@@ -616,7 +616,7 @@ class TestPlotterHelpers(unittest.TestCase):
         result. Here the intensity coloraxis is logarithmic.
 
         """
-        dummy_data = get_dummy_McStasData_2d()
+        dummy_data = get_dummy_McStasDataBinned_2d()
 
         fig, ax0 = plt.subplots()
         _plot_fig_ax(dummy_data, fig, ax0, log=True)

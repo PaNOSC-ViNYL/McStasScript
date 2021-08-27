@@ -1,9 +1,11 @@
 import os
 import numpy as np
 import subprocess
+import mmap
 
 from mcstasscript.data.data import McStasMetaData
-from mcstasscript.data.data import McStasData
+from mcstasscript.data.data import McStasDataBinned
+from mcstasscript.data.data import McStasDataEvent
 
 
 class ManagedMcrun:
@@ -339,7 +341,7 @@ def load_metadata(data_folder_name):
                 # This line contains info to be added to metadata
                 colon_index = lines.index(":")
                 key = lines[2:colon_index]
-                value = lines[colon_index+2:]
+                value = lines[colon_index+2:].strip()
                 current_object.add_info(key, value)
 
             if lines == "begin data\n":
@@ -367,8 +369,8 @@ def load_monitor(metadata, data_folder_name):
         path to folder from which metadata should be loaded
     """
     # Load data with numpy
-    data = np.loadtxt(os.path.join(data_folder_name,
-                                   metadata.filename.rstrip()))
+    filename = os.path.join(data_folder_name, metadata.filename.rstrip())
+    data = np.loadtxt(filename)
 
     # Split data into intensity, error and ncount
     if type(metadata.dimension) == int:
@@ -377,18 +379,37 @@ def load_monitor(metadata, data_folder_name):
         Error = data.T[2, :]
         Ncount = data.T[3, :]
 
-    elif len(metadata.dimension) == 2:
-        xaxis = []  # Assume evenly binned in 2d
-        data_lines = metadata.dimension[1]
+        # The data is saved as a McStasDataBinned object
+        return McStasDataBinned(metadata, Intensity, Error, Ncount, xaxis=xaxis)
 
-        Intensity = data[0:data_lines, :]
-        Error = data[data_lines:2 * data_lines, :]
-        Ncount = data[2 * data_lines:3 * data_lines, :]
+    elif len(metadata.dimension) == 2:
+        # Need to check if it is binned data or event data
+
+        with open(filename, 'rb', 0) as file, \
+                mmap.mmap(file.fileno(), 0, access=mmap.ACCESS_READ) as s:
+            if s.find(b'# Errors') != -1:
+                data_type = "Binned"
+            else:
+                data_type = "Events"
+
+        if data_type == "Events":
+            Events = data
+
+            return McStasDataEvent(metadata, Events)
+
+        elif data_type == "Binned":
+            # Binned 2D data
+            xaxis = []  # Assume evenly binned in 2d
+            data_lines = metadata.dimension[1]
+            Intensity = data[0:data_lines, :]
+            Error = data[data_lines:2 * data_lines, :]
+            Ncount = data[2 * data_lines:3 * data_lines, :]
+
+            # The data is saved as a McStasDataBinned object
+            return McStasDataBinned(metadata, Intensity, Error, Ncount, xaxis=xaxis)
     else:
         raise NameError(
             "Dimension not read correctly in data set "
             + "connected to monitor named "
             + metadata.component_name)
 
-    # The data is saved as a McStasData object
-    return McStasData(metadata, Intensity, Error, Ncount, xaxis=xaxis)
