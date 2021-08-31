@@ -9,11 +9,11 @@ from mcstasscript.jb_interface.plot_interface import ColormapDropdown
 from mcstasscript.jb_interface.plot_interface import OrdersOfMagField
 
 from mcstasscript.data.data import McStasMetaData
-from mcstasscript.data.data import McStasData
+from mcstasscript.data.data import McStasDataBinned
 
 import ipywidgets as widgets
 
-def set_dummy_MetaData_1d():
+def set_dummy_MetaDataBinned_1d():
     """
     Sets up simple McStasMetaData object with dimension, 1d case
     """
@@ -30,21 +30,21 @@ def set_dummy_MetaData_1d():
     return meta_data
 
 
-def set_dummy_McStasData_1d():
+def set_dummy_McStasDataBinned_1d():
     """
     Sets up simple McStasData object, 1d case
     """
-    meta_data = set_dummy_MetaData_1d()
+    meta_data = set_dummy_MetaDataBinned_1d()
 
     intensity = np.arange(20)
     error = 0.5 * np.arange(20)
     ncount = 2 * np.arange(20)
     axis = np.arange(20)*5.0
 
-    return McStasData(meta_data, intensity, error, ncount, xaxis=axis)
+    return McStasDataBinned(meta_data, intensity, error, ncount, xaxis=axis)
 
 
-def set_dummy_MetaData_2d():
+def set_dummy_MetaDataBinned_2d():
     """
     Sets up simple McStasMetaData object with dimensions, 2d case
     """
@@ -61,21 +61,23 @@ def set_dummy_MetaData_2d():
     return meta_data
 
 
-def set_dummy_McStasData_2d():
+def set_dummy_McStasDataBinned_2d():
     """
     Sets up simple McStasData object, 2d case
     """
-    meta_data = set_dummy_MetaData_2d()
+    meta_data = set_dummy_MetaDataBinned_2d()
 
     intensity = np.arange(20).reshape(4, 5)
     error = 0.5 * np.arange(20).reshape(4, 5)
     ncount = 2 * np.arange(20).reshape(4, 5)
 
-    return McStasData(meta_data, intensity, error, ncount)
+    return McStasDataBinned(meta_data, intensity, error, ncount)
 
 
 def fake_data():
-    return [set_dummy_McStasData_1d(), set_dummy_McStasData_2d(), set_dummy_McStasData_2d()]
+    return [set_dummy_McStasDataBinned_1d(),
+            set_dummy_McStasDataBinned_2d(),
+            set_dummy_McStasDataBinned_2d()]
 
 
 class FakeChange:

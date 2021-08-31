@@ -396,7 +396,7 @@ class TestManagedMcrun(unittest.TestCase):
         os.chdir(current_work_dir)  # Reset work directory
 
         # Check three data objects are loaded
-        self.assertEqual(len(results), 3)
+        self.assertEqual(len(results), 4)
 
         # Check properties of PSD_4PI data
         PSD_4PI = results[0]
@@ -432,7 +432,7 @@ class TestManagedMcrun(unittest.TestCase):
         os.chdir(current_work_dir)  # Reset work directory
 
         # Check three data objects are loaded
-        self.assertEqual(len(results), 3)
+        self.assertEqual(len(results), 4)
 
         # Check properties of PSD data
         PSD = results[1]
@@ -468,7 +468,7 @@ class TestManagedMcrun(unittest.TestCase):
         os.chdir(current_work_dir)  # Reset work directory
 
         # Check three data objects are loaded
-        self.assertEqual(len(results), 3)
+        self.assertEqual(len(results), 4)
 
         # Check properties of L_mon
         L_mon = results[2]
@@ -518,6 +518,49 @@ class TestManagedMcrun(unittest.TestCase):
         self.assertEqual(L_mon.Ncount[53], 37111)
         self.assertEqual(L_mon.Intensity[53], 6.990299315e-06)
         self.assertEqual(L_mon.Error[53], 6.215308587e-08)
+
+        self.assertFalse(hasattr(L_mon, 'Events'))
+
+    def test_ManagedMcrun_load_data_Event(self):
+        """
+        Use test_data_set to test load_data for event data
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
+        mcrun_obj = ManagedMcrun("test.instr",
+                                 foldername="test_data_set",
+                                 executable_path=executable_path,
+                                 mcrun_path="path")
+
+        load_path = os.path.join(THIS_DIR, "test_data_set")
+        results = mcrun_obj.load_results(load_path)
+
+        os.chdir(current_work_dir)  # Reset work directory
+
+        # Check properties of event data file
+        mon = results[3]
+
+        self.assertEqual(mon.name, "monitor")
+        self.assertEqual(mon.metadata.dimension, [8, 12000])
+        self.assertEqual(mon.metadata.limits, [1.0, 12000.0, 1.0, 8.0])
+        self.assertEqual(mon.metadata.xlabel, "List of neutron events")
+        self.assertEqual(mon.metadata.ylabel, "p x y z vx vy vz t")
+        self.assertEqual(mon.metadata.title, "Intensity Position Position"
+                + " Position Velocity Velocity Velocity"
+                + " Time_Of_Flight Monitor (Square)")
+        self.assertEqual(mon.Intensity[12, 1], -0.006163896406)
+        self.assertEqual(mon.Events[12, 1], -0.006163896406)
+        self.assertEqual(mon.Events[43, 4], 22.06193582)
+
+        self.assertFalse(hasattr(mon, 'xaxis'))
+        self.assertFalse(hasattr(mon, 'Error'))
+        self.assertFalse(hasattr(mon, 'Ncount'))
+
 
     def test_ManagedMcrun_load_data_L_mon_direct_error(self):
         """
@@ -585,7 +628,7 @@ class Test_load_functions(unittest.TestCase):
 
         os.chdir(current_work_dir)  # Reset work directory
 
-        self.assertEqual(len(results), 3)
+        self.assertEqual(len(results), 4)
 
         PSD_4PI = results[0]
 
@@ -613,7 +656,7 @@ class Test_load_functions(unittest.TestCase):
 
         os.chdir(current_work_dir)  # Reset work directory
 
-        self.assertEqual(len(results), 3)
+        self.assertEqual(len(results), 4)
 
         PSD = results[1]
 
@@ -641,7 +684,7 @@ class Test_load_functions(unittest.TestCase):
 
         os.chdir(current_work_dir)  # Reset work directory
 
-        self.assertEqual(len(metadata), 3)
+        self.assertEqual(len(metadata), 4)
 
         PSD_4PI = metadata[0]
         self.assertEqual(PSD_4PI.dimension, [300, 300])
@@ -664,7 +707,7 @@ class Test_load_functions(unittest.TestCase):
 
         os.chdir(current_work_dir)  # Reset work directory
 
-        self.assertEqual(len(metadata), 3)
+        self.assertEqual(len(metadata), 4)
 
         L_mon = metadata[2]
         self.assertEqual(L_mon.dimension, 150)

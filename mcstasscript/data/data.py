@@ -330,6 +330,99 @@ class McStasData:
     name : str
         Name of component, extracted from metadata
 
+    plot_options : McStasPlotOptions instance
+        Holds the plotting preferences for the dataset
+
+    Methods
+    -------
+    set_xlabel : string
+        sets xlabel of data for plotting
+
+    set_ylabel : string
+        sets ylabel of data for plotting
+
+    set_title : string
+        sets title of data for plotting
+
+    set_options : keyword arguments
+        sets plot options, keywords passed to McStasPlotOptions method
+    """
+
+    def __init__(self, metadata):
+        """
+        Initialize a new McStas dataset, 4 positional arguments, pass
+        xaxis as kwarg if 1d data
+
+        Parameters
+        ----------
+        metadata : McStasMetaData instance
+            Holds the metadata for the dataset
+        """
+
+        # attach meta data
+        self.metadata = metadata
+        # get name from metadata
+        self.name = self.metadata.component_name
+        # initialize PlotOptions
+        self.plot_options = McStasPlotOptions()
+
+        self.data_type = None
+
+    # Methods xlabel, ylabel and title as they might not be found
+    def set_xlabel(self, string):
+        self.metadata.set_xlabel(string)
+
+    def set_ylabel(self, string):
+        self.metadata.set_ylabel(string)
+
+    def set_title(self, string):
+        self.metadata.set_title(string)
+
+    def set_plot_options(self, **kwargs):
+        self.plot_options.set_options(**kwargs)
+
+    def __str__(self):
+        """
+        Returns string with quick summary of data
+        """
+
+        string = "McStasData: "
+        string += self.name + " "
+        if type(self.metadata.dimension) == int:
+            string += "type: 1D "
+        elif len(self.metadata.dimension) == 2:
+            string += "type: 2D "
+        else:
+            string += "type: other "
+
+        if "values" in self.metadata.info:
+            values = self.metadata.info["values"]
+            values = values.strip()
+            values = values.split(" ")
+            if len(values) == 3:
+                string += " I:" + str(values[0])
+                string += " E:" + str(values[1])
+                string += " N:" + str(values[2])
+
+        return string
+
+    def __repr__(self):
+        return "\n" + self.__str__()
+
+
+class McStasDataBinned(McStasData):
+    """
+    Class for holding full McStas dataset with data, metadata and
+    plotting preferences
+
+    Attributes
+    ----------
+    metadata : McStasMetaData instance
+        Holds the metadata for the dataset
+
+    name : str
+        Name of component, extracted from metadata
+
     Intensity : numpy array
         Intensity data [neutrons/s] in 1d or 2d numpy array, dimension in
         metadata
@@ -386,10 +479,8 @@ class McStasData:
             xaxis is required for 1d data
         """
 
-        # attach meta data
-        self.metadata = metadata
-        # get name from metadata
-        self.name = self.metadata.component_name
+        super().__init__(metadata)
+
         # three basic arrays from positional arguments
         if not isinstance(intensity, np.ndarray):
             raise ValueError("intensity should be numpy array!")
@@ -403,50 +494,91 @@ class McStasData:
         self.Ncount = ncount
 
         if type(self.metadata.dimension) == int:
+            self.data_type = "Binned 1D"
             if "xaxis" in kwargs:
                 self.xaxis = kwargs["xaxis"]
             else:
                 raise NameError(
                     "ERROR: Initialization of McStasData done with 1d "
                     + "data, but without xaxis for " + self.name + "!")
+        elif len(self.metadata.dimension) == 2:
+            self.data_type = "Binned 2D"
+        else:
+            self.data_type = "Binned"
 
-        self.plot_options = McStasPlotOptions()
 
-    # Methods xlabel, ylabel and title as they might not be found
-    def set_xlabel(self, string):
-        self.metadata.set_xlabel(string)
+class McStasDataEvent(McStasData):
+    """
+    Class for holding McStas event dataset with data, metadata and
+    plotting preferences. Usually data the first one million events
+    is plotted.
 
-    def set_ylabel(self, string):
-        self.metadata.set_ylabel(string)
+    Attributes
+    ----------
+    metadata : McStasMetaData instance
+        Holds the metadata for the dataset
 
-    def set_title(self, string):
-        self.metadata.set_title(string)
+    name : str
+        Name of component, extracted from metadata
 
-    def set_plot_options(self, **kwargs):
-        self.plot_options.set_options(**kwargs)
+    Events : numpy array
+        Event data
+
+    plot_options : McStasPlotOptions instance
+        Holds the plotting preferences for the dataset
+
+    Methods
+    -------
+    set_xlabel : string
+        sets xlabel of data for plotting
+
+    set_ylabel : string
+        sets ylabel of data for plotting
+
+    set_title : string
+        sets title of data for plotting
+
+    set_options : keyword arguments
+        sets plot options, keywords passed to McStasPlotOptions method
+    """
+
+    def __init__(self, metadata, events, **kwargs):
+        """
+        Initialize a new McStas event dataset, 2 positional arguments
+
+        Parameters
+        ----------
+        metadata : McStasMetaData instance
+            Holds the metadata for the dataset
+
+        events : numpy array
+            event data
+        """
+
+        super().__init__(metadata)
+
+        # three basic arrays from positional arguments
+        if not isinstance(events, np.ndarray):
+            raise ValueError("events should be numpy array!")
+
+        self.Events = events
+        self.data_type = "Events"
+
+        # Intensity for compatibility with plotting routine
+        data_lines = metadata.dimension[1]
+        self.Intensity = self.Events[0:data_lines, :]
 
     def __str__(self):
         """
         Returns string with quick summary of data
         """
 
-        string = "McStasData: "
-        string += self.name + " "
-        if type(self.metadata.dimension) == int:
-            string += "type: 1D "
-        elif len(self.metadata.dimension) == 2:
-            string += "type: 2D "
-        else:
-            string += "type: other "
-
-        if "values" in self.metadata.info:
-            values = self.metadata.info["values"]
-            values = values.strip()
-            values = values.split(" ")
-            if len(values) == 3:
-                string += " I:" + str(values[0])
-                string += " E:" + str(values[1])
-                string += " N:" + str(values[2])
+        string = "McStasDataEvent: "
+        string += self.name + " with "
+        string += str(len(self.Events)) + " events."
+        if "variables" in self.metadata.info:
+            string += " Variables: "
+            string += self.metadata.info["variables"].strip()
 
         return string
 

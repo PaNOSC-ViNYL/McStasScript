@@ -2,11 +2,11 @@ import unittest
 import numpy as np
 import copy
 
-from mcstasscript.data.data import McStasData
+from mcstasscript.data.data import McStasDataBinned
 from mcstasscript.data.data import McStasMetaData
 from mcstasscript.jb_interface.simulation_interface import add_data
 
-def set_dummy_MetaData_1d():
+def set_dummy_MetaDataBinned_1d():
     """
     Sets up simple McStasMetaData object with dimension, 1d case
     """
@@ -20,21 +20,21 @@ def set_dummy_MetaData_1d():
     return meta_data
 
 
-def set_dummy_McStasData_1d():
+def set_dummy_McStasDataBinned_1d():
     """
     Sets up simple McStasData object, 1d case
     """
-    meta_data = set_dummy_MetaData_1d()
+    meta_data = set_dummy_MetaDataBinned_1d()
 
     intensity = np.ones(20)
     error = np.ones(20)
     ncount = np.ones(20)
     axis = np.arange(20)*5.0
 
-    return McStasData(meta_data, intensity, error, ncount, xaxis=axis)
+    return McStasDataBinned(meta_data, intensity, error, ncount, xaxis=axis)
 
 
-def set_dummy_MetaData_2d():
+def set_dummy_MetaDataBinned_2d():
     """
     Sets up simple McStasMetaData object with dimensions, 2d case
     """
@@ -48,17 +48,17 @@ def set_dummy_MetaData_2d():
     return meta_data
 
 
-def set_dummy_McStasData_2d():
+def set_dummy_McStasDataBinned_2d():
     """
     Sets up simple McStasData object, 2d case
     """
-    meta_data = set_dummy_MetaData_2d()
+    meta_data = set_dummy_MetaDataBinned_2d()
 
     intensity = np.ones(20).reshape(4, 5)
     error = np.ones(20).reshape(4, 5)
     ncount = np.ones(20).reshape(4, 5)
 
-    return McStasData(meta_data, intensity, error, ncount)
+    return McStasDataBinned(meta_data, intensity, error, ncount)
 
 class Test_add_data(unittest.TestCase):
     def test_1d_updates_correctly(self):
@@ -66,10 +66,10 @@ class Test_add_data(unittest.TestCase):
         Test that adding 1d dataset modifies only the intended dataset
         """
 
-        data1 = set_dummy_McStasData_1d()
+        data1 = set_dummy_McStasDataBinned_1d()
         data1_original = copy.deepcopy(data1)
 
-        data2 = set_dummy_McStasData_1d()
+        data2 = set_dummy_McStasDataBinned_1d()
         data2_original = copy.deepcopy(data2)
 
         add_data([data1], [data2])
@@ -89,7 +89,7 @@ class Test_add_data(unittest.TestCase):
         """
         Test that adding 1d datasets work as expected when different
         """
-        data1 = set_dummy_McStasData_1d()
+        data1 = set_dummy_McStasDataBinned_1d()
         data1.Intensity *= 2.0
         data1.Intensity[10:] *= 2.0
         data1.Error *= 1.5
@@ -97,7 +97,7 @@ class Test_add_data(unittest.TestCase):
         data1.metadata.info["Ncount"] *= 4.0
         data1_original = copy.deepcopy(data1)
 
-        data2 = set_dummy_McStasData_1d()
+        data2 = set_dummy_McStasDataBinned_1d()
         data2.Intensity *= 3.0
         data2.Error *= 1.5
         data2_original = copy.deepcopy(data2)
@@ -133,23 +133,23 @@ class Test_add_data(unittest.TestCase):
         Both 1d and 2d cases included.
         """
 
-        data11 = set_dummy_McStasData_1d()
+        data11 = set_dummy_McStasDataBinned_1d()
         data11.name = "first monitor"
         data11.filename = "first_monitor.dat"
-        data12 = set_dummy_McStasData_2d()
+        data12 = set_dummy_McStasDataBinned_2d()
         data12.name = "second monitor"
         data12.filename = "second_monitor.dat"
-        data13 = set_dummy_McStasData_1d()
+        data13 = set_dummy_McStasDataBinned_1d()
         data13.name = "third monitor"
         data13.filename = "third_monitor.dat"
 
-        data21 = set_dummy_McStasData_1d()
+        data21 = set_dummy_McStasDataBinned_1d()
         data21.name = "first monitor"
         data21.filename = "first_monitor.dat"
-        data22 = set_dummy_McStasData_2d()
+        data22 = set_dummy_McStasDataBinned_2d()
         data22.name = "second monitor"
         data22.filename = "second_monitor.dat"
-        data23 = set_dummy_McStasData_1d()
+        data23 = set_dummy_McStasDataBinned_1d()
         data23.name = "third monitor"
         data23.filename = "third_monitor.dat"
 
@@ -172,10 +172,10 @@ class Test_add_data(unittest.TestCase):
         Test that adding 1d dataset modifies only the intended dataset
         """
 
-        data1 = set_dummy_McStasData_2d()
+        data1 = set_dummy_McStasDataBinned_2d()
         data1_original = copy.deepcopy(data1)
 
-        data2 = set_dummy_McStasData_2d()
+        data2 = set_dummy_McStasDataBinned_2d()
         data2_original = copy.deepcopy(data2)
 
         add_data([data1], [data2])
@@ -195,7 +195,7 @@ class Test_add_data(unittest.TestCase):
         """
         Test that adding 2d datasets work as expected when different
         """
-        data1 = set_dummy_McStasData_2d()
+        data1 = set_dummy_McStasDataBinned_2d()
         data1.Intensity *= 2.0
         data1.Intensity[1,:] *= 2.0
         data1.Error *= 1.5
@@ -203,7 +203,7 @@ class Test_add_data(unittest.TestCase):
         data1.metadata.info["Ncount"] *= 4.0
         data1_original = copy.deepcopy(data1)
 
-        data2 = set_dummy_McStasData_2d()
+        data2 = set_dummy_McStasDataBinned_2d()
         data2.Intensity *= 3.0
         data2.Error *= 1.5
         data2_original = copy.deepcopy(data2)

@@ -31,7 +31,7 @@ def name_search(name, data_list):
     if len(data_list) == 0:
         raise RuntimeError("Given data list empty.")
 
-    if not type(data_list[0]) == McStasData:
+    if not isinstance(data_list[0], McStasData):
         raise RuntimeError(
             "name_search function needs objects of type McStasData as input.")
 
