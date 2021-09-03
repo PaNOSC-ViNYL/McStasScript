@@ -367,6 +367,7 @@ class McStasData:
         self.plot_options = McStasPlotOptions()
 
         self.data_type = None
+        self.original_data_location = None
 
     # Methods xlabel, ylabel and title as they might not be found
     def set_xlabel(self, string):
@@ -380,6 +381,12 @@ class McStasData:
 
     def set_plot_options(self, **kwargs):
         self.plot_options.set_options(**kwargs)
+
+    def set_data_location(self, data_location):
+        self.original_data_location = data_location
+
+    def get_data_location(self):
+        return self.original_data_location
 
     def __str__(self):
         """

@@ -288,7 +288,9 @@ def load_results(data_folder_name):
 
     results = []
     for metadata in metadata_list:
-        results.append(load_monitor(metadata, data_folder_name))
+        result = load_monitor(metadata, data_folder_name)
+        result.set_data_location(data_folder_name)
+        results.append(result)
 
     return results
 
