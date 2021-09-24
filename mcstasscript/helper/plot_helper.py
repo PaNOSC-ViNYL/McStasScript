@@ -94,7 +94,7 @@ def _plot_fig_ax(data, fig, ax, **kwargs):
         ax.errorbar(x, y, yerr=y_err)
 
         if data.plot_options.log:
-            ax.set_yscale("log", nonposy='clip')
+            ax.set_yscale("log", nonpositive='clip')
 
         ax.set_xlim(data.metadata.limits[0] * x_axis_mult,
                     data.metadata.limits[1] * x_axis_mult)
