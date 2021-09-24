@@ -54,6 +54,7 @@ class SimInterface:
 
         self.ncount = "1E6"
         self.mpi = "disabled"
+        self.last_mpi_on = None
 
         self.thread_data = None
         self.thread = None
@@ -106,6 +107,7 @@ class SimInterface:
 
         if self.live_widget.value:
             sim_parts = self.sim_steps
+            #self.plot_interface.set_data(None)
         else:
             sim_parts = 1
 
@@ -114,10 +116,22 @@ class SimInterface:
         run_arguments = {"foldername": "interface_" + self.instrument.name,
                          "increment_folder_name": True,
                          "parameters": self.parameters,
-                         "ncount": part_ncount,
-                         "force_compile": False}
+                         "ncount": part_ncount}
         if self.mpi != "disabled":
             run_arguments["mpi"] = self.mpi
+            mpi_on = True
+        else:
+            mpi_on = False
+
+        # McStas does not recognize if the instrument was compiled with or without mpi
+        # Ensure it is compiled when switching to and from mpi
+        # This also ensures the instrument is compiled at the first run
+        if mpi_on == self.last_mpi_on:
+            run_arguments["force_compile"] = False
+        else:
+            run_arguments["force_compile"] = True
+
+        self.last_mpi_on = mpi_on
 
         self.run_button.icon = "hourglass"
         #print("Running with:", run_arguments)
@@ -137,18 +151,20 @@ class SimInterface:
                 print("McStas run failed.")
                 data = []
 
-            self.progress_bar.value = index + 1
-
-            if plot_data is None:
-                plot_data = data
-            else:
-                add_data(plot_data, data)
-
             with lock:
+                self.progress_bar.value = index + 1
+
+                if plot_data is None:
+                    plot_data = data
+                else:
+                    add_data(plot_data, data)
+
                 sent_data = copy.deepcopy(plot_data)
+                # This happens in a thread, maybe it should be in Main?
                 self.plot_interface.set_data(sent_data)
 
         self.run_button.icon = "calculator"
+
 
     def make_run_button(self):
         """
@@ -234,6 +250,7 @@ class SimInterface:
         Makes widget for choosing live simulations on / off
         """
         widget = widgets.Checkbox(value=False, description="Live results")
+        widget.layout.visibility = "hidden"
 
         return widget
 

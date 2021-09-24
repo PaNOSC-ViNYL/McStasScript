@@ -113,20 +113,29 @@ class PlotInterface:
             #self.ax.xaxis.set_ticks([])
             #self.ax.yaxis.set_ticks([])
             self.colorbar_ax.cla()
-            self.colorbar_ax.xaxis.set_ticks([])
-            self.colorbar_ax.yaxis.set_ticks([])
+            #self.colorbar_ax.xaxis.set_ticks([])
+            #self.colorbar_ax.yaxis.set_ticks([])
 
             # Display message if not data can be plotted
             if self.data is None:
                 self.ax.text(0.3, 0.5, "No data available yet")
+                self.colorbar_ax.set_axis_off()
+                self.ax.xaxis.set_ticks([])
+                self.ax.yaxis.set_ticks([])
                 return
 
             if len(self.data) == 0:
                 self.ax.text(0.25, 0.5, "Simulation returned no data")
+                self.colorbar_ax.set_axis_off()
+                self.ax.xaxis.set_ticks([])
+                self.ax.yaxis.set_ticks([])
                 return
 
             if self.current_monitor is None:
                 self.ax.text(0.3, 0.5, "Select a monitor to plot")
+                self.colorbar_ax.set_axis_off()
+                self.ax.xaxis.set_ticks([])
+                self.ax.yaxis.set_ticks([])
                 return
 
             # Get monitor and establish plot options
@@ -140,10 +149,17 @@ class PlotInterface:
             #print("Plotting with: ", plot_options)
             monitor.set_plot_options(**plot_options)
             with HiddenPrints():
-                #plotter._plot_fig_ax(monitor, self.fig, self.ax, colorbar_axes=self.colorbar_ax)
                 _plot_fig_ax(monitor, self.fig, self.ax, colorbar_axes=self.colorbar_ax)
 
             self.colorbar_ax.set_aspect(20)
+
+            # Show colorbar if something is present, otherwise hide it
+            if self.colorbar_ax.lines or self.colorbar_ax.collections:
+                self.colorbar_ax.set_axis_on()
+            else:
+                self.colorbar_ax.set_axis_off()
+
+            #self.ax.set_axis_on()
 
             plt.tight_layout()
             self.fig.canvas.draw()
@@ -297,6 +313,7 @@ class MonitorDropdown:
         """
 
         self.set_current_monitor = set_current_monitor
+        self.last_monitor = None
         self.data = None
         self.widget = None
 
@@ -310,21 +327,34 @@ class MonitorDropdown:
         data: McStasData list
             Data returned by McStasScript simulation
         """
-        self.data = data
 
-        monitor_names = []
-        for data in self.data:
+        lock = threading.Lock()
+        with lock:
 
-            # Ensure data names are unique
-            original_name = data.name
-            index = 1
-            while data.name in monitor_names:
-                data.name = original_name + "_" + str(index)
-                index += 1
+            self.data = data
 
-            monitor_names.append(data.name)
+            if data is None:
+                self.widget.options = []
+                return
 
-        self.widget.options = monitor_names
+            monitor_names = []
+            for data in self.data:
+
+                # Ensure data names are unique
+                original_name = data.name
+                index = 1
+                while data.name in monitor_names:
+                    data.name = original_name + "_" + str(index)
+                    index += 1
+
+                monitor_names.append(data.name)
+
+            self.widget.options = monitor_names
+
+            # Go to the last set monitor if possible
+            if self.last_monitor is not None:
+                if self.last_monitor in self.widget.options:
+                    self.set_current_monitor(self.last_monitor)
 
     def make_widget(self):
         """
@@ -348,7 +378,11 @@ class MonitorDropdown:
             state change of widget
         """
         # can do input sanitation here
-        self.set_current_monitor(change.new)
+        lock = threading.Lock()
+        with lock:
+            self.set_current_monitor(change.new)
+            if change.new is not None:
+                self.last_monitor = change.new
 
 
 class LogCheckbox:
