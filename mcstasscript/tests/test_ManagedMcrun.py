@@ -1,5 +1,6 @@
 import os
 import unittest
+import unittest.mock
 
 from mcstasscript.helper.managed_mcrun import ManagedMcrun
 from mcstasscript.helper.managed_mcrun import load_results
@@ -407,6 +408,9 @@ class TestManagedMcrun(unittest.TestCase):
         self.assertEqual(PSD_4PI.metadata.xlabel, "Longitude [deg]")
         self.assertEqual(PSD_4PI.metadata.ylabel, "Latitude [deg]")
         self.assertEqual(PSD_4PI.metadata.title, "4PI PSD monitor")
+        expected_parameters = {"wavelength": 1.0}
+        self.assertEqual(PSD_4PI.metadata.info["Parameters"], expected_parameters)
+        self.assertEqual(PSD_4PI.metadata.parameters, expected_parameters)
         self.assertEqual(PSD_4PI.Ncount[4][1], 4)
         self.assertEqual(PSD_4PI.Intensity[4][1], 1.537334562E-10)
         self.assertEqual(PSD_4PI.Error[4][1], 1.139482296E-10)
@@ -443,6 +447,9 @@ class TestManagedMcrun(unittest.TestCase):
         self.assertEqual(PSD.metadata.xlabel, "X position [cm]")
         self.assertEqual(PSD.metadata.ylabel, "Y position [cm]")
         self.assertEqual(PSD.metadata.title, "PSD monitor")
+        expected_parameters = {"wavelength": 1.0}
+        self.assertEqual(PSD.metadata.info["Parameters"], expected_parameters)
+        self.assertEqual(PSD.metadata.parameters, expected_parameters)
         self.assertEqual(PSD.Ncount[27][21], 9)
         self.assertEqual(PSD.Intensity[27][21], 2.623929371e-13)
         self.assertEqual(PSD.Error[27][21], 2.765467693e-13)
@@ -479,6 +486,9 @@ class TestManagedMcrun(unittest.TestCase):
         self.assertEqual(L_mon.metadata.xlabel, "Wavelength [AA]")
         self.assertEqual(L_mon.metadata.ylabel, "Intensity")
         self.assertEqual(L_mon.metadata.title, "Wavelength monitor")
+        expected_parameters = {"wavelength": 1.0}
+        self.assertEqual(L_mon.metadata.info["Parameters"], expected_parameters)
+        self.assertEqual(L_mon.metadata.parameters, expected_parameters)
         self.assertEqual(L_mon.xaxis[53], 0.914)
         self.assertEqual(L_mon.Ncount[53], 37111)
         self.assertEqual(L_mon.Intensity[53], 6.990299315e-06)
@@ -514,6 +524,9 @@ class TestManagedMcrun(unittest.TestCase):
         self.assertEqual(L_mon.metadata.xlabel, "Wavelength [AA]")
         self.assertEqual(L_mon.metadata.ylabel, "Intensity")
         self.assertEqual(L_mon.metadata.title, "Wavelength monitor")
+        expected_parameters = {"wavelength": 1.0}
+        self.assertEqual(L_mon.metadata.info["Parameters"], expected_parameters)
+        self.assertEqual(L_mon.metadata.parameters, expected_parameters)
         self.assertEqual(L_mon.xaxis[53], 0.914)
         self.assertEqual(L_mon.Ncount[53], 37111)
         self.assertEqual(L_mon.Intensity[53], 6.990299315e-06)
@@ -553,6 +566,9 @@ class TestManagedMcrun(unittest.TestCase):
         self.assertEqual(mon.metadata.title, "Intensity Position Position"
                 + " Position Velocity Velocity Velocity"
                 + " Time_Of_Flight Monitor (Square)")
+        expected_parameters = {"wavelength": 1.0}
+        self.assertEqual(mon.metadata.info["Parameters"], expected_parameters)
+        self.assertEqual(mon.metadata.parameters, expected_parameters)
         self.assertEqual(mon.Intensity[12, 1], -0.006163896406)
         self.assertEqual(mon.Events[12, 1], -0.006163896406)
         self.assertEqual(mon.Events[43, 4], 22.06193582)
@@ -560,7 +576,6 @@ class TestManagedMcrun(unittest.TestCase):
         self.assertFalse(hasattr(mon, 'xaxis'))
         self.assertFalse(hasattr(mon, 'Error'))
         self.assertFalse(hasattr(mon, 'Ncount'))
-
 
     def test_ManagedMcrun_load_data_L_mon_direct_error(self):
         """
@@ -638,6 +653,9 @@ class Test_load_functions(unittest.TestCase):
         self.assertEqual(PSD_4PI.metadata.xlabel, "Longitude [deg]")
         self.assertEqual(PSD_4PI.metadata.ylabel, "Latitude [deg]")
         self.assertEqual(PSD_4PI.metadata.title, "4PI PSD monitor")
+        expected_parameters = {"wavelength": 1.0}
+        self.assertEqual(PSD_4PI.metadata.info["Parameters"], expected_parameters)
+        self.assertEqual(PSD_4PI.metadata.parameters, expected_parameters)
         self.assertEqual(PSD_4PI.Ncount[4][1], 4)
         self.assertEqual(PSD_4PI.Intensity[4][1], 1.537334562E-10)
         self.assertEqual(PSD_4PI.Error[4][1], 1.139482296E-10)
@@ -666,6 +684,9 @@ class Test_load_functions(unittest.TestCase):
         self.assertEqual(PSD.metadata.xlabel, "X position [cm]")
         self.assertEqual(PSD.metadata.ylabel, "Y position [cm]")
         self.assertEqual(PSD.metadata.title, "PSD monitor")
+        expected_parameters = {"wavelength": 1.0}
+        self.assertEqual(PSD.metadata.info["Parameters"], expected_parameters)
+        self.assertEqual(PSD.metadata.parameters, expected_parameters)
         self.assertEqual(PSD.Ncount[27][21], 9)
         self.assertEqual(PSD.Intensity[27][21], 2.623929371e-13)
         self.assertEqual(PSD.Error[27][21], 2.765467693e-13)
@@ -692,6 +713,9 @@ class Test_load_functions(unittest.TestCase):
         self.assertEqual(PSD_4PI.xlabel, "Longitude [deg]")
         self.assertEqual(PSD_4PI.ylabel, "Latitude [deg]")
         self.assertEqual(PSD_4PI.title, "4PI PSD monitor")
+        expected_parameters = {"wavelength": 1.0}
+        self.assertEqual(PSD_4PI.info["Parameters"], expected_parameters)
+        self.assertEqual(PSD_4PI.parameters, expected_parameters)
 
     def test_mcrun_load_metadata_L_mon(self):
         """
@@ -715,6 +739,9 @@ class Test_load_functions(unittest.TestCase):
         self.assertEqual(L_mon.xlabel, "Wavelength [AA]")
         self.assertEqual(L_mon.ylabel, "Intensity")
         self.assertEqual(L_mon.title, "Wavelength monitor")
+        expected_parameters = {"wavelength": 1.0}
+        self.assertEqual(L_mon.info["Parameters"], expected_parameters)
+        self.assertEqual(L_mon.parameters, expected_parameters)
 
     def test_mcrun_load_monitor_PSD4PI(self):
         """
@@ -738,6 +765,9 @@ class Test_load_functions(unittest.TestCase):
         self.assertEqual(monitor.metadata.xlabel, "Longitude [deg]")
         self.assertEqual(monitor.metadata.ylabel, "Latitude [deg]")
         self.assertEqual(monitor.metadata.title, "4PI PSD monitor")
+        expected_parameters = {"wavelength": 1.0}
+        self.assertEqual(monitor.metadata.info["Parameters"], expected_parameters)
+        self.assertEqual(monitor.metadata.parameters, expected_parameters)
         self.assertEqual(monitor.Ncount[4][1], 4)
         self.assertEqual(monitor.Intensity[4][1], 1.537334562E-10)
         self.assertEqual(monitor.Error[4][1], 1.139482296E-10)
@@ -764,6 +794,9 @@ class Test_load_functions(unittest.TestCase):
         self.assertEqual(monitor.metadata.xlabel, "Wavelength [AA]")
         self.assertEqual(monitor.metadata.ylabel, "Intensity")
         self.assertEqual(monitor.metadata.title, "Wavelength monitor")
+        expected_parameters = {"wavelength": 1.0}
+        self.assertEqual(monitor.metadata.info["Parameters"], expected_parameters)
+        self.assertEqual(monitor.metadata.parameters, expected_parameters)
         self.assertEqual(monitor.xaxis[53], 0.914)
         self.assertEqual(monitor.Ncount[53], 37111)
         self.assertEqual(monitor.Intensity[53], 6.990299315e-06)

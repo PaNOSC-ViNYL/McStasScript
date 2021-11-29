@@ -87,6 +87,9 @@ class McStasMetaData:
         if "component" in self.info:
             self.component_name = self.info["component"].rstrip()
 
+        if "Parameters" in self.info:
+            self.parameters = self.info["Parameters"]
+
         # Extract filename
         if "filename" in self.info:
             self.filename = self.info["filename"].rstrip()

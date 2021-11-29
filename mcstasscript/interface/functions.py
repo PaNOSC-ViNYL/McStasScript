@@ -352,3 +352,18 @@ class Configurator:
 
         # write new configuration file
         self._write_yaml(config)
+
+    def __repr__(self):
+        string = "Configurator:\n"
+        config = self._read_yaml()
+        if "paths" in config:
+            string += " paths:\n"
+            for key, value in config["paths"].items():
+                string += "  " + str(key) + ": " + str(value) + "\n"
+
+        if "other" in config:
+            string += " other:\n"
+            for key, value in config["other"].items():
+                string += "  " + str(key) + ": " + str(value) + "\n"
+
+        return string

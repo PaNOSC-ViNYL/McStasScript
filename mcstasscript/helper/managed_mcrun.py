@@ -346,8 +346,13 @@ def load_metadata(data_folder_name):
                 
             if in_sim:
                 if "Param" in lines:
-                    parm_lst=lines.split(':')[1].split('=')
-                    instrument_parameters[parm_lst[0]] = parm_lst[1]
+                    parm_lst = lines.split(':')[1].split('=')
+                    try:
+                        value = float(parm_lst[1].strip())
+                    except ValueError:
+                        value = parm_lst[1].strip()
+
+                    instrument_parameters[parm_lst[0].strip()] = value
                     
             if in_data:
                 # This line contains info to be added to metadata
