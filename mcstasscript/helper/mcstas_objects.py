@@ -2,9 +2,9 @@ from mcstasscript.helper.formatting import bcolors
 from mcstasscript.helper.formatting import is_legal_parameter
 
 
-class parameter_variable:
+class ParameterVariable:
     """
-    Class describing a input parameter in McStas instrument
+    Class describing an input parameter in McStas instrument
 
     McStas input parameters are of default type double, but can be
     cast.  If two positional arguments are given, the first is the
@@ -35,6 +35,18 @@ class parameter_variable:
     def __init__(self, *args, **kwargs):
         """Initializing mcstas parameter object
 
+        Examples
+        --------
+
+        Creates a parameter with name wavelength and associated comment
+        A = ParameterVariable("wavelength", comment="wavelength in [AA]")
+
+        Creates a parameter with name A3 and default value
+        A = ParameterVariable("A3", value=30, comment="A3 angle in [deg]")
+
+        Creates a parameter with type string and name sample_name
+        A = ParameterVariable("string", "sample_name")
+
         Parameters
         ----------
         If giving a type:
@@ -52,12 +64,21 @@ class parameter_variable:
                 sets default value of parameter
             comment : str
                 sets comment displayed next to declaration
+
         """
         if len(args) == 1:
             self.type = ""
             self.name = str(args[0])
         if len(args) == 2:
-            self.type = args[0] + " "
+            specified_type = args[0]
+            allowed_types = {"double", "int", "string"}
+            if specified_type not in allowed_types:
+                raise RuntimeError("Tried to create parameter of type \""
+                                   + str(specified_type)
+                                   + "\" which is not among the allowed types "
+                                   + str(allowed_types) + ".")
+
+            self.type = specified_type
             self.name = str(args[1])
 
         if not is_legal_parameter(self.name):
@@ -68,19 +89,38 @@ class parameter_variable:
 
         self.value = ""
         if "value" in kwargs:
+            if not isinstance(kwargs["value"], (str, int, float)):
+                raise RuntimeError("Given value for parameter has to be of "
+                                   + "type str, int or float.")
             self.value = kwargs["value"]
 
         self.comment = ""
         if "comment" in kwargs:
-            self.comment = "// " + kwargs["comment"]
+            self.comment = kwargs["comment"]
+            if not isinstance(self.comment, str):
+                raise RuntimeError("Tried to create a parameter with a "
+                                   + "comment that was not a string.")
+            self.comment = "// " + self.comment
 
-        # could check for allowed types
-        # they are int, double, string, are there more?
+        self.options = None
+        if "options" in kwargs:
+            self.options = kwargs["options"]
+            if self.value != "":
+                if (self.value not in self.options
+                        and self.value.strip("'") not in self.options
+                        and self.value.strip('"') not in self.options):
+                    raise RuntimeError("When giving both options and default, "
+                                       "the value has to be an option.")
 
     def write_parameter(self, fo, stop_character):
         """Writes input parameter to file"""
-        fo.write("%s%s" % (self.type, self.name))
-        if self.value is not "":
+
+        if not isinstance(stop_character, str):
+            raise RuntimeError("stop_character in write_parameter should be "
+                               + "a string.")
+
+        fo.write("%s %s" % (self.type, self.name))
+        if self.value != "":
             if isinstance(self.value, int):
                 fo.write(" = %d" % self.value)
             elif isinstance(self.value, float):
@@ -92,7 +132,7 @@ class parameter_variable:
         fo.write("\n")
 
 
-class declare_variable:
+class DeclareVariable:
     """
     Class describing a declared variable in McStas instrument
 
@@ -116,23 +156,36 @@ class declare_variable:
         Comment displayed next to the declaration, could contain units
 
     vector : int
-        0 if a single value is given, ortherwise contains the length
+        0 if a single value is given, otherwise contains the length
 
     Methods
     -------
     write_line(fo)
         Writes a line to text file fo declaring the parameter in c
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, type, name, **kwargs):
         """
         Initializing mcstas parameter object
 
+        Examples
+        --------
+
+        Creates a variable with name A3 and default value
+        A = DeclareVariable("double", "A3", value=30)
+
+        Creates a variable with type integer and name sample_number
+        A = DeclareVariable("int", "sample_number")
+
+        Creates an array variable called m_values
+        A = DeclareVariable("double", "m_values", array=3,
+                             value=[2, 2.5, 2])
+
         Parameters
         ----------
-        Positional argument 1: type : str
+        type : str
             Type of the parameter, double, int or string
 
-        Positional argument 2: name : str
+        name : str
             Name of input parameter
 
         Keyword arguments
@@ -146,9 +199,13 @@ class declare_variable:
             comment : str
                 sets comment displayed next to declaration
         """
-        self.type = args[0]
-        self.name = str(args[1])
 
+        self.type = type
+        if not isinstance(self.type, str):
+            raise RuntimeError("Given type of DeclareVariable should be a "
+                               + "string.")
+
+        self.name = str(name)
 
         par_name = self.name
         if "*" in par_name[0]:
@@ -157,7 +214,7 @@ class declare_variable:
         elif "&" in par_name[0]:
             # Remove the first & indicating the variable is an address
             par_name = par_name[1:]
-            
+
         if not is_legal_parameter(par_name):
             raise NameError("The given parameter name: \""
                             + self.name
@@ -185,9 +242,9 @@ class declare_variable:
         fo : file object
             File the line will be written to
         """
-        if self.value is "" and self.vector == 0:
+        if self.value == "" and self.vector == 0:
             fo.write("%s %s;%s" % (self.type, self.name, self.comment))
-        if self.value is not "" and self.vector == 0:
+        if self.value != "" and self.vector == 0:
             if self.type == "int":
                 fo.write("%s %s = %d;%s" % (self.type, self.name,
                                             self.value, self.comment))
@@ -195,37 +252,36 @@ class declare_variable:
                 try:
                     fo.write("%s %s = %G;%s" % (self.type, self.name,
                                                 self.value, self.comment))
-                except:
+                except TypeError:
+                    # Value could not be converted to float, write as string
                     fo.write("%s %s = %s;%s" % (self.type, self.name,
                                                 self.value, self.comment))
-        if self.value is "" and self.vector != 0:
+        if self.value == "" and self.vector != 0:
             fo.write("%s %s[%d];%s" % (self.type, self.name,
                                        self.vector, self.comment))
-        if self.value is not "" and self.vector != 0:
+        if self.value != "" and self.vector != 0:
             if isinstance(self.value, str):
                 # value is a string
                 string = self.value
-                #string = string.replace('"',"\\\"")
-                fo.write("%s %s[%d] = %s;" % (self.type, self.name, self.vector, string))
+                fo.write("%s %s[%d] = %s;" % (self.type, self.name,
+                                              self.vector, string))
             else:
                 # list of values
                 fo.write("%s %s[%d] = {" % (self.type, self.name, self.vector))
                 for i in range(0, len(self.value) - 1):
                     fo.write("%G," % self.value[i])
                 fo.write("%G};%s" % (self.value[-1], self.comment))
-                
-                
 
 
-class component:
+class Component:
     """
-    A class describing a McStas component to be written to a instrument
+    A class describing a McStas component to be written to an instrument
 
     This class is used by the instrument class when setting up
     components as dynamic subclasses to this class.  Most information
     can be given on initialize using keyword arguments, but there are
     methods for setting the attributes describing the component. The
-    class contains both methods to write the component to a instrument
+    class contains both methods to write the component to an instrument
     file and methods for printing to the python terminal for checking
     the information. The McStas_Instr class creates subclasses from
     this class that have attributes for all parameters for the given
@@ -243,34 +299,43 @@ class component:
     component_name : str
         Name of the component code to use, e.g. Arm, Guide_gravity, ...
 
-    AT_data : list of 3 floats
+    AT_data : list of 3 floats, default [0, 0, 0]
         Position data of the component
 
-    AT_relative : str
+    AT_relative : str, default "ABSOLUTE"
         Name of former component to use as reference for position
 
-    ROTATED_data : list of 3 floats
+    ROTATED_data : list of 3 floats, default [0, 0, 0]
         Rotation data of the component
 
-    ROTATED_relative : str
+    ROTATED_relative : str, default "ABSOLUTE"
         Name of former component to use as reference for position
 
-    WHEN : str
+    WHEN : str, default ""
         String with logical c expression x for when component is active
 
-    EXTEND : str
+    EXTEND : str, default ""
         c code for McStas EXTEND section
 
-    GROUP : str
+    GROUP : str, default ""
         Name of group the component should belong to
 
-    JUMP : str
+    JUMP : str, default ""
         String describing use of JUMP, need to contain all after "JUMP"
+
+    SPLIT : int, default 0 (disabled)
+        Integer setting SPLIT, splitting the neutron before this component
+
+    c_code_before : str, default ""
+        C code inserted before the component
+
+    c_code_after : str, default ""
+        C code inserted after the component
 
     component_parameters : dict
         Parameters to be used with component in dictionary
 
-    comment : str
+    comment : str, default ""
         Comment inserted before the component as an explanation
 
     __isfrozen : bool
@@ -278,11 +343,17 @@ class component:
 
     Methods
     -------
-    set_AT(at_list,**kwargs)
+    set_AT(at_list, RELATIVE)
         Sets AT_data, can set AT_relative using keyword
 
-    set_ROTATED(rotated_list,**kwargs)
+    set_AT_RELATIVE(relative)
+        Can set RELATIVE for position
+
+    set_ROTATED(rotated_list, RELATIVE)
         Sets ROTATED_data, can set ROTATED_relative using keyword
+
+    set_ROTATED_RELATIVE(relative)
+        Can set RELATIVE for rotation
 
     set_RELATIVE(relative_name)
         Set both AT_relative and ROTATED_relative to relative_name
@@ -293,6 +364,9 @@ class component:
     set_WHEN(string)
         Sets WHEN string
 
+    set_SPLIT(value)
+        Sets SPLIT value, a value of 0 disables SPLIT
+
     set_GROUP(string)
         Sets GROUP name
 
@@ -302,17 +376,32 @@ class component:
     append_EXTEND(string)
         Append string to EXTEND string
 
+    set_c_code_before(string)
+        Sets c code to be inserted before component
+
+    set_c_code_before(string)
+        Sets c code to be inserted after component
+
     set_comment(string)
         Sets comment for component
 
     write_component(fo)
         Writes component code to instrument file
 
+    show_parameters()
+        Prints current component state with all parameters
+
     print_long()
         Prints basic view of component code (not correct syntax)
 
+    print_long_deprecated()
+        Prints basic view of component code (obsolete)
+
     print_short(**kwargs)
         Prints short description, used in print_components
+
+    set_keyword_input(**kwargs)
+        Handle keyword arguments during initialize
 
     __setattr__(key, value)
         Overwriting __setattr__ to implement ability to freeze
@@ -339,37 +428,37 @@ class component:
             name of the component type e.g. Arm, Guide_gravity, ...
 
         keyword arguments:
-            AT : list of 3 floats
+            AT : list of 3 floats, default [0, 0, 0]
                 Sets AT_data describing position of component
 
-            AT_RELATIVE : str
+            AT_RELATIVE : str, default "ABSOLUTE"
                 sets AT_relative, describing position reference
 
-            ROTATED : list of 3 floats
+            ROTATED : list of 3 floats, default [0, 0, 0]
                 Sets ROTATED_data, describing rotation of component
 
-            ROTATED_RELATIVE : str
+            ROTATED_RELATIVE : str, default "ABSOLUTE"
                 Sets ROTATED_relative, sets reference for rotation
 
             RELATIVE : str
                 Sets both AT_relative and ROTATED_relative
 
-            WHEN : str
+            WHEN : str, default ""
                 Sets WHEN string, should contain logical c expression
 
-            EXTEND : str
+            EXTEND : str, default ""
                 Sets initial EXTEND string, should contain c code
 
-            GROUP : str
+            GROUP : str, default ""
                 Sets name of group the component should belong to
 
-            JUMP : str
+            JUMP : str, default ""
                 Sets JUMP str
-                
-            SPLIT : int
+
+            SPLIT : int, default 0 (disabled)
                 Sets SPLIT value
 
-            comment: str
+            comment: str, default ""
                 Sets comment string
         """
 
@@ -391,7 +480,7 @@ class component:
         self.JUMP = ""
         self.SPLIT = 0
         self.comment = ""
-        self.c_code_before = "" 
+        self.c_code_before = ""
         self.c_code_after = ""
 
         # If any keywords are set in kwargs, update these
@@ -399,64 +488,56 @@ class component:
 
         """
         Could store an option for whether this component should be
-        printed in instrument file or in a seperate file which would
+        printed in instrument file or in a separate file which would
         then be included.
         """
 
         # Do not allow addition of attributes after init
         self._freeze()
-    
+
     def set_keyword_input(self, **kwargs):
         # Allow addition of attributes in init
         self._unfreeze()
 
         if "AT" in kwargs:
-            self.AT_data = kwargs["AT"]
-        
-        # Could check if AT_RELATIVE is a string
+            self.set_AT(kwargs["AT"])
+
         if "AT_RELATIVE" in kwargs:
-            self.AT_relative = "RELATIVE " + kwargs["AT_RELATIVE"]
+            self.set_AT_RELATIVE(kwargs["AT_RELATIVE"])
 
         self.ROTATED_specified = False
         if "ROTATED" in kwargs:
-            self.ROTATED_data = kwargs["ROTATED"]
-            self.ROTATED_specified = True
+            self.set_ROTATED(kwargs["ROTATED"])
 
-        # Could check if ROTATED_RELATIVE is a string
         if "ROTATED_RELATIVE" in kwargs:
-            self.ROTATED_relative = "RELATIVE " + kwargs["ROTATED_RELATIVE"]
-            self.ROTATED_specified = True
+            self.set_ROTATED_RELATIVE(kwargs["ROTATED_RELATIVE"])
 
-        # Could check if RELATIVE is a string
         if "RELATIVE" in kwargs:
-            self.AT_relative = "RELATIVE " + kwargs["RELATIVE"]
-            self.ROTATED_relative = "RELATIVE " + kwargs["RELATIVE"]
-            self.ROTATED_specified = True
+            self.set_RELATIVE(kwargs["RELATIVE"])
 
         if "WHEN" in kwargs:
-            self.WHEN = "WHEN (" + kwargs["WHEN"] + ")"
+            self.set_WHEN(kwargs["WHEN"])
 
         if "EXTEND" in kwargs:
-            self.EXTEND = kwargs["EXTEND"] + "\n"
+            self.append_EXTEND(kwargs["EXTEND"])
 
         if "GROUP" in kwargs:
-            self.GROUP = kwargs["GROUP"]
+            self.set_GROUP(kwargs["GROUP"])
 
         if "JUMP" in kwargs:
-            self.JUMP = kwargs["JUMP"]
-            
+            self.set_JUMP(kwargs["JUMP"])
+
         if "SPLIT" in kwargs:
-            self.SPLIT = kwargs["SPLIT"]
+            self.set_SPLIT(kwargs["SPLIT"])
 
         if "comment" in kwargs:
-            self.comment = kwargs["comment"]
-            
+            self.set_comment(kwargs["comment"])
+
         if "c_code_before" in kwargs:
-            self.c_code_before = kwargs["c_code_before"]
-        
+            self.set_c_code_before(kwargs["c_code_before"])
+
         if "c_code_after" in kwargs:
-            self.c_code_after = kwargs["c_code_after"]
-        
+            self.set_c_code_after(kwargs["c_code_after"])
 
     def __setattr__(self, key, value):
         if self.__isfrozen and not hasattr(self, key):
@@ -475,44 +556,98 @@ class component:
     def _unfreeze(self):
         self.__isfrozen = False
 
-    def set_AT(self, at_list, **kwargs):
-        """Sets AT data, List of 3 floats"""
-        self.AT_data = at_list
-        if "RELATIVE" in kwargs:
-            relative_name = kwargs["RELATIVE"]
-            if relative_name == "ABSOLUTE":
-                self.AT_relative = relative_name
-            else:
-                self.AT_relative = "RELATIVE " + relative_name
+    def set_AT(self, at_list, RELATIVE=None):
+        """Sets AT data, List of 3 floats or single float for z only"""
+        if isinstance(at_list, (int, float)):
+            at_list = [0, 0, at_list]
 
-    def set_ROTATED(self, rotated_list, **kwargs):
+        if not isinstance(at_list, list):
+            raise RuntimeError("set_AT should be given either a list or "
+                               + "float, but received "
+                               + str(type(at_list)))
+
+        if len(at_list) != 3:
+            raise RuntimeError("Position data given to set_AT should "
+                               + "either be of length 3 or just a float.")
+
+        self.AT_data = at_list
+        if RELATIVE is not None:
+            self.set_AT_RELATIVE(RELATIVE)
+
+    def set_AT_RELATIVE(self, relative):
+        """Sets AT RELATIVE with string or component instance"""
+
+        # Extract name if Component instance is given
+        if isinstance(relative, Component):
+            relative = relative.name
+        elif not isinstance(relative, str):
+            raise ValueError("Relative must be either string or "
+                             + "Component object.")
+
+        # Set AT relative
+        if relative == "ABSOLUTE":
+            self.AT_relative = "ABSOLUTE"
+        else:
+            self.AT_relative = "RELATIVE " + relative
+
+    def set_ROTATED(self, rotated_list, RELATIVE=None):
         """Sets ROTATED data, List of 3 floats"""
+        if not isinstance(rotated_list, list):
+            raise RuntimeError("set_ROTATED should be given a list "
+                               + " but received "
+                               + str(type(rotated_list)))
+
+        if len(rotated_list) != 3:
+            raise RuntimeError("Rotation data given to set_ROTATED should "
+                               + "be of length 3.")
+
         self.ROTATED_data = rotated_list
         self.ROTATED_specified = True
-        if "RELATIVE" in kwargs:
-            relative_name = kwargs["RELATIVE"]
-            if relative_name == "ABSOLUTE":
-                self.ROTATED_relative = relative_name
-            else:
-                self.ROTATED_relative = "RELATIVE " + relative_name
+        if RELATIVE is not None:
+            self.set_ROTATED_RELATIVE(RELATIVE)
 
-    def set_RELATIVE(self, relative_name):
-        """Sets both AT_relative and ROTATED_relative"""
-        if relative_name == "ABSOLUTE":
-            self.AT_relative = relative_name
-            self.ROTATED_relative = relative_name
+    def set_ROTATED_RELATIVE(self, relative):
+        """Sets ROTATED RELATIVE with string or Component instance"""
+
+        self.ROTATED_specified = True
+        # Extract name if a Component instance is given
+        if isinstance(relative, Component):
+            relative = relative.name
+        elif not isinstance(relative, str):
+            raise ValueError("Relative must be either string or "
+                             + "Component object.")
+
+        # Set ROTATED relative
+        if relative == "ABSOLUTE":
+            self.ROTATED_relative = "ABSOLUTE"
         else:
-            self.AT_relative = "RELATIVE " + relative_name
-            self.ROTATED_relative = "RELATIVE " + relative_name
+            self.ROTATED_relative = "RELATIVE " + relative
+
+    def set_RELATIVE(self, relative):
+        """Sets both AT_relative and ROTATED_relative"""
+        # Extract name if a Component instance is given
+        if isinstance(relative, Component):
+            relative = relative.name
+        elif not isinstance(relative, str):
+            raise ValueError("Relative must be either string or "
+                             + "Component object.")
+
+        if relative == "ABSOLUTE":
+            self.AT_relative = "ABSOLUTE"
+            self.ROTATED_relative = "ABSOLUTE"
+        else:
+            self.AT_relative = "RELATIVE " + relative
+            self.ROTATED_relative = "RELATIVE " + relative
 
     def set_parameters(self, dict_input):
         """
-        Adds parameters and their values from dictionary input
+        Set Component parameters from dictionary input
 
-        Relies on attributes added when McStas_Instr creates a
-        subclass from the component class where each component
-        parameter is added as an attribute.
+        Relies on attributes added when McStas_Instr creates a subclass from
+        the Component class where each component parameter is added as an
+        attribute.
 
+        An error is raised if trying to set a parameter that does not exist
         """
         for key, val in dict_input.items():
             if not hasattr(self, key):
@@ -528,34 +663,65 @@ class component:
 
     def set_WHEN(self, string):
         """Sets WHEN string, should be a c logical expression"""
+        if not isinstance(string, str):
+            raise RuntimeError("set_WHEN expect a string, but was "
+                               + "given " + str(type(string)))
         self.WHEN = "WHEN (" + string + ")"
 
     def set_GROUP(self, string):
         """Sets GROUP name"""
+        if not isinstance(string, str):
+            raise RuntimeError("set_GROUP expect a string, but was "
+                               + "given " + str(type(string)))
         self.GROUP = string
 
     def set_JUMP(self, string):
         """Sets JUMP string, should contain all text after JUMP"""
+        if not isinstance(string, str):
+            raise RuntimeError("set_JUMP expect a string, but was "
+                               + "given " + str(type(string)))
         self.JUMP = string
-        
+
     def set_SPLIT(self, value):
-        """Sets SPLIT value, should contain all text after JUMP"""
+        """Sets SPLIT value, needs to be an integer"""
+        if not isinstance(value, (int, str)):
+            raise RuntimeError("set_SPLIT expect a integer or string, but "
+                               + "was given " + str(type(value)))
+
+        if isinstance(value, int):
+            if value < 0:
+                raise RuntimeError("set_SPLIT got a negative value, this is "
+                                   + "meaningless, has to be a "
+                                   + "positive value.")
+
         self.SPLIT = value
 
     def append_EXTEND(self, string):
         """Appends a line of code to EXTEND block of component"""
+        if not isinstance(string, str):
+            raise RuntimeError("append_EXTEND expect a string, but was "
+                               + "given " + str(type(string)))
         self.EXTEND = self.EXTEND + string + "\n"
 
     def set_comment(self, string):
         """Method that sets a comment to be written to instrument file"""
+        if not isinstance(string, str):
+            raise RuntimeError("set_comment expect a string, but was "
+                               + "given " + str(type(string)))
         self.comment = string
-        
+
     def set_c_code_before(self, string):
         """Method that sets c code to be written before the component"""
+        if not isinstance(string, str):
+            raise RuntimeError("set_c_code_before expect a string, but was "
+                               + "given " + str(type(string)))
         self.c_code_before = string
-        
+
     def set_c_code_after(self, string):
         """Method that sets c code to be written after the component"""
+        if not isinstance(string, str):
+            raise RuntimeError("set_c_code_after expect a string, but was "
+                               + "given " + str(type(string)))
         self.c_code_after = string
 
     def write_component(self, fo):
@@ -570,7 +736,6 @@ class component:
         # Could use character limit on lines instead
         parameters_written = 0  # internal parameter
 
-
         if len(self.c_code_before) > 0:
             explanation = "From component named " + self.name
             fo.write("%s // %s\n" % (str(self.c_code_before), explanation))
@@ -580,8 +745,8 @@ class component:
         if len(self.comment) > 1:
             fo.write("// %s\n" % (str(self.comment)))
 
-        if self.SPLIT is not 0:
-            fo.write("SPLIT " + str(self.SPLIT) + " ") 
+        if self.SPLIT != 0:
+            fo.write("SPLIT " + str(self.SPLIT) + " ")
 
         # Write component name and component type
         fo.write("COMPONENT %s = %s(" % (self.name, self.component_name))
@@ -631,7 +796,7 @@ class component:
                                     str(self.AT_data[1]),
                                     str(self.AT_data[2])))
         fo.write(" %s\n" % self.AT_relative)
-        
+
         if self.ROTATED_specified:
             fo.write("ROTATED (%s,%s,%s)" % (str(self.ROTATED_data[0]),
                                              str(self.ROTATED_data[1]),
@@ -649,7 +814,7 @@ class component:
 
         if not self.JUMP == "":
             fo.write("JUMP %s\n" % self.JUMP)
-            
+
         if len(self.c_code_after) > 0:
             fo.write("\n")
             explanation = "From component named " + self.name
@@ -658,7 +823,7 @@ class component:
         # Leave a new line between components for readability
         fo.write("\n")
 
-    def print_long(self):
+    def print_long_deprecated(self):
         """
         Prints contained information to Python terminal
 
@@ -671,7 +836,7 @@ class component:
             print(self.c_code_before)
         if len(self.comment) > 1:
             print("// " + self.comment)
-        if self.SPLIT is not 0:
+        if self.SPLIT != 0:
             print("SPLIT " + str(self.SPLIT) + " ", end="")
         print("COMPONENT", str(self.name),
               "=", str(self.component_name))
@@ -711,13 +876,86 @@ class component:
         if len(self.c_code_after) > 1:
             print(self.c_code_after)
 
+    def __str__(self):
+        """
+        Returns string of information about the component
+
+        Includes information on required parameters if they are not yet
+        specified. Information on the components are added when the
+        class is used as a superclass for classes describing each
+        McStas component.
+        """
+        string = ""
+
+        if len(self.c_code_before) > 1:
+            string += self.c_code_before + "\n"
+        if len(self.comment) > 1:
+            string += "// " + self.comment + "\n"
+        if self.SPLIT != 0:
+            string += "SPLIT " + str(self.SPLIT) + " "
+        string += "COMPONENT " + str(self.name)
+        string += " = " + str(self.component_name) + "\n"
+        for key in self.parameter_names:
+            val = getattr(self, key)
+            parameter_name = bcolors.BOLD + key + bcolors.ENDC
+            if val is not None:
+                unit = ""
+                if key in self.parameter_units:
+                    unit = "[" + self.parameter_units[key] + "]"
+                value = (bcolors.BOLD
+                         + bcolors.OKGREEN
+                         + str(val)
+                         + bcolors.ENDC
+                         + bcolors.ENDC)
+                string += "  " + parameter_name
+                string += " = " + value + " " + unit + "\n"
+            else:
+                if self.parameter_defaults[key] is None:
+                    string += "  " + parameter_name
+                    string += bcolors.FAIL
+                    string += " : Required parameter not yet specified"
+                    string += bcolors.ENDC + "\n"
+
+        if not self.WHEN == "":
+            string += self.WHEN + "\n"
+        string += "AT " + str(self.AT_data) + " "
+        string += str(self.AT_relative) + "\n"
+        if self.ROTATED_specified:
+            string += "ROTATED " + str(self.ROTATED_data)
+            string += " " + self.ROTATED_relative + "\n"
+        if not self.GROUP == "":
+            string += "GROUP " + self.GROUP + "\n"
+        if not self.EXTEND == "":
+            string += "EXTEND %{" + "\n"
+            string += self.EXTEND + "%}" + "\n"
+        if not self.JUMP == "":
+            string += "JUMP " + self.JUMP + "\n"
+        if len(self.c_code_after) > 1:
+            string += self.c_code_after + "\n"
+
+        return string
+
+    def print_long(self):
+        """
+        Prints information about the component
+
+        Includes information on required parameters if they are not yet
+        specified. Information on the components are added when the
+        class is used as a superclass for classes describing each
+        McStas component.
+        """
+        print(self.__str__())
+
+    def __repr__(self):
+        return self.__str__()
+
     def print_short(self, **kwargs):
         """Prints short description of component to list print"""
         if self.ROTATED_specified:
             print_rotate_rel = self.ROTATED_relative
         else:
             print_rotate_rel = self.AT_relative
-        
+
         if "longest_name" in kwargs:
             number_of_spaces = 3+kwargs["longest_name"]-len(self.name)
             print(str(self.name) + " "*number_of_spaces, end='')
@@ -872,7 +1110,7 @@ class component:
 
             comment = ""
             if parameter in self.parameter_comments:
-                if self.parameter_comments[parameter] is not "":
+                if self.parameter_comments[parameter] != "":
                     comment = " // " + self.parameter_comments[parameter]
 
             print(parameter + value + unit + comment)

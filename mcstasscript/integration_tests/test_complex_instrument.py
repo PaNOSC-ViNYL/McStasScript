@@ -1,18 +1,25 @@
 import io
-import time
+import os
 import unittest
 import unittest.mock
 import matplotlib as plt
+import threading
 
-from mcstasscript.interface import instr, functions, plotter
+from mcstasscript.interface import instr, functions
+from mcstasscript.jb_interface.simulation_interface import SimInterface
 
+class FakeChange:
+    def __init__(self, new=None, old=None, name=None):
+        self.new = new
+        self.old = old
+        self.name = name
 
 def setup_complex_instrument():
     """
     Sets up guide system with two guides that are placed next to one
     another with separate entrances but converge at the end.
 
-    It attempts to use as McStas keywords and features as possible.
+    It attempts to use as many McStas keywords and features as possible.
     """
     Instr = instr.McStas_instr("integration_test_complex",
                                author="test_suite",
@@ -90,10 +97,10 @@ def setup_complex_instrument():
     guide2.l = "guide_length"
     guide2.m = 4
     guide2.G = -9.82
-    
+
     guide2.set_SPLIT = 2
 
-    done = Instr.add_component("done", "Arm", RELATIVE="after_guide")
+    Instr.add_component("done", "Arm", RELATIVE="after_guide")
 
     PSD1 = Instr.add_component("PSD_1D_1", "PSDlin_monitor")
     PSD1.set_AT([0, 0, 0.2], RELATIVE="after_guide")
@@ -133,11 +140,15 @@ class TestComplexInstrument(unittest.TestCase):
     correctly in order for these tests to succeed.
     """
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_complex_instrument(self, mock_stdout):
+    def test_complex_instrument_run(self, mock_stdout):
         """
         Test parameters can be controlled through McStasScript.  Here
         a slit is moved to one side and the result is verified.
         """
+        CURRENT_DIR = os.getcwd()
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        os.chdir(THIS_DIR)
+
         Instr = setup_complex_instrument()
 
         data = Instr.run_full_instrument(foldername="integration_test_complex",
@@ -145,6 +156,8 @@ class TestComplexInstrument(unittest.TestCase):
                                          increment_folder_name=True,
                                          parameters={"guide_width": 0.03,
                                                      "guide_length": 8.0})
+
+        os.chdir(CURRENT_DIR)
 
         intensity_data_pos = functions.name_search("PSD_1D_1", data).Intensity
         sum_outside_beam = sum(intensity_data_pos[0:50])
@@ -167,6 +180,52 @@ class TestComplexInstrument(unittest.TestCase):
         # plotter.make_sub_plot(data)
         # time.sleep(10)
         # plt.close()
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_complex_instrument_interface(self, mock_stdout):
+        """
+        Test that a simulation can be performed through the simulation
+        interface, or as close as I can through scripting.
+        Need to join the simulation thread to the main thread in order
+        to wait for the completion as it is performed in a new thread.
+        """
+        CURRENT_DIR = os.getcwd()
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        os.chdir(THIS_DIR)
+
+        Instr = setup_complex_instrument()
+
+        interface = SimInterface(Instr)
+        interface.show_interface()
+
+        change = FakeChange()
+
+        interface.run_simulation_thread(change)
+
+        for thread in threading.enumerate():
+            if thread.name != "MainThread":
+                thread.join()
+
+        data = interface.plot_interface.data
+
+        os.chdir(CURRENT_DIR)
+
+        intensity_data_pos = functions.name_search("PSD_1D_1", data).Intensity
+        sum_outside_beam = sum(intensity_data_pos[0:50])
+        sum_inside_beam = sum(intensity_data_pos[51:99])
+        self.assertTrue(1000 * sum_outside_beam < sum_inside_beam)
+
+        intensity_data_neg = functions.name_search("PSD_1D_2", data).Intensity
+        sum_outside_beam = sum(intensity_data_neg[51:99])
+        sum_inside_beam = sum(intensity_data_neg[0:50])
+        self.assertTrue(1000 * sum_outside_beam < sum_inside_beam)
+
+        intensity_data_all = functions.name_search("PSD_1D", data).Intensity
+        sum_outside_beam = sum(intensity_data_all[49:51])
+        sum_inside_beam = (sum(intensity_data_all[0:45])
+                           + sum(intensity_data_all[56:99]))
+        self.assertTrue(1000 * sum_outside_beam < sum_inside_beam)
+
 
 if __name__ == '__main__':
     unittest.main()
