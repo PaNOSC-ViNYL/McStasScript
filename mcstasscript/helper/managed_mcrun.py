@@ -318,6 +318,8 @@ def load_metadata(data_folder_name):
     # Raise an error if mccode.sim is not available
     if "mccode.sim" not in files_in_folder:
         raise NameError("No mccode.sim in data folder.")
+        
+    instrument_parameters = {}
 
     # Open mccode to read metadata for all datasets written to disk
     with open(os.path.join(data_folder_name, "mccode.sim"), "r") as f:
@@ -326,11 +328,14 @@ def load_metadata(data_folder_name):
         metadata_list = []
         current_object = None
         in_data = False
+        in_sim = False
         for lines in f:
             # Could read other details about run
 
             if lines == "end data\n":
                 # No more data for this metadata object
+                # Add parameter information
+                current_object.add_info("Parameters", instrument_parameters)
                 # Extract the information
                 current_object.extract_info()
                 # Add to metadata list
@@ -338,7 +343,12 @@ def load_metadata(data_folder_name):
                     metadata_list.append(current_object)
                 # Stop reading data
                 in_data = False
-
+                
+            if in_sim:
+                if "Param" in lines:
+                    parm_lst=lines.split(':')[1].split('=')
+                    instrument_parameters[parm_lst[0]] = parm_lst[1]
+                    
             if in_data:
                 # This line contains info to be added to metadata
                 colon_index = lines.index(":")
@@ -351,6 +361,38 @@ def load_metadata(data_folder_name):
                 current_object = McStasMetaData()
                 # Start recording data to metadata object
                 in_data = True
+
+            if 'begin simulation:' in lines:
+                in_sim = True
+            if 'end simulation:' in lines:
+                in_sim = False
+
+        # Close mccode.sim
+        f.close()
+
+        # Create a list for McStasData instances to return
+        results = []
+
+        # Load datasets described in metadata list individually
+        for metadata in metadata_list:
+            # Load data with numpy
+            data = np.loadtxt(data_folder_name
+                              + "/"
+                              + metadata.filename.rstrip())
+
+            # Split data into intensity, error and ncount
+            if type(metadata.dimension) == int:
+                xaxis = data.T[0, :]
+                Intensity = data.T[1, :]
+                Error = data.T[2, :]
+                Ncount = data.T[3, :]
+
+            elif len(metadata.dimension) == 2:
+                xaxis = []  # Assume evenly binned in 2d
+                data_lines = metadata.dimension[1]
+                Intensity = data.T[:, 0:data_lines - 1]
+                Error = data.T[:, data_lines:2*data_lines - 1]
+                Ncount = data.T[:, 2*data_lines:3*data_lines - 1]
 
     return metadata_list
 
