@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
      name='McStasScript',
-     version='0.0.36',
+     version='0.0.37',
      author="Mads Bertelsen",
      author_email="Mads.Bertelsen@ess.eu",
      description="A python scripting interface for McStas",
