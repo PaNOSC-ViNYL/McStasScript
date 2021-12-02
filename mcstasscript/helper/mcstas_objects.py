@@ -1,8 +1,11 @@
 from mcstasscript.helper.formatting import bcolors
 from mcstasscript.helper.formatting import is_legal_parameter
 
+from libpyvinyl.Parameters.Parameter import Parameter
+from libpyvinyl.Parameters.Collections import CalculatorParameters
 
-class ParameterVariable:
+
+class ParameterVariable(Parameter):
     """
     Class describing an input parameter in McStas instrument
 
@@ -66,9 +69,10 @@ class ParameterVariable:
                 sets comment displayed next to declaration
 
         """
+
         if len(args) == 1:
             self.type = ""
-            self.name = str(args[0])
+            name = str(args[0])
         if len(args) == 2:
             specified_type = args[0]
             allowed_types = {"double", "int", "string"}
@@ -79,38 +83,40 @@ class ParameterVariable:
                                    + str(allowed_types) + ".")
 
             self.type = specified_type
-            self.name = str(args[1])
+            name = str(args[1])
 
-        if not is_legal_parameter(self.name):
+        if not is_legal_parameter(name):
             raise NameError("The given parameter name: \""
-                            + self.name
+                            + name
                             + "\" is not a legal c variable name, "
                             + " and cannot be used in McStas.")
 
-        self.value = ""
+        comment = None
+        if "comment" in kwargs:
+            comment = kwargs["comment"]
+            if not isinstance(comment, str):
+                raise RuntimeError("Tried to create a parameter with a "
+                                   + "comment that was not a string.")
+
+        unit = None
+        if "unit" in kwargs:
+            unit = kwargs["unit"]
+            if not isinstance(unit, str):
+                raise RuntimeError("Unit has to be a string")
+
+        super().__init__(name=name, unit=unit, comment=comment)
+
+        if "options" in kwargs:
+            options = kwargs["options"]
+
+            self.add_option(options)
+
         if "value" in kwargs:
             if not isinstance(kwargs["value"], (str, int, float)):
                 raise RuntimeError("Given value for parameter has to be of "
                                    + "type str, int or float.")
+
             self.value = kwargs["value"]
-
-        self.comment = ""
-        if "comment" in kwargs:
-            self.comment = kwargs["comment"]
-            if not isinstance(self.comment, str):
-                raise RuntimeError("Tried to create a parameter with a "
-                                   + "comment that was not a string.")
-            self.comment = "// " + self.comment
-
-        self.options = None
-        if "options" in kwargs:
-            self.options = kwargs["options"]
-            if self.value != "":
-                if (self.value not in self.options
-                        and self.value.strip("'") not in self.options
-                        and self.value.strip('"') not in self.options):
-                    raise RuntimeError("When giving both options and default, "
-                                       "the value has to be an option.")
 
     def write_parameter(self, fo, stop_character):
         """Writes input parameter to file"""
@@ -120,7 +126,7 @@ class ParameterVariable:
                                + "a string.")
 
         fo.write("%s %s" % (self.type, self.name))
-        if self.value != "":
+        if self.value is not None:
             if isinstance(self.value, int):
                 fo.write(" = %d" % self.value)
             elif isinstance(self.value, float):
@@ -128,8 +134,110 @@ class ParameterVariable:
             else:
                 fo.write(" = %s" % str(self.value))
         fo.write(stop_character)
-        fo.write(self.comment)
+
+        if self.comment is None:
+            c_comment = ""
+        else:
+            c_comment = "// " + self.comment
+
+        fo.write(c_comment)
         fo.write("\n")
+
+class ParameterContainer(CalculatorParameters):
+    def __init__(self, parameters=None):
+        super().__init__(parameters)
+
+    def show_parameters(self, line_limit=100):
+
+        """
+        Method for displaying current instrument parameters
+
+        line_limit : int
+            Maximum line length for terminal output
+        """
+
+        if len(self.parameters) == 0:
+            print("No instrument parameters available")
+            return
+
+        # Find longest fields
+        types = []
+        names = []
+        values = []
+        comments = []
+        for parameter in self.parameters.values():
+            types.append(str(parameter.type))
+            names.append(str(parameter.name))
+            values.append(str(parameter.value))
+            if parameter.comment is None:
+                comments.append("")
+            else:
+                comments.append(str(parameter.comment))
+
+        longest_type = len(max(types, key=len))
+        longest_name = len(max(names, key=len))
+        longest_value = len(max(values, key=len))
+        # In addition to the data 11 characters are added before the comment
+        comment_start_point = longest_type + longest_name + longest_value + 11
+        longest_comment = len(max(comments, key=len))
+        length_for_comment = line_limit - comment_start_point
+
+        # Print to console
+        for parameter in self.parameters.values():
+            print(str(parameter.type).ljust(longest_type), end=' ')
+            print(str(parameter.name).ljust(longest_name), end=' ')
+            if parameter.value is None:
+                print("  ", end=' ')
+                print(" ".ljust(longest_value + 1), end=' ')
+            else:
+                print(" =", end=' ')
+                print(str(parameter.value).ljust(longest_value + 1), end=' ')
+
+            if parameter.comment is None:
+                c_comment = ""
+            else:
+                c_comment = "// " + str(parameter.comment)
+
+            if (length_for_comment < 5
+                    or length_for_comment > len(c_comment)):
+                print(c_comment)
+            else:
+                # Split comment into several lines
+                comment = c_comment
+                words = comment.split(" ")
+                words_left = len(words)
+                last_index = 0
+                current_index = 0
+                comment = ""
+                iterations = 0
+                max_iterations = 50
+                while words_left > 0:
+                    iterations += 1
+                    if iterations > max_iterations:
+                        #  Something went long, print on one line
+                        break
+
+                    line_left = length_for_comment
+
+                    while line_left > 0:
+                        if current_index >= len(words):
+                            current_index = len(words) + 1
+                            break
+                        line_left -= len(str(words[current_index])) + 1
+                        current_index += 1
+
+                    current_index -= 1
+                    for word in words[last_index:current_index]:
+                        comment += word + " "
+                    words_left = len(words) - current_index
+                    if words_left > 0:
+                        comment += "\n" + " " * comment_start_point
+                        last_index = current_index
+
+                if not iterations == max_iterations + 1:
+                    print(comment)
+                else:
+                    print(c_comment.ljust(longest_comment))
 
 
 class DeclareVariable:
@@ -242,6 +350,7 @@ class DeclareVariable:
         fo : file object
             File the line will be written to
         """
+
         if self.value == "" and self.vector == 0:
             fo.write("%s %s;%s" % (self.type, self.name, self.comment))
         if self.value != "" and self.vector == 0:

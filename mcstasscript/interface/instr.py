@@ -9,6 +9,7 @@ import copy
 from mcstasscript.helper.mcstas_objects import DeclareVariable
 from mcstasscript.helper.mcstas_objects import ParameterVariable
 from mcstasscript.helper.mcstas_objects import Component
+from mcstasscript.helper.mcstas_objects import ParameterContainer
 from mcstasscript.helper.component_reader import ComponentReader
 from mcstasscript.helper.managed_mcrun import ManagedMcrun
 from mcstasscript.helper.formatting import is_legal_filename
@@ -55,7 +56,7 @@ class McCode_instr:
     executable_path : str
         absolute path of mcrun command, or empty if it is in path
 
-    parameter_list : list of ParameterVariable instances
+    instrument_parameters : ParameterContainer
         contains all input parameters to be written to file
 
     declare_list : list of DeclareVariable instances
@@ -277,7 +278,7 @@ class McCode_instr:
                             + " installation as keyword named "
                             + "package_path or in configuration.yaml")
 
-        self.parameter_list = []
+        self.instrument_parameters = ParameterContainer()
         self.declare_list = []
         self.initialize_section = ("// Start of initialize for generated "
                                    + name + "\n")
@@ -338,7 +339,7 @@ class McCode_instr:
                 Comment displayed next to declaration of parameter
         """
         # ParameterVariable class documented independently
-        self.parameter_list.append(ParameterVariable(*args, **kwargs))
+        self.instrument_parameters.add(ParameterVariable(*args, ** kwargs))
 
     def show_parameters(self, **kwargs):
         """
@@ -353,78 +354,7 @@ class McCode_instr:
         else:
             line_limit = self.line_limit
 
-        if len(self.parameter_list) == 0:
-            print("No instrument parameters available")
-            return
-
-        # Find longest fields
-        types = []
-        names = []
-        values = []
-        comments = []
-        for parameter in self.parameter_list:
-            types.append(str(parameter.type))
-            names.append(str(parameter.name))
-            values.append(str(parameter.value))
-            comments.append(str(parameter.comment))
-
-        longest_type = len(max(types, key=len))
-        longest_name = len(max(names, key=len))
-        longest_value = len(max(values, key=len))
-        # In addition to the data 11 characters are added before the comment
-        comment_start_point = longest_type + longest_name + longest_value + 11
-        longest_comment = len(max(comments, key=len))
-        length_for_comment = line_limit - comment_start_point
-
-        # Print to console
-        for parameter in self.parameter_list:
-            print(str(parameter.type).ljust(longest_type), end=' ')
-            print(str(parameter.name).ljust(longest_name), end=' ')
-            if parameter.value == "":
-                print("   ", end=' ')
-            else:
-                print(" = ", end=' ')
-            print(str(parameter.value).ljust(longest_value+1), end=' ')
-            if (length_for_comment < 5
-                    or length_for_comment > len(str(parameter.comment))):
-                print(str(parameter.comment))
-            else:
-                # Split comment into several lines
-                comment = str(parameter.comment)
-                words = comment.split(" ")
-                words_left = len(words)
-                last_index = 0
-                current_index = 0
-                comment = ""
-                iterations = 0
-                max_iterations = 50
-                while(words_left > 0):
-                    iterations += 1
-                    if iterations > max_iterations:
-                        #  Something went long, print on one line
-                        break
-
-                    line_left = length_for_comment
-
-                    while(line_left > 0):
-                        if current_index >= len(words):
-                            current_index = len(words) + 1
-                            break
-                        line_left -= len(str(words[current_index])) + 1
-                        current_index += 1
-
-                    current_index -= 1
-                    for word in words[last_index:current_index]:
-                        comment += word + " "
-                    words_left = len(words) - current_index
-                    if words_left > 0:
-                        comment += "\n" + " "*comment_start_point
-                        last_index = current_index
-
-                if not iterations == max_iterations + 1:
-                    print(comment)
-                else:
-                    print(str(parameter.comment).ljust(longest_comment))
+        self.instrument_parameters.show_parameters(line_limit)
 
     def add_declare_var(self, *args, **kwargs):
         """
@@ -1458,10 +1388,11 @@ class McCode_instr:
         fo.write("DEFINE INSTRUMENT %s (" % self.name)
         fo.write("\n")
         # Add loop that inserts parameters here
-        for variable in self.parameter_list[0:-1]:
+        parameter_list = list(self.instrument_parameters.parameters.values())
+        for variable in parameter_list[0:-1]:
             variable.write_parameter(fo, ",")
-        if len(self.parameter_list) > 0:
-            self.parameter_list[-1].write_parameter(fo, " ")
+        if len(parameter_list) > 0:
+            parameter_list[-1].write_parameter(fo, " ")
         fo.write(")\n")
         fo.write("\n")
 
@@ -1524,12 +1455,11 @@ class McCode_instr:
         required_parameters = []
         default_parameters = {}
 
-        for index in range(len(self.parameter_list)):
-            if self.parameter_list[index].value == "":
-                required_parameters.append(self.parameter_list[index].name)
+        for name, parameter in self.instrument_parameters.parameters.items():
+            if parameter.value is None:
+                required_parameters.append(name)
             else:
-                default_parameters.update({self.parameter_list[index].name:
-                                           self.parameter_list[index].value})
+                default_parameters.update({name: parameter.value})
 
         # Check if all given parameters correspond to legal parameters
         for given_par in given_parameters:
@@ -1751,7 +1681,7 @@ class McStas_instr(McCode_instr):
     executable_path : str
         absolute path of mcrun command, or empty if it is in path
 
-    parameter_list : list of ParameterVariable instances
+    instrument_parameters : ParameterContainer instance
         contains all input parameters to be written to file
 
     declare_list : list of DeclareVariable instances
@@ -1975,7 +1905,7 @@ class McXtrace_instr(McCode_instr):
     executable_path : str
         absolute path of mcrun command, or empty if it is in path
 
-    parameter_list : list of ParameterVariable instances
+    instrument_parameters : ParameterContainer
         contains all input parameters to be written to file
 
     declare_list : list of DeclareVariable instances

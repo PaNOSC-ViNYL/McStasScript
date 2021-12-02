@@ -24,7 +24,7 @@ def parameter_has_default(parameter):
     parameter: ParameterVariable
         The parameter to check for default value
     """
-    if parameter.value == "":
+    if parameter.value is None:
         return False
     return True
 
@@ -39,7 +39,7 @@ def get_parameter_default(parameter):
     parameter: ParameterVariable
         The parameter for which the default value is returned
     """
-    if parameter.value != "":
+    if parameter.value is not None:
         if parameter.type == "string":
             return parameter.value
         elif parameter.type == "double" or parameter.type == "":
@@ -50,4 +50,5 @@ def get_parameter_default(parameter):
             raise RuntimeError("Unknown parameter type '"
                                + parameter.type + "' of par named '"
                                + parameter.name + "'.")
+
     return None

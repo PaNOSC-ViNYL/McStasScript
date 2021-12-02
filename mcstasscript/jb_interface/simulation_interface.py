@@ -62,7 +62,7 @@ class SimInterface:
 
         self.parameters = {}
         # get default parameters from instrument
-        for parameter in self.instrument.parameter_list:
+        for parameter in self.instrument.instrument_parameters.parameters.values():
             if parameter_has_default(parameter):
                 self.parameters[parameter.name] = get_parameter_default(parameter)
 
@@ -73,7 +73,7 @@ class SimInterface:
         returns widget including all parameters
         """
         parameter_widgets = []
-        for parameter in self.instrument.parameter_list:
+        for parameter in self.instrument.instrument_parameters.parameters.values():
             par_widget = ParameterWidget(parameter, self.parameters)
             parameter_widgets.append(par_widget.make_widget())
 
@@ -322,7 +322,7 @@ class ParameterWidget:
         if parameter_has_default(parameter):
             self.default_value = get_parameter_default(parameter)
         else:
-            self.default_value = ""
+            self.default_value = None
 
         self.name = parameter.name
         self.comment = parameter.comment
@@ -333,17 +333,22 @@ class ParameterWidget:
         """
         label = widgets.Label(value=self.name,
                               layout=widgets.Layout(width='15%', height='32px'))
-        if self.parameter.options is not None:
+        if len(self.parameter.options) > 0:
             par_widget = widgets.Dropdown(options=self.parameter.options,
                                           layout=widgets.Layout(width='10%', height='32px'))
-            if self.default_value != "":
+            if self.default_value is not None:
                 if self.default_value in self.parameter.options:
                     par_widget.value = self.default_value
-                elif self.default_value.strip("'") in self.parameter.options:
-                    par_widget.value = self.default_value.strip("'")
-                elif self.default_value.strip('"') in self.parameter.options:
-                    par_widget.value = self.default_value.strip('"')
-                else:
+
+                if isinstance(self.default_value, str):
+
+                    if self.default_value.strip("'") in self.parameter.options:
+                        par_widget.value = self.default_value.strip("'")
+                    elif self.default_value.strip('"') in self.parameter.options:
+                        par_widget.value = self.default_value.strip('"')
+
+                if par_widget.value is None:
+                    print(self.parameter.options)
                     raise KeyError("default value not found in options for parameter: "
                                    + str(self.parameter.name))
 

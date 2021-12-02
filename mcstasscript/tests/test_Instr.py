@@ -399,8 +399,9 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr.add_parameter("double", "theta", comment="test par")
 
-        self.assertEqual(instr.parameter_list[0].name, "theta")
-        self.assertEqual(instr.parameter_list[0].comment, "// test par")
+        parameter = instr.instrument_parameters["theta"]
+        self.assertEqual(parameter.name, "theta")
+        self.assertEqual(parameter.comment, "test par")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_show_parameters(self, mock_stdout):
@@ -409,9 +410,9 @@ class TestMcStas_instr(unittest.TestCase):
         """
         instr = setup_instr_root_path()
 
-        instr.add_parameter("double", "theta", comment="test par")
-        instr.add_parameter("double", "theta", comment="test par")
-        instr.add_parameter("int", "theta", value=8, comment="test par")
+        instr.add_parameter("theta", comment="test par")
+        instr.add_parameter("double", "par_double", comment="test par")
+        instr.add_parameter("int", "int_par", value=8, comment="test par")
         instr.add_parameter("int", "slits", comment="test par")
         instr.add_parameter("string", "ref",
                             value="string", comment="new string")
@@ -420,11 +421,11 @@ class TestMcStas_instr(unittest.TestCase):
 
         output = mock_stdout.getvalue().split("\n")
 
-        self.assertEqual(output[0], "double theta             // test par")
-        self.assertEqual(output[1], "double theta             // test par")
-        self.assertEqual(output[2], "int    theta  =  8       // test par")
-        self.assertEqual(output[3], "int    slits             // test par")
-        self.assertEqual(output[4], "string ref    =  string  // new string")
+        self.assertEqual(output[0], "       theta                 // test par")
+        self.assertEqual(output[1], "double par_double            // test par")
+        self.assertEqual(output[2], "int    int_par     = 8       // test par")
+        self.assertEqual(output[3], "int    slits                 // test par")
+        self.assertEqual(output[4], "string ref         = string  // new string")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_show_parameters_line_break(self, mock_stdout):
@@ -436,9 +437,9 @@ class TestMcStas_instr(unittest.TestCase):
         """
         instr = setup_instr_root_path()
 
-        instr.add_parameter("double", "theta", comment="test par")
-        instr.add_parameter("double", "theta", comment="test par")
-        instr.add_parameter("int", "theta", value=8, comment="test par")
+        instr.add_parameter("theta", comment="test par")
+        instr.add_parameter("double", "par_double", comment="test par")
+        instr.add_parameter("int", "int_par", value=8, comment="test par")
         instr.add_parameter("int", "slits", comment="test par")
         instr.add_parameter("string", "ref",
                             value="string", comment="new string")
@@ -456,23 +457,20 @@ class TestMcStas_instr(unittest.TestCase):
 
         output = mock_stdout.getvalue().split("\n")
 
-        self.assertEqual(output[0], "double theta             // test par")
-        self.assertEqual(output[1], "double theta             // test par")
-        self.assertEqual(output[2], "int    theta  =  8       // test par")
-        self.assertEqual(output[3], "int    slits             // test par")
-        self.assertEqual(output[4], "string ref    =  string  // new string")
-        comment_line = "This is a very long comment meant for testing "
-        self.assertEqual(output[5], "double value  =  37      // "
+        self.assertEqual(output[0], "       theta                 // test par")
+        self.assertEqual(output[1], "double par_double            // test par")
+        self.assertEqual(output[2], "int    int_par     = 8       // test par")
+        self.assertEqual(output[3], "int    slits                 // test par")
+        self.assertEqual(output[4], "string ref         = string  // new string")
+        comment_line = "This is a very long comment meant for "
+        self.assertEqual(output[5], "double value       = 37      // "
                                     + comment_line)
-        comment_line = "the dynamic line breaking that is used in this "
-        self.assertEqual(output[6], "                            "
-                                    + comment_line)
-        comment_line = "method. It needs to have many lines in order to "
-        self.assertEqual(output[7], "                            "
-                                    + comment_line)
-        comment_line = "ensure it really works. "
-        self.assertEqual(output[8], "                            "
-                                    + comment_line)
+        comment_line = "testing the dynamic line breaking that is "
+        self.assertEqual(output[6], " "*33 + comment_line)
+        comment_line = "used in this method. It needs to have many "
+        self.assertEqual(output[7], " "*33 + comment_line)
+        comment_line = "lines in order to ensure it really works. "
+        self.assertEqual(output[8], " "*33 + comment_line)
 
     def test_simple_add_declare_parameter(self):
         """
