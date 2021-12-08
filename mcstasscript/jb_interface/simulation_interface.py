@@ -62,7 +62,7 @@ class SimInterface:
 
         self.parameters = {}
         # get default parameters from instrument
-        for parameter in self.instrument.instrument_parameters.parameters.values():
+        for parameter in self.instrument.parameters.parameters.values():
             if parameter_has_default(parameter):
                 self.parameters[parameter.name] = get_parameter_default(parameter)
 
@@ -73,7 +73,7 @@ class SimInterface:
         returns widget including all parameters
         """
         parameter_widgets = []
-        for parameter in self.instrument.instrument_parameters.parameters.values():
+        for parameter in self.instrument.parameters.parameters.values():
             par_widget = ParameterWidget(parameter, self.parameters)
             parameter_widgets.append(par_widget.make_widget())
 
@@ -146,7 +146,9 @@ class SimInterface:
         for index in range(sim_parts):
             try:
                 with HiddenPrints():
-                    data = self.instrument.run_full_instrument(**run_arguments)
+                    self.instrument.prepare_run(**run_arguments)
+                    self.instrument.backengine()
+                    data = self.instrument.data
             except NameError:
                 print("McStas run failed.")
                 data = []

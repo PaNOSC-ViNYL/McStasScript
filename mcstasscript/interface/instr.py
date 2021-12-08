@@ -6,6 +6,8 @@ import yaml
 import subprocess
 import copy
 
+from libpyvinyl.BaseCalculator import BaseCalculator
+
 from mcstasscript.helper.mcstas_objects import DeclareVariable
 from mcstasscript.helper.mcstas_objects import ParameterVariable
 from mcstasscript.helper.mcstas_objects import Component
@@ -17,7 +19,7 @@ from mcstasscript.helper.formatting import bcolors
 from mcstasscript.jb_interface.simulation_interface import SimInterface
 
 
-class McCode_instr:
+class McCode_instr(BaseCalculator):
     """
     Main class for writing a McCode instrument using McStasScript
 
@@ -26,7 +28,8 @@ class McCode_instr:
     The class also holds methods for writing the finished instrument
     file to disk and to run the simulation. This is meant as a base class
     that McStas_instr and McXtrace_instr inherits from, these have to provide
-    some attributes.
+    some attributes. Inherits from libpyvinyl BaseCalculator in order to
+    harmonize input with other simulation engines.
 
     Required attributes in superclass
     ---------------------------------
@@ -198,7 +201,7 @@ class McCode_instr:
         Returns data set from latest simulation in widget
     """
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, parameters=None, dumpfile=None, **kwargs):
         """
         Initialization of McStas Instrument
 
@@ -221,14 +224,23 @@ class McCode_instr:
                 Work directory, will load components from this folder
         """
 
+        super().__init__(name, parameters, dumpfile, **kwargs)
+
+        # If no parameters given, initialize parameter container
+        if self.parameters is None:
+            self.parameters = ParameterContainer()
+        else:
+            if not isinstance(self.parameters, ParameterContainer):
+                # Need to convert McStasScript parameters
+                # todo
+                pass
+
         # Check required attributes has been set by class that inherits
         if not (hasattr(self, "particle") or
                 hasattr(self, "executable") or
                 hasattr(self, "package_name")):
             raise AttributeError("McCode_instr is a base class, use "
                                  + "McStas_intr or McXtrace_instr instead.")
-
-        self.name = name
 
         if not is_legal_filename(self.name + ".instr"):
             raise NameError("The instrument is called: \""
@@ -274,11 +286,14 @@ class McCode_instr:
         elif self.package_path == "":
             raise NameError("At this stage of development "
                             + "McStasScript need the absolute path "
-                            + "for the " + self.package_name +
+                            + "for the " + self.package_name
                             + " installation as keyword named "
                             + "package_path or in configuration.yaml")
 
-        self.instrument_parameters = ParameterContainer()
+
+        self.current_run_options = None
+
+        #self.instrument_parameters = ParameterContainer()
         self.declare_list = []
         self.initialize_section = ("// Start of initialize for generated "
                                    + name + "\n")
@@ -339,7 +354,7 @@ class McCode_instr:
                 Comment displayed next to declaration of parameter
         """
         # ParameterVariable class documented independently
-        self.instrument_parameters.add(ParameterVariable(*args, ** kwargs))
+        return self.parameters.add(ParameterVariable(*args, ** kwargs))
 
     def show_parameters(self, **kwargs):
         """
@@ -354,7 +369,7 @@ class McCode_instr:
         else:
             line_limit = self.line_limit
 
-        self.instrument_parameters.show_parameters(line_limit)
+        self.parameters.show_parameters(line_limit)
 
     def add_declare_var(self, *args, **kwargs):
         """
@@ -1388,7 +1403,7 @@ class McCode_instr:
         fo.write("DEFINE INSTRUMENT %s (" % self.name)
         fo.write("\n")
         # Add loop that inserts parameters here
-        parameter_list = list(self.instrument_parameters.parameters.values())
+        parameter_list = list(self.parameters.parameters.values())
         for variable in parameter_list[0:-1]:
             variable.write_parameter(fo, ",")
         if len(parameter_list) > 0:
@@ -1455,7 +1470,7 @@ class McCode_instr:
         required_parameters = []
         default_parameters = {}
 
-        for name, parameter in self.instrument_parameters.parameters.items():
+        for name, parameter in self.parameters.parameters.items():
             if parameter.value is None:
                 required_parameters.append(name)
             else:
@@ -1496,19 +1511,9 @@ class McCode_instr:
             default_parameters.update(given_parameters)
             return default_parameters
 
-    def run_full_instrument(self, **kwargs):
+    def prepare_run(self, **kwargs):
         """
-        Runs McStas instrument described by this class, returns list of
-        McStasData
-
-        This method will write the instrument to disk and then run it
-        using the mcrun command of the system. Options are set using
-        keyword arguments.  Some options are mandatory, for example
-        foldername, which can not already exist, if it does data will
-        be read from this folder.  If the mcrun command is not in the
-        path of the system, the absolute path can be given with the
-        executable_path keyword argument.  This path could also already
-        have been set at initialization of the instrument object.
+        Sets parameters and options for McStas run
 
         Parameters
         ----------
@@ -1528,6 +1533,7 @@ class McCode_instr:
             executable_path : str
                 Path to mcrun command, "" if already in path
         """
+
         # Make sure executable path is in kwargs
         if "executable_path" not in kwargs:
             kwargs["executable_path"] = self.executable_path
@@ -1562,19 +1568,59 @@ class McCode_instr:
 
         kwargs["parameters"] = self._handle_parameters(given_parameters)
 
-        # Write the instrument file
-        compile = True
-        if "force_compile" in kwargs:
-            compile = kwargs["force_compile"]
-        if compile:
+        if "force_compile" not in kwargs:
+            kwargs["force_compile"] = True
+
+        self.current_run_options = kwargs
+
+    def backengine(self):
+        """
+        Runs McStas instrument described by this class, returns list of
+        McStasData
+
+        This method will write the instrument to disk and then run it
+        using the mcrun command of the system. Options are set using
+        keyword arguments.  Some options are mandatory, for example
+        foldername, which can not already exist, if it does data will
+        be read from this folder.  If the mcrun command is not in the
+        path of the system, the absolute path can be given with the
+        executable_path keyword argument.  This path could also already
+        have been set at initialization of the instrument object.
+
+        Parameters
+        ----------
+        Keyword arguments
+            foldername : str
+                Sets data_folder_name
+            ncount : int
+                Sets ncount
+            mpi : int
+                Sets thread count
+            parameters : dict
+                Sets parameters
+            custom_flags : str
+                Sets custom_flags passed to mcrun
+            force_compile : bool
+                If True (default) new instrument file is written, otherwise not
+            executable_path : str
+                Path to mcrun command, "" if already in path
+        """
+
+        if self.current_run_options is None:
+            raise RuntimeError("Need to prepare run first!")
+
+        if self.current_run_options["force_compile"]:
             self.write_full_instrument()
 
         # Set up the simulation
-        simulation = ManagedMcrun(self.name + ".instr", **kwargs)
+        simulation = ManagedMcrun(self.name + ".instr", **self.current_run_options)
 
         # Run the simulation and return data
-        simulation.run_simulation(**kwargs)
-        return simulation.load_results()
+        simulation.run_simulation(**self.current_run_options)
+
+        # Load data and store in __data
+        data = simulation.load_results()
+        self._set_data(data)
 
     def show_instrument(self, *args, **kwargs):
         """
@@ -1645,6 +1691,9 @@ class McCode_instr:
             return []
 
         return self.widget_interface.plot_interface.data
+
+    def saveH5(self, filename: str, openpmd: bool = True):
+        pass
 
 class McStas_instr(McCode_instr):
     """
