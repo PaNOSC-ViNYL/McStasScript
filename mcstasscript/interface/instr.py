@@ -1405,7 +1405,7 @@ class McCode_instr(BaseCalculator):
         fo.write("DEFINE INSTRUMENT %s (" % self.name)
         fo.write("\n")
         # Add loop that inserts parameters here
-        parameter_list = list(self.parameters.parameters.values())
+        parameter_list = list(self.parameters)
         for variable in parameter_list[0:-1]:
             variable.write_parameter(fo, ",")
         if len(parameter_list) > 0:
@@ -1472,11 +1472,11 @@ class McCode_instr(BaseCalculator):
         required_parameters = []
         default_parameters = {}
 
-        for name, parameter in self.parameters.parameters.items():
+        for parameter in self.parameters:
             if parameter.value is None:
-                required_parameters.append(name)
+                required_parameters.append(parameter.name)
             else:
-                default_parameters.update({name: parameter.value})
+                default_parameters.update({parameter.name: parameter.value})
 
         # Check if all given parameters correspond to legal parameters
         for given_par in given_parameters:

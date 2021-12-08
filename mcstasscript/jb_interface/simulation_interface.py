@@ -62,7 +62,7 @@ class SimInterface:
 
         self.parameters = {}
         # get default parameters from instrument
-        for parameter in self.instrument.parameters.parameters.values():
+        for parameter in self.instrument.parameters:
             if parameter_has_default(parameter):
                 self.parameters[parameter.name] = get_parameter_default(parameter)
 
@@ -73,7 +73,7 @@ class SimInterface:
         returns widget including all parameters
         """
         parameter_widgets = []
-        for parameter in self.instrument.parameters.parameters.values():
+        for parameter in self.instrument.parameters:
             par_widget = ParameterWidget(parameter, self.parameters)
             parameter_widgets.append(par_widget.make_widget())
 
