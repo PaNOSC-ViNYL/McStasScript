@@ -354,7 +354,9 @@ class McCode_instr(BaseCalculator):
                 Comment displayed next to declaration of parameter
         """
         # ParameterVariable class documented independently
-        return self.parameters.add(ParameterVariable(*args, ** kwargs))
+        par = ParameterVariable(*args, ** kwargs)
+        self.parameters.add(par)
+        return par
 
     def show_parameters(self, **kwargs):
         """

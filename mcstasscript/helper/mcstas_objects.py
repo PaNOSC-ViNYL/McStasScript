@@ -143,6 +143,7 @@ class ParameterVariable(Parameter):
         fo.write(c_comment)
         fo.write("\n")
 
+
 class ParameterContainer(CalculatorParameters):
     def __init__(self, parameters=None):
         super().__init__(parameters)
@@ -872,6 +873,9 @@ class Component:
                                     + " not set.")
                 else:
                     continue
+            elif isinstance(val, ParameterVariable):
+                # Extract the parameter name
+                val = val.name
 
             component_parameters[key] = val
 
