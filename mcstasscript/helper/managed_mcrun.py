@@ -56,7 +56,7 @@ class ManagedMcrun:
             Name of instrument file to be simulated
 
         kwargs : keyword arguments
-            foldername : str, required
+            output_path : str, required
                 Sets data_folder_name
             ncount : int, default 1E6
                 Sets ncount
@@ -68,8 +68,8 @@ class ManagedMcrun:
                 Sets custom_flags passed to mcrun
             executable_path : str
                 Path to mcrun command, "" if already in path
-            increment_folder_name : bool, default False
-                If True, automatically appends foldername to make it unique
+            increment_folder_name : bool, default True
+                If True, automatically appends output_path to make it unique
             force_compile : bool, default True
                 If True, forces compile. If False no new instrument is written
             run_folder : str
@@ -86,7 +86,7 @@ class ManagedMcrun:
         self.custom_flags = ""
         self.executable_path = ""
         self.executable = ""
-        self.increment_folder_name = False
+        self.increment_folder_name = True
         self.compile = True
         self.run_path = "."
         # executable_path always in kwargs
@@ -96,11 +96,11 @@ class ManagedMcrun:
         if "executable" in kwargs:
             self.executable = kwargs["executable"]
 
-        if "foldername" in kwargs:
-            self.data_folder_name = kwargs["foldername"]
+        if "output_path" in kwargs:
+            self.data_folder_name = kwargs["output_path"]
         else:
             raise NameError(
-                "ManagedMcrun needs foldername to load data, add "
+                "ManagedMcrun needs output_path to load data, add "
                 + "with keyword argument.")
 
         if "ncount" in kwargs:

@@ -5,6 +5,7 @@ import datetime
 import yaml
 import subprocess
 import copy
+import warnings
 
 from libpyvinyl.BaseCalculator import BaseCalculator
 from libpyvinyl.Parameters.Collections import CalculatorParameters
@@ -1528,14 +1529,14 @@ class McCode_instr(BaseCalculator):
             default_parameters.update(given_parameters)
             return default_parameters
 
-    def prepare_run(self, **kwargs):
+    def settings(self, **kwargs):
         """
         Sets parameters and options for McStas run
 
         Parameters
         ----------
         Keyword arguments
-            foldername : str
+            output_path : str
                 Sets data_folder_name
             ncount : int
                 Sets ncount
@@ -1578,12 +1579,17 @@ class McCode_instr(BaseCalculator):
                                    + "directory: \""
                                    + str(kwargs["run_path"]) + "\"")
 
+        if "output_path" not in kwargs:
+            kwargs["output_path"] = self.output_path
+
+        """
         if "parameters" in kwargs:
             given_parameters = kwargs["parameters"]
         else:
             given_parameters = {}
 
         kwargs["parameters"] = self._handle_parameters(given_parameters)
+        """
 
         if "force_compile" not in kwargs:
             kwargs["force_compile"] = True
@@ -1598,7 +1604,7 @@ class McCode_instr(BaseCalculator):
         This method will write the instrument to disk and then run it
         using the mcrun command of the system. Options are set using
         keyword arguments.  Some options are mandatory, for example
-        foldername, which can not already exist, if it does data will
+        output_path, which can not already exist, if it does data will
         be read from this folder.  If the mcrun command is not in the
         path of the system, the absolute path can be given with the
         executable_path keyword argument.  This path could also already
@@ -1607,7 +1613,7 @@ class McCode_instr(BaseCalculator):
         Parameters
         ----------
         Keyword arguments
-            foldername : str
+            output_path : str
                 Sets data_folder_name
             ncount : int
                 Sets ncount
@@ -1629,8 +1635,19 @@ class McCode_instr(BaseCalculator):
         if self.current_run_options["force_compile"]:
             self.write_full_instrument()
 
+        parameters = {}
+        for parameter in self.parameters:
+            if parameter.value is None:
+                raise RuntimeError("Unspecified parameter: '" + parameter.name
+                                   + "' set with set_parameters.")
+
+            parameters[parameter.name] = parameter.value
+
+        options = self.current_run_options
+        options["parameters"] = parameters
+
         # Set up the simulation
-        simulation = ManagedMcrun(self.name + ".instr", **self.current_run_options)
+        simulation = ManagedMcrun(self.name + ".instr", **options)
 
         # Run the simulation and return data
         simulation.run_simulation(**self.current_run_options)
@@ -1638,6 +1655,49 @@ class McCode_instr(BaseCalculator):
         # Load data and store in __data
         data = simulation.load_results()
         self._set_data(data)
+
+    def run_full_instrument(self, **kwargs):
+        """
+        Runs McStas instrument described by this class, returns list of
+        McStasData
+
+        This method will write the instrument to disk and then run it
+        using the mcrun command of the system. Options are set using
+        keyword arguments.  Some options are mandatory, for example
+        output_path, which can not already exist, if it does data will
+        be read from this folder.  If the mcrun command is not in the
+        path of the system, the absolute path can be given with the
+        executable_path keyword argument.  This path could also already
+        have been set at initialization of the instrument object.
+
+        Parameters
+        ----------
+        Keyword arguments
+            output_path : str
+                Sets data_folder_name
+            ncount : int
+                Sets ncount
+            mpi : int
+                Sets thread count
+            parameters : dict
+                Sets parameters
+            custom_flags : str
+                Sets custom_flags passed to mcrun
+            force_compile : bool
+                If True (default) new instrument file is written, otherwise not
+            executable_path : str
+                Path to mcrun command, "" if already in path
+        """
+        warnings.warn(
+            "run_full_instrument will be removed in future version of McStasScript. \n"
+            + "Instead supply parameters with set_parameters, set settings with "
+            + "settings and use backengine() to run. See examples in package.")
+
+        self.prepare_run(**kwargs)
+        if "parameters" in kwargs:
+            self.set_parameters(kwargs["parameters"])
+        self.backengine()
+        return self.data
 
     def show_instrument(self, *args, **kwargs):
         """
