@@ -7,6 +7,7 @@ import subprocess
 import copy
 
 from libpyvinyl.BaseCalculator import BaseCalculator
+from libpyvinyl.Parameters.Collections import CalculatorParameters
 
 from mcstasscript.helper.mcstas_objects import DeclareVariable
 from mcstasscript.helper.mcstas_objects import ParameterVariable
@@ -232,8 +233,14 @@ class McCode_instr(BaseCalculator):
         else:
             if not isinstance(self.parameters, ParameterContainer):
                 # Need to convert McStasScript parameters
-                # todo
-                pass
+                if isinstance(self.parameters, CalculatorParameters):
+                    mcstasscript_parameters = ParameterContainer()
+                    mcstasscript_parameters.import_parameters(self.parameters)
+                    self.parameters = mcstasscript_parameters
+
+                else:
+                    raise RuntimeError("Given parameters object not"
+                                       + " recognized.")
 
         # Check required attributes has been set by class that inherits
         if not (hasattr(self, "particle") or
@@ -290,27 +297,27 @@ class McCode_instr(BaseCalculator):
                             + " installation as keyword named "
                             + "package_path or in configuration.yaml")
 
-
-        self.current_run_options = None
-
-        #self.instrument_parameters = ParameterContainer()
-        self.declare_list = []
-        self.initialize_section = ("// Start of initialize for generated "
-                                   + name + "\n")
-        self.trace_section = ("// Start of trace section for generated "
-                              + name + "\n")
-        self.finally_section = ("// Start of finally for generated "
-                                + name + "\n")
-        # Handle components
-        self.component_list = []  # List of components (have to be ordered)
-        self.component_name_list = []  # List of component names
-
         # Read info on active McStas components
         self.component_reader = ComponentReader(self.package_path,
                                                 input_path=self.input_path)
-        self.component_class_lib = {}
 
+        self.component_class_lib = {}
         self.widget_interface = None
+
+        # Avoid initializing if loading from dump
+        if not hasattr(self, "current_run_options"):
+            self.current_run_options = None
+
+            self.declare_list = []
+            self.initialize_section = ("// Start of initialize for generated "
+                                       + name + "\n")
+            self.trace_section = ("// Start of trace section for generated "
+                                  + name + "\n")
+            self.finally_section = ("// Start of finally for generated "
+                                    + name + "\n")
+            # Handle components
+            self.component_list = []  # List of components (have to be ordered)
+            self.component_name_list = []  # List of component names
 
     def _read_calibration(self):
         """
@@ -592,9 +599,13 @@ class McCode_instr(BaseCalculator):
             input_dict["category"] = comp_info.category
             input_dict["line_limit"] = self.line_limit
 
-            self.component_class_lib[component_name] = type(component_name,
-                                                            (Component,),
-                                                            input_dict)
+            dynamic_component_class = type(component_name, (Component,),
+                                           input_dict)
+
+            # add this class to globals to allow for pickling
+            globals()[component_name] = dynamic_component_class
+
+            self.component_class_lib[component_name] = dynamic_component_class
 
         return self.component_class_lib[component_name](name, component_name,
                                                         **kwargs)
@@ -1119,6 +1130,10 @@ class McCode_instr(BaseCalculator):
         line_length : int
             Maximum line length in console
         """
+
+        if len(self.component_name_list) == 0:
+            print("No components added to instrument object yet.")
+            return
 
         if "line_length" in kwargs:
             line_limit = kwargs["line_length"]

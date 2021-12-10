@@ -146,7 +146,47 @@ class ParameterVariable(Parameter):
 
 class ParameterContainer(CalculatorParameters):
     def __init__(self, parameters=None):
+        """
+        McStasScript version of libpyvinyls CalculatorParameters
+
+        Expanded with ability to import standard libpyvinyl parameters to
+        McStasScript and show parameter method.
+        """
         super().__init__(parameters)
+
+    def import_parameters(self, parameters):
+        """
+        Imports libpyvinyl parameters to this ParameterContainer
+
+        There are further requirements for parameters in McStasScript which
+        need to be checked on import, and a subclass of Parameter is used
+        to store these with additional functionality.
+        """
+        if isinstance(parameters, ParameterContainer):
+            for parameter in parameters:
+                self.add(parameter)
+            return
+
+        if not isinstance(parameters, CalculatorParameters):
+            raise RuntimeError("Uknown parameter class given.")
+
+        # Code for loading from CalculatorParameters
+        for parameter in parameters:
+            try:
+                mcstas_par = ParameterVariable(parameter.name,
+                                               unit=parameter.unit,
+                                               comment=parameter.comment)
+            except:
+                raise NameError("Imported parameter did not have McStas "
+                                + "legal name")
+
+            # Ensure strings get appropriate McStas type.
+            if isinstance(parameter.value, str):
+                mcstas_par.type = "string"
+
+            mcstas_par.__dict__.update(parameter.__dict__)
+
+            self.add(mcstas_par)
 
     def show_parameters(self, line_limit=100):
 
