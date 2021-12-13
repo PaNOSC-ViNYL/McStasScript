@@ -399,7 +399,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr.add_parameter("double", "theta", comment="test par")
 
-        parameter = instr.instrument_parameters["theta"]
+        parameter = instr.parameters["theta"]
         self.assertEqual(parameter.name, "theta")
         self.assertEqual(parameter.comment, "test par")
 
@@ -1687,7 +1687,7 @@ class TestMcStas_instr(unittest.TestCase):
          my_call("DEFINE INSTRUMENT test_instrument ("),
          my_call("\n"),
          my_call("double theta"),
-         my_call(","),
+         my_call(", "),
          my_call(""),
          my_call("\n"),
          my_call("double has_default"),
@@ -1745,7 +1745,8 @@ class TestMcStas_instr(unittest.TestCase):
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
         with self.assertRaises(NameError):
-            instr.run_full_instrument(foldername="test_data_set",
+            instr.run_full_instrument(output_path="test_data_set",
+                                      increment_folder_name=False,
                                       executable_path=executable_path)
 
     def test_run_full_instrument_junk_par_error(self):
@@ -1757,8 +1758,9 @@ class TestMcStas_instr(unittest.TestCase):
 
         pars = {"theta": 2, "junk": "test"}
 
-        with self.assertRaises(NameError):
-            instr.run_full_instrument(foldername="test_data_set",
+        with self.assertRaises(KeyError):
+            instr.run_full_instrument(output_path="test_data_set",
+                                      increment_folder_name=False,
                                       parameters=pars)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
@@ -1779,7 +1781,8 @@ class TestMcStas_instr(unittest.TestCase):
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
         instr = setup_populated_x_ray_instr_with_dummy_path()
-        instr.run_full_instrument(foldername="test_data_set",
+        instr.run_full_instrument(output_path="test_data_set",
+                                  increment_folder_name=False,
                                   executable_path=executable_path,
                                   parameters={"theta": 1})
 
@@ -1787,13 +1790,14 @@ class TestMcStas_instr(unittest.TestCase):
 
         expected_path = os.path.join(executable_path, "mxrun")
 
-        expected_folder_path = os.path.join(THIS_DIR, "test_data_set")
+        expected_folder_path = os.path.join(THIS_DIR,
+                                            "test_data_set")
 
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 1000000 "
                          + "-d " + expected_folder_path
                          + "  test_instrument.instr"
-                         + " has_default=37 theta=1")
+                         + " theta=1 has_default=37")
 
         expected_run_path = os.path.join(THIS_DIR, ".")
 
@@ -1822,9 +1826,11 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_populated_instr_with_dummy_path()
 
-        instr.run_full_instrument(foldername="test_data_set",
-                                  executable_path=executable_path,
-                                  parameters={"theta": 1})
+        instr.set_parameters({"theta": 1})
+        instr.settings(output_path="test_data_set",
+                       increment_folder_name=False,
+                       executable_path=executable_path)
+        instr.backengine()
 
         os.chdir(current_work_dir)
 
@@ -1836,7 +1842,7 @@ class TestMcStas_instr(unittest.TestCase):
         expected_call = (expected_path + " -c -n 1000000 "
                          + "-d " + expected_folder_path
                          + "  test_instrument.instr"
-                         + " has_default=37 theta=1")
+                         + " theta=1 has_default=37")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
@@ -1867,7 +1873,8 @@ class TestMcStas_instr(unittest.TestCase):
         instr.add_parameter("A")
         instr.add_parameter("BC")
 
-        instr.run_full_instrument(foldername="test_data_set",
+        instr.run_full_instrument(output_path="test_data_set",
+                                  increment_folder_name=False,
                                   executable_path=executable_path,
                                   mpi=7,
                                   ncount=48.4,
@@ -1886,7 +1893,7 @@ class TestMcStas_instr(unittest.TestCase):
         expected_call = (expected_path + " -c -n 48 --mpi=7 "
                          + "-d " + expected_folder_path
                          + " -fo test_instrument.instr "
-                         + "has_default=37 A=2 BC=car theta=\"toy\"")
+                         + "theta=\"toy\" has_default=37 A=2 BC=car")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
@@ -1915,7 +1922,8 @@ class TestMcStas_instr(unittest.TestCase):
         instr.add_parameter("A")
         instr.add_parameter("BC")
 
-        instr.run_full_instrument(foldername="test_data_set",
+        instr.run_full_instrument(output_path="test_data_set",
+                                  increment_folder_name=False,
                                   executable_path=executable_path,
                                   mpi=7,
                                   ncount=48.4,
@@ -1936,7 +1944,7 @@ class TestMcStas_instr(unittest.TestCase):
         expected_call = (expected_path + " -c -n 48 --mpi=7 "
                          + "-d " + expected_folder_path
                          + " -fo test_instrument.instr "
-                         + "has_default=10 A=2 BC=car theta=\"toy\"")
+                         + "theta=\"toy\" has_default=10 A=2 BC=car")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
@@ -1963,7 +1971,8 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_populated_x_ray_instr_with_dummy_path()
 
-        instr.run_full_instrument(foldername="test_data_set",
+        instr.run_full_instrument(output_path="test_data_set",
+                                  increment_folder_name=False,
                                   executable_path=executable_path,
                                   parameters={"theta": 1})
 
@@ -1977,7 +1986,7 @@ class TestMcStas_instr(unittest.TestCase):
         expected_call = (expected_path + " -c -n 1000000 "
                          + "-d " + expected_folder_path
                          + "  test_instrument.instr"
-                         + " has_default=37 theta=1")
+                         + " theta=1 has_default=37")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,

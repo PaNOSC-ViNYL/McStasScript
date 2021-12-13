@@ -113,7 +113,7 @@ class SimInterface:
 
         part_ncount = int(float(self.ncount)/sim_parts)
 
-        run_arguments = {"foldername": "interface_" + self.instrument.name,
+        run_arguments = {"output_path": "interface_" + self.instrument.name,
                          "increment_folder_name": True,
                          "parameters": self.parameters,
                          "ncount": part_ncount}
@@ -146,7 +146,7 @@ class SimInterface:
         for index in range(sim_parts):
             try:
                 with HiddenPrints():
-                    self.instrument.prepare_run(**run_arguments)
+                    self.instrument.settings(**run_arguments)
                     self.instrument.backengine()
                     data = self.instrument.data
             except NameError:
@@ -335,22 +335,22 @@ class ParameterWidget:
         """
         label = widgets.Label(value=self.name,
                               layout=widgets.Layout(width='15%', height='32px'))
-        if len(self.parameter.options) > 0:
-            par_widget = widgets.Dropdown(options=self.parameter.options,
+        if len(self.parameter._options) > 0:
+            par_widget = widgets.Dropdown(options=self.parameter._options,
                                           layout=widgets.Layout(width='10%', height='32px'))
             if self.default_value is not None:
-                if self.default_value in self.parameter.options:
+                if self.default_value in self.parameter._options:
                     par_widget.value = self.default_value
 
                 if isinstance(self.default_value, str):
 
-                    if self.default_value.strip("'") in self.parameter.options:
+                    if self.default_value.strip("'") in self.parameter._options:
                         par_widget.value = self.default_value.strip("'")
-                    elif self.default_value.strip('"') in self.parameter.options:
+                    elif self.default_value.strip('"') in self.parameter._options:
                         par_widget.value = self.default_value.strip('"')
 
                 if par_widget.value is None:
-                    print(self.parameter.options)
+                    print(self.parameter._options)
                     raise KeyError("default value not found in options for parameter: "
                                    + str(self.parameter.name))
 

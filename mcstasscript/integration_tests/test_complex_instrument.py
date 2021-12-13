@@ -210,6 +210,8 @@ class TestComplexInstrument(unittest.TestCase):
 
         os.chdir(CURRENT_DIR)
 
+        print(data)
+
         intensity_data_pos = functions.name_search("PSD_1D_1", data).Intensity
         sum_outside_beam = sum(intensity_data_pos[0:50])
         sum_inside_beam = sum(intensity_data_pos[51:99])

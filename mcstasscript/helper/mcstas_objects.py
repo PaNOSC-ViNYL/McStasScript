@@ -109,7 +109,7 @@ class ParameterVariable(Parameter):
         if "options" in kwargs:
             options = kwargs["options"]
 
-            self.add_option(options)
+            self.add_option(options, True)
 
         if "value" in kwargs:
             if not isinstance(kwargs["value"], (str, int, float)):
@@ -125,7 +125,11 @@ class ParameterVariable(Parameter):
             raise RuntimeError("stop_character in write_parameter should be "
                                + "a string.")
 
-        fo.write("%s %s" % (self.type, self.name))
+        if not self.type == "":
+            fo.write("%s %s" % (self.type, self.name))
+        else:
+            fo.write(self.name)
+
         if self.value is not None:
             if isinstance(self.value, int):
                 fo.write(" = %d" % self.value)
@@ -913,7 +917,7 @@ class Component:
                                     + " not set.")
                 else:
                     continue
-            elif isinstance(val, ParameterVariable):
+            elif isinstance(val, (ParameterVariable, DeclareVariable)):
                 # Extract the parameter name
                 val = val.name
 

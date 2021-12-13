@@ -61,7 +61,7 @@ class McCode_instr(BaseCalculator):
     executable_path : str
         absolute path of mcrun command, or empty if it is in path
 
-    instrument_parameters : ParameterContainer
+    parameters : ParameterContainer
         contains all input parameters to be written to file
 
     declare_list : list of DeclareVariable instances
@@ -305,6 +305,10 @@ class McCode_instr(BaseCalculator):
         self.component_class_lib = {}
         self.widget_interface = None
 
+        # Ensure output_path field exist
+        if not hasattr(self, "output_path"):
+            self.output_path = None
+
         # Avoid initializing if loading from dump
         if not hasattr(self, "current_run_options"):
             self.current_run_options = None
@@ -407,7 +411,9 @@ class McCode_instr(BaseCalculator):
         """
 
         # DeclareVariable class documented independently
-        self.declare_list.append(DeclareVariable(*args, **kwargs))
+        declare_par = DeclareVariable(*args, **kwargs)
+        self.declare_list.append(declare_par)
+        return declare_par
 
     def append_declare(self, string):
         """
@@ -1423,7 +1429,7 @@ class McCode_instr(BaseCalculator):
         # Add loop that inserts parameters here
         parameter_list = list(self.parameters)
         for variable in parameter_list[0:-1]:
-            variable.write_parameter(fo, ",")
+            variable.write_parameter(fo, ", ")
         if len(parameter_list) > 0:
             parameter_list[-1].write_parameter(fo, " ")
         fo.write(")\n")
@@ -1693,7 +1699,10 @@ class McCode_instr(BaseCalculator):
             + "Instead supply parameters with set_parameters, set settings with "
             + "settings and use backengine() to run. See examples in package.")
 
-        self.prepare_run(**kwargs)
+        if "foldername" in kwargs:
+            kwargs["output_path"] = kwargs["foldername"]
+
+        self.settings(**kwargs)
         if "parameters" in kwargs:
             self.set_parameters(kwargs["parameters"])
         self.backengine()
@@ -1807,7 +1816,7 @@ class McStas_instr(McCode_instr):
     executable_path : str
         absolute path of mcrun command, or empty if it is in path
 
-    instrument_parameters : ParameterContainer instance
+    parameters : ParameterContainer instance
         contains all input parameters to be written to file
 
     declare_list : list of DeclareVariable instances
@@ -2031,7 +2040,7 @@ class McXtrace_instr(McCode_instr):
     executable_path : str
         absolute path of mcrun command, or empty if it is in path
 
-    instrument_parameters : ParameterContainer
+    parameters : ParameterContainer
         contains all input parameters to be written to file
 
     declare_list : list of DeclareVariable instances

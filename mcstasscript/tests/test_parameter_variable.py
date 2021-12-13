@@ -77,7 +77,7 @@ class Test_ParameterVariable(unittest.TestCase):
         self.assertEqual(par.name, "test")
         self.assertEqual(par.type, "")
         self.assertEqual(par.value, 2)
-        self.assertEqual(par.options, [1, 2, "horse"])
+        self.assertEqual(par._options, [1, 2, "horse"])
 
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)

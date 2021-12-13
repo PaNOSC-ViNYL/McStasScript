@@ -168,13 +168,13 @@ class TestSimulationInterface(unittest.TestCase):
 
         parameters = {}
         # get default parameters from instrument
-        for parameter in instrument.instrument_parameters.parameters.values():
+        for parameter in instrument.parameters:
             if parameter_has_default(parameter):
                 parameters[parameter.name] = get_parameter_default(parameter)
 
         parameter_widgets = []
         parameterwidget_objects = []
-        for parameter in instrument.instrument_parameters.parameters.values():
+        for parameter in instrument.parameters:
             par_widget = ParameterWidget(parameter, parameters)
             parameterwidget_objects.append(par_widget)
             parameter_widgets.append(par_widget.make_widget())

@@ -72,7 +72,7 @@ class TestInstrReader(unittest.TestCase):
         enablePrint()
         setup_standard(Instr)
 
-        parameter_list = list(Instr.instrument_parameters.parameters.values())
+        parameter_list = list(Instr.parameters)
 
         self.assertEqual(parameter_list[0].name, "stick_displacement")
         # space in type inserted for easier writing by McStas_Instr class

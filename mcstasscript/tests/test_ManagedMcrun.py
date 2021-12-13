@@ -30,7 +30,7 @@ class TestManagedMcrun(unittest.TestCase):
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
         mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_folder",
+                                 output_path="test_folder",
                                  executable_path=executable_path,
                                  executable="mcrun")
 
@@ -55,7 +55,7 @@ class TestManagedMcrun(unittest.TestCase):
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
         mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_folder",
+                                 output_path="test_folder",
                                  executable_path=executable_path,
                                  executable="mcrun")
 
@@ -79,7 +79,7 @@ class TestManagedMcrun(unittest.TestCase):
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
         mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_folder",
+                                 output_path="test_folder",
                                  executable="mcrun",
                                  executable_path=executable_path,
                                  run_path="test_data_set",
@@ -110,7 +110,7 @@ class TestManagedMcrun(unittest.TestCase):
                      "string_par": "\"Car\""}
 
         mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_folder",
+                                 output_path="test_folder",
                                  executable_path=executable_path,
                                  executable="",
                                  parameters=par_input)
@@ -136,7 +136,7 @@ class TestManagedMcrun(unittest.TestCase):
         custom_flag_input = "-p"
 
         mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_folder",
+                                 output_path="test_folder",
                                  executable="mcrun",
                                  executable_path=executable_path,
                                  custom_flags=custom_flag_input)
@@ -158,7 +158,7 @@ class TestManagedMcrun(unittest.TestCase):
         """
         with self.assertRaises(ValueError):
             ManagedMcrun("test.instr",
-                         foldername="test_folder",
+                         output_path="test_folder",
                          mcrun_path="",
                          ncount=-8)
 
@@ -168,7 +168,7 @@ class TestManagedMcrun(unittest.TestCase):
         """
         with self.assertRaises(ValueError):
             ManagedMcrun("test.instr",
-                         foldername="test_folder",
+                         output_path="test_folder",
                          mcrun_path="",
                          mpi=-8)
 
@@ -178,7 +178,7 @@ class TestManagedMcrun(unittest.TestCase):
         """
         with self.assertRaises(RuntimeError):
             ManagedMcrun("test.instr",
-                         foldername="test_folder",
+                         output_path="test_folder",
                          mcrun_path="",
                          parameters=[1, 2, 3])
 
@@ -195,7 +195,7 @@ class TestManagedMcrun(unittest.TestCase):
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
         mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_folder",
+                                 output_path="test_folder",
                                  executable_path=executable_path,
                                  executable="mcrun",)
 
@@ -229,7 +229,7 @@ class TestManagedMcrun(unittest.TestCase):
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
         mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_folder",
+                                 output_path="test_folder",
                                  executable_path=executable_path,
                                  executable="mcrun",)
 
@@ -266,7 +266,7 @@ class TestManagedMcrun(unittest.TestCase):
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
         mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_folder",
+                                 output_path="test_folder",
                                  executable_path=executable_path,
                                  executable="mcrun",
                                  mpi=7,
@@ -303,7 +303,7 @@ class TestManagedMcrun(unittest.TestCase):
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
         mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_folder",
+                                 output_path="test_folder",
                                  executable_path=executable_path,
                                  executable="mcrun",
                                  mpi=7,
@@ -344,7 +344,7 @@ class TestManagedMcrun(unittest.TestCase):
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
         mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_folder",
+                                 output_path="test_folder",
                                  executable_path=executable_path,
                                  executable="mcrun",
                                  mpi=7,
@@ -388,7 +388,7 @@ class TestManagedMcrun(unittest.TestCase):
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
         mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_data_set",
+                                 output_path="test_data_set",
                                  executable_path=executable_path,
                                  mcrun_path="path")
 
@@ -427,7 +427,7 @@ class TestManagedMcrun(unittest.TestCase):
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
         mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_data_set",
+                                 output_path="test_data_set",
                                  executable_path=executable_path,
                                  mcrun_path="path")
 
@@ -466,7 +466,7 @@ class TestManagedMcrun(unittest.TestCase):
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
         mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_data_set",
+                                 output_path="test_data_set",
                                  executable_path=executable_path,
                                  mcrun_path="path")
 
@@ -506,7 +506,7 @@ class TestManagedMcrun(unittest.TestCase):
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
         mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_data_set",
+                                 output_path="test_data_set",
                                  executable_path=executable_path,
                                  mcrun_path="path")
 
@@ -546,7 +546,7 @@ class TestManagedMcrun(unittest.TestCase):
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
         mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_data_set",
+                                 output_path="test_data_set",
                                  executable_path=executable_path,
                                  mcrun_path="path")
 
@@ -589,7 +589,7 @@ class TestManagedMcrun(unittest.TestCase):
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
         mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_data_set",
+                                 output_path="test_data_set",
                                  executable_path=executable_path,
                                  mcrun_path="path")
 
@@ -611,7 +611,7 @@ class TestManagedMcrun(unittest.TestCase):
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
         mcrun_obj = ManagedMcrun("test.instr",
-                                 foldername="test_data_set",
+                                 output_path="test_data_set",
                                  executable_path=executable_path,
                                  mcrun_path="path")
 
