@@ -15,7 +15,7 @@
 * 
 * %Identification
 * Written by: Python McXtrace Instrument Generator
-* Date: 16:27:39 on December 02, 2021
+* Date: 10:17:47 on December 14, 2021
 * Origin: ESS DMSC
 * %INSTRUMENT_SITE: Generated_instruments
 * 
@@ -26,7 +26,7 @@
 ********************************************************************************/
 
 DEFINE INSTRUMENT test_instrument (
-double theta,
+double theta = 1, 
 double has_default = 37 
 )
 

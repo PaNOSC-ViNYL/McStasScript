@@ -13,7 +13,8 @@ class ParameterVariable(Parameter):
     cast.  If two positional arguments are given, the first is the
     type, and the second is the parameter name.  With one input, only
     the parameter name is read.  It is also possible to assign a
-    default value and a comment through keyword arguments.
+    default value and a comment through keyword arguments. Inherits from the
+    libpyvinyl Parameter.
 
     Attributes
     ----------
@@ -25,6 +26,9 @@ class ParameterVariable(Parameter):
 
     value : any
         Default value/string of parameter, converted to string
+
+    unit : str
+        String descrbing the unit for this variable
 
     comment : str
         Comment displayed next to the parameter, could contain units
@@ -165,6 +169,10 @@ class ParameterContainer(CalculatorParameters):
         There are further requirements for parameters in McStasScript which
         need to be checked on import, and a subclass of Parameter is used
         to store these with additional functionality.
+
+        Parameters:
+            parameters: ParameterContainer
+                libpyvinyl ParameterContainer for conversion
         """
         if isinstance(parameters, ParameterContainer):
             for parameter in parameters:

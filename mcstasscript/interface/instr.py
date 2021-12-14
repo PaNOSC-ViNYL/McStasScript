@@ -58,6 +58,9 @@ class McCode_instr(BaseCalculator):
     input_path : str, default "."
         directory in which simulation is executed, uses components found there
 
+    output_path : str
+        directory in which the data is written
+
     executable_path : str
         absolute path of mcrun command, or empty if it is in path
 
@@ -90,6 +93,12 @@ class McCode_instr(BaseCalculator):
 
     package_path : str
         Path to mccode package containing component folders
+
+    current_run_settings : dict
+        Dict of options set with settings
+
+    data : list
+        List of McStasData objects produced by last run
 
     Methods
     -------
@@ -192,9 +201,17 @@ class McCode_instr(BaseCalculator):
     show_instrument()
         Shows instrument using mcdisplay
 
+    set_parameters(dict)
+        Inherited from libpyvinyl BaseCalculator
+
+    settings(**kwargs)
+        Sets settings for performing simulation
+
+    backengine()
+        Performs simulation, saves in data attribute
+
     run_full_instrument(**kwargs)
-        Writes instrument files and runs simulation.
-        Returns list of McStasData
+        Depricated method for performing the simulation
 
     interface()
         Shows interface with jupyter notebook widgets
@@ -213,6 +230,12 @@ class McCode_instr(BaseCalculator):
             Name of project, instrument file will be name + ".instr"
 
         keyword arguments:
+            parameters : ParameterContainer or CalculatorParameters
+                Parameters for this instrument
+
+            dumpfile: str
+                File path to dump file to be loaded
+
             author : str
                 Name of author, written in instrument file
 
@@ -310,8 +333,8 @@ class McCode_instr(BaseCalculator):
             self.output_path = None
 
         # Avoid initializing if loading from dump
-        if not hasattr(self, "current_run_options"):
-            self.current_run_options = None
+        if not hasattr(self, "current_run_settings"):
+            self.current_run_settings = None
 
             self.declare_list = []
             self.initialize_section = ("// Start of initialize for generated "
@@ -1537,19 +1560,25 @@ class McCode_instr(BaseCalculator):
 
     def settings(self, **kwargs):
         """
-        Sets parameters and options for McStas run
+        Sets settings for McStas run performed with backengine
+
+        Some options are mandatory, for example output_path, which can not
+        already exist, if it does data will be read from this folder. If the
+        mcrun command is not in the path of the system, the absolute path can
+        be given with the executable_path keyword argument. This path could
+        also already have been set at initialization of the instrument object.
 
         Parameters
         ----------
         Keyword arguments
             output_path : str
                 Sets data_folder_name
+            increment_folder_name : bool
+                Will update output_path if folder already exists, default True
             ncount : int
                 Sets ncount
             mpi : int
                 Sets thread count
-            parameters : dict
-                Sets parameters
             custom_flags : str
                 Sets custom_flags passed to mcrun
             force_compile : bool
@@ -1563,8 +1592,8 @@ class McCode_instr(BaseCalculator):
             kwargs["executable_path"] = self.executable_path
         else:
             if not os.path.isdir(str(kwargs["executable_path"])):
-                raise RuntimeError("The executable_path provided to "
-                                   + "run_full_instrument does not point to a"
+                raise RuntimeError("The executable_path provided in "
+                                   + "settings does not point to a"
                                    + "directory: \""
                                    + str(kwargs["executable_path"]) + "\"")
 
@@ -1581,64 +1610,32 @@ class McCode_instr(BaseCalculator):
         else:
             if not os.path.isdir(str(kwargs["run_path"])):
                 raise RuntimeError("The run_path provided to "
-                                   + "run_full_instrument does not point to a"
+                                   + "settings does not point to a"
                                    + "directory: \""
                                    + str(kwargs["run_path"]) + "\"")
 
         if "output_path" not in kwargs:
             kwargs["output_path"] = self.output_path
 
-        """
-        if "parameters" in kwargs:
-            given_parameters = kwargs["parameters"]
-        else:
-            given_parameters = {}
-
-        kwargs["parameters"] = self._handle_parameters(given_parameters)
-        """
-
         if "force_compile" not in kwargs:
             kwargs["force_compile"] = True
 
-        self.current_run_options = kwargs
+        self.current_run_settings = kwargs
 
     def backengine(self):
         """
-        Runs McStas instrument described by this class, returns list of
-        McStasData
+        Runs McStas instrument described by this class, saves data in
+        data attribute
 
         This method will write the instrument to disk and then run it
-        using the mcrun command of the system. Options are set using
-        keyword arguments.  Some options are mandatory, for example
-        output_path, which can not already exist, if it does data will
-        be read from this folder.  If the mcrun command is not in the
-        path of the system, the absolute path can be given with the
-        executable_path keyword argument.  This path could also already
-        have been set at initialization of the instrument object.
-
-        Parameters
-        ----------
-        Keyword arguments
-            output_path : str
-                Sets data_folder_name
-            ncount : int
-                Sets ncount
-            mpi : int
-                Sets thread count
-            parameters : dict
-                Sets parameters
-            custom_flags : str
-                Sets custom_flags passed to mcrun
-            force_compile : bool
-                If True (default) new instrument file is written, otherwise not
-            executable_path : str
-                Path to mcrun command, "" if already in path
+        using the mcrun command of the system. Settings are set using
+        settings methods.
         """
 
-        if self.current_run_options is None:
+        if self.current_run_settings is None:
             raise RuntimeError("Need to prepare run first!")
 
-        if self.current_run_options["force_compile"]:
+        if self.current_run_settings["force_compile"]:
             self.write_full_instrument()
 
         parameters = {}
@@ -1649,14 +1646,14 @@ class McCode_instr(BaseCalculator):
 
             parameters[parameter.name] = parameter.value
 
-        options = self.current_run_options
+        options = self.current_run_settings
         options["parameters"] = parameters
 
         # Set up the simulation
         simulation = ManagedMcrun(self.name + ".instr", **options)
 
         # Run the simulation and return data
-        simulation.run_simulation(**self.current_run_options)
+        simulation.run_simulation(**self.current_run_settings)
 
         # Load data and store in __data
         data = simulation.load_results()
@@ -1801,22 +1798,16 @@ class McStas_instr(McCode_instr):
     origin : str, default "ESS DMSC"
         origin of instrument file (affiliation)
 
-    executable : str
-        Name of executable, mcrun or mxrun
-
-    particle : str
-        Name of probe particle, "neutron" or "x-ray"
-
-    package_name : str
-        Name of package, "McStas" or "McXtrace"
-
     input_path : str, default "."
         directory in which simulation is executed, uses components found there
+
+    output_path : str
+        directory in which the data is written
 
     executable_path : str
         absolute path of mcrun command, or empty if it is in path
 
-    parameters : ParameterContainer instance
+    parameters : ParameterContainer
         contains all input parameters to be written to file
 
     declare_list : list of DeclareVariable instances
@@ -1845,6 +1836,12 @@ class McStas_instr(McCode_instr):
 
     package_path : str
         Path to mccode package containing component folders
+
+    current_run_settings : dict
+        Dict of options set with settings
+
+    data : list
+        List of McStasData objects produced by last run
 
     Methods
     -------
@@ -1947,9 +1944,17 @@ class McStas_instr(McCode_instr):
     show_instrument()
         Shows instrument using mcdisplay
 
+    set_parameters(dict)
+        Inherited from libpyvinyl BaseCalculator
+
+    settings(**kwargs)
+        Sets settings for performing simulation
+
+    backengine()
+        Performs simulation, saves in data attribute
+
     run_full_instrument(**kwargs)
-        Writes instrument files and runs simulation.
-        Returns list of McStasData
+        Depricated method for performing the simulation
 
     interface()
         Shows interface with jupyter notebook widgets
@@ -1967,6 +1972,12 @@ class McStas_instr(McCode_instr):
             Name of project, instrument file will be name + ".instr"
 
         keyword arguments:
+            parameters : ParameterContainer or CalculatorParameters
+                Parameters for this instrument
+
+            dumpfile: str
+                File path to dump file to be loaded
+
             author : str
                 Name of author, written in instrument file
 
@@ -2025,17 +2036,11 @@ class McXtrace_instr(McCode_instr):
     origin : str, default "ESS DMSC"
         origin of instrument file (affiliation)
 
-    executable : str
-        Name of executable, mcrun or mxrun
-
-    particle : str
-        Name of probe particle, "neutron" or "x-ray"
-
-    package_name : str
-        Name of package, "McStas" or "McXtrace"
-
     input_path : str, default "."
         directory in which simulation is executed, uses components found there
+
+    output_path : str
+        directory in which the data is written
 
     executable_path : str
         absolute path of mcrun command, or empty if it is in path
@@ -2055,7 +2060,7 @@ class McXtrace_instr(McCode_instr):
     finally_section : str
         string containing entire finally section to be written
 
-    component_list : list of Component instances
+    component_list : list of component instances
         list of components in the instrument
 
     component_name_list : list of strings
@@ -2069,6 +2074,12 @@ class McXtrace_instr(McCode_instr):
 
     package_path : str
         Path to mccode package containing component folders
+
+    current_run_settings : dict
+        Dict of options set with settings
+
+    data : list
+        List of McStasData objects produced by last run
 
     Methods
     -------
@@ -2171,9 +2182,17 @@ class McXtrace_instr(McCode_instr):
     show_instrument()
         Shows instrument using mcdisplay
 
+    set_parameters(dict)
+        Inherited from libpyvinyl BaseCalculator
+
+    settings(**kwargs)
+        Sets settings for performing simulation
+
+    backengine()
+        Performs simulation, saves in data attribute
+
     run_full_instrument(**kwargs)
-        Writes instrument files and runs simulation.
-        Returns list of McStasData
+        Depricated method for performing the simulation
 
     interface()
         Shows interface with jupyter notebook widgets
@@ -2191,6 +2210,12 @@ class McXtrace_instr(McCode_instr):
             Name of project, instrument file will be name + ".instr"
 
         keyword arguments:
+            parameters : ParameterContainer or CalculatorParameters
+                Parameters for this instrument
+
+            dumpfile: str
+                File path to dump file to be loaded
+
             author : str
                 Name of author, written in instrument file
 
@@ -2198,7 +2223,7 @@ class McXtrace_instr(McCode_instr):
                 Affiliation of author, written in instrument file
 
             executable_path : str
-                Absolute path of mxrun or empty if already in path
+                Absolute path of mcrun or empty if already in path
 
             input_path : str
                 Work directory, will load components from this folder
