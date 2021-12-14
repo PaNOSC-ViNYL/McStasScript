@@ -118,7 +118,7 @@ A monitor is added as well to get data out of the simulation (few bins so it is 
 
 Settings for the simulation can be adjusted with the *settings* method, an output_path for the data is needed.
 
-    my_instrument.settings(output_path="first_run, ncount=1E7)
+    my_instrument.settings(output_path="first_run", ncount=1E7)
 
 The simulatiuon is performed with the *backengine* method. After this call, the data can be retrieved from the data attribute.
 
