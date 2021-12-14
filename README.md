@@ -114,11 +114,16 @@ A monitor is added as well to get data out of the simulation (few bins so it is 
     PSD.yheight = 0.1
     PSD.nx = 5
     PSD.ny = 5
-    PSD.filename = "\"PSD.dat\""
+    PSD.filename = '"PSD.dat"'
 
-This simple simulation can be executed from the 
+Settings for the simulation can be adjusted with the *settings* method, an output_path for the data is needed.
 
-    data = my_instrument.run_full_instrument(foldername="first_run", increment_folder_name=True)
+    my_instrument.settings(output_path="first_run, ncount=1E7)
+
+The simulatiuon is performed with the *backengine* method. After this call, the data can be retrieved from the data attribute.
+
+    my_instrument.backengine()
+    data = my_instrument.data
 
 Results from the monitors would be stored as a list of McStasData objects in the returned data. The counts are stored as numpy arrays. We can read and change the intensity directly and manipulate the data before plotting.
 
@@ -170,7 +175,9 @@ Here is a quick overview of the available methods of the main classes in the pro
         ├── append_initialize(str string) # Appends a line to initialize (c syntax)
         ├── print_components() # Prints list of components and their location
         ├── write_full_instrument() # Writes instrument to disk with given name + ".instr"
-        ├── run_full_instrument() # Runs simulation. Options in keyword arguments. Returns list of McStasData
+        ├── settings(kwargs) Settings as keyword arguments.
+        ├── backengine() # Runs simulation.
+        ├── data # Data attribute, contains list of McStasData objects
         ├── interface() # Shows widget interface in jupyter notebook
         └── get_interface_data() # Returns data set from latest simulation performed in interface
         
