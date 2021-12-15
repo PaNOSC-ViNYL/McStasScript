@@ -254,24 +254,26 @@ class McCode_instr(BaseCalculator):
         # If no parameters given, initialize parameter container
         if self.parameters is None:
             self.parameters = ParameterContainer()
-        else:
-            if not isinstance(self.parameters, ParameterContainer):
-                # Need to convert McStasScript parameters
-                if isinstance(self.parameters, CalculatorParameters):
-                    mcstasscript_parameters = ParameterContainer()
-                    mcstasscript_parameters.import_parameters(self.parameters)
-                    self.parameters = mcstasscript_parameters
 
-                else:
-                    raise RuntimeError("Given parameters object not"
-                                       + " recognized.")
+        if not isinstance(self.parameters, ParameterContainer):
+            # Need to convert McStasScript parameters
+            if isinstance(self.parameters, CalculatorParameters):
+                mcstasscript_parameters = ParameterContainer()
+                mcstasscript_parameters.import_parameters(self.parameters)
+                self.parameters = mcstasscript_parameters
+
+            else:
+                raise TypeError("Input parameter 'parameters' must be of "
+                                + "type CalculatorParameters or "
+                                + "ParameterContainer, not "
+                                + "%s", type(self.parameters))
 
         # Check required attributes has been set by class that inherits
         if not (hasattr(self, "particle") or
                 hasattr(self, "executable") or
                 hasattr(self, "package_name")):
             raise AttributeError("McCode_instr is a base class, use "
-                                 + "McStas_intr or McXtrace_instr instead.")
+                                 + "McStas_instr or McXtrace_instr instead.")
 
         if not is_legal_filename(self.name + ".instr"):
             raise NameError("The instrument is called: \""
@@ -1564,7 +1566,7 @@ class McCode_instr(BaseCalculator):
 
         Some options are mandatory, for example output_path, which can not
         already exist, if it does data will be read from this folder. If the
-        mcrun command is not in the path of the system, the absolute path can
+        mcrun command is not in the PATH of the system, the absolute path can
         be given with the executable_path keyword argument. This path could
         also already have been set at initialization of the instrument object.
 
@@ -1629,7 +1631,7 @@ class McCode_instr(BaseCalculator):
 
         This method will write the instrument to disk and then run it
         using the mcrun command of the system. Settings are set using
-        settings methods.
+        settings method.
         """
 
         if self.current_run_settings is None:
@@ -1776,7 +1778,11 @@ class McCode_instr(BaseCalculator):
         return self.widget_interface.plot_interface.data
 
     def saveH5(self, filename: str, openpmd: bool = True):
+        """
+        Not relevant, but required from BaseCalculator, will be removed
+        """
         pass
+
 
 class McStas_instr(McCode_instr):
     """

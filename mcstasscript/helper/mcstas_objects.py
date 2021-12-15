@@ -732,6 +732,11 @@ class Component:
             raise RuntimeError("Position data given to set_AT should "
                                + "either be of length 3 or just a float.")
 
+        # If parameter objects given, take their name instead
+        for index, element in enumerate(at_list):
+            if isinstance(element, (ParameterVariable, DeclareVariable)):
+                at_list[index] = element.name
+
         self.AT_data = at_list
         if RELATIVE is not None:
             self.set_AT_RELATIVE(RELATIVE)
@@ -762,6 +767,11 @@ class Component:
         if len(rotated_list) != 3:
             raise RuntimeError("Rotation data given to set_ROTATED should "
                                + "be of length 3.")
+
+        # If parameter objects given, take their name instead
+        for index, element in enumerate(rotated_list):
+            if isinstance(element, (ParameterVariable, DeclareVariable)):
+                rotated_list[index] = element.name
 
         self.ROTATED_data = rotated_list
         self.ROTATED_specified = True
@@ -1067,9 +1077,17 @@ class Component:
                 unit = ""
                 if key in self.parameter_units:
                     unit = "[" + self.parameter_units[key] + "]"
+                if isinstance(val, ParameterVariable):
+                    #val_string = val.print_line() # too long
+                    val_string = val.name
+                elif isinstance(val, DeclareVariable):
+                    val_string = val.name
+                else:
+                    val_string = str(val)
+
                 value = (bcolors.BOLD
                          + bcolors.OKGREEN
-                         + str(val)
+                         + val_string
                          + bcolors.ENDC
                          + bcolors.ENDC)
                 string += "  " + parameter_name

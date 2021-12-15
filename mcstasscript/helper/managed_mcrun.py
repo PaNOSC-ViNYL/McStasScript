@@ -50,6 +50,11 @@ class ManagedMcrun:
 
     def __init__(self, instr_name, **kwargs):
         """
+        Performs call to McStas with given options
+
+        Uses subprocess to call mcrun / mxrun to perform simulation of given
+        instrument file.
+
         Parameters
         ----------
         instr_name : str
