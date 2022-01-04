@@ -1,10 +1,8 @@
 # Demonstration of McStasScript, an API for creating and running McStas instruments from python scripts
 # Written by Mads Bertelsen, ESS DMSC
 import random
-import sys
-sys.path.append('/Users/madsbertelsen/PaNOSC/McStasScript/github/McStasScript')
-from mcstasscript.interface import instr, plotter, functions
 
+from mcstasscript.interface import instr, plotter, functions
 
 # Create a McStas instrument
 Instr = instr.McStas_instr("random_demo",
@@ -26,15 +24,15 @@ Cu.my_absorption = "100*4*3.78/55.4"
 Cu.process_string = "\"Cu_incoherent,Cu_powder\""
 
 # Add neutron source
-Source = Instr.add_component("source", "Source_div", AT=[0,0,0])
+Source = Instr.add_component("source", "Source_div")
 # Add parameter to select energy at run time
-Instr.add_parameter("double","energy", value=10, comment="[meV] source energy")
+energy = Instr.add_parameter("double", "energy", value=10, comment="[meV] source energy")
 
 Source.xwidth = 0.12
 Source.yheight = 0.12
 Source.focus_aw = 0.1
 Source.focus_ah = 0.1
-Source.E0 = "energy"
+Source.E0 = energy
 Source.dE = 0.0
 Source.flux = 1E13
 
@@ -42,7 +40,7 @@ Source.flux = 1E13
 material_name_list = ["Cu", "Vacuum"]
 
 # Wish to set up a number of random boxes, here the number is chosen at random
-number_of_volumes = random.randint(30,40)
+number_of_volumes = random.randint(30, 40)
 
 # Initialize the priority that needs to be unique for each volume
 current_priority = 99
@@ -65,9 +63,9 @@ for volume in range(number_of_volumes):
 
     # Add a McStas Union geometry with unique name
     this_geometry = Instr.add_component("volume_" + str(volume), "Union_box")
-    this_geometry.xwidth = random.uniform(0.01,max_side_length)
-    this_geometry.yheight = random.uniform(0.01,max_side_length)
-    this_geometry.zdepth = random.uniform(0.01,max_side_length)
+    this_geometry.xwidth = random.uniform(0.01, max_side_length)
+    this_geometry.yheight = random.uniform(0.01, max_side_length)
+    this_geometry.zdepth = random.uniform(0.01, max_side_length)
     this_geometry.material_string = "\"" + volume_material + "\""
     this_geometry.priority = current_priority
     this_geometry.p_interact = 0.3
@@ -112,7 +110,7 @@ PSD.ny = 500
 PSD.filename = "\"PSD.dat\""
 PSD.restore_neutron = 1
 
-big_PSD = Instr.add_component("large_detector","PSD_monitor", AT=[0,0,2])
+big_PSD = Instr.add_component("large_detector", "PSD_monitor", AT=[0,0,2])
 big_PSD.xwidth = 1.0
 big_PSD.yheight = 1.0
 big_PSD.nx = 500
@@ -123,9 +121,11 @@ big_PSD.restore_neutron = 1
 Instr.print_components()
 
 # Run the McStas simulation, a unique foldername is required for each run
-data = Instr.run_full_instrument(foldername="demonstration",
-                                 parameters={"energy": 600},
-                                 mpi=2, ncount=5E7)
+Instr.settings(output_path="demonstration", mpi=2, ncount=5E7)
+Instr.set_parameters(energy=600)
+
+Instr.backengine()
+data = Instr.data
 
 # Set plotting options for the data (optional)
 functions.name_plot_options("logger_space_zx_all", data, log=1, orders_of_mag=3)

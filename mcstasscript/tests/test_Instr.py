@@ -303,9 +303,9 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(my_instrument.author, "Mads")
         self.assertEqual(my_instrument.origin, "DMSC")
-        self.assertEqual(my_instrument.executable_path,
+        self.assertEqual(my_instrument._run_settings["executable_path"],
                          "./dummy_mcstas/contrib")
-        self.assertEqual(my_instrument.package_path,
+        self.assertEqual(my_instrument._run_settings["package_path"],
                          "./dummy_mcstas/misc")
 
     def test_load_config_file(self):
@@ -344,8 +344,8 @@ class TestMcStas_instr(unittest.TestCase):
         # Check the value matches what is loaded by initialization
         my_instrument = setup_instr_no_path()
 
-        self.assertEqual(my_instrument.executable_path, correct_mcrun_path)
-        self.assertEqual(my_instrument.package_path, correct_mcstas_path)
+        self.assertEqual(my_instrument._run_settings["executable_path"], correct_mcrun_path)
+        self.assertEqual(my_instrument._run_settings["package_path"], correct_mcstas_path)
         self.assertEqual(my_instrument.line_limit, correct_n_of_characters)
 
     def test_load_config_file_x_ray(self):
@@ -384,8 +384,8 @@ class TestMcStas_instr(unittest.TestCase):
         # Check the value matches what is loaded by initialization
         my_instrument = setup_x_ray_instr_no_path()
 
-        self.assertEqual(my_instrument.executable_path, correct_mxrun_path)
-        self.assertEqual(my_instrument.package_path, correct_mcxtrace_path)
+        self.assertEqual(my_instrument._run_settings["executable_path"], correct_mxrun_path)
+        self.assertEqual(my_instrument._run_settings["package_path"], correct_mcxtrace_path)
         self.assertEqual(my_instrument.line_limit, correct_n_of_characters)
 
     def test_simple_add_parameter(self):

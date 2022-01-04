@@ -94,7 +94,7 @@ class McCode_instr(BaseCalculator):
     package_path : str
         Path to mccode package containing component folders
 
-    current_run_settings : dict
+    run_settings : dict
         Dict of options set with settings
 
     data : list
@@ -220,7 +220,7 @@ class McCode_instr(BaseCalculator):
         Returns data set from latest simulation in widget
     """
 
-    def __init__(self, name, parameters=None, dumpfile=None, **kwargs):
+    def __init__(self, name, parameters=None, dumpfile=None, executable=None, **kwargs):
         """
         Initialization of McStas Instrument
 
@@ -242,11 +242,20 @@ class McCode_instr(BaseCalculator):
             origin : str
                 Affiliation of author, written in instrument file
 
+            executable : str
+                Name of simulation executable (mcrun or mxrun)
+
             executable_path : str
                 Absolute path of mcrun or empty if already in path
 
             input_path : str
                 Work directory, will load components from this folder
+
+            ncount : int
+                Number of rays to simulate
+
+            mpi : int
+                Number of mpi threads to use in simulation
         """
 
         super().__init__(name, parameters, dumpfile, **kwargs)
@@ -270,7 +279,6 @@ class McCode_instr(BaseCalculator):
 
         # Check required attributes has been set by class that inherits
         if not (hasattr(self, "particle") or
-                hasattr(self, "executable") or
                 hasattr(self, "package_name")):
             raise AttributeError("McCode_instr is a base class, use "
                                  + "McStas_instr or McXtrace_instr instead.")
@@ -293,6 +301,12 @@ class McCode_instr(BaseCalculator):
         else:
             self.origin = "ESS DMSC"
 
+        self._run_settings = {}  # Settings for running simulation
+
+        # Sets max_line_length and adds paths to run_settings
+        self._read_calibration()
+
+        # Settings that can't be changed later
         if "input_path" in kwargs:
             self.input_path = str(kwargs["input_path"])
             if not os.path.isdir(self.input_path):
@@ -300,44 +314,50 @@ class McCode_instr(BaseCalculator):
                                    + "folder:\"" + self.input_path + '"')
         else:
             self.input_path = "."
-
-        self._read_calibration()
-
-        if "executable_path" in kwargs:
-            self.executable_path = str(kwargs["executable_path"])
-            if not os.path.isdir(self.executable_path):
-                raise RuntimeError("Given executable_path does not point to "
-                                   + "a folder:\"" + self.executable_path
-                                   + '"')
+        self._run_settings["run_path"] = self.input_path
 
         if "package_path" in kwargs:
-            self.package_path = str(kwargs["package_path"])
-            if not os.path.isdir(self.package_path):
-                raise RuntimeError("Given package_path does not point to "
-                                   + "a folder:\"" + self.package_path + '"')
+            if not os.path.isdir(str(kwargs["package_path"])):
+                raise RuntimeError("The package_path provided to mccode_instr "
+                                   + " does not point to a + directory: \""
+                                   + str(kwargs["package_path"]) + "\"")
+            self._run_settings["package_path"] = kwargs["package_path"]
 
-        elif self.package_path == "":
-            raise NameError("At this stage of development "
-                            + "McStasScript need the absolute path "
-                            + "for the " + self.package_name
-                            + " installation as keyword named "
-                            + "package_path or in configuration.yaml")
+        # Settings for run that can be adjusted by user
+        provided_run_settings = {"executable": executable}
+
+        if "executable_path" in kwargs:
+            provided_run_settings["executable_path"] = str(kwargs["executable_path"])
+
+        if "force_compile" in kwargs:
+            provided_run_settings["force_compile"] = kwargs["force_compile"]
+        else:
+            provided_run_settings["force_compile"] = True
+
+        if "ncount" in kwargs:
+            provided_run_settings["ncount"] = kwargs["ncount"]
+
+        if "mpi" in kwargs:
+            provided_run_settings["mpi"] = kwargs["mpi"]
+
+        # Set run_settings, perform input sanitation
+        self.settings(**provided_run_settings)
 
         # Read info on active McStas components
-        self.component_reader = ComponentReader(self.package_path,
-                                                input_path=self.input_path)
+        package_path = self._run_settings["package_path"]
+        run_path = self._run_settings["run_path"]
+        self.component_reader = ComponentReader(package_path,
+                                                input_path=run_path)
 
         self.component_class_lib = {}
         self.widget_interface = None
 
-        # Ensure output_path field exist
+        # Ensure output_path field exist (not ensured by BaseCalculator)
         if not hasattr(self, "output_path"):
-            self.output_path = None
+            self.output_path = self.name + "_data"
 
         # Avoid initializing if loading from dump
-        if not hasattr(self, "current_run_settings"):
-            self.current_run_settings = None
-
+        if not hasattr(self, "declare_list"):
             self.declare_list = []
             self.initialize_section = ("// Start of initialize for generated "
                                        + name + "\n")
@@ -1589,55 +1609,122 @@ class McCode_instr(BaseCalculator):
                 Path to mcrun command, "" if already in path
         """
 
-        # Make sure executable path is in kwargs
-        if "executable_path" not in kwargs:
-            kwargs["executable_path"] = self.executable_path
-        else:
+        if "run_path" in kwargs:
+            raise RuntimeError("Can not change run_path for instrument as the "
+                               + "available components could change along "
+                               + "with their inputs. Create new instrument "
+                               + "object with the desired input_path")
+
+        if "package_path" in kwargs:
+            raise RuntimeError("Can not change package_path for instrument as "
+                               + "the available components could change "
+                               + "along with their inputs. Update "
+                               + "configuration and create a new instrument "
+                               + "object which will then have the new "
+                               + "package_path.")
+
+        if "executable_path" in kwargs:
             if not os.path.isdir(str(kwargs["executable_path"])):
                 raise RuntimeError("The executable_path provided in "
                                    + "settings does not point to a"
                                    + "directory: \""
                                    + str(kwargs["executable_path"]) + "\"")
 
-        if "executable" not in kwargs:
-            kwargs["executable"] = str(self.executable)
-        else:
+        if "executable" in kwargs:
             # check provided executable can be converted to string
             str(kwargs["executable"])
 
-        if "run_path" not in kwargs:
-            # path where mcrun is executed, will load components there
-            # if not set, use input_folder given
-            kwargs["run_path"] = self.input_path
-        else:
-            if not os.path.isdir(str(kwargs["run_path"])):
-                raise RuntimeError("The run_path provided to "
-                                   + "settings does not point to a"
-                                   + "directory: \""
-                                   + str(kwargs["run_path"]) + "\"")
+        if "force_compile" in kwargs:
+            if not isinstance(kwargs["force_compile"], bool):
+                raise TypeError("force_compile must be a bool.")
 
-        if "output_path" not in kwargs:
-            kwargs["output_path"] = self.output_path
+        if "increment_folder_name" in kwargs:
+            if not isinstance(kwargs["increment_folder_name"], bool):
+                raise TypeError("increment_folder_name must be a bool.")
 
-        if "force_compile" not in kwargs:
-            kwargs["force_compile"] = True
+        if "ncount" in kwargs:
+            if not isinstance(kwargs["ncount"], (float, int)):
+                raise TypeError("ncount must be a number.")
 
-        self.current_run_settings = kwargs
+        if "mpi" in kwargs:
+            if not isinstance(kwargs["mpi"], (type(None), int)):
+                raise TypeError("mpi must be an integer or None.")
+
+        if "output_path" in kwargs:
+            self.output_path = kwargs["output_path"]
+
+        self._run_settings.update(kwargs)
+
+    def settings_string(self):
+        """
+        Returns a string describing settings stored in this instrument object
+        """
+
+        variable_space = 20
+        description = "Instrument settings:\n"
+
+        if "ncount" in self._run_settings:
+            value = self._run_settings["ncount"]
+            description += "  ncount:".ljust(variable_space)
+            description += "{:.2e}".format(value) + "\n"
+
+        if "mpi" in self._run_settings:
+            value = self._run_settings["mpi"]
+            description += "  mpi:".ljust(variable_space)
+            description += str(int(value)) + "\n"
+
+        description += "  output_path:".ljust(variable_space)
+        description += str(self.output_path) + "\n"
+
+        if "increment_folder_name" in self._run_settings:
+            value = self._run_settings["increment_folder_name"]
+            description += "  increment_folder_name:".ljust(variable_space)
+            description += str(value) + "\n"
+
+        if "run_path" in self._run_settings:
+            value = self._run_settings["run_path"]
+            description += "  run_path:".ljust(variable_space)
+            description += str(value) + "\n"
+
+        if "package_path" in self._run_settings:
+            value = self._run_settings["package_path"]
+            description += "  package_path:".ljust(variable_space)
+            description += str(value) + "\n"
+
+        if "executable_path" in self._run_settings:
+            value = self._run_settings["executable_path"]
+            description += "  executable_path:".ljust(variable_space)
+            description += str(value) + "\n"
+
+        if "executable" in self._run_settings:
+            value = self._run_settings["executable"]
+            description += "  executable:".ljust(variable_space)
+            description += str(value) + "\n"
+
+        if "force_compile" in self._run_settings:
+            value = self._run_settings["force_compile"]
+            description += "  force_compile:".ljust(variable_space)
+            description += str(value) + "\n"
+
+        return description.strip()
+
+    def show_settings(self):
+        """
+        Prints settings stored in this instrument object
+        """
+        print(self.settings_string())
 
     def backengine(self):
         """
-        Runs McStas instrument described by this class, saves data in
-        data attribute
+        Runs McStas instrument described by this class, saves data in data
+        attribute
 
-        This method will write the instrument to disk and then run it
-        using the mcrun command of the system. Settings are set using
-        settings method.
+        This method will write the instrument to disk and then run it using
+        the mcrun command of the system. Settings are set using settings
+        method.
         """
 
-        if self.current_run_settings is None:
-            raise RuntimeError("Need to prepare run first!")
-
-        if self.current_run_settings["force_compile"]:
+        if self._run_settings["force_compile"]:
             self.write_full_instrument()
 
         parameters = {}
@@ -1648,14 +1735,15 @@ class McCode_instr(BaseCalculator):
 
             parameters[parameter.name] = parameter.value
 
-        options = self.current_run_settings
+        options = self._run_settings
         options["parameters"] = parameters
+        options["output_path"] = self.output_path
 
         # Set up the simulation
         simulation = ManagedMcrun(self.name + ".instr", **options)
 
         # Run the simulation and return data
-        simulation.run_simulation(**self.current_run_settings)
+        simulation.run_simulation(**self._run_settings)
 
         # Load data and store in __data
         data = simulation.load_results()
@@ -1727,7 +1815,8 @@ class McCode_instr(BaseCalculator):
                                 + "="
                                 + str(val))  # parameter value
 
-        bin_path = os.path.join(self.package_path, "bin", "")
+        package_path = self._run_settings["package_path"]
+        bin_path = os.path.join(package_path, "bin", "")
         executable = "mcdisplay-webgl"
         if "format" in kwargs:
             if kwargs["format"] == "webgl":
@@ -1843,7 +1932,7 @@ class McStas_instr(McCode_instr):
     package_path : str
         Path to mccode package containing component folders
 
-    current_run_settings : dict
+    run_settings : dict
         Dict of options set with settings
 
     data : list
@@ -1997,10 +2086,10 @@ class McStas_instr(McCode_instr):
                 Work directory, will load components from this folder
         """
         self.particle = "neutron"
-        self.executable = "mcrun"
         self.package_name = "McStas"
+        executable = "mcrun"
 
-        super().__init__(name, **kwargs)
+        super().__init__(name, executable=executable, **kwargs)
 
     def _read_calibration(self):
         this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -2012,13 +2101,13 @@ class McStas_instr(McCode_instr):
             config = yaml.safe_load(ymlfile)
 
         if type(config) is dict:
-            self.executable_path = config["paths"]["mcrun_path"]
-            self.package_path = config["paths"]["mcstas_path"]
+            self._run_settings["executable_path"] = config["paths"]["mcrun_path"]
+            self._run_settings["package_path"] = config["paths"]["mcstas_path"]
             self.line_limit = config["other"]["characters_per_line"]
         else:
             # This happens in unit tests that mocks open
-            self.executable_path = ""
-            self.package_path = ""
+            self._run_settings["executable_path"] = ""
+            self._run_settings["package_path"] = ""
             self.line_limit = 180
 
 
@@ -2081,7 +2170,7 @@ class McXtrace_instr(McCode_instr):
     package_path : str
         Path to mccode package containing component folders
 
-    current_run_settings : dict
+    run_settings : dict
         Dict of options set with settings
 
     data : list
@@ -2235,10 +2324,10 @@ class McXtrace_instr(McCode_instr):
                 Work directory, will load components from this folder
         """
         self.particle = "x-ray"
-        self.executable = "mxrun"
         self.package_name = "McXtrace"
+        executable = "mxrun"
 
-        super().__init__(name, **kwargs)
+        super().__init__(name, executable=executable, **kwargs)
 
     def _read_calibration(self):
         this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -2250,11 +2339,11 @@ class McXtrace_instr(McCode_instr):
             config = yaml.safe_load(ymlfile)
 
         if type(config) is dict:
-            self.executable_path = config["paths"]["mxrun_path"]
-            self.package_path = config["paths"]["mcxtrace_path"]
+            self._run_settings["executable_path"] = config["paths"]["mxrun_path"]
+            self._run_settings["package_path"] = config["paths"]["mcxtrace_path"]
             self.line_limit = config["other"]["characters_per_line"]
         else:
             # This happens in unit tests that mocks open
-            self.executable_path = ""
-            self.package_path = ""
+            self._run_settings["executable_path"] = ""
+            self._run_settings["package_path"] = ""
             self.line_limit = 180

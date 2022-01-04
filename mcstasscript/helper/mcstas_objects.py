@@ -811,9 +811,9 @@ class Component:
             self.AT_relative = "RELATIVE " + relative
             self.ROTATED_relative = "RELATIVE " + relative
 
-    def set_parameters(self, dict_input):
+    def set_parameters(self, args_as_dict=None, **kwargs):
         """
-        Set Component parameters from dictionary input
+        Set Component parameters from dictionary input or keyword arguments
 
         Relies on attributes added when McStas_Instr creates a subclass from
         the Component class where each component parameter is added as an
@@ -821,7 +821,12 @@ class Component:
 
         An error is raised if trying to set a parameter that does not exist
         """
-        for key, val in dict_input.items():
+        if args_as_dict is not None:
+            parameter_dict = args_as_dict
+        else:
+            parameter_dict = kwargs
+
+        for key, val in parameter_dict.items():
             if not hasattr(self, key):
                 raise NameError("No parameter called "
                                 + key
