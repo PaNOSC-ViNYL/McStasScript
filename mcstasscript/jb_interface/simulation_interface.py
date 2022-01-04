@@ -115,7 +115,7 @@ class SimInterface:
 
         run_arguments = {"output_path": "interface_" + self.instrument.name,
                          "increment_folder_name": True,
-                         "parameters": self.parameters,
+                         #"parameters": self.parameters,
                          "ncount": part_ncount}
         if self.mpi != "disabled":
             run_arguments["mpi"] = self.mpi
@@ -147,6 +147,7 @@ class SimInterface:
             try:
                 with HiddenPrints():
                     self.instrument.settings(**run_arguments)
+                    self.instrument.set_parameters(self.parameters)
                     self.instrument.backengine()
                     data = self.instrument.data
             except NameError:

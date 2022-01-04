@@ -1580,7 +1580,9 @@ class McCode_instr(BaseCalculator):
             default_parameters.update(given_parameters)
             return default_parameters
 
-    def settings(self, **kwargs):
+    def settings(self, ncount=None, mpi="not_set", force_compile=None,
+                 output_path=None, increment_folder_name=None,
+                 custom_flags=None, executable=None, executable_path=None):
         """
         Sets settings for McStas run performed with backengine
 
@@ -1601,59 +1603,58 @@ class McCode_instr(BaseCalculator):
                 Sets ncount
             mpi : int
                 Sets thread count
-            custom_flags : str
-                Sets custom_flags passed to mcrun
             force_compile : bool
                 If True (default) new instrument file is written, otherwise not
+            custom_flags : str
+                Sets custom_flags passed to mcrun
+            executable : str
+                Name of the executable
             executable_path : str
                 Path to mcrun command, "" if already in path
         """
 
-        if "run_path" in kwargs:
-            raise RuntimeError("Can not change run_path for instrument as the "
-                               + "available components could change along "
-                               + "with their inputs. Create new instrument "
-                               + "object with the desired input_path")
-
-        if "package_path" in kwargs:
-            raise RuntimeError("Can not change package_path for instrument as "
-                               + "the available components could change "
-                               + "along with their inputs. Update "
-                               + "configuration and create a new instrument "
-                               + "object which will then have the new "
-                               + "package_path.")
-
-        if "executable_path" in kwargs:
-            if not os.path.isdir(str(kwargs["executable_path"])):
+        settings = {}
+        if executable_path is not None:
+            if not os.path.isdir(str(executable_path)):
                 raise RuntimeError("The executable_path provided in "
                                    + "settings does not point to a"
                                    + "directory: \""
-                                   + str(kwargs["executable_path"]) + "\"")
+                                   + str(executable_path) + "\"")
+            settings["executable_path"] = executable_path
 
-        if "executable" in kwargs:
+        if executable is not None:
             # check provided executable can be converted to string
-            str(kwargs["executable"])
+            str(executable)
+            settings["executable"] = executable
 
-        if "force_compile" in kwargs:
-            if not isinstance(kwargs["force_compile"], bool):
+        if force_compile is not None:
+            if not isinstance(force_compile, bool):
                 raise TypeError("force_compile must be a bool.")
+            settings["force_compile"] = force_compile
 
-        if "increment_folder_name" in kwargs:
-            if not isinstance(kwargs["increment_folder_name"], bool):
+        if increment_folder_name is not None:
+            if not isinstance(increment_folder_name, bool):
                 raise TypeError("increment_folder_name must be a bool.")
+            settings["increment_folder_name"] = increment_folder_name
 
-        if "ncount" in kwargs:
-            if not isinstance(kwargs["ncount"], (float, int)):
+        if ncount is not None:
+            if not isinstance(ncount, (float, int)):
                 raise TypeError("ncount must be a number.")
+            settings["ncount"] = ncount
 
-        if "mpi" in kwargs:
-            if not isinstance(kwargs["mpi"], (type(None), int)):
+        if mpi != "not_set":  # None is a legal value for mpi
+            if not isinstance(mpi, (type(None), int)):
                 raise TypeError("mpi must be an integer or None.")
+            settings["mpi"] = mpi
 
-        if "output_path" in kwargs:
-            self.output_path = kwargs["output_path"]
+        if custom_flags is not None:
+            str(custom_flags)  # Check a string is given
+            settings["custom_flags"] = custom_flags
 
-        self._run_settings.update(kwargs)
+        if output_path is not None:
+            self.output_path = output_path
+
+        self._run_settings.update(settings)
 
     def settings_string(self):
         """
@@ -1788,10 +1789,14 @@ class McCode_instr(BaseCalculator):
 
         if "foldername" in kwargs:
             kwargs["output_path"] = kwargs["foldername"]
+            del kwargs["foldername"]
 
-        self.settings(**kwargs)
         if "parameters" in kwargs:
             self.set_parameters(kwargs["parameters"])
+            del kwargs["parameters"]
+
+        self.settings(**kwargs)
+
         self.backengine()
         return self.data
 
