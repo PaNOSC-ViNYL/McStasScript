@@ -2,6 +2,7 @@ import os
 import numpy as np
 import subprocess
 import mmap
+import warnings
 
 from mcstasscript.data.data import McStasMetaData
 from mcstasscript.data.data import McStasDataBinned
@@ -198,14 +199,18 @@ class ManagedMcrun:
                          + "-n " + str(self.ncount)  # Set ncount
                          + mpi_string)
 
-        if self.increment_folder_name and os.path.isdir(self.data_folder_name):
-            counter = 0
-            new_name = self.data_folder_name + "_" + str(counter)
-            while os.path.isdir(new_name):
-                counter = counter + 1
+        if os.path.exists(self.data_folder_name):
+            if self.increment_folder_name:
+                counter = 0
                 new_name = self.data_folder_name + "_" + str(counter)
+                while os.path.isdir(new_name):
+                    counter = counter + 1
+                    new_name = self.data_folder_name + "_" + str(counter)
 
-            self.data_folder_name = new_name
+                self.data_folder_name = new_name
+            else:
+                raise NameError("output_path already exists and "
+                                + "increment_folder_name was set to False.")
 
         if len(self.data_folder_name) > 0:
             option_string = (option_string
@@ -248,6 +253,9 @@ class ManagedMcrun:
             print(process.stderr)
             print(process.stdout)
 
+        if not os.path.isdir(self.data_folder_name):
+            warnings.warn("Simulation did not create data folder, most likely failed.")
+
     def load_results(self, *args):
         """
         Method for loading data from a mcstas simulation
@@ -271,7 +279,11 @@ class ManagedMcrun:
             raise RuntimeError("load_results can be called "
                                + "with 0 or 1 arguments")
 
-        return load_results(data_folder_name)
+        if os.path.isdir(data_folder_name):
+            return load_results(data_folder_name)
+        else:
+            warnings.warn("No data available to load.")
+            return None
 
 
 def load_results(data_folder_name):

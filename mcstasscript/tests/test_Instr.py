@@ -8,23 +8,17 @@ import datetime
 from mcstasscript.interface.instr import McStas_instr
 from mcstasscript.interface.instr import McXtrace_instr
 from mcstasscript.helper.formatting import bcolors
-
+from .helpers_for_tests import WorkInTestDir
 
 run_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '.')
-
 
 def setup_instr_no_path():
     """
     Sets up a neutron instrument without a package_path
     """
-    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
-
-    instrument = McStas_instr("test_instrument")
-
-    os.chdir(current_work_dir)
+    with WorkInTestDir() as handler:
+        instrument = McStas_instr("test_instrument")
 
     return instrument
 
@@ -33,14 +27,9 @@ def setup_x_ray_instr_no_path():
     """
     Sets up a X-ray instrument without a package_path
     """
-    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
-
-    instrument = McXtrace_instr("test_instrument")
-
-    os.chdir(current_work_dir)
+    with WorkInTestDir() as handler:
+        instrument = McXtrace_instr("test_instrument")
 
     return instrument
 
@@ -49,14 +38,8 @@ def setup_instr_root_path():
     """
     Sets up a neutron instrument with root package_path
     """
-    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
-
-    instrument = McStas_instr("test_instrument", package_path="/")
-
-    os.chdir(current_work_dir)
+    with WorkInTestDir() as handler:
+        instrument = McStas_instr("test_instrument", package_path="/")
 
     return instrument
 
@@ -65,14 +48,8 @@ def setup_x_ray_instr_root_path():
     """
     Sets up a X-ray instrument with root package_path
     """
-    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
-
-    instrument = McXtrace_instr("test_instrument", package_path="/")
-
-    os.chdir(current_work_dir)
+    with WorkInTestDir() as handler:
+        instrument = McXtrace_instr("test_instrument", package_path="/")
 
     return instrument
 
@@ -83,15 +60,10 @@ def setup_instr_with_path():
     the dummy installation in the test folder.
     """
 
-    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-    dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
-
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
-
-    instrument = McStas_instr("test_instrument", package_path=dummy_path)
-
-    os.chdir(current_work_dir)  # Return to previous workdir
+    with WorkInTestDir() as handler:
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
+        instrument = McStas_instr("test_instrument", package_path=dummy_path)
 
     return instrument
 
@@ -105,12 +77,8 @@ def setup_x_ray_instr_with_path():
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
-
-    instrument = McXtrace_instr("test_instrument", package_path=dummy_path)
-
-    os.chdir(current_work_dir)  # Return to previous workdir
+    with WorkInTestDir() as handler:
+        instrument = McXtrace_instr("test_instrument", package_path=dummy_path)
 
     return instrument
 
@@ -121,18 +89,15 @@ def setup_instr_with_input_path():
     the dummy installation in the test folder. In addition the input_path
     is set to a folder in the test directory using an absolute path.
     """
+
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
     input_path = os.path.join(THIS_DIR, "test_input_folder")
 
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
-
-    instrument = McStas_instr("test_instrument",
-                              package_path=dummy_path,
-                              input_path=input_path)
-
-    os.chdir(current_work_dir)  # Return to previous workdir
+    with WorkInTestDir() as handler:
+        instrument = McStas_instr("test_instrument",
+                                  package_path=dummy_path,
+                                  input_path=input_path)
 
     return instrument
 
@@ -143,16 +108,11 @@ def setup_instr_with_input_path_relative():
     the dummy installation in the test folder. In addition the input_path
     is set to a folder in the test directory using a relative path.
     """
-    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
-
-    instrument = McStas_instr("test_instrument",
-                              package_path="dummy_mcstas",
-                              input_path="test_input_folder")
-
-    os.chdir(current_work_dir)  # Return to previous workdir
+    with WorkInTestDir() as handler:
+        instrument = McStas_instr("test_instrument",
+                                  package_path="dummy_mcstas",
+                                  input_path="test_input_folder")
 
     return instrument
 
@@ -1770,28 +1730,28 @@ class TestMcStas_instr(unittest.TestCase):
         Tests x-ray run_full_instrument
 
         Check a simple run performs the correct system call.  Here
-        the target directory is set to the test data set so that some
-        data is loaded even though the system call is not executed.
+        the output_path is set to a name that does not correspond to a
+        existing file so no error is thrown.
         """
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
-        current_work_dir = os.getcwd()
-        os.chdir(THIS_DIR)  # Set work directory to test folder
-
-        instr = setup_populated_x_ray_instr_with_dummy_path()
-        instr.run_full_instrument(output_path="test_data_set",
-                                  increment_folder_name=False,
-                                  executable_path=executable_path,
-                                  parameters={"theta": 1})
-
-        os.chdir(current_work_dir)
+        with WorkInTestDir() as handler:
+            new_folder_name = "folder_name_which_is_unused"
+            if os.path.exists(new_folder_name):
+                raise RuntimeError("Folder_name was supposed to not "
+                                   + "exist before "
+                                   + "test_run_backengine_basic")
+            instr = setup_populated_x_ray_instr_with_dummy_path()
+            instr.run_full_instrument(output_path=new_folder_name,
+                                      increment_folder_name=False,
+                                      executable_path=executable_path,
+                                      parameters={"theta": 1})
 
         expected_path = os.path.join(executable_path, "mxrun")
 
-        expected_folder_path = os.path.join(THIS_DIR,
-                                            "test_data_set")
+        expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 1000000 "
@@ -1808,35 +1768,58 @@ class TestMcStas_instr(unittest.TestCase):
                                          universal_newlines=True)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    @unittest.mock.patch("subprocess.run")
-    def test_run_full_instrument_basic(self, mock_sub, mock_stdout):
+    def test_run_backengine_existing_folder(self, mock_stdout):
         """
-        Test neutron run_full_instrument
-
-        Check a simple run performs the correct system call.  Here
-        the target directory is set to the test data set so that some
-        data is loaded even though the system call is not executed.
+        Test neutron run of backengine fails if using existing folder
+        for output_path and with increment_folder_name disabled.
         """
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
-        current_work_dir = os.getcwd()
-        os.chdir(THIS_DIR)  # Set work directory to test folder
+        with WorkInTestDir() as handler:
+            instr = setup_populated_instr_with_dummy_path()
 
-        instr = setup_populated_instr_with_dummy_path()
+            instr.set_parameters({"theta": 1})
+            instr.settings(output_path="test_data_set",
+                           increment_folder_name=False,
+                           executable_path=executable_path)
 
-        instr.set_parameters({"theta": 1})
-        instr.settings(output_path="test_data_set",
-                       increment_folder_name=False,
-                       executable_path=executable_path)
-        instr.backengine()
+            with self.assertRaises(NameError):
+                instr.backengine()
 
-        os.chdir(current_work_dir)
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    @unittest.mock.patch("subprocess.run")
+    def test_run_backengine_basic(self, mock_sub, mock_stdout):
+        """
+        Test neutron run_full_instrument
+
+        Check a simple run performs the correct system call. Here
+        the output_path is set to a name that does not correspond to a
+        existing file so no error is thrown.
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        with WorkInTestDir() as handler:
+            new_folder_name = "folder_name_which_is_unused"
+            if os.path.exists(new_folder_name):
+                raise RuntimeError("Folder_name was supposed to not "
+                                   + "exist before "
+                                   + "test_run_backengine_basic")
+
+            instr = setup_populated_instr_with_dummy_path()
+
+            instr.set_parameters({"theta": 1})
+            instr.settings(output_path=new_folder_name,
+                           increment_folder_name=True,
+                           executable_path=executable_path)
+            instr.backengine()
 
         expected_path = os.path.join(executable_path, "mcrun")
 
-        expected_folder_path = os.path.join(THIS_DIR, "test_data_set")
+        expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 1000000 "
@@ -1856,38 +1839,39 @@ class TestMcStas_instr(unittest.TestCase):
         """
         Test neutron run_full_instrument in more complex case
 
-        Check a complex run performs the correct system call.  Here
-        the target directory is set to the test data set so that some
-        data is loaded even though the system call is not executed.
+        Check a complex run performs the correct system call. Here
+        the output_path is set to a name that does not correspond to a
+        existing file so no error is thrown.
         """
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
-        current_work_dir = os.getcwd()
-        os.chdir(THIS_DIR)  # Set work directory to test folder
+        with WorkInTestDir() as handler:
+            new_folder_name = "folder_name_which_is_unused"
+            if os.path.exists(new_folder_name):
+                raise RuntimeError("Folder_name was supposed to not "
+                                   + "exist before "
+                                   + "test_run_backengine_basic")
 
-        instr = setup_populated_instr_with_dummy_path()
+            instr = setup_populated_instr_with_dummy_path()
 
-        # Add some extra parameters for testing
-        instr.add_parameter("A")
-        instr.add_parameter("BC")
+            # Add some extra parameters for testing
+            instr.add_parameter("A")
+            instr.add_parameter("BC")
 
-        instr.run_full_instrument(output_path="test_data_set",
-                                  increment_folder_name=False,
-                                  executable_path=executable_path,
-                                  mpi=7,
-                                  ncount=48.4,
-                                  custom_flags="-fo",
-                                  parameters={"A": 2,
-                                              "BC": "car",
-                                              "theta": "\"toy\""})
-
-        os.chdir(current_work_dir)
+            instr.run_full_instrument(output_path=new_folder_name,
+                                      increment_folder_name=False,
+                                      executable_path=executable_path,
+                                      mpi=7,
+                                      ncount=48.4,
+                                      custom_flags="-fo",
+                                      parameters={"A": 2,
+                                                  "BC": "car",
+                                                  "theta": "\"toy\""})
 
         expected_path = os.path.join(executable_path, "mcrun")
-
-        expected_folder_path = os.path.join(THIS_DIR, "test_data_set")
+        expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 48 --mpi=7 "
@@ -1913,32 +1897,32 @@ class TestMcStas_instr(unittest.TestCase):
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
-        current_work_dir = os.getcwd()
-        os.chdir(THIS_DIR)  # Set work directory to test folder
+        with WorkInTestDir() as handler:
+            new_folder_name = "folder_name_which_is_unused"
+            if os.path.exists(new_folder_name):
+                raise RuntimeError("Folder_name was supposed to not "
+                                   + "exist before "
+                                   + "test_run_backengine_basic")
 
-        instr = setup_populated_instr_with_dummy_path()
+            instr = setup_populated_instr_with_dummy_path()
 
-        # Add some extra parameters for testing
-        instr.add_parameter("A")
-        instr.add_parameter("BC")
+            # Add some extra parameters for testing
+            instr.add_parameter("A")
+            instr.add_parameter("BC")
 
-        instr.run_full_instrument(output_path="test_data_set",
-                                  increment_folder_name=False,
-                                  executable_path=executable_path,
-                                  mpi=7,
-                                  ncount=48.4,
-                                  custom_flags="-fo",
-                                  parameters={"A": 2,
-                                              "BC": "car",
-                                              "theta": "\"toy\"",
-                                              "has_default": 10})
-
-        os.chdir(current_work_dir)
+            instr.run_full_instrument(output_path=new_folder_name,
+                                      increment_folder_name=False,
+                                      executable_path=executable_path,
+                                      mpi=7,
+                                      ncount=48.4,
+                                      custom_flags="-fo",
+                                      parameters={"A": 2,
+                                                  "BC": "car",
+                                                  "theta": "\"toy\"",
+                                                  "has_default": 10})
 
         expected_path = os.path.join(executable_path, "mcrun")
-
-        os.getcwd()
-        expected_folder_path = os.path.join(THIS_DIR, "test_data_set")
+        expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 48 --mpi=7 "
@@ -1959,28 +1943,29 @@ class TestMcStas_instr(unittest.TestCase):
         Test x-ray run_full_instrument
 
         Check a simple run performs the correct system call.  Here
-        the target directory is set to the test data set so that some
-        data is loaded even though the system call is not executed.
+        the output_path is set to a name that does not correspond to a
+        existing file so no error is thrown.
         """
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
-        current_work_dir = os.getcwd()
-        os.chdir(THIS_DIR)  # Set work directory to test folder
+        with WorkInTestDir() as handler:
+            new_folder_name = "folder_name_which_is_unused"
+            if os.path.exists(new_folder_name):
+                raise RuntimeError("Folder_name was supposed to not "
+                                   + "exist before "
+                                   + "test_run_backengine_basic")
 
-        instr = setup_populated_x_ray_instr_with_dummy_path()
+            instr = setup_populated_x_ray_instr_with_dummy_path()
 
-        instr.run_full_instrument(output_path="test_data_set",
-                                  increment_folder_name=False,
-                                  executable_path=executable_path,
-                                  parameters={"theta": 1})
-
-        os.chdir(current_work_dir)
+            instr.run_full_instrument(output_path=new_folder_name,
+                                      increment_folder_name=False,
+                                      executable_path=executable_path,
+                                      parameters={"theta": 1})
 
         expected_path = os.path.join(executable_path, "mxrun")
-
-        expected_folder_path = os.path.join(THIS_DIR, "test_data_set")
+        expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 1000000 "

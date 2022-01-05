@@ -10,6 +10,8 @@ from mcstasscript.interface.instr import McXtrace_instr
 from mcstasscript.helper.mcstas_objects import ParameterContainer
 from mcstasscript.helper.mcstas_objects import ParameterVariable
 
+from .helpers_for_tests import WorkInTestDir
+
 
 run_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '.')
 
@@ -269,19 +271,6 @@ def setup_populated_with_some_options_instr():
     instr.add_component("third_component", "test_for_reading")
 
     return instr
-
-
-class WorkInTestDir:
-    """
-    Simple class that enables working in test directory
-    """
-    def __enter__(self):
-        self.current_work_dir = os.getcwd()
-        os.chdir(os.path.dirname(os.path.abspath(__file__)))
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        os.chdir(self.current_work_dir)
 
 
 class TestDumpAndLoad(unittest.TestCase):
