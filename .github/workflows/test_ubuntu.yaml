@@ -2,10 +2,11 @@ name: McStasScript unit tests on Linux
 on: [push]
 jobs:
   build:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8]
+        os: [linux-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
       
     steps:
       - name: Checkout
