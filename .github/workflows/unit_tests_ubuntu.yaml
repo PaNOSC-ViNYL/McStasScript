@@ -7,7 +7,7 @@ jobs:
         python-version: [3.6, 3.7, 3.8]
     runs-on: ubuntu-latest
       
-     steps:
+    steps:
       - name: Temporary developer libpyvinyl checkout
         uses: actions/checkout@v2
         with:
