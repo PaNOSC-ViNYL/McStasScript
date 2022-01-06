@@ -83,6 +83,10 @@ class SimInterface:
         """
         Runs simulation as thread, allowing user to update plots simultaneously
 
+        The use of this method has caused crashes, temporarily circumvented by
+        calling run_simulation_live on button instead. Now plots can now be
+        updated while a simulation is running.
+
         Parameters
         ----------
 
