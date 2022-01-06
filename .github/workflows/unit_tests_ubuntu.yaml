@@ -8,6 +8,12 @@ jobs:
     runs-on: ubuntu-latest
       
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ env.BRANCH }}
+          path: mcstasscript
+    
       - name: Temporary developer libpyvinyl checkout
         uses: actions/checkout@v2
         with:
@@ -28,13 +34,9 @@ jobs:
           pip install -e .
           pip install pytest
           
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          ref: ${{ env.BRANCH }}
-          
-      - name: Install dependencies
+      - name: Install dependencies (mcstasscript)
         run: |
+          cd mcstasscript
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -e .
@@ -44,4 +46,4 @@ jobs:
         run: tree .
 
       - name: Run unit tests
-        run: python -m pytest mcstasscript/tests/
+        run: python -m pytest mcstasscript/mcstasscript/tests/
