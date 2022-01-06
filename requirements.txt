@@ -2,5 +2,4 @@ numpy
 matplotlib
 PyYAML
 ipywidgets
-mmap
 libpyvinyl

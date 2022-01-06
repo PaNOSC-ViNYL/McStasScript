@@ -98,7 +98,7 @@ class ComponentReader:
                     overwritten_components.append(file)
 
                 self.component_path[component_name] = abs_path
-                self.component_category[component_name] = "Work directory"
+                self.component_category[component_name] = "work directory"
 
         # Report components found in the work directory and install to the user
         if len(overwritten_components) > 0:
@@ -114,12 +114,16 @@ class ComponentReader:
         """
         Method that will show all component categories available
 
+        Sorted alphabetically for easier readability and consistency
         """
         categories = []
         for component, category in self.component_category.items():
             if category not in categories:
                 categories.append(category)
-                print(" " + category)
+
+        categories.sort()
+        for category in categories:
+            print(" " + category)
 
     def show_components_in_category(self, category_input, **kwargs):
         """
@@ -215,8 +219,8 @@ class ComponentReader:
         output = self.read_component_file(self.component_path[component_name])
 
         # Category loaded using path, in case of Work directory it fails
-        if self.component_category[component_name] == "Work directory":
-            output.category = "Work directory"  # Corrects category
+        if self.component_category[component_name] == "work directory":
+            output.category = "work directory"  # Corrects category
 
         return output
 
