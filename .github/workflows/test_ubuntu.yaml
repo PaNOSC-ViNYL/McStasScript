@@ -20,10 +20,10 @@ steps:
           python-version: ${{ matrix.python-version }}
           
       - name: Install dependencies
-              run: |
-                python -m pip install --upgrade pip
-                pip install -r requirements.txt
-                pip install -e .
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
 
       - name: Run unit tests
-              run: python -m pytest mcstasscript/tests/
+        run: python -m pytest mcstasscript/tests/
