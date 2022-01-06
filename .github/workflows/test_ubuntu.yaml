@@ -1,3 +1,5 @@
+name: McStasScript unit tests on Linux
+on: [push]
 jobs:
   build:
     strategy:
