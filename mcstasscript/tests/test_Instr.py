@@ -1597,16 +1597,19 @@ class TestMcStas_instr(unittest.TestCase):
         finally:
             os.chdir(current_directory)
 
-        mock_f.assert_any_call("./generated_includes/"
-                               + "test_instrument_declare.c", "w")
-        mock_f.assert_any_call("./generated_includes/"
-                               + "test_instrument_declare.c", "a")
-        mock_f.assert_any_call("./generated_includes/"
-                               + "test_instrument_initialize.c", "w")
-        mock_f.assert_any_call("./generated_includes/"
-                               + "test_instrument_trace.c", "w")
-        mock_f.assert_any_call("./generated_includes/"
-                               + "test_instrument_component_trace.c", "w")
+        base_path = os.path.join(".", "generated_includes")
+        expected_path = os.path.join(base_path, "test_instrument_declare.c")
+        mock_f.assert_any_call(expected_path, "w")
+        mock_f.assert_any_call(expected_path, "a")
+
+        expected_path = os.path.join(base_path, "test_instrument_initialize.c")
+        mock_f.assert_any_call(expected_path, "w")
+
+        expected_path = os.path.join(base_path, "test_instrument_trace.c")
+        mock_f.assert_any_call(expected_path, "w")
+
+        expected_path = os.path.join(base_path, "test_instrument_component_trace.c")
+        mock_f.assert_any_call(expected_path, "w")
 
         # This does not check that the right thing is written to the
         # right file. Can be improved by splitting the method into
@@ -1728,7 +1731,8 @@ class TestMcStas_instr(unittest.TestCase):
          my_call("%}\n"),
          my_call("\nEND\n")]
 
-        mock_f.assert_called_with("./test_instrument.instr", "w")
+        expected_path = os.path.join(".", "test_instrument.instr")
+        mock_f.assert_called_with(expected_path, "w")
         handle = mock_f()
         handle.write.assert_has_calls(wrts, any_order=False)
 
