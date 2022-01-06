@@ -21,6 +21,15 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
+          
+      - name: Temporary developer libpyvinyl checkout
+        uses: actions/checkout@v2
+        with:
+          repository: PaNOSC-ViNYL/libpyvinyl
+          ref: develop
+          
+      - name: Show file structure
+        run: tree .
               
       - name: Install dependencies
         run: |
