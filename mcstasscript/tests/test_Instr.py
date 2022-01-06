@@ -682,9 +682,9 @@ class TestMcStas_instr(unittest.TestCase):
                          + "instead of the installed versions.")
         self.assertEqual(output[3],
                          "Here are the available component categories:")
-        self.assertEqual(output[4], " sources")
-        self.assertEqual(output[5], " Work directory")
-        self.assertEqual(output[6], " misc")
+        self.assertEqual(output[4], " misc")
+        self.assertEqual(output[5], " sources")
+        self.assertEqual(output[6], " work directory")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_show_components_folder(self, mock_stdout):
@@ -699,7 +699,7 @@ class TestMcStas_instr(unittest.TestCase):
         current_work_dir = os.getcwd()
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
-        instr.show_components("Work directory")
+        instr.show_components("work directory")
 
         os.chdir(current_work_dir)
 
@@ -713,7 +713,7 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[2], "These definitions will be used "
                          + "instead of the installed versions.")
         self.assertEqual(output[3],
-                         "Here are all components in the Work directory "
+                         "Here are all components in the work directory "
                          + "category.")
         self.assertEqual(output[4], " test_for_reading")
         self.assertEqual(output[5], "")
@@ -739,9 +739,9 @@ class TestMcStas_instr(unittest.TestCase):
                          + "instead of the installed versions.")
         self.assertEqual(output[3],
                          "Here are the available component categories:")
-        self.assertEqual(output[4], " sources")
-        self.assertEqual(output[5], " misc")
-        self.assertEqual(output[6], " Work directory")
+        self.assertEqual(output[4], " misc")
+        self.assertEqual(output[5], " sources")
+        self.assertEqual(output[6], " work directory")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_show_components_input_path_custom(self, mock_stdout):
@@ -766,9 +766,9 @@ class TestMcStas_instr(unittest.TestCase):
                          + "instead of the installed versions.")
         self.assertEqual(output[3],
                          "Here are the available component categories:")
-        self.assertEqual(output[4], " sources")
-        self.assertEqual(output[5], " misc")
-        self.assertEqual(output[6], " Work directory")
+        self.assertEqual(output[4], " misc")
+        self.assertEqual(output[5], " sources")
+        self.assertEqual(output[6], " work directory")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_component_help(self, mock_stdout):
@@ -846,7 +846,7 @@ class TestMcStas_instr(unittest.TestCase):
         comment = ("Radius of circle in (x,y,0) plane where "
                    + "neutrons are generated.")
         self.assertEqual(comp.parameter_comments["radius"], comment)
-        self.assertEqual(comp.category, "Work directory")
+        self.assertEqual(comp.category, "work directory")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_create_component_instance_complex(self, mock_stdout):
@@ -883,7 +883,7 @@ class TestMcStas_instr(unittest.TestCase):
         comment = ("Radius of circle in (x,y,0) plane where "
                    + "neutrons are generated.")
         self.assertEqual(comp.parameter_comments["radius"], comment)
-        self.assertEqual(comp.category, "Work directory")
+        self.assertEqual(comp.category, "work directory")
 
         # The keyword arguments of the call should be passed to the
         # new instance of the component. This is checked by reading
