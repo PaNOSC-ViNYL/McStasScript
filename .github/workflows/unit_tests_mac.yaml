@@ -8,6 +8,12 @@ jobs:
     runs-on: macos-latest
       
     steps:
+      - name: Temporary developer libpyvinyl checkout
+        uses: actions/checkout@v2
+        with:
+          repository: PaNOSC-ViNYL/libpyvinyl
+          ref: develop
+    
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
