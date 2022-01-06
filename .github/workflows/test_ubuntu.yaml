@@ -3,11 +3,11 @@ on: [push]
 jobs:
   Linux-Unit-Test:
     build:
+      runs-on: ubuntu-latest
       strategy:
         matrix:
-          python-version: [3.8.8]
-      runs-on: ubuntu-latest
-    
+          python-version: [3.6, 3.7, 3.8]
+      
       steps:
         - name: Checkout
           uses: actions/checkout@v2
@@ -18,7 +18,7 @@ jobs:
           run: git checkout ${{ env.BRANCH }}
                   
         - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@v1
+          uses: actions/setup-python@v2
           with:
             python-version: ${{ matrix.python-version }}
               
