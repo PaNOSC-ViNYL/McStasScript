@@ -32,11 +32,9 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: ${{ env.BRANCH }}
-          path: mcstasscript
           
       - name: Install dependencies
         run: |
-          cd mcstasscript
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -e .
