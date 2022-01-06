@@ -1,4 +1,4 @@
-name: McStasScript unit tests on Linux
+name: McStasScript unit tests on OS X
 on: [push]
 jobs:
   build:
@@ -8,20 +8,31 @@ jobs:
     runs-on: macos-latest
       
     steps:
-      - name: Checkout
+      - name: Temporary developer libpyvinyl checkout
         uses: actions/checkout@v2
         with:
-          fetch-depth: 0
-              
-      - name: Switch to Current Branch
-        run: git checkout ${{ env.BRANCH }}
-                  
+          repository: PaNOSC-ViNYL/libpyvinyl
+          ref: develop
+    
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
               
+      - name: Install dependencies (libpyvinyl)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+          pip install pytest
+          
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: ${{ env.BRANCH }}
+          
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
