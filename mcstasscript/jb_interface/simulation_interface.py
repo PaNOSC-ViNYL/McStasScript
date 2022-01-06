@@ -90,10 +90,10 @@ class SimInterface:
             Not used
         """
 
-        thread = threading.Thread(target=self.run_simulation_live)
+        thread = threading.Thread(target=self.run_simulation_live, args=[1])
         thread.start()
 
-    def run_simulation_live(self):
+    def run_simulation_live(self, change):
         """
         Performs the simulation with current parameters and settings.
 
@@ -149,25 +149,25 @@ class SimInterface:
                     self.instrument.settings(**run_arguments)
                     self.instrument.set_parameters(self.parameters)
                     self.instrument.backengine()
-                    data = self.instrument.data
             except NameError:
                 print("McStas run failed.")
                 data = []
 
             with lock:
                 self.progress_bar.value = index + 1
+                data = self.instrument.data
 
-                if plot_data is None:
-                    plot_data = data
-                else:
-                    add_data(plot_data, data)
+                if data is not None:
+                    if plot_data is None:
+                        plot_data = data
+                    else:
+                        add_data(plot_data, data)
 
-                sent_data = copy.deepcopy(plot_data)
-                # This happens in a thread, maybe it should be in Main?
-                self.plot_interface.set_data(sent_data)
+                    sent_data = copy.deepcopy(plot_data)
+                    # This happens in a thread, maybe it should be in Main?
+                    self.plot_interface.set_data(sent_data)
 
         self.run_button.icon = "calculator"
-
 
     def make_run_button(self):
         """
@@ -180,7 +180,8 @@ class SimInterface:
             tooltip='Runs the simulation with current parameters',
             icon='calculator'  # (FontAwesome names without the `fa-` prefix)
         )
-        button.on_click(self.run_simulation_thread)
+        #button.on_click(self.run_simulation_thread)
+        button.on_click(self.run_simulation_live)
 
         return button
 

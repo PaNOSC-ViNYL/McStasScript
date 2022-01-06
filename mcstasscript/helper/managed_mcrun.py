@@ -95,6 +95,7 @@ class ManagedMcrun:
         self.increment_folder_name = True
         self.compile = True
         self.run_path = "."
+        self.seed = None
         # executable_path always in kwargs
         if "executable_path" in kwargs:
             self.executable_path = kwargs["executable_path"]
@@ -129,6 +130,9 @@ class ManagedMcrun:
                 if self.mpi < 1:
                     raise ValueError("MPI should be an integer larger than"
                                      + " 0, was " + str(self.mpi))
+
+        if "seed" in kwargs:
+            self.seed = kwargs["seed"]
 
         if "parameters" in kwargs:
             self.parameters = kwargs["parameters"]
@@ -191,13 +195,19 @@ class ManagedMcrun:
             option_string = "-c "
 
         if self.mpi is not None:
-            mpi_string = " --mpi=" + str(self.mpi) + " "  # Set mpi
+            mpi_string = "--mpi=" + str(self.mpi) + " "  # Set mpi
         else:
-            mpi_string = " "
+            mpi_string = ""
+
+        if self.seed is not None:
+            seed_string = "--seed=" + str(self.seed) + " " # Set seed
+        else:
+            seed_string = ""
 
         option_string = (option_string
-                         + "-n " + str(self.ncount)  # Set ncount
-                         + mpi_string)
+                         + "-n " + str(self.ncount) + " " # Set ncount
+                         + mpi_string
+                         + seed_string)
 
         if os.path.exists(self.data_folder_name):
             if self.increment_folder_name:

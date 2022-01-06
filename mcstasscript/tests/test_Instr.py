@@ -1864,6 +1864,7 @@ class TestMcStas_instr(unittest.TestCase):
                                       increment_folder_name=False,
                                       executable_path=executable_path,
                                       mpi=7,
+                                      seed=300,
                                       ncount=48.4,
                                       custom_flags="-fo",
                                       parameters={"A": 2,
@@ -1874,7 +1875,7 @@ class TestMcStas_instr(unittest.TestCase):
         expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
         # a double space because of a missing option
-        expected_call = (expected_path + " -c -n 48 --mpi=7 "
+        expected_call = (expected_path + " -c -n 48 --mpi=7 --seed=300 "
                          + "-d " + expected_folder_path
                          + " -fo test_instrument.instr "
                          + "theta=\"toy\" has_default=37 A=2 BC=car")

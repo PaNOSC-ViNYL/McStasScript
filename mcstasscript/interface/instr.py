@@ -1580,9 +1580,10 @@ class McCode_instr(BaseCalculator):
             default_parameters.update(given_parameters)
             return default_parameters
 
-    def settings(self, ncount=None, mpi="not_set", force_compile=None,
-                 output_path=None, increment_folder_name=None,
-                 custom_flags=None, executable=None, executable_path=None):
+    def settings(self, ncount=None, mpi="not_set", seed=None,
+                 force_compile=None, output_path=None,
+                 increment_folder_name=None, custom_flags=None,
+                 executable=None, executable_path=None):
         """
         Sets settings for McStas run performed with backengine
 
@@ -1650,6 +1651,9 @@ class McCode_instr(BaseCalculator):
         if custom_flags is not None:
             str(custom_flags)  # Check a string is given
             settings["custom_flags"] = custom_flags
+
+        if seed is not None:
+            settings["seed"] = seed
 
         if output_path is not None:
             self.output_path = output_path

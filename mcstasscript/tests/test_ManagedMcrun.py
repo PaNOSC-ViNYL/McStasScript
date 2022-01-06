@@ -238,7 +238,7 @@ class TestManagedMcrun(unittest.TestCase):
                                      output_path="test_folder",
                                      executable_path=executable_path,
                                      executable="mcrun",
-                                     mpi=7,
+                                     mpi=7, seed=300,
                                      ncount=48.4,
                                      custom_flags="-fo")
 
@@ -248,7 +248,7 @@ class TestManagedMcrun(unittest.TestCase):
 
         # a double space because of a missing option
         executable = os.path.join(executable_path, "mcrun")
-        expected_call = (executable + " -c -n 48 --mpi=7 "
+        expected_call = (executable + " -c -n 48 --mpi=7 --seed=300 "
                          + "-d " + expected_folder_path + " -fo test.instr")
 
         mock_sub.assert_called_once_with(expected_call,
