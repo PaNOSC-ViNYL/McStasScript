@@ -13,6 +13,7 @@ jobs:
         with:
           repository: PaNOSC-ViNYL/libpyvinyl
           ref: develop
+          path: libpyvinyl
     
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
@@ -29,8 +30,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          fetch-depth: 0
           ref: ${{ env.BRANCH }}
+          path: mcstasscript
           
       - name: Install dependencies
         run: |
