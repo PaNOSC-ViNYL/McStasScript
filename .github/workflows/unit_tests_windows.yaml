@@ -22,6 +22,7 @@ jobs:
               
       - name: Install dependencies (libpyvinyl)
         run: |
+          cd libpyvinyl
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -e .
@@ -36,6 +37,7 @@ jobs:
           
       - name: Install dependencies
         run: |
+          cd mcstasscript
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -e .
