@@ -31,7 +31,7 @@ jobs:
           pip install pytest
           
       - name: Show file structure
-        run: tree .
+        run: find .
 
       - name: Run unit tests
         run: python -m pytest mcstasscript/tests/
