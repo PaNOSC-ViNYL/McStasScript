@@ -31,12 +31,12 @@ jobs:
           pip install pytest
           
       - name: Show file structure
-        run: tree .
         if: ${{ matrix.os }} == ubuntu-latest || ${{ matrix.os }} == windows-latest
+        run: tree .
         
       - name: Show file structure
-        run: find .
         if: ${{ matrix.os }} == macos-latest
+        run: find .
 
       - name: Run unit tests
         run: python -m pytest mcstasscript/tests/
