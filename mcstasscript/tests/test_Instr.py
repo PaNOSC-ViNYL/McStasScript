@@ -1999,7 +1999,8 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_populated_instr_with_dummy_path()
 
-        instr.show_instrument(parameters={"theta": 1.2})
+        instr.set_parameters(theta=1.2)
+        instr.show_instrument()
 
         os.chdir(current_work_dir)
 
@@ -2008,8 +2009,9 @@ class TestMcStas_instr(unittest.TestCase):
 
         # a double space because of a missing option
         expected_call = (expected_path
+                         + " --dirname test_instrument_mcdisplay"
                          + " " + expected_instr_path
-                         + "  has_default=37 theta=1.2")
+                         + "  theta=1.2 has_default=37")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,

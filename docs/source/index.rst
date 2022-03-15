@@ -22,7 +22,9 @@ Documentation
    user_guide/instrument_object
    user_guide/component_object
    user_guide/parameters_and_variables
+   user_guide/data
    user_guide/plotting
+   user_guide/functions
    user_guide/instrument_reader
 
 .. toctree::
@@ -53,6 +55,14 @@ Documentation
    :recursive:
    
    mcstasscript
+   
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-module-template.rst
+   :caption: Reference (libpyvinyl)
+   :recursive:
+   
+   libpyvinyl
 
 Indices and tables
 ==================

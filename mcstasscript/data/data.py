@@ -57,6 +57,16 @@ class McStasMetaData:
         """Creating a new instance, no parameters"""
         self.info = {}
 
+        self.component_name = None
+        self.parameters = None
+        self.filename = None
+        self.dimension = None
+        self.limits = []
+
+        self.xlabel = None
+        self.ylabel = None
+        self.title = None
+
     def add_info(self, key, value):
         """Adding information to info dict"""
         self.info[key] = value
@@ -135,6 +145,48 @@ class McStasMetaData:
         """Sets ylabel for plotting"""
         self.ylabel = string
 
+    def __repr__(self):
+        string = "metadata object\n"
+        if self.component_name is not None:
+            string += "component_name: " + self.component_name + "\n"
+
+        if self.filename is not None:
+            string += "filename: " + str(self.filename) + "\n"
+
+        if self.dimension is not None:
+            if isinstance(self.dimension, int):
+                string += "1D data of length " + str(self.dimension) + "\n"
+                if self.limits is not None:
+                    string += "  [" + str(self.limits[0]) + ": "
+                    string += str(self.limits[1]) + "]"
+                if self.xlabel is not None:
+                    string += " " + self.xlabel + "\n"
+                if self.ylabel is not None:
+                    string += " " + self.ylabel + "\n"
+
+            elif len(self.dimension) == 2:
+                string += "2D data of dimension (" + str(self.dimension[0])
+                string += ", " + str(self.dimension[1]) + ")\n"
+                if self.xlabel is not None:
+                    if self.limits is not None:
+                        string += "  [" + str(self.limits[0]) + ": "
+                        string += str(self.limits[1]) + "]"
+                    string += " " + self.xlabel + "\n"
+
+                if self.ylabel is not None:
+                    if self.limits is not None and len(self.limits) == 4:
+                        string += "  [" + str(self.limits[2]) + ": "
+                        string += str(self.limits[3]) + "]"
+                    string += " " + self.ylabel + "\n"
+
+        if self.parameters is not None and len(self.parameters)>0:
+            string += "Instrument parameters: \n"
+            for key in self.parameters:
+                string += " " + str(key) + " = "
+                string += str(self.parameters[key]) + "\n"
+
+        return string
+
 
 class McStasPlotOptions:
     """
@@ -201,6 +253,11 @@ class McStasPlotOptions:
         self.custom_ylim_top = False
         self.custom_xlim_left = False
         self.custom_xlim_right = False
+
+        self.top_lim = None
+        self.bottom_lim = None
+        self.left_lim = None
+        self.right_lim = None
 
     def set_options(self, **kwargs):
         """
@@ -318,6 +375,35 @@ class McStasPlotOptions:
             if not isinstance(self.right_lim, (float, int)):
                 raise ValueError("right_lim has to be a number, was "
                                  + "given: " + str(self.right_lim))
+
+    def __repr__(self):
+
+        string = "plot_options"
+
+        string += " log: " + str(self.log) + "\n"
+        if self.log:
+            string += " orders_of_mag: " + str(self.orders_of_mag) + "\n"
+
+        string += " colormap: " + str(self.colormap) + "\n"
+        string += " show_colorbar: " + str(self.show_colorbar) + "\n"
+        string += " cut_min: " + str(self.cut_min) + "\n"
+        string += " cut_max: " + str(self.cut_max) + "\n"
+        string += " x_limit_multiplier: " + str(self.x_limit_multiplier) + "\n"
+        string += " y_limit_multiplier: " + str(self.y_limit_multiplier) + "\n"
+
+        if self.custom_xlim_left:
+            string += "manual x lower limit: " + str(self.left_lim)
+
+        if self.custom_xlim_right:
+            string += "manual x upper limit: " + str(self.right_lim)
+
+        if self.custom_ylim_bottom:
+            string += "manual y lower limit: " + str(self.bottom_lim)
+
+        if self.custom_ylim_bottom:
+            string += "manual y upper limit: " + str(self.top_lim)
+
+        return string
 
 
 class McStasData:

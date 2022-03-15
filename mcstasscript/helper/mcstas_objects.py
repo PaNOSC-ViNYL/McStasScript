@@ -434,6 +434,21 @@ class DeclareVariable:
                     fo.write("%G," % self.value[i])
                 fo.write("%G};%s" % (self.value[-1], self.comment))
 
+    def __repr__(self):
+        string = "Declare variable: '"
+        string += str(self.name)
+        string += "' of type "
+        string += str(self.type)
+
+        if self.value != "":
+            string += " with value: "
+            string += str(self.value)
+
+        if self.vector != 0:
+            string += ". Array with length "
+            string += str(self.vector)
+
+        return string
 
 class Component:
     """
@@ -1121,7 +1136,7 @@ class Component:
         if len(self.c_code_after) > 1:
             string += self.c_code_after + "\n"
 
-        return string
+        return string.strip()
 
     def print_long(self):
         """
@@ -1220,7 +1235,12 @@ class Component:
                 characters_from_value = 3 + len(this_default)
 
             if getattr(self, parameter) is not None:
-                this_set_value = str(getattr(self, parameter))
+                parameter_input = getattr(self, parameter)
+                # Use name when an par/var object is found
+                if isinstance(parameter_input, (ParameterVariable, DeclareVariable)):
+                    parameter_input = parameter_input.name
+
+                this_set_value = str(parameter_input)
                 value = (" = "
                          + bcolors.BOLD
                          + bcolors.OKGREEN

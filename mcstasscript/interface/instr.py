@@ -7,8 +7,12 @@ import subprocess
 import copy
 import warnings
 
+from IPython.display import IFrame
+
 from libpyvinyl.BaseCalculator import BaseCalculator
 from libpyvinyl.Parameters.Collections import CalculatorParameters
+
+from mcstasscript.data.pyvinylData import pyvinylMcStasData
 
 from mcstasscript.helper.mcstas_objects import DeclareVariable
 from mcstasscript.helper.mcstas_objects import ParameterVariable
@@ -220,7 +224,7 @@ class McCode_instr(BaseCalculator):
         Returns data set from latest simulation in widget
     """
 
-    def __init__(self, name, parameters=None, dumpfile=None, executable=None, **kwargs):
+    def __init__(self, name, parameters=None, dumpfile=None, executable=None, author=None,  **kwargs):
         """
         Initialization of McStas Instrument
 
@@ -258,12 +262,12 @@ class McCode_instr(BaseCalculator):
                 Number of mpi threads to use in simulation
         """
 
-        super().__init__(name, parameters, dumpfile, **kwargs)
+        super().__init__(name, input=[],
+                         output_keys=["simulation_data"],
+                         output_data_types=[pyvinylMcStasData],
+                         parameters=parameters)
 
-        # If no parameters given, initialize parameter container
-        if self.parameters is None:
-            self.parameters = ParameterContainer()
-
+        # Libpyvinyl uses CalculatorParameters, replace with ParameterContainer
         if not isinstance(self.parameters, ParameterContainer):
             # Need to convert McStasScript parameters
             if isinstance(self.parameters, CalculatorParameters):
@@ -340,6 +344,12 @@ class McCode_instr(BaseCalculator):
         if "mpi" in kwargs:
             provided_run_settings["mpi"] = kwargs["mpi"]
 
+        if "seed" in kwargs:
+            provided_run_settings["seed"] = str(kwargs["seed"])
+
+        if "custom_flags" in kwargs:
+            provided_run_settings["custom_flags"] = kwargs["custom_flags"]
+
         # Set run_settings, perform input sanitation
         self.settings(**provided_run_settings)
 
@@ -368,6 +378,12 @@ class McCode_instr(BaseCalculator):
             # Handle components
             self.component_list = []  # List of components (have to be ordered)
             self.component_name_list = []  # List of component names
+
+    def init_parameters(self):
+        """
+        Create empty ParameterContainer for new instrument
+        """
+        self.parameters = ParameterContainer()
 
     def _read_calibration(self):
         """
@@ -415,7 +431,7 @@ class McCode_instr(BaseCalculator):
         self.parameters.add(par)
         return par
 
-    def show_parameters(self, **kwargs):
+    def show_parameters(self, line_length=None):
         """
         Method for displaying current instrument parameters
 
@@ -423,12 +439,65 @@ class McCode_instr(BaseCalculator):
             line_length : int
                 Maximum line length for terminal output
         """
-        if "line_length" in kwargs:
-            line_limit = kwargs["line_length"]
-        else:
-            line_limit = self.line_limit
+        if line_length is None:
+            line_length = self.line_limit
 
-        self.parameters.show_parameters(line_limit)
+        self.parameters.show_parameters(line_length)
+
+    def show_variables(self):
+        """
+        Shows declared variables in instrument
+        """
+
+        type_heading = "type"
+        variable_types = [x.type for x in self.declare_list]
+        variable_types.append(type_heading)
+        max_type_length = len(max(variable_types, key=len))
+
+        name_heading = "variable name"
+        variable_names = [x.name for x in self.declare_list]
+        variable_names.append(name_heading)
+        max_name_length = len(max(variable_names, key=len))
+
+        value_heading = "value"
+        variable_values = [str(x.value) for x in self.declare_list]
+        variable_values.append(value_heading)
+        max_value_length = len(max(variable_values, key=len))
+
+        vector_heading = "array length"
+        variable_vector = [str(x.vector) for x in self.declare_list]
+        variable_vector.append(vector_heading)
+        max_vector_length = len(max(variable_vector, key=len))
+
+        padding = 2
+        string = ""
+        string += type_heading.ljust(max_type_length + padding)
+        string += name_heading.ljust(max_name_length + padding)
+        string += value_heading.ljust(max_value_length + padding)
+        string += vector_heading.ljust(max_vector_length + padding)
+        string += "\n"
+        string += "-"*(max_type_length + max_name_length + max_value_length
+                       + max_vector_length + 3*padding)
+        string += "\n"
+
+        for variable in self.declare_list:
+            string += str(variable.type).ljust(max_type_length + padding)
+            string += str(variable.name).ljust(max_name_length + padding)
+
+            if variable.value != "":
+                value_string = str(variable.value)
+            else:
+                value_string = ""
+            string += value_string.ljust(max_value_length + padding)
+
+            if variable.vector != 0:
+                vector_string = str(variable.vector)
+            else:
+                vector_string = ""
+            string += vector_string.ljust(max_vector_length + padding)
+            string += "\n"
+
+        print(string)
 
     def add_declare_var(self, *args, **kwargs):
         """
@@ -457,6 +526,13 @@ class McCode_instr(BaseCalculator):
 
         # DeclareVariable class documented independently
         declare_par = DeclareVariable(*args, **kwargs)
+
+        names = [x.name for x in self.declare_list
+                 if isinstance(x, DeclareVariable)]
+        if declare_par.name in names:
+            raise NameError("Variable with name '" + declare_par.name
+                            + "' already present in instrument!")
+        
         self.declare_list.append(declare_par)
         return declare_par
 
@@ -1517,69 +1593,6 @@ class McCode_instr(BaseCalculator):
 
         fo.close()
 
-    def _handle_parameters(self, given_parameters):
-        """
-        Internal helper function that handles which parameters to pass
-        when given a certain set of parameters and values.
-
-        Adds the given parameters to the default parameters, and ensures all
-        required parameters are provided. Also checks all given parameters
-        match an existing parameter.
-
-        Parameters
-        ----------
-        given_parameters: dict
-            Parameters given by the user for simulation run
-        """
-
-        if not isinstance(given_parameters, dict):
-            raise RuntimeError("Given parameters must be a dict.")
-
-        # Find required parameters
-        required_parameters = []
-        default_parameters = {}
-
-        for parameter in self.parameters:
-            if parameter.value is None:
-                required_parameters.append(parameter.name)
-            else:
-                default_parameters.update({parameter.name: parameter.value})
-
-        # Check if all given parameters correspond to legal parameters
-        for given_par in given_parameters:
-            if not isinstance(given_par, str):
-                raise NameError("Given parameter must be a string.")
-            if (given_par not in required_parameters
-                    and given_par not in default_parameters):
-                raise NameError("Given parameter: \"" + str(given_par)
-                                + "\" did not match any in instrument. "
-                                + "Currently available parameters: \n"
-                                + "  Required parameters:"
-                                + str(required_parameters) + "\n"
-                                + "  Default parameters: "
-                                + str(list(default_parameters.keys())))
-
-        # Check if required parameters are provided
-        if len(given_parameters) == 0:
-            if len(required_parameters) > 0:
-                # print required parameters and raise error
-                print("Required instrument parameters:")
-                for name in required_parameters:
-                    print("  " + name)
-                raise NameError("Required parameters not provided.")
-            else:
-                # If all parameters have defaults, just run with the defaults.
-                return default_parameters
-        else:
-            for name in required_parameters:
-                if name not in given_parameters:
-                    raise NameError("The required instrument parameter "
-                                    + str(name)
-                                    + " was not provided.")
-            # Overwrite default parameters with given parameters
-            default_parameters.update(given_parameters)
-            return default_parameters
-
     def settings(self, ncount=None, mpi="not_set", seed=None,
                  force_compile=None, output_path=None,
                  increment_folder_name=None, custom_flags=None,
@@ -1678,6 +1691,11 @@ class McCode_instr(BaseCalculator):
             description += "  mpi:".ljust(variable_space)
             description += str(int(value)) + "\n"
 
+        if "seed" in self._run_settings:
+            value = self._run_settings["seed"]
+            description += "  seed:".ljust(variable_space)
+            description += str(int(value)) + "\n"
+
         description += "  output_path:".ljust(variable_space)
         description += str(self.output_path) + "\n"
 
@@ -1721,8 +1739,7 @@ class McCode_instr(BaseCalculator):
 
     def backengine(self):
         """
-        Runs McStas instrument described by this class, saves data in data
-        attribute
+        Runs instrument with McStas / McXtrace, saves data in data attribute
 
         This method will write the instrument to disk and then run it using
         the mcrun command of the system. Settings are set using settings
@@ -1751,8 +1768,20 @@ class McCode_instr(BaseCalculator):
         simulation.run_simulation(**self._run_settings)
 
         # Load data and store in __data
+        #data = simulation.load_results()
+        #self._set_data(data)
+
         data = simulation.load_results()
-        self._set_data(data)
+        data_dict = {"data": data}
+        key = self.output_keys[0]
+        output_data = self.output[key]
+        output_data.set_dict(data_dict)
+
+        if "data" not in self.output.get_data():
+            print("\n\nNo data returned.")
+            return None
+        else:
+            return self.output.get_data()["data"]
 
     def run_full_instrument(self, **kwargs):
         """
@@ -1801,20 +1830,32 @@ class McCode_instr(BaseCalculator):
 
         self.settings(**kwargs)
 
-        self.backengine()
-        return self.data
+        return self.backengine()
 
-    def show_instrument(self, *args, **kwargs):
+    def show_instrument(self, format="webgl", width=800, height=450):
         """
         Uses mcdisplay to show the instrument in web browser
+
+        If this method is performed from a jupyter notebook and use the webgl
+        format the interface will be shown in the notebook using an IFrame.
+
+        Keyword arguments
+        -----------------
+            format : str
+                'webgl' or 'window' format for display
+            width : int
+                width of IFrame if used in notebook
+            height : int
+                height of IFrame if used in notebook
         """
 
-        if "parameters" in kwargs:
-            given_parameters = kwargs["parameters"]
-        else:
-            given_parameters = {}
+        parameters = {}
+        for parameter in self.parameters:
+            if parameter.value is None:
+                raise RuntimeError("Unspecified parameter: '" + parameter.name
+                                   + "' set with set_parameters.")
 
-        parameters = self._handle_parameters(given_parameters)
+            parameters[parameter.name] = parameter.value
 
         # add parameters to command
         parameter_string = ""
@@ -1826,12 +1867,20 @@ class McCode_instr(BaseCalculator):
 
         package_path = self._run_settings["package_path"]
         bin_path = os.path.join(package_path, "bin", "")
-        executable = "mcdisplay-webgl"
-        if "format" in kwargs:
-            if kwargs["format"] == "webgl":
-                executable = "mcdisplay-webgl"
-            elif kwargs["format"] == "window":
-                executable = "mcdisplay"
+
+        if format == "webgl":
+            executable = "mcdisplay-webgl"
+        elif format == "window":
+            executable = "mcdisplay"
+
+        dir_name_original = self.name + "_mcdisplay"
+        dir_name = dir_name_original
+        index = 0
+        while os.path.exists(os.path.join(self.input_path, dir_name)):
+            dir_name = dir_name_original + "_" + str(index)
+            index += 1
+
+        dir_control = "--dirname " + dir_name + " "
 
         self.write_full_instrument()
 
@@ -1839,6 +1888,7 @@ class McCode_instr(BaseCalculator):
         instr_path = os.path.abspath(instr_path)
 
         full_command = (bin_path + executable + " "
+                        + dir_control
                         + instr_path
                         + " " + parameter_string)
 
@@ -1847,8 +1897,29 @@ class McCode_instr(BaseCalculator):
                                  stderr=subprocess.PIPE,
                                  universal_newlines=True,
                                  cwd=self.input_path)
-        print(process.stderr)
-        print(process.stdout)
+
+        try:
+            shell = get_ipython().__class__.__name__
+            is_notebook = shell == "ZMQInteractiveShell"
+        except:
+            is_notebook = False
+
+        if not is_notebook or executable != "mcdisplay-webgl":
+            print(process.stderr)
+            print(process.stdout)
+            return
+
+        html_path = os.path.join(self.input_path, dir_name, "index.html")
+        if not os.path.exists(html_path):
+            print(process.stderr)
+            print(process.stdout)
+            print("")
+            print("mcdisplay run failed.")
+            return
+
+        # Create IFrame in ipython that shows instrument
+
+        return IFrame(src=html_path, width=width, height=height)
 
     def interface(self):
         """
