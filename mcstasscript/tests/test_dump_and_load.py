@@ -309,7 +309,7 @@ class TestDumpAndLoad(unittest.TestCase):
             dump_name = "test_McStasScript_dump.dmp"
             my_instrument.dump(dump_name)
 
-            loaded_instrument = McStas_instr("", dumpfile=dump_name)
+            loaded_instrument = McStas_instr.from_dump(dump_name)
             os.remove(dump_name)
 
             self.assertTrue(loaded_instrument, McStas_instr)

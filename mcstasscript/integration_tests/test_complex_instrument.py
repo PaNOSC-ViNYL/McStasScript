@@ -200,11 +200,15 @@ class TestComplexInstrument(unittest.TestCase):
 
         change = FakeChange()
 
+        """
         interface.run_simulation_thread(change)
 
         for thread in threading.enumerate():
             if thread.name != "MainThread":
                 thread.join()
+        """
+
+        interface.run_simulation_live(change)
 
         data = interface.plot_interface.data
 

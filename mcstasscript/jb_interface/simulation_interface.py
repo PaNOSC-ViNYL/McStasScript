@@ -159,7 +159,7 @@ class SimInterface:
 
             with lock:
                 self.progress_bar.value = index + 1
-                data = self.instrument.data
+                data = self.instrument.output.get_data()["data"]
 
                 if data is not None:
                     if plot_data is None:
@@ -341,22 +341,22 @@ class ParameterWidget:
         """
         label = widgets.Label(value=self.name,
                               layout=widgets.Layout(width='15%', height='32px'))
-        if len(self.parameter._options) > 0:
-            par_widget = widgets.Dropdown(options=self.parameter._options,
+        if len(self.parameter.get_options()) > 0:
+            par_widget = widgets.Dropdown(options=self.parameter.get_options(),
                                           layout=widgets.Layout(width='10%', height='32px'))
             if self.default_value is not None:
-                if self.default_value in self.parameter._options:
+                if self.default_value in self.parameter.get_options():
                     par_widget.value = self.default_value
 
                 if isinstance(self.default_value, str):
 
-                    if self.default_value.strip("'") in self.parameter._options:
+                    if self.default_value.strip("'") in self.parameter.get_options():
                         par_widget.value = self.default_value.strip("'")
-                    elif self.default_value.strip('"') in self.parameter._options:
+                    elif self.default_value.strip('"') in self.parameter.get_options():
                         par_widget.value = self.default_value.strip('"')
 
                 if par_widget.value is None:
-                    print(self.parameter._options)
+                    print(self.parameter.get_options())
                     raise KeyError("default value not found in options for parameter: "
                                    + str(self.parameter.name))
 

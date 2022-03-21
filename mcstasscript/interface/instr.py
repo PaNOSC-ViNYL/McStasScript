@@ -23,6 +23,7 @@ from mcstasscript.helper.managed_mcrun import ManagedMcrun
 from mcstasscript.helper.formatting import is_legal_filename
 from mcstasscript.helper.formatting import bcolors
 from mcstasscript.jb_interface.simulation_interface import SimInterface
+from mcstasscript.helper.unpickler import CustomMcStasUnpickler, CustomMcXtraceUnpickler
 
 
 class McCode_instr(BaseCalculator):
@@ -224,7 +225,8 @@ class McCode_instr(BaseCalculator):
         Returns data set from latest simulation in widget
     """
 
-    def __init__(self, name, parameters=None, dumpfile=None, executable=None, author=None,  **kwargs):
+    def __init__(self, name, parameters=None, dumpfile=None, executable=None,
+                 author=None, origin=None,  **kwargs):
         """
         Initialization of McStas Instrument
 
@@ -294,16 +296,16 @@ class McCode_instr(BaseCalculator):
                             + self.name + ".instr"
                             + "\" which is not a legal filename")
 
-        if "author" in kwargs:
-            self.author = str(kwargs["author"])
-        else:
+        if author is None:
             self.author = "Python " + self.package_name
             self.author += " Instrument Generator"
-
-        if "origin" in kwargs:
-            self.origin = str(kwargs["origin"])
         else:
+            self.author = str(author)
+
+        if origin is None:
             self.origin = "ESS DMSC"
+        else:
+            self.origin = str(origin)
 
         self._run_settings = {}  # Settings for running simulation
 
@@ -717,7 +719,6 @@ class McCode_instr(BaseCalculator):
         if component_name not in self.component_class_lib:
             comp_info = self.component_reader.read_name(component_name)
 
-            input_dict = {}
             input_dict = {key: None for key in comp_info.parameter_names}
             input_dict["parameter_names"] = comp_info.parameter_names
             input_dict["parameter_defaults"] = comp_info.parameter_defaults
@@ -2190,6 +2191,30 @@ class McStas_instr(McCode_instr):
             self._run_settings["package_path"] = ""
             self.line_limit = 180
 
+    @classmethod
+    def from_dump(cls, dumpfile: str):
+        """Load a dill dump from a dumpfile.
+
+        Overwrites a libpyvinyl method to load McStas components
+
+        :param dumpfile: The file name of the dumpfile.
+        :type dumpfile: str
+        :return: The calculator object restored from the dumpfile.
+        :rtype: CalcualtorClass
+        """
+
+        with open(dumpfile, "rb") as fhandle:
+            try:
+                # Loads necessary component classes from unpackers installation
+                tmp = CustomMcStasUnpickler(fhandle).load()
+            except:
+                raise IOError("Cannot load calculator from {}.".format(dumpfile))
+
+            if not isinstance(tmp, cls):
+                raise TypeError(f"The object in the file {dumpfile} is not a {cls}")
+
+        return tmp
+
 
 class McXtrace_instr(McCode_instr):
     """
@@ -2427,3 +2452,27 @@ class McXtrace_instr(McCode_instr):
             self._run_settings["executable_path"] = ""
             self._run_settings["package_path"] = ""
             self.line_limit = 180
+
+    @classmethod
+    def from_dump(cls, dumpfile: str):
+        """Load a dill dump from a dumpfile.
+
+        Overwrites a libpyvinyl method to load McStas components
+
+        :param dumpfile: The file name of the dumpfile.
+        :type dumpfile: str
+        :return: The calculator object restored from the dumpfile.
+        :rtype: CalcualtorClass
+        """
+
+        with open(dumpfile, "rb") as fhandle:
+            try:
+                # Loads necessary component classes from unpackers installation
+                tmp = CustomMcXtraceUnpickler(fhandle).load()
+            except:
+                raise IOError("Cannot load calculator from {}.".format(dumpfile))
+
+            if not isinstance(tmp, cls):
+                raise TypeError(f"The object in the file {dumpfile} is not a {cls}")
+
+        return tmp
