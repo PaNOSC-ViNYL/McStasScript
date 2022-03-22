@@ -382,6 +382,8 @@ class ParameterWidget:
             if type(new_value) is str:
                 if not (new_value[0] == '"' or new_value[0] == "'"):
                     new_value = '"' + new_value + '"'
+        else:
+            new_value = float(new_value)
 
         self.parameters[self.name] = new_value
 

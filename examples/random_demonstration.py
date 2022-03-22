@@ -124,8 +124,7 @@ Instr.print_components()
 Instr.settings(output_path="demonstration", mpi=2, ncount=5E7)
 Instr.set_parameters(energy=600)
 
-Instr.backengine()
-data = Instr.data
+data = Instr.backengine()
 
 # Set plotting options for the data (optional)
 functions.name_plot_options("logger_space_zx_all", data, log=1, orders_of_mag=3)
