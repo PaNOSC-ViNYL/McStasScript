@@ -1,7 +1,7 @@
-from mcstasscript.interface import instr, functions, plotter
+import mcstasscript as ms
 
 def create_data(path):
-    instrument = instr.McStas_instr("laue_example", output_path=path)
+    instrument = ms.McStas_instr("laue_example", output_path=path)
     
     source = instrument.add_component("source", "Source_simple")
     source.set_parameters(xwidth=0.01, yheight=0.01,
@@ -44,5 +44,5 @@ def create_data(path):
                         restore_neutron=1)
 
     instrument.settings(ncount=5E6)
-    instrument.backengine()
-    return instrument.data
+    data = instrument.backengine()
+    return data
