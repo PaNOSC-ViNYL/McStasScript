@@ -1,11 +1,22 @@
-import setuptools
+import os
+from setuptools import setup, find_packages
+from glob import glob
+
+# Get version number
+here = os.path.abspath(os.path.dirname(__file__))
+version_path = os.path.join(here, "guide_bot", "_version.py")
+version = {}
+with open(version_path) as fp:
+    exec(fp.read(), version)
+found_version = version['__version__']
+print("Version read from file:", found_version)
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
      name='McStasScript',
-     version='0.0.37',
+     version=found_version,
      author="Mads Bertelsen",
      author_email="Mads.Bertelsen@ess.eu",
      description="A python scripting interface for McStas",
@@ -13,7 +24,7 @@ setuptools.setup(
      long_description=long_description,
      long_description_content_type="text/markdown",
      url="https://github.com/PaNOSC-ViNYL/McStasScript",
-     install_requires=['numpy', 'matplotlib', 'PyYAML', "ipywidgets", "libpyvinyl"],
+     install_requires=['numpy', 'matplotlib', 'PyYAML', 'ipywidgets', 'libpyvinyl', 'pickle'],
      packages=setuptools.find_packages(),
      classifiers=[
          "Programming Language :: Python :: 3",
