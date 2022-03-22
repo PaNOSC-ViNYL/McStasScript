@@ -8,23 +8,17 @@ import datetime
 from mcstasscript.interface.instr import McStas_instr
 from mcstasscript.interface.instr import McXtrace_instr
 from mcstasscript.helper.formatting import bcolors
-
+from .helpers_for_tests import WorkInTestDir
 
 run_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '.')
-
 
 def setup_instr_no_path():
     """
     Sets up a neutron instrument without a package_path
     """
-    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
-
-    instrument = McStas_instr("test_instrument")
-
-    os.chdir(current_work_dir)
+    with WorkInTestDir() as handler:
+        instrument = McStas_instr("test_instrument")
 
     return instrument
 
@@ -33,14 +27,9 @@ def setup_x_ray_instr_no_path():
     """
     Sets up a X-ray instrument without a package_path
     """
-    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
-
-    instrument = McXtrace_instr("test_instrument")
-
-    os.chdir(current_work_dir)
+    with WorkInTestDir() as handler:
+        instrument = McXtrace_instr("test_instrument")
 
     return instrument
 
@@ -49,14 +38,8 @@ def setup_instr_root_path():
     """
     Sets up a neutron instrument with root package_path
     """
-    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
-
-    instrument = McStas_instr("test_instrument", package_path="/")
-
-    os.chdir(current_work_dir)
+    with WorkInTestDir() as handler:
+        instrument = McStas_instr("test_instrument", package_path="/")
 
     return instrument
 
@@ -65,14 +48,8 @@ def setup_x_ray_instr_root_path():
     """
     Sets up a X-ray instrument with root package_path
     """
-    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
-
-    instrument = McXtrace_instr("test_instrument", package_path="/")
-
-    os.chdir(current_work_dir)
+    with WorkInTestDir() as handler:
+        instrument = McXtrace_instr("test_instrument", package_path="/")
 
     return instrument
 
@@ -83,15 +60,10 @@ def setup_instr_with_path():
     the dummy installation in the test folder.
     """
 
-    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-    dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
-
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
-
-    instrument = McStas_instr("test_instrument", package_path=dummy_path)
-
-    os.chdir(current_work_dir)  # Return to previous workdir
+    with WorkInTestDir() as handler:
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
+        instrument = McStas_instr("test_instrument", package_path=dummy_path)
 
     return instrument
 
@@ -105,12 +77,8 @@ def setup_x_ray_instr_with_path():
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
-
-    instrument = McXtrace_instr("test_instrument", package_path=dummy_path)
-
-    os.chdir(current_work_dir)  # Return to previous workdir
+    with WorkInTestDir() as handler:
+        instrument = McXtrace_instr("test_instrument", package_path=dummy_path)
 
     return instrument
 
@@ -121,18 +89,15 @@ def setup_instr_with_input_path():
     the dummy installation in the test folder. In addition the input_path
     is set to a folder in the test directory using an absolute path.
     """
+
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
     input_path = os.path.join(THIS_DIR, "test_input_folder")
 
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
-
-    instrument = McStas_instr("test_instrument",
-                              package_path=dummy_path,
-                              input_path=input_path)
-
-    os.chdir(current_work_dir)  # Return to previous workdir
+    with WorkInTestDir() as handler:
+        instrument = McStas_instr("test_instrument",
+                                  package_path=dummy_path,
+                                  input_path=input_path)
 
     return instrument
 
@@ -143,16 +108,11 @@ def setup_instr_with_input_path_relative():
     the dummy installation in the test folder. In addition the input_path
     is set to a folder in the test directory using a relative path.
     """
-    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
-
-    instrument = McStas_instr("test_instrument",
-                              package_path="dummy_mcstas",
-                              input_path="test_input_folder")
-
-    os.chdir(current_work_dir)  # Return to previous workdir
+    with WorkInTestDir() as handler:
+        instrument = McStas_instr("test_instrument",
+                                  package_path="dummy_mcstas",
+                                  input_path="test_input_folder")
 
     return instrument
 
@@ -303,9 +263,9 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(my_instrument.author, "Mads")
         self.assertEqual(my_instrument.origin, "DMSC")
-        self.assertEqual(my_instrument.executable_path,
+        self.assertEqual(my_instrument._run_settings["executable_path"],
                          "./dummy_mcstas/contrib")
-        self.assertEqual(my_instrument.package_path,
+        self.assertEqual(my_instrument._run_settings["package_path"],
                          "./dummy_mcstas/misc")
 
     def test_load_config_file(self):
@@ -344,8 +304,8 @@ class TestMcStas_instr(unittest.TestCase):
         # Check the value matches what is loaded by initialization
         my_instrument = setup_instr_no_path()
 
-        self.assertEqual(my_instrument.executable_path, correct_mcrun_path)
-        self.assertEqual(my_instrument.package_path, correct_mcstas_path)
+        self.assertEqual(my_instrument._run_settings["executable_path"], correct_mcrun_path)
+        self.assertEqual(my_instrument._run_settings["package_path"], correct_mcstas_path)
         self.assertEqual(my_instrument.line_limit, correct_n_of_characters)
 
     def test_load_config_file_x_ray(self):
@@ -384,8 +344,8 @@ class TestMcStas_instr(unittest.TestCase):
         # Check the value matches what is loaded by initialization
         my_instrument = setup_x_ray_instr_no_path()
 
-        self.assertEqual(my_instrument.executable_path, correct_mxrun_path)
-        self.assertEqual(my_instrument.package_path, correct_mcxtrace_path)
+        self.assertEqual(my_instrument._run_settings["executable_path"], correct_mxrun_path)
+        self.assertEqual(my_instrument._run_settings["package_path"], correct_mcxtrace_path)
         self.assertEqual(my_instrument.line_limit, correct_n_of_characters)
 
     def test_simple_add_parameter(self):
@@ -399,8 +359,9 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr.add_parameter("double", "theta", comment="test par")
 
-        self.assertEqual(instr.parameter_list[0].name, "theta")
-        self.assertEqual(instr.parameter_list[0].comment, "// test par")
+        parameter = instr.parameters["theta"]
+        self.assertEqual(parameter.name, "theta")
+        self.assertEqual(parameter.comment, "test par")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_show_parameters(self, mock_stdout):
@@ -409,9 +370,9 @@ class TestMcStas_instr(unittest.TestCase):
         """
         instr = setup_instr_root_path()
 
-        instr.add_parameter("double", "theta", comment="test par")
-        instr.add_parameter("double", "theta", comment="test par")
-        instr.add_parameter("int", "theta", value=8, comment="test par")
+        instr.add_parameter("theta", comment="test par")
+        instr.add_parameter("double", "par_double", comment="test par")
+        instr.add_parameter("int", "int_par", value=8, comment="test par")
         instr.add_parameter("int", "slits", comment="test par")
         instr.add_parameter("string", "ref",
                             value="string", comment="new string")
@@ -420,11 +381,11 @@ class TestMcStas_instr(unittest.TestCase):
 
         output = mock_stdout.getvalue().split("\n")
 
-        self.assertEqual(output[0], "double theta             // test par")
-        self.assertEqual(output[1], "double theta             // test par")
-        self.assertEqual(output[2], "int    theta  =  8       // test par")
-        self.assertEqual(output[3], "int    slits             // test par")
-        self.assertEqual(output[4], "string ref    =  string  // new string")
+        self.assertEqual(output[0], "       theta                 // test par")
+        self.assertEqual(output[1], "double par_double            // test par")
+        self.assertEqual(output[2], "int    int_par     = 8       // test par")
+        self.assertEqual(output[3], "int    slits                 // test par")
+        self.assertEqual(output[4], "string ref         = string  // new string")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_show_parameters_line_break(self, mock_stdout):
@@ -436,9 +397,9 @@ class TestMcStas_instr(unittest.TestCase):
         """
         instr = setup_instr_root_path()
 
-        instr.add_parameter("double", "theta", comment="test par")
-        instr.add_parameter("double", "theta", comment="test par")
-        instr.add_parameter("int", "theta", value=8, comment="test par")
+        instr.add_parameter("theta", comment="test par")
+        instr.add_parameter("double", "par_double", comment="test par")
+        instr.add_parameter("int", "int_par", value=8, comment="test par")
         instr.add_parameter("int", "slits", comment="test par")
         instr.add_parameter("string", "ref",
                             value="string", comment="new string")
@@ -456,23 +417,20 @@ class TestMcStas_instr(unittest.TestCase):
 
         output = mock_stdout.getvalue().split("\n")
 
-        self.assertEqual(output[0], "double theta             // test par")
-        self.assertEqual(output[1], "double theta             // test par")
-        self.assertEqual(output[2], "int    theta  =  8       // test par")
-        self.assertEqual(output[3], "int    slits             // test par")
-        self.assertEqual(output[4], "string ref    =  string  // new string")
-        comment_line = "This is a very long comment meant for testing "
-        self.assertEqual(output[5], "double value  =  37      // "
+        self.assertEqual(output[0], "       theta                 // test par")
+        self.assertEqual(output[1], "double par_double            // test par")
+        self.assertEqual(output[2], "int    int_par     = 8       // test par")
+        self.assertEqual(output[3], "int    slits                 // test par")
+        self.assertEqual(output[4], "string ref         = string  // new string")
+        comment_line = "This is a very long comment meant for "
+        self.assertEqual(output[5], "double value       = 37      // "
                                     + comment_line)
-        comment_line = "the dynamic line breaking that is used in this "
-        self.assertEqual(output[6], "                            "
-                                    + comment_line)
-        comment_line = "method. It needs to have many lines in order to "
-        self.assertEqual(output[7], "                            "
-                                    + comment_line)
-        comment_line = "ensure it really works. "
-        self.assertEqual(output[8], "                            "
-                                    + comment_line)
+        comment_line = "testing the dynamic line breaking that is "
+        self.assertEqual(output[6], " "*33 + comment_line)
+        comment_line = "used in this method. It needs to have many "
+        self.assertEqual(output[7], " "*33 + comment_line)
+        comment_line = "lines in order to ensure it really works. "
+        self.assertEqual(output[8], " "*33 + comment_line)
 
     def test_simple_add_declare_parameter(self):
         """
@@ -1692,7 +1650,7 @@ class TestMcStas_instr(unittest.TestCase):
          my_call("DEFINE INSTRUMENT test_instrument ("),
          my_call("\n"),
          my_call("double theta"),
-         my_call(","),
+         my_call(", "),
          my_call(""),
          my_call("\n"),
          my_call("double has_default"),
@@ -1751,7 +1709,8 @@ class TestMcStas_instr(unittest.TestCase):
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
         with self.assertRaises(NameError):
-            instr.run_full_instrument(foldername="test_data_set",
+            instr.run_full_instrument(output_path="test_data_set",
+                                      increment_folder_name=False,
                                       executable_path=executable_path)
 
     def test_run_full_instrument_junk_par_error(self):
@@ -1763,8 +1722,9 @@ class TestMcStas_instr(unittest.TestCase):
 
         pars = {"theta": 2, "junk": "test"}
 
-        with self.assertRaises(NameError):
-            instr.run_full_instrument(foldername="test_data_set",
+        with self.assertRaises(KeyError):
+            instr.run_full_instrument(output_path="test_data_set",
+                                      increment_folder_name=False,
                                       parameters=pars)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
@@ -1774,32 +1734,34 @@ class TestMcStas_instr(unittest.TestCase):
         Tests x-ray run_full_instrument
 
         Check a simple run performs the correct system call.  Here
-        the target directory is set to the test data set so that some
-        data is loaded even though the system call is not executed.
+        the output_path is set to a name that does not correspond to a
+        existing file so no error is thrown.
         """
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
-        current_work_dir = os.getcwd()
-        os.chdir(THIS_DIR)  # Set work directory to test folder
-
-        instr = setup_populated_x_ray_instr_with_dummy_path()
-        instr.run_full_instrument(foldername="test_data_set",
-                                  executable_path=executable_path,
-                                  parameters={"theta": 1})
-
-        os.chdir(current_work_dir)
+        with WorkInTestDir() as handler:
+            new_folder_name = "folder_name_which_is_unused"
+            if os.path.exists(new_folder_name):
+                raise RuntimeError("Folder_name was supposed to not "
+                                   + "exist before "
+                                   + "test_run_backengine_basic")
+            instr = setup_populated_x_ray_instr_with_dummy_path()
+            instr.run_full_instrument(output_path=new_folder_name,
+                                      increment_folder_name=False,
+                                      executable_path=executable_path,
+                                      parameters={"theta": 1})
 
         expected_path = os.path.join(executable_path, "mxrun")
 
-        expected_folder_path = os.path.join(THIS_DIR, "test_data_set")
+        expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 1000000 "
                          + "-d " + expected_folder_path
                          + "  test_instrument.instr"
-                         + " has_default=37 theta=1")
+                         + " theta=1 has_default=37")
 
         expected_run_path = os.path.join(THIS_DIR, ".")
 
@@ -1810,39 +1772,64 @@ class TestMcStas_instr(unittest.TestCase):
                                          universal_newlines=True)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    @unittest.mock.patch("subprocess.run")
-    def test_run_full_instrument_basic(self, mock_sub, mock_stdout):
+    def test_run_backengine_existing_folder(self, mock_stdout):
         """
-        Test neutron run_full_instrument
-
-        Check a simple run performs the correct system call.  Here
-        the target directory is set to the test data set so that some
-        data is loaded even though the system call is not executed.
+        Test neutron run of backengine fails if using existing folder
+        for output_path and with increment_folder_name disabled.
         """
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
-        current_work_dir = os.getcwd()
-        os.chdir(THIS_DIR)  # Set work directory to test folder
+        with WorkInTestDir() as handler:
+            instr = setup_populated_instr_with_dummy_path()
 
-        instr = setup_populated_instr_with_dummy_path()
+            instr.set_parameters({"theta": 1})
+            instr.settings(output_path="test_data_set",
+                           increment_folder_name=False,
+                           executable_path=executable_path)
 
-        instr.run_full_instrument(foldername="test_data_set",
-                                  executable_path=executable_path,
-                                  parameters={"theta": 1})
+            with self.assertRaises(NameError):
+                instr.backengine()
 
-        os.chdir(current_work_dir)
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    @unittest.mock.patch("subprocess.run")
+    def test_run_backengine_basic(self, mock_sub, mock_stdout):
+        """
+        Test neutron run_full_instrument
+
+        Check a simple run performs the correct system call. Here
+        the output_path is set to a name that does not correspond to a
+        existing file so no error is thrown.
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        with WorkInTestDir() as handler:
+            new_folder_name = "folder_name_which_is_unused"
+            if os.path.exists(new_folder_name):
+                raise RuntimeError("Folder_name was supposed to not "
+                                   + "exist before "
+                                   + "test_run_backengine_basic")
+
+            instr = setup_populated_instr_with_dummy_path()
+
+            instr.set_parameters({"theta": 1})
+            instr.settings(output_path=new_folder_name,
+                           increment_folder_name=True,
+                           executable_path=executable_path)
+            instr.backengine()
 
         expected_path = os.path.join(executable_path, "mcrun")
 
-        expected_folder_path = os.path.join(THIS_DIR, "test_data_set")
+        expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 1000000 "
                          + "-d " + expected_folder_path
                          + "  test_instrument.instr"
-                         + " has_default=37 theta=1")
+                         + " theta=1 has_default=37")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
@@ -1856,43 +1843,46 @@ class TestMcStas_instr(unittest.TestCase):
         """
         Test neutron run_full_instrument in more complex case
 
-        Check a complex run performs the correct system call.  Here
-        the target directory is set to the test data set so that some
-        data is loaded even though the system call is not executed.
+        Check a complex run performs the correct system call. Here
+        the output_path is set to a name that does not correspond to a
+        existing file so no error is thrown.
         """
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
-        current_work_dir = os.getcwd()
-        os.chdir(THIS_DIR)  # Set work directory to test folder
+        with WorkInTestDir() as handler:
+            new_folder_name = "folder_name_which_is_unused"
+            if os.path.exists(new_folder_name):
+                raise RuntimeError("Folder_name was supposed to not "
+                                   + "exist before "
+                                   + "test_run_backengine_basic")
 
-        instr = setup_populated_instr_with_dummy_path()
+            instr = setup_populated_instr_with_dummy_path()
 
-        # Add some extra parameters for testing
-        instr.add_parameter("A")
-        instr.add_parameter("BC")
+            # Add some extra parameters for testing
+            instr.add_parameter("A")
+            instr.add_parameter("BC")
 
-        instr.run_full_instrument(foldername="test_data_set",
-                                  executable_path=executable_path,
-                                  mpi=7,
-                                  ncount=48.4,
-                                  custom_flags="-fo",
-                                  parameters={"A": 2,
-                                              "BC": "car",
-                                              "theta": "\"toy\""})
-
-        os.chdir(current_work_dir)
+            instr.run_full_instrument(output_path=new_folder_name,
+                                      increment_folder_name=False,
+                                      executable_path=executable_path,
+                                      mpi=7,
+                                      seed=300,
+                                      ncount=48.4,
+                                      custom_flags="-fo",
+                                      parameters={"A": 2,
+                                                  "BC": "car",
+                                                  "theta": "\"toy\""})
 
         expected_path = os.path.join(executable_path, "mcrun")
-
-        expected_folder_path = os.path.join(THIS_DIR, "test_data_set")
+        expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
         # a double space because of a missing option
-        expected_call = (expected_path + " -c -n 48 --mpi=7 "
+        expected_call = (expected_path + " -c -n 48 --mpi=7 --seed=300 "
                          + "-d " + expected_folder_path
                          + " -fo test_instrument.instr "
-                         + "has_default=37 A=2 BC=car theta=\"toy\"")
+                         + "theta=\"toy\" has_default=37 A=2 BC=car")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
@@ -1912,37 +1902,38 @@ class TestMcStas_instr(unittest.TestCase):
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
-        current_work_dir = os.getcwd()
-        os.chdir(THIS_DIR)  # Set work directory to test folder
+        with WorkInTestDir() as handler:
+            new_folder_name = "folder_name_which_is_unused"
+            if os.path.exists(new_folder_name):
+                raise RuntimeError("Folder_name was supposed to not "
+                                   + "exist before "
+                                   + "test_run_backengine_basic")
 
-        instr = setup_populated_instr_with_dummy_path()
+            instr = setup_populated_instr_with_dummy_path()
 
-        # Add some extra parameters for testing
-        instr.add_parameter("A")
-        instr.add_parameter("BC")
+            # Add some extra parameters for testing
+            instr.add_parameter("A")
+            instr.add_parameter("BC")
 
-        instr.run_full_instrument(foldername="test_data_set",
-                                  executable_path=executable_path,
-                                  mpi=7,
-                                  ncount=48.4,
-                                  custom_flags="-fo",
-                                  parameters={"A": 2,
-                                              "BC": "car",
-                                              "theta": "\"toy\"",
-                                              "has_default": 10})
-
-        os.chdir(current_work_dir)
+            instr.run_full_instrument(output_path=new_folder_name,
+                                      increment_folder_name=False,
+                                      executable_path=executable_path,
+                                      mpi=7,
+                                      ncount=48.4,
+                                      custom_flags="-fo",
+                                      parameters={"A": 2,
+                                                  "BC": "car",
+                                                  "theta": "\"toy\"",
+                                                  "has_default": 10})
 
         expected_path = os.path.join(executable_path, "mcrun")
-
-        os.getcwd()
-        expected_folder_path = os.path.join(THIS_DIR, "test_data_set")
+        expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 48 --mpi=7 "
                          + "-d " + expected_folder_path
                          + " -fo test_instrument.instr "
-                         + "has_default=10 A=2 BC=car theta=\"toy\"")
+                         + "theta=\"toy\" has_default=10 A=2 BC=car")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
@@ -1957,33 +1948,35 @@ class TestMcStas_instr(unittest.TestCase):
         Test x-ray run_full_instrument
 
         Check a simple run performs the correct system call.  Here
-        the target directory is set to the test data set so that some
-        data is loaded even though the system call is not executed.
+        the output_path is set to a name that does not correspond to a
+        existing file so no error is thrown.
         """
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
-        current_work_dir = os.getcwd()
-        os.chdir(THIS_DIR)  # Set work directory to test folder
+        with WorkInTestDir() as handler:
+            new_folder_name = "folder_name_which_is_unused"
+            if os.path.exists(new_folder_name):
+                raise RuntimeError("Folder_name was supposed to not "
+                                   + "exist before "
+                                   + "test_run_backengine_basic")
 
-        instr = setup_populated_x_ray_instr_with_dummy_path()
+            instr = setup_populated_x_ray_instr_with_dummy_path()
 
-        instr.run_full_instrument(foldername="test_data_set",
-                                  executable_path=executable_path,
-                                  parameters={"theta": 1})
-
-        os.chdir(current_work_dir)
+            instr.run_full_instrument(output_path=new_folder_name,
+                                      increment_folder_name=False,
+                                      executable_path=executable_path,
+                                      parameters={"theta": 1})
 
         expected_path = os.path.join(executable_path, "mxrun")
-
-        expected_folder_path = os.path.join(THIS_DIR, "test_data_set")
+        expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 1000000 "
                          + "-d " + expected_folder_path
                          + "  test_instrument.instr"
-                         + " has_default=37 theta=1")
+                         + " theta=1 has_default=37")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
@@ -2006,7 +1999,8 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_populated_instr_with_dummy_path()
 
-        instr.show_instrument(parameters={"theta": 1.2})
+        instr.set_parameters(theta=1.2)
+        instr.show_instrument()
 
         os.chdir(current_work_dir)
 
@@ -2015,8 +2009,9 @@ class TestMcStas_instr(unittest.TestCase):
 
         # a double space because of a missing option
         expected_call = (expected_path
+                         + " --dirname test_instrument_mcdisplay"
                          + " " + expected_instr_path
-                         + "  has_default=37 theta=1.2")
+                         + "  theta=1.2 has_default=37")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,

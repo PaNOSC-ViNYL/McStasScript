@@ -62,7 +62,7 @@ class SimInterface:
 
         self.parameters = {}
         # get default parameters from instrument
-        for parameter in self.instrument.parameter_list:
+        for parameter in self.instrument.parameters:
             if parameter_has_default(parameter):
                 self.parameters[parameter.name] = get_parameter_default(parameter)
 
@@ -73,7 +73,7 @@ class SimInterface:
         returns widget including all parameters
         """
         parameter_widgets = []
-        for parameter in self.instrument.parameter_list:
+        for parameter in self.instrument.parameters:
             par_widget = ParameterWidget(parameter, self.parameters)
             parameter_widgets.append(par_widget.make_widget())
 
@@ -83,6 +83,10 @@ class SimInterface:
         """
         Runs simulation as thread, allowing user to update plots simultaneously
 
+        The use of this method has caused crashes, temporarily circumvented by
+        calling run_simulation_live on button instead. Now plots can now be
+        updated while a simulation is running.
+
         Parameters
         ----------
 
@@ -90,10 +94,10 @@ class SimInterface:
             Not used
         """
 
-        thread = threading.Thread(target=self.run_simulation_live)
+        thread = threading.Thread(target=self.run_simulation_live, args=[1])
         thread.start()
 
-    def run_simulation_live(self):
+    def run_simulation_live(self, change):
         """
         Performs the simulation with current parameters and settings.
 
@@ -113,9 +117,9 @@ class SimInterface:
 
         part_ncount = int(float(self.ncount)/sim_parts)
 
-        run_arguments = {"foldername": "interface_" + self.instrument.name,
+        run_arguments = {"output_path": "interface_" + self.instrument.name,
                          "increment_folder_name": True,
-                         "parameters": self.parameters,
+                         #"parameters": self.parameters,
                          "ncount": part_ncount}
         if self.mpi != "disabled":
             run_arguments["mpi"] = self.mpi
@@ -146,25 +150,28 @@ class SimInterface:
         for index in range(sim_parts):
             try:
                 with HiddenPrints():
-                    data = self.instrument.run_full_instrument(**run_arguments)
+                    self.instrument.settings(**run_arguments)
+                    self.instrument.set_parameters(self.parameters)
+                    self.instrument.backengine()
             except NameError:
                 print("McStas run failed.")
                 data = []
 
             with lock:
                 self.progress_bar.value = index + 1
+                data = self.instrument.output.get_data()["data"]
 
-                if plot_data is None:
-                    plot_data = data
-                else:
-                    add_data(plot_data, data)
+                if data is not None:
+                    if plot_data is None:
+                        plot_data = data
+                    else:
+                        add_data(plot_data, data)
 
-                sent_data = copy.deepcopy(plot_data)
-                # This happens in a thread, maybe it should be in Main?
-                self.plot_interface.set_data(sent_data)
+                    sent_data = copy.deepcopy(plot_data)
+                    # This happens in a thread, maybe it should be in Main?
+                    self.plot_interface.set_data(sent_data)
 
         self.run_button.icon = "calculator"
-
 
     def make_run_button(self):
         """
@@ -177,7 +184,8 @@ class SimInterface:
             tooltip='Runs the simulation with current parameters',
             icon='calculator'  # (FontAwesome names without the `fa-` prefix)
         )
-        button.on_click(self.run_simulation_thread)
+        #button.on_click(self.run_simulation_thread)
+        button.on_click(self.run_simulation_live)
 
         return button
 
@@ -322,7 +330,7 @@ class ParameterWidget:
         if parameter_has_default(parameter):
             self.default_value = get_parameter_default(parameter)
         else:
-            self.default_value = ""
+            self.default_value = None
 
         self.name = parameter.name
         self.comment = parameter.comment
@@ -333,17 +341,22 @@ class ParameterWidget:
         """
         label = widgets.Label(value=self.name,
                               layout=widgets.Layout(width='15%', height='32px'))
-        if self.parameter.options is not None:
-            par_widget = widgets.Dropdown(options=self.parameter.options,
+        if len(self.parameter.get_options()) > 0:
+            par_widget = widgets.Dropdown(options=self.parameter.get_options(),
                                           layout=widgets.Layout(width='10%', height='32px'))
-            if self.default_value != "":
-                if self.default_value in self.parameter.options:
+            if self.default_value is not None:
+                if self.default_value in self.parameter.get_options():
                     par_widget.value = self.default_value
-                elif self.default_value.strip("'") in self.parameter.options:
-                    par_widget.value = self.default_value.strip("'")
-                elif self.default_value.strip('"') in self.parameter.options:
-                    par_widget.value = self.default_value.strip('"')
-                else:
+
+                if isinstance(self.default_value, str):
+
+                    if self.default_value.strip("'") in self.parameter.get_options():
+                        par_widget.value = self.default_value.strip("'")
+                    elif self.default_value.strip('"') in self.parameter.get_options():
+                        par_widget.value = self.default_value.strip('"')
+
+                if par_widget.value is None:
+                    print(self.parameter.get_options())
                     raise KeyError("default value not found in options for parameter: "
                                    + str(self.parameter.name))
 

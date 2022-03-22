@@ -200,15 +200,21 @@ class TestComplexInstrument(unittest.TestCase):
 
         change = FakeChange()
 
+        """
         interface.run_simulation_thread(change)
 
         for thread in threading.enumerate():
             if thread.name != "MainThread":
                 thread.join()
+        """
+
+        interface.run_simulation_live(change)
 
         data = interface.plot_interface.data
 
         os.chdir(CURRENT_DIR)
+
+        print(data)
 
         intensity_data_pos = functions.name_search("PSD_1D_1", data).Intensity
         sum_outside_beam = sum(intensity_data_pos[0:50])

@@ -168,19 +168,19 @@ class TestSimulationInterface(unittest.TestCase):
 
         parameters = {}
         # get default parameters from instrument
-        for parameter in instrument.parameter_list:
+        for parameter in instrument.parameters:
             if parameter_has_default(parameter):
                 parameters[parameter.name] = get_parameter_default(parameter)
 
         parameter_widgets = []
         parameterwidget_objects = []
-        for parameter in instrument.parameter_list:
+        for parameter in instrument.parameters:
             par_widget = ParameterWidget(parameter, parameters)
             parameterwidget_objects.append(par_widget)
             parameter_widgets.append(par_widget.make_widget())
 
         self.assertEqual(parameterwidget_objects[0].name, "theta")
-        self.assertEqual(parameterwidget_objects[0].default_value, "")
+        self.assertEqual(parameterwidget_objects[0].default_value, None)
         # Parameter does not exist in parameter dict yet
         with self.assertRaises(KeyError):
             parameters[parameterwidget_objects[0].name]
@@ -198,7 +198,7 @@ class TestSimulationInterface(unittest.TestCase):
         self.assertEqual(parameters[parameterwidget_objects[1].name], 227)
 
         self.assertEqual(parameterwidget_objects[2].name, "choice")
-        self.assertEqual(parameterwidget_objects[2].default_value, "")
+        self.assertEqual(parameterwidget_objects[2].default_value, None)
         with self.assertRaises(KeyError):
             parameters[parameterwidget_objects[2].name]
 

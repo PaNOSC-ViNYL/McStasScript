@@ -1,8 +1,11 @@
 from mcstasscript.helper.formatting import bcolors
 from mcstasscript.helper.formatting import is_legal_parameter
 
+from libpyvinyl.Parameters.Parameter import Parameter
+from libpyvinyl.Parameters.Collections import CalculatorParameters
 
-class ParameterVariable:
+
+class ParameterVariable(Parameter):
     """
     Class describing an input parameter in McStas instrument
 
@@ -10,7 +13,8 @@ class ParameterVariable:
     cast.  If two positional arguments are given, the first is the
     type, and the second is the parameter name.  With one input, only
     the parameter name is read.  It is also possible to assign a
-    default value and a comment through keyword arguments.
+    default value and a comment through keyword arguments. Inherits from the
+    libpyvinyl Parameter.
 
     Attributes
     ----------
@@ -22,6 +26,9 @@ class ParameterVariable:
 
     value : any
         Default value/string of parameter, converted to string
+
+    unit : str
+        String descrbing the unit for this variable
 
     comment : str
         Comment displayed next to the parameter, could contain units
@@ -66,9 +73,10 @@ class ParameterVariable:
                 sets comment displayed next to declaration
 
         """
+
         if len(args) == 1:
             self.type = ""
-            self.name = str(args[0])
+            name = str(args[0])
         if len(args) == 2:
             specified_type = args[0]
             allowed_types = {"double", "int", "string"}
@@ -79,38 +87,40 @@ class ParameterVariable:
                                    + str(allowed_types) + ".")
 
             self.type = specified_type
-            self.name = str(args[1])
+            name = str(args[1])
 
-        if not is_legal_parameter(self.name):
+        if not is_legal_parameter(name):
             raise NameError("The given parameter name: \""
-                            + self.name
+                            + name
                             + "\" is not a legal c variable name, "
                             + " and cannot be used in McStas.")
 
-        self.value = ""
+        comment = None
+        if "comment" in kwargs:
+            comment = kwargs["comment"]
+            if not isinstance(comment, str):
+                raise RuntimeError("Tried to create a parameter with a "
+                                   + "comment that was not a string.")
+
+        unit = None
+        if "unit" in kwargs:
+            unit = kwargs["unit"]
+            if not isinstance(unit, str):
+                raise RuntimeError("Unit has to be a string")
+
+        super().__init__(name=name, unit=unit, comment=comment)
+
+        if "options" in kwargs:
+            options = kwargs["options"]
+
+            self.add_option(options, True)
+
         if "value" in kwargs:
             if not isinstance(kwargs["value"], (str, int, float)):
                 raise RuntimeError("Given value for parameter has to be of "
                                    + "type str, int or float.")
+
             self.value = kwargs["value"]
-
-        self.comment = ""
-        if "comment" in kwargs:
-            self.comment = kwargs["comment"]
-            if not isinstance(self.comment, str):
-                raise RuntimeError("Tried to create a parameter with a "
-                                   + "comment that was not a string.")
-            self.comment = "// " + self.comment
-
-        self.options = None
-        if "options" in kwargs:
-            self.options = kwargs["options"]
-            if self.value != "":
-                if (self.value not in self.options
-                        and self.value.strip("'") not in self.options
-                        and self.value.strip('"') not in self.options):
-                    raise RuntimeError("When giving both options and default, "
-                                       "the value has to be an option.")
 
     def write_parameter(self, fo, stop_character):
         """Writes input parameter to file"""
@@ -119,8 +129,12 @@ class ParameterVariable:
             raise RuntimeError("stop_character in write_parameter should be "
                                + "a string.")
 
-        fo.write("%s %s" % (self.type, self.name))
-        if self.value != "":
+        if not self.type == "":
+            fo.write("%s %s" % (self.type, self.name))
+        else:
+            fo.write(self.name)
+
+        if self.value is not None:
             if isinstance(self.value, int):
                 fo.write(" = %d" % self.value)
             elif isinstance(self.value, float):
@@ -128,8 +142,155 @@ class ParameterVariable:
             else:
                 fo.write(" = %s" % str(self.value))
         fo.write(stop_character)
-        fo.write(self.comment)
+
+        if self.comment is None:
+            c_comment = ""
+        else:
+            c_comment = "// " + self.comment
+
+        fo.write(c_comment)
         fo.write("\n")
+
+
+class ParameterContainer(CalculatorParameters):
+    def __init__(self, parameters=None):
+        """
+        McStasScript version of libpyvinyls CalculatorParameters
+
+        Expanded with ability to import standard libpyvinyl parameters to
+        McStasScript and show parameter method.
+        """
+        super().__init__(parameters)
+
+    def import_parameters(self, parameters):
+        """
+        Imports libpyvinyl parameters to this ParameterContainer
+
+        There are further requirements for parameters in McStasScript which
+        need to be checked on import, and a subclass of Parameter is used
+        to store these with additional functionality.
+
+        Parameters:
+            parameters: ParameterContainer
+                libpyvinyl ParameterContainer for conversion
+        """
+        if isinstance(parameters, ParameterContainer):
+            for parameter in parameters:
+                self.add(parameter)
+            return
+
+        if not isinstance(parameters, CalculatorParameters):
+            raise RuntimeError("Uknown parameter class given.")
+
+        # Code for loading from CalculatorParameters
+        for parameter in parameters:
+            try:
+                mcstas_par = ParameterVariable(parameter.name,
+                                               unit=parameter.unit,
+                                               comment=parameter.comment)
+            except:
+                raise NameError("Imported parameter did not have McStas "
+                                + "legal name")
+
+            # Ensure strings get appropriate McStas type.
+            if isinstance(parameter.value, str):
+                mcstas_par.type = "string"
+
+            mcstas_par.__dict__.update(parameter.__dict__)
+
+            self.add(mcstas_par)
+
+    def show_parameters(self, line_limit=100):
+
+        """
+        Method for displaying current instrument parameters
+
+        line_limit : int
+            Maximum line length for terminal output
+        """
+
+        if len(self.parameters) == 0:
+            print("No instrument parameters available")
+            return
+
+        # Find longest fields
+        types = []
+        names = []
+        values = []
+        comments = []
+        for parameter in self.parameters.values():
+            types.append(str(parameter.type))
+            names.append(str(parameter.name))
+            values.append(str(parameter.value))
+            if parameter.comment is None:
+                comments.append("")
+            else:
+                comments.append(str(parameter.comment))
+
+        longest_type = len(max(types, key=len))
+        longest_name = len(max(names, key=len))
+        longest_value = len(max(values, key=len))
+        # In addition to the data 11 characters are added before the comment
+        comment_start_point = longest_type + longest_name + longest_value + 11
+        longest_comment = len(max(comments, key=len))
+        length_for_comment = line_limit - comment_start_point
+
+        # Print to console
+        for parameter in self.parameters.values():
+            print(str(parameter.type).ljust(longest_type), end=' ')
+            print(str(parameter.name).ljust(longest_name), end=' ')
+            if parameter.value is None:
+                print("  ", end=' ')
+                print(" ".ljust(longest_value + 1), end=' ')
+            else:
+                print(" =", end=' ')
+                print(str(parameter.value).ljust(longest_value + 1), end=' ')
+
+            if parameter.comment is None:
+                c_comment = ""
+            else:
+                c_comment = "// " + str(parameter.comment)
+
+            if (length_for_comment < 5
+                    or length_for_comment > len(c_comment)):
+                print(c_comment)
+            else:
+                # Split comment into several lines
+                comment = c_comment
+                words = comment.split(" ")
+                words_left = len(words)
+                last_index = 0
+                current_index = 0
+                comment = ""
+                iterations = 0
+                max_iterations = 50
+                while words_left > 0:
+                    iterations += 1
+                    if iterations > max_iterations:
+                        #  Something went long, print on one line
+                        break
+
+                    line_left = length_for_comment
+
+                    while line_left > 0:
+                        if current_index >= len(words):
+                            current_index = len(words) + 1
+                            break
+                        line_left -= len(str(words[current_index])) + 1
+                        current_index += 1
+
+                    current_index -= 1
+                    for word in words[last_index:current_index]:
+                        comment += word + " "
+                    words_left = len(words) - current_index
+                    if words_left > 0:
+                        comment += "\n" + " " * comment_start_point
+                        last_index = current_index
+
+                if not iterations == max_iterations + 1:
+                    print(comment)
+                else:
+                    print(c_comment.ljust(longest_comment))
 
 
 class DeclareVariable:
@@ -242,6 +403,7 @@ class DeclareVariable:
         fo : file object
             File the line will be written to
         """
+
         if self.value == "" and self.vector == 0:
             fo.write("%s %s;%s" % (self.type, self.name, self.comment))
         if self.value != "" and self.vector == 0:
@@ -272,6 +434,21 @@ class DeclareVariable:
                     fo.write("%G," % self.value[i])
                 fo.write("%G};%s" % (self.value[-1], self.comment))
 
+    def __repr__(self):
+        string = "Declare variable: '"
+        string += str(self.name)
+        string += "' of type "
+        string += str(self.type)
+
+        if self.value != "":
+            string += " with value: "
+            string += str(self.value)
+
+        if self.vector != 0:
+            string += ". Array with length "
+            string += str(self.vector)
+
+        return string
 
 class Component:
     """
@@ -570,6 +747,11 @@ class Component:
             raise RuntimeError("Position data given to set_AT should "
                                + "either be of length 3 or just a float.")
 
+        # If parameter objects given, take their name instead
+        for index, element in enumerate(at_list):
+            if isinstance(element, (ParameterVariable, DeclareVariable)):
+                at_list[index] = element.name
+
         self.AT_data = at_list
         if RELATIVE is not None:
             self.set_AT_RELATIVE(RELATIVE)
@@ -600,6 +782,11 @@ class Component:
         if len(rotated_list) != 3:
             raise RuntimeError("Rotation data given to set_ROTATED should "
                                + "be of length 3.")
+
+        # If parameter objects given, take their name instead
+        for index, element in enumerate(rotated_list):
+            if isinstance(element, (ParameterVariable, DeclareVariable)):
+                rotated_list[index] = element.name
 
         self.ROTATED_data = rotated_list
         self.ROTATED_specified = True
@@ -639,9 +826,9 @@ class Component:
             self.AT_relative = "RELATIVE " + relative
             self.ROTATED_relative = "RELATIVE " + relative
 
-    def set_parameters(self, dict_input):
+    def set_parameters(self, args_as_dict=None, **kwargs):
         """
-        Set Component parameters from dictionary input
+        Set Component parameters from dictionary input or keyword arguments
 
         Relies on attributes added when McStas_Instr creates a subclass from
         the Component class where each component parameter is added as an
@@ -649,7 +836,12 @@ class Component:
 
         An error is raised if trying to set a parameter that does not exist
         """
-        for key, val in dict_input.items():
+        if args_as_dict is not None:
+            parameter_dict = args_as_dict
+        else:
+            parameter_dict = kwargs
+
+        for key, val in parameter_dict.items():
             if not hasattr(self, key):
                 raise NameError("No parameter called "
                                 + key
@@ -763,6 +955,9 @@ class Component:
                                     + " not set.")
                 else:
                     continue
+            elif isinstance(val, (ParameterVariable, DeclareVariable)):
+                # Extract the parameter name
+                val = val.name
 
             component_parameters[key] = val
 
@@ -902,9 +1097,17 @@ class Component:
                 unit = ""
                 if key in self.parameter_units:
                     unit = "[" + self.parameter_units[key] + "]"
+                if isinstance(val, ParameterVariable):
+                    #val_string = val.print_line() # too long
+                    val_string = val.name
+                elif isinstance(val, DeclareVariable):
+                    val_string = val.name
+                else:
+                    val_string = str(val)
+
                 value = (bcolors.BOLD
                          + bcolors.OKGREEN
-                         + str(val)
+                         + val_string
                          + bcolors.ENDC
                          + bcolors.ENDC)
                 string += "  " + parameter_name
@@ -933,7 +1136,7 @@ class Component:
         if len(self.c_code_after) > 1:
             string += self.c_code_after + "\n"
 
-        return string
+        return string.strip()
 
     def print_long(self):
         """
@@ -1032,7 +1235,12 @@ class Component:
                 characters_from_value = 3 + len(this_default)
 
             if getattr(self, parameter) is not None:
-                this_set_value = str(getattr(self, parameter))
+                parameter_input = getattr(self, parameter)
+                # Use name when an par/var object is found
+                if isinstance(parameter_input, (ParameterVariable, DeclareVariable)):
+                    parameter_input = parameter_input.name
+
+                this_set_value = str(parameter_input)
                 value = (" = "
                          + bcolors.BOLD
                          + bcolors.OKGREEN

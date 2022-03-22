@@ -2,6 +2,7 @@ import os
 import numpy as np
 import subprocess
 import mmap
+import warnings
 
 from mcstasscript.data.data import McStasMetaData
 from mcstasscript.data.data import McStasDataBinned
@@ -50,13 +51,18 @@ class ManagedMcrun:
 
     def __init__(self, instr_name, **kwargs):
         """
+        Performs call to McStas with given options
+
+        Uses subprocess to call mcrun / mxrun to perform simulation of given
+        instrument file.
+
         Parameters
         ----------
         instr_name : str
             Name of instrument file to be simulated
 
         kwargs : keyword arguments
-            foldername : str, required
+            output_path : str, required
                 Sets data_folder_name
             ncount : int, default 1E6
                 Sets ncount
@@ -68,8 +74,8 @@ class ManagedMcrun:
                 Sets custom_flags passed to mcrun
             executable_path : str
                 Path to mcrun command, "" if already in path
-            increment_folder_name : bool, default False
-                If True, automatically appends foldername to make it unique
+            increment_folder_name : bool, default True
+                If True, automatically appends output_path to make it unique
             force_compile : bool, default True
                 If True, forces compile. If False no new instrument is written
             run_folder : str
@@ -86,9 +92,10 @@ class ManagedMcrun:
         self.custom_flags = ""
         self.executable_path = ""
         self.executable = ""
-        self.increment_folder_name = False
+        self.increment_folder_name = True
         self.compile = True
         self.run_path = "."
+        self.seed = None
         # executable_path always in kwargs
         if "executable_path" in kwargs:
             self.executable_path = kwargs["executable_path"]
@@ -96,11 +103,11 @@ class ManagedMcrun:
         if "executable" in kwargs:
             self.executable = kwargs["executable"]
 
-        if "foldername" in kwargs:
-            self.data_folder_name = kwargs["foldername"]
+        if "output_path" in kwargs:
+            self.data_folder_name = kwargs["output_path"]
         else:
             raise NameError(
-                "ManagedMcrun needs foldername to load data, add "
+                "ManagedMcrun needs output_path to load data, add "
                 + "with keyword argument.")
 
         if "ncount" in kwargs:
@@ -123,6 +130,9 @@ class ManagedMcrun:
                 if self.mpi < 1:
                     raise ValueError("MPI should be an integer larger than"
                                      + " 0, was " + str(self.mpi))
+
+        if "seed" in kwargs:
+            self.seed = kwargs["seed"]
 
         if "parameters" in kwargs:
             self.parameters = kwargs["parameters"]
@@ -185,22 +195,32 @@ class ManagedMcrun:
             option_string = "-c "
 
         if self.mpi is not None:
-            mpi_string = " --mpi=" + str(self.mpi) + " "  # Set mpi
+            mpi_string = "--mpi=" + str(self.mpi) + " "  # Set mpi
         else:
-            mpi_string = " "
+            mpi_string = ""
+
+        if self.seed is not None:
+            seed_string = "--seed=" + str(self.seed) + " " # Set seed
+        else:
+            seed_string = ""
 
         option_string = (option_string
-                         + "-n " + str(self.ncount)  # Set ncount
-                         + mpi_string)
+                         + "-n " + str(self.ncount) + " " # Set ncount
+                         + mpi_string
+                         + seed_string)
 
-        if self.increment_folder_name and os.path.isdir(self.data_folder_name):
-            counter = 0
-            new_name = self.data_folder_name + "_" + str(counter)
-            while os.path.isdir(new_name):
-                counter = counter + 1
+        if os.path.exists(self.data_folder_name):
+            if self.increment_folder_name:
+                counter = 0
                 new_name = self.data_folder_name + "_" + str(counter)
+                while os.path.isdir(new_name):
+                    counter = counter + 1
+                    new_name = self.data_folder_name + "_" + str(counter)
 
-            self.data_folder_name = new_name
+                self.data_folder_name = new_name
+            else:
+                raise NameError("output_path already exists and "
+                                + "increment_folder_name was set to False.")
 
         if len(self.data_folder_name) > 0:
             option_string = (option_string
@@ -243,6 +263,9 @@ class ManagedMcrun:
             print(process.stderr)
             print(process.stdout)
 
+        if not os.path.isdir(self.data_folder_name):
+            warnings.warn("Simulation did not create data folder, most likely failed.")
+
     def load_results(self, *args):
         """
         Method for loading data from a mcstas simulation
@@ -266,7 +289,11 @@ class ManagedMcrun:
             raise RuntimeError("load_results can be called "
                                + "with 0 or 1 arguments")
 
-        return load_results(data_folder_name)
+        if os.path.isdir(data_folder_name):
+            return load_results(data_folder_name)
+        else:
+            warnings.warn("No data available to load.")
+            return None
 
 
 def load_results(data_folder_name):

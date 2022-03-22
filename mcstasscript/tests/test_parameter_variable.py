@@ -51,7 +51,7 @@ class Test_ParameterVariable(unittest.TestCase):
         self.assertEqual(par.name, "test")
         self.assertEqual(par.type, "double")
         self.assertEqual(par.value, 518)
-        self.assertEqual(par.comment, "// test comment /")
+        self.assertEqual(par.comment, "test comment /")
 
     def test_ParameterVariable_init_basic_value_comment(self):
         """
@@ -64,7 +64,20 @@ class Test_ParameterVariable(unittest.TestCase):
         self.assertEqual(par.name, "test")
         self.assertEqual(par.type, "")
         self.assertEqual(par.value, 518)
-        self.assertEqual(par.comment, "// test comment /")
+        self.assertEqual(par.comment, "test comment /")
+
+    def test_ParameterVariable_init_options_initialize(self):
+        """
+        Initialization with value and comment
+        """
+
+        par = ParameterVariable("test", value=2,
+                                options=[1, 2, 3.1])
+
+        self.assertEqual(par.name, "test")
+        self.assertEqual(par.type, "")
+        self.assertEqual(par.value, 2)
+        self.assertEqual(par.get_options(), [1, 2, 3.1])
 
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
