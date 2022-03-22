@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
       
     steps:
-      - name: Checkout
+      - name: Temporary developer libpyvinyl checkout
         uses: actions/checkout@v2
         with:
           ref: ${{ env.BRANCH }}
@@ -33,7 +33,7 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
           pip install pytest
-          
+
       - name: Install dependencies (mcstasscript)
         run: |
           cd mcstasscript
