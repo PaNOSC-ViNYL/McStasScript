@@ -4,7 +4,7 @@ from glob import glob
 
 # Get version number
 here = os.path.abspath(os.path.dirname(__file__))
-version_path = os.path.join(here, "guide_bot", "_version.py")
+version_path = os.path.join(here, "mcstasscript", "_version.py")
 version = {}
 with open(version_path) as fp:
     exec(fp.read(), version)
