@@ -14,7 +14,7 @@ print("Version read from file:", found_version)
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-setuptools.setup(
+setup(
      name='McStasScript',
      version=found_version,
      author="Mads Bertelsen",
