@@ -1819,7 +1819,8 @@ class McCode_instr(BaseCalculator):
         warnings.warn(
             "run_full_instrument will be removed in future version of McStasScript. \n"
             + "Instead supply parameters with set_parameters, set settings with "
-            + "settings and use backengine() to run. See examples in package.")
+            + "settings and use backengine() to run. See examples in package. "
+            + "Documentation now at https://mads-bertelsen.github.io")
 
         if "foldername" in kwargs:
             kwargs["output_path"] = kwargs["foldername"]
