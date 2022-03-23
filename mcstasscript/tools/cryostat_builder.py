@@ -2,14 +2,14 @@ import numpy as np
 
 class Layer:
     def __init__(self, name, cryostat,
-                 sample_to_bottom, bottom_thickness, sample_to_top, top_thickness=0.01,
+                 origin_to_bottom, bottom_thickness, origin_to_top, top_thickness=0.01,
                  inner_radius=None, outer_radius=None, thickness=None,
                  material="Al", p_interact=0):
         """
         Layer of cryostat with a shell made of given material and hollowed by vacuum
 
         Describes a layer of a cryostat with given geometry and materials. The geometry
-        is specified with distance from sample to top and bottom, along with a
+        is specified with distance from origin to top and bottom, along with a
         thickness of these. In addition an outer and inner radius is needed, here the
         user can specify two of inner_radius, outer_radius and thickness.
         The Layer is given the cryostat object of which is it a part to access methods
@@ -25,14 +25,14 @@ class Layer:
         Parameters
         ----------
 
-        sample_to_bottom: float
-            Distance from sample to bottom of layer [m] (bottom thickness added)
+        origin_to_bottom: float
+            Distance from origin to bottom of layer [m] (bottom thickness added)
 
         bottom_thickness: float
             Thickness of layer bottom [m]
 
-        sample_to_top: float
-            Distance from sample to top of layer [m] (top thickness added)
+        origin_to_top: float
+            Distance from origin to top of layer [m] (top thickness added)
 
         top_thickness: float
             Thickness of layer top [m]
@@ -68,8 +68,8 @@ class Layer:
                                + "' found in given instrument file. \n"
                                + "Construct with Union_make_material.")
 
-        self.shell_lowest_point = -sample_to_bottom - bottom_thickness
-        self.shell_highest_point = sample_to_top + top_thickness
+        self.shell_lowest_point = -origin_to_bottom - bottom_thickness
+        self.shell_highest_point = origin_to_top + top_thickness
         self.shell_center = 0.5 * (self.shell_lowest_point + self.shell_highest_point)
         self.shell_height = self.shell_highest_point - self.shell_lowest_point
 
@@ -77,8 +77,8 @@ class Layer:
         self.cryostat.add_y_plane(self.shell_lowest_point)
         self.cryostat.add_y_plane(self.shell_highest_point)
 
-        self.vac_lowest_point = -sample_to_bottom
-        self.vac_highest_point = sample_to_top
+        self.vac_lowest_point = -origin_to_bottom
+        self.vac_highest_point = origin_to_top
         self.vac_center = 0.5 * (self.vac_highest_point + self.vac_lowest_point)
         self.vac_height = self.vac_highest_point - self.vac_lowest_point
 
@@ -162,7 +162,7 @@ class Layer:
         return inner_radius, outer_radius
 
     def add_window(self, inner_radius=None, outer_radius=None, thickness=None,
-                   height=None, sample_to_top=None, sample_to_bottom=None):
+                   height=None, origin_to_top=None, origin_to_bottom=None):
         """
         Adds 360 deg window in given height interval
 
@@ -174,8 +174,8 @@ class Layer:
         is given, material will be removed from both the outside and inside, only
         use this if necessary, never specify inner / outer radius identical to the
         main layer.
-        Any two of height, sample_to_top and sample_to_bottom can be given, or if
-        the window is symmetrical in height around the sample position, the height
+        Any two of height, origin_to_top and origin_to_bottom can be given, or if
+        the window is symmetrical in height around the origin position, the height
         alone is sufficient.
         It is possible to add multiple multiple windows by calling this method
         multiple times, add the tallest first.
@@ -195,11 +195,11 @@ class Layer:
         height : float
             height of window
 
-        sample_to_top : float
-            distance from sample center to top of window
+        origin_to_top : float
+            distance from origin to top of window
 
-        sample_to_bototm : float
-            distance from sample center to bottom of window
+        origin_to_bototm : float
+            distance from origin to bottom of window
         """
 
         # Assume no cuts are made
@@ -232,21 +232,21 @@ class Layer:
         if abs(outer_radius - self.outer_radius) > 1E-5:
             outer_cut = True
 
-        if self.count_inputs(height, sample_to_top, sample_to_bottom) == 3:
+        if self.count_inputs(height, origin_to_top, origin_to_bottom) == 3:
             raise RuntimeError("Ambigious definition of window height.")
 
         if height is not None:
             window_top = height / 2
             window_bottom = -height / 2
-            if sample_to_top is not None:
-                window_top = sample_to_top
-                window_bottom = sample_to_top - height
-            if sample_to_bottom is not None:
-                window_top = -sample_to_bottom + height
-                window_bottom = -sample_to_bottom
+            if origin_to_top is not None:
+                window_top = origin_to_top
+                window_bottom = origin_to_top - height
+            if origin_to_bottom is not None:
+                window_top = -origin_to_bottom + height
+                window_bottom = -origin_to_bottom
         else:
-            window_top = sample_to_top
-            window_bottom = -sample_to_bottom
+            window_top = origin_to_top
+            window_bottom = -origin_to_bottom
 
         window_height = window_top - window_bottom
         window_position = 0.5 * (window_top + window_bottom)
@@ -325,6 +325,9 @@ class Cryostat:
         set_ROTATED methods that works as the standard McStasScript versions.
         It is possible to add logger components that show scattering in the
         system with the add_spatial_loggers method.
+        The position of the cryostat refers to the sample position and is
+        called the origin. It can be placed in McStas with set_AT and
+        set_ROTATED methods on the cryostat object.
 
         Parameters
         ----------
