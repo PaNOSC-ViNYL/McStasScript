@@ -2131,7 +2131,7 @@ class McStas_instr(McCode_instr):
         Performs simulation, saves in data attribute
 
     run_full_instrument(**kwargs)
-        Depricated method for performing the simulation
+        Deprecated method for performing the simulation
 
     interface()
         Shows interface with jupyter notebook widgets
@@ -2393,7 +2393,7 @@ class McXtrace_instr(McCode_instr):
         Performs simulation, saves in data attribute
 
     run_full_instrument(**kwargs)
-        Depricated method for performing the simulation
+        Deprecated method for performing the simulation
 
     interface()
         Shows interface with jupyter notebook widgets
