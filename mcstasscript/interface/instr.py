@@ -298,6 +298,7 @@ class McCode_instr(BaseCalculator):
             elif isinstance(parameter.value, (str)):
                 parameter.type = "string"
             else:
+                # They will be typed when the instrument is written
                 parameter.type = None
 
         self._run_settings = {}  # Settings for running simulation
@@ -392,7 +393,7 @@ class McCode_instr(BaseCalculator):
         Method for adding input parameter to instrument
 
         Type does not need to be specified, McStas considers that a floating
-        point value with the type double. Uses libpyvinyl Parameter object.
+        point value with the type 'double'. Uses libpyvinyl Parameter object.
 
         Examples
         --------
@@ -423,6 +424,9 @@ class McCode_instr(BaseCalculator):
 
             comment : str
                 Comment displayed next to declaration of parameter
+
+            options : list or value
+                list or value of allowed values for this parameter
         """
         par = provide_parameter(*args, **kwargs)
         self.parameters.add(par)

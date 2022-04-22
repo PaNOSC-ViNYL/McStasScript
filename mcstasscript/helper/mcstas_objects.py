@@ -2,7 +2,6 @@ from mcstasscript.helper.formatting import bcolors
 from mcstasscript.helper.formatting import is_legal_parameter
 
 from libpyvinyl.Parameters.Parameter import Parameter
-from libpyvinyl.Parameters.Collections import CalculatorParameters
 
 
 def provide_parameter(*args, **kwargs):
@@ -33,11 +32,14 @@ def provide_parameter(*args, **kwargs):
         Name of input parameter
 
     Keyword arguments
-        value : any
+        value : float, int or str
             sets default value of parameter
+        unit : str
+            string that describes the unit
         comment : str
             sets comment displayed next to declaration
-
+        options : list or value
+            list or value of allowed values for this parameter
     """
     if len(args) == 0:
         # Check all required keyword arguments present
@@ -111,6 +113,21 @@ def provide_parameter(*args, **kwargs):
 
 
 def write_parameter(fo, parameter, stop_character):
+    """
+    Writes a parameter object to McStas define section
+
+    Parameters
+    ----------
+
+    fo : file object
+        Open file object to write parameter string to
+
+    parameter : Parameter
+        Parameter object to be written
+
+    stop_character : str
+        Character inserted after parameter, usually comma and space
+    """
     if not isinstance(stop_character, str):
         raise RuntimeError("stop_character in write_parameter should be "
                            + "a string.")
