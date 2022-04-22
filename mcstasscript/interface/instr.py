@@ -293,7 +293,7 @@ class McCode_instr(BaseCalculator):
 
         # Attempt to classify given parameters in McStas context
         for parameter in self.parameters.parameters.values():
-            if parameter.value is None or isinstance(parameter.value, (float, int)):
+            if isinstance(parameter.value, (float, int)):
                 parameter.type = "double"
             elif isinstance(parameter.value, (str)):
                 parameter.type = "string"
