@@ -7,8 +7,6 @@ import datetime
 
 from mcstasscript.interface.instr import McStas_instr
 from mcstasscript.interface.instr import McXtrace_instr
-from mcstasscript.helper.mcstas_objects import ParameterContainer
-from mcstasscript.helper.mcstas_objects import ParameterVariable
 
 from .helpers_for_tests import WorkInTestDir
 

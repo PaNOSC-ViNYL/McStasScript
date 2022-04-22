@@ -5,292 +5,151 @@ from libpyvinyl.Parameters.Parameter import Parameter
 from libpyvinyl.Parameters.Collections import CalculatorParameters
 
 
-class ParameterVariable(Parameter):
-    """
-    Class describing an input parameter in McStas instrument
+def provide_parameter(*args, **kwargs):
+    """Makes a libpyvinyl parameter object
 
-    McStas input parameters are of default type double, but can be
-    cast.  If two positional arguments are given, the first is the
-    type, and the second is the parameter name.  With one input, only
-    the parameter name is read.  It is also possible to assign a
-    default value and a comment through keyword arguments. Inherits from the
-    libpyvinyl Parameter.
+    Examples
+    --------
 
-    Attributes
+    Creates a parameter with name wavelength and associated comment
+    A = provide_parameter("wavelength", comment="wavelength in [AA]")
+
+    Creates a parameter with name A3 and default value
+    A = provide_parameter("A3", value=30, comment="A3 angle in [deg]")
+
+    Creates a parameter with type string and name sample_name
+    A = provide_parameter("string", "sample_name")
+
+    Parameters
     ----------
-    type : str
-        McStas type of input: Double, Int, String
-
-    name : str
+    If giving a type:
+    Positional argument 1: type: str
+        Type of the parameter, double, int or string
+    Positional argument 2: name: str
         Name of input parameter
 
-    value : any
-        Default value/string of parameter, converted to string
+    If not giving type
+    Positional argument 1: name : str
+        Name of input parameter
 
-    unit : str
-        String descrbing the unit for this variable
+    Keyword arguments
+        value : any
+            sets default value of parameter
+        comment : str
+            sets comment displayed next to declaration
 
-    comment : str
-        Comment displayed next to the parameter, could contain units
-
-    Methods
-    -------
-    write_parameter(fo,stop_character)
-        writes the parameter to file fo, uses given stop character
     """
+    if len(args) == 0:
+        # Check all required keyword arguments present
+        if "name" not in kwargs["name"]:
+            raise RuntimeError("Need to provide name, either as first argument"
+                               + " or keyword argument")
+        provided_name = kwargs["name"]
 
-    def __init__(self, *args, **kwargs):
-        """Initializing mcstas parameter object
+        provided_type = ""
+        if "type" in kwargs:
+            provided_type = kwargs["type"]
 
-        Examples
-        --------
+    elif len(args) == 1:
+        if "name" in kwargs:
+            raise RuntimeError("Only specify name with argument or keyword argument")
+        provided_name = args[0]
 
-        Creates a parameter with name wavelength and associated comment
-        A = ParameterVariable("wavelength", comment="wavelength in [AA]")
+        # Assume default type if not given
+        provided_type = ""
+        if "type" in kwargs:
+            provided_type = kwargs["type"]
 
-        Creates a parameter with name A3 and default value
-        A = ParameterVariable("A3", value=30, comment="A3 angle in [deg]")
+    elif len(args) == 2:
+        if "type" in kwargs:
+            raise RuntimeError("Only specify type with argument or keyword argument")
+        provided_type = args[0]
 
-        Creates a parameter with type string and name sample_name
-        A = ParameterVariable("string", "sample_name")
+        if "name" in kwargs:
+            raise RuntimeError("Only specify name with argument or keyword argument")
+        provided_name = args[1]
 
-        Parameters
-        ----------
-        If giving a type:
-        Positional argument 1: type: str
-            Type of the parameter, double, int or string
-        Positional argument 2: name: str
-            Name of input parameter
+    else:
+        raise RuntimeError("Too many arguments given to parameter")
 
-        If not giving type
-        Positional argument 1: name : str
-            Name of input parameter
+    if not is_legal_parameter(provided_name):
+        raise NameError("The given parameter name: \""
+                        + provided_name
+                        + "\" is not a legal c variable name, "
+                        + " and cannot be used in McStas.")
 
-        Keyword arguments
-            value : any
-                sets default value of parameter
-            comment : str
-                sets comment displayed next to declaration
+    allowed_types = {"", "double", "int", "string"}
+    if provided_type not in allowed_types:
+        raise RuntimeError("Tried to create parameter of type \""
+                           + str(provided_type)
+                           + "\" which is not among the allowed types "
+                           + str(allowed_types) + ".")
 
-        """
+    comment = ""
+    if "comment" in kwargs:
+        if not isinstance(comment, str):
+            raise RuntimeError("Tried to create a parameter with a "
+                               + "comment that was not a string.")
+        comment = kwargs["comment"]
 
-        if len(args) == 1:
-            self.type = ""
-            name = str(args[0])
-        if len(args) == 2:
-            specified_type = args[0]
-            allowed_types = {"double", "int", "string"}
-            if specified_type not in allowed_types:
-                raise RuntimeError("Tried to create parameter of type \""
-                                   + str(specified_type)
-                                   + "\" which is not among the allowed types "
-                                   + str(allowed_types) + ".")
+    unit = ""
+    if "unit" in kwargs:
+        if not isinstance(unit, str):
+            raise RuntimeError("Unit has to be a string")
+        unit = kwargs["unit"]
 
-            self.type = specified_type
-            name = str(args[1])
+    parameter = Parameter(name=provided_name, unit=unit, comment=comment)
+    parameter.type = provided_type
 
-        if not is_legal_parameter(name):
-            raise NameError("The given parameter name: \""
-                            + name
-                            + "\" is not a legal c variable name, "
-                            + " and cannot be used in McStas.")
+    if "options" in kwargs:
+        parameter.add_option(kwargs["options"], True)
 
-        comment = None
-        if "comment" in kwargs:
-            comment = kwargs["comment"]
-            if not isinstance(comment, str):
-                raise RuntimeError("Tried to create a parameter with a "
-                                   + "comment that was not a string.")
+    if "value" in kwargs:
+        parameter.value = kwargs["value"]
 
-        unit = None
-        if "unit" in kwargs:
-            unit = kwargs["unit"]
-            if not isinstance(unit, str):
-                raise RuntimeError("Unit has to be a string")
+    return parameter
 
-        super().__init__(name=name, unit=unit, comment=comment)
 
-        if "options" in kwargs:
-            options = kwargs["options"]
+def write_parameter(fo, parameter, stop_character):
+    if not isinstance(stop_character, str):
+        raise RuntimeError("stop_character in write_parameter should be "
+                           + "a string.")
 
-            self.add_option(options, True)
+    if parameter.type is None:
+        # This can happen if parameter given by libpyvinyl directly, infer type
+        if parameter.value is None:
+            raise RuntimeError("Need to set parameter '" + parameter.name
+                               + "' before writing instrument.")
 
-        if "value" in kwargs:
-            if not isinstance(kwargs["value"], (str, int, float)):
-                raise RuntimeError("Given value for parameter has to be of "
-                                   + "type str, int or float.")
-
-            self.value = kwargs["value"]
-
-    def write_parameter(self, fo, stop_character):
-        """Writes input parameter to file"""
-
-        if not isinstance(stop_character, str):
-            raise RuntimeError("stop_character in write_parameter should be "
-                               + "a string.")
-
-        if not self.type == "":
-            fo.write("%s %s" % (self.type, self.name))
+        if isinstance(parameter.value, (float, int)):
+            parameter.type = "double"
+        elif isinstance(parameter.value, str):
+            parameter.type = "string"
         else:
-            fo.write(self.name)
+            raise RuntimeError("Parameter '" + parameter.name + "' has value "
+                               + "of type not recognized by McStasScript.")
 
-        if self.value is not None:
-            if isinstance(self.value, int):
-                fo.write(" = %d" % self.value)
-            elif isinstance(self.value, float):
-                fo.write(" = %G" % self.value)
-            else:
-                fo.write(" = %s" % str(self.value))
-        fo.write(stop_character)
+    if not parameter.type == "":
+        fo.write("%s %s" % (parameter.type, parameter.name))
+    else:
+        fo.write(parameter.name)
 
-        if self.comment is None:
-            c_comment = ""
+    if parameter.value is not None:
+        if isinstance(parameter.value, int):
+            fo.write(" = %d" % parameter.value)
+        elif isinstance(parameter.value, float):
+            fo.write(" = %G" % parameter.value)
         else:
-            c_comment = "// " + self.comment
+            fo.write(" = %s" % str(parameter.value))
+    fo.write(stop_character)
 
-        fo.write(c_comment)
-        fo.write("\n")
+    if parameter.comment is None or parameter.comment == "":
+        c_comment = ""
+    else:
+        c_comment = "// " + parameter.comment
 
-
-class ParameterContainer(CalculatorParameters):
-    def __init__(self, parameters=None):
-        """
-        McStasScript version of libpyvinyls CalculatorParameters
-
-        Expanded with ability to import standard libpyvinyl parameters to
-        McStasScript and show parameter method.
-        """
-        super().__init__(parameters)
-
-    def import_parameters(self, parameters):
-        """
-        Imports libpyvinyl parameters to this ParameterContainer
-
-        There are further requirements for parameters in McStasScript which
-        need to be checked on import, and a subclass of Parameter is used
-        to store these with additional functionality.
-
-        Parameters:
-            parameters: ParameterContainer
-                libpyvinyl ParameterContainer for conversion
-        """
-        if isinstance(parameters, ParameterContainer):
-            for parameter in parameters:
-                self.add(parameter)
-            return
-
-        if not isinstance(parameters, CalculatorParameters):
-            raise RuntimeError("Uknown parameter class given.")
-
-        # Code for loading from CalculatorParameters
-        for parameter in parameters:
-            try:
-                mcstas_par = ParameterVariable(parameter.name,
-                                               unit=parameter.unit,
-                                               comment=parameter.comment)
-            except:
-                raise NameError("Imported parameter did not have McStas "
-                                + "legal name")
-
-            # Ensure strings get appropriate McStas type.
-            if isinstance(parameter.value, str):
-                mcstas_par.type = "string"
-
-            mcstas_par.__dict__.update(parameter.__dict__)
-
-            self.add(mcstas_par)
-
-    def show_parameters(self, line_limit=100):
-
-        """
-        Method for displaying current instrument parameters
-
-        line_limit : int
-            Maximum line length for terminal output
-        """
-
-        if len(self.parameters) == 0:
-            print("No instrument parameters available")
-            return
-
-        # Find longest fields
-        types = []
-        names = []
-        values = []
-        comments = []
-        for parameter in self.parameters.values():
-            types.append(str(parameter.type))
-            names.append(str(parameter.name))
-            values.append(str(parameter.value))
-            if parameter.comment is None:
-                comments.append("")
-            else:
-                comments.append(str(parameter.comment))
-
-        longest_type = len(max(types, key=len))
-        longest_name = len(max(names, key=len))
-        longest_value = len(max(values, key=len))
-        # In addition to the data 11 characters are added before the comment
-        comment_start_point = longest_type + longest_name + longest_value + 11
-        longest_comment = len(max(comments, key=len))
-        length_for_comment = line_limit - comment_start_point
-
-        # Print to console
-        for parameter in self.parameters.values():
-            print(str(parameter.type).ljust(longest_type), end=' ')
-            print(str(parameter.name).ljust(longest_name), end=' ')
-            if parameter.value is None:
-                print("  ", end=' ')
-                print(" ".ljust(longest_value + 1), end=' ')
-            else:
-                print(" =", end=' ')
-                print(str(parameter.value).ljust(longest_value + 1), end=' ')
-
-            if parameter.comment is None:
-                c_comment = ""
-            else:
-                c_comment = "// " + str(parameter.comment)
-
-            if (length_for_comment < 5
-                    or length_for_comment > len(c_comment)):
-                print(c_comment)
-            else:
-                # Split comment into several lines
-                comment = c_comment
-                words = comment.split(" ")
-                words_left = len(words)
-                last_index = 0
-                current_index = 0
-                comment = ""
-                iterations = 0
-                max_iterations = 50
-                while words_left > 0:
-                    iterations += 1
-                    if iterations > max_iterations:
-                        #  Something went long, print on one line
-                        break
-
-                    line_left = length_for_comment
-
-                    while line_left > 0:
-                        if current_index >= len(words):
-                            current_index = len(words) + 1
-                            break
-                        line_left -= len(str(words[current_index])) + 1
-                        current_index += 1
-
-                    current_index -= 1
-                    for word in words[last_index:current_index]:
-                        comment += word + " "
-                    words_left = len(words) - current_index
-                    if words_left > 0:
-                        comment += "\n" + " " * comment_start_point
-                        last_index = current_index
-
-                if not iterations == max_iterations + 1:
-                    print(comment)
-                else:
-                    print(c_comment.ljust(longest_comment))
+    fo.write(c_comment)
+    fo.write("\n")
 
 
 class DeclareVariable:
@@ -449,6 +308,7 @@ class DeclareVariable:
             string += str(self.vector)
 
         return string
+
 
 class Component:
     """
@@ -749,7 +609,7 @@ class Component:
 
         # If parameter objects given, take their name instead
         for index, element in enumerate(at_list):
-            if isinstance(element, (ParameterVariable, DeclareVariable)):
+            if isinstance(element, (Parameter, DeclareVariable)):
                 at_list[index] = element.name
 
         self.AT_data = at_list
@@ -785,7 +645,7 @@ class Component:
 
         # If parameter objects given, take their name instead
         for index, element in enumerate(rotated_list):
-            if isinstance(element, (ParameterVariable, DeclareVariable)):
+            if isinstance(element, (Parameter, DeclareVariable)):
                 rotated_list[index] = element.name
 
         self.ROTATED_data = rotated_list
@@ -955,7 +815,7 @@ class Component:
                                     + " not set.")
                 else:
                     continue
-            elif isinstance(val, (ParameterVariable, DeclareVariable)):
+            elif isinstance(val, (Parameter, DeclareVariable)):
                 # Extract the parameter name
                 val = val.name
 
@@ -1097,7 +957,7 @@ class Component:
                 unit = ""
                 if key in self.parameter_units:
                     unit = "[" + self.parameter_units[key] + "]"
-                if isinstance(val, ParameterVariable):
+                if isinstance(val, Parameter):
                     #val_string = val.print_line() # too long
                     val_string = val.name
                 elif isinstance(val, DeclareVariable):
@@ -1237,7 +1097,7 @@ class Component:
             if getattr(self, parameter) is not None:
                 parameter_input = getattr(self, parameter)
                 # Use name when an par/var object is found
-                if isinstance(parameter_input, (ParameterVariable, DeclareVariable)):
+                if isinstance(parameter_input, (Parameter, DeclareVariable)):
                     parameter_input = parameter_input.name
 
                 this_set_value = str(parameter_input)

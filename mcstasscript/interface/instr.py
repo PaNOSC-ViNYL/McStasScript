@@ -15,9 +15,10 @@ from libpyvinyl.Parameters.Collections import CalculatorParameters
 from mcstasscript.data.pyvinylData import pyvinylMcStasData
 
 from mcstasscript.helper.mcstas_objects import DeclareVariable
-from mcstasscript.helper.mcstas_objects import ParameterVariable
+from mcstasscript.helper.mcstas_objects import provide_parameter
+from mcstasscript.helper.mcstas_objects import write_parameter
 from mcstasscript.helper.mcstas_objects import Component
-from mcstasscript.helper.mcstas_objects import ParameterContainer
+
 from mcstasscript.helper.component_reader import ComponentReader
 from mcstasscript.helper.managed_mcrun import ManagedMcrun
 from mcstasscript.helper.formatting import is_legal_filename
@@ -225,7 +226,7 @@ class McCode_instr(BaseCalculator):
         Returns data set from latest simulation in widget
     """
 
-    def __init__(self, name, parameters=None, dumpfile=None, executable=None,
+    def __init__(self, name, parameters=None, executable=None,
                  author=None, origin=None,  **kwargs):
         """
         Initialization of McStas Instrument
@@ -238,9 +239,6 @@ class McCode_instr(BaseCalculator):
         keyword arguments:
             parameters : ParameterContainer or CalculatorParameters
                 Parameters for this instrument
-
-            dumpfile: str
-                File path to dump file to be loaded
 
             author : str
                 Name of author, written in instrument file
@@ -269,20 +267,6 @@ class McCode_instr(BaseCalculator):
                          output_data_types=[pyvinylMcStasData],
                          parameters=parameters)
 
-        # Libpyvinyl uses CalculatorParameters, replace with ParameterContainer
-        if not isinstance(self.parameters, ParameterContainer):
-            # Need to convert McStasScript parameters
-            if isinstance(self.parameters, CalculatorParameters):
-                mcstasscript_parameters = ParameterContainer()
-                mcstasscript_parameters.import_parameters(self.parameters)
-                self.parameters = mcstasscript_parameters
-
-            else:
-                raise TypeError("Input parameter 'parameters' must be of "
-                                + "type CalculatorParameters or "
-                                + "ParameterContainer, not "
-                                + "%s", type(self.parameters))
-
         # Check required attributes has been set by class that inherits
         if not (hasattr(self, "particle") or
                 hasattr(self, "package_name")):
@@ -306,6 +290,15 @@ class McCode_instr(BaseCalculator):
             self.origin = "ESS DMSC"
         else:
             self.origin = str(origin)
+
+        # Attempt to classify given parameters in McStas context
+        for parameter in self.parameters.parameters.values():
+            if parameter.value is None or isinstance(parameter.value, (float, int)):
+                parameter.type = "double"
+            elif isinstance(parameter.value, (str)):
+                parameter.type = "string"
+            else:
+                parameter.type = None
 
         self._run_settings = {}  # Settings for running simulation
 
@@ -385,7 +378,7 @@ class McCode_instr(BaseCalculator):
         """
         Create empty ParameterContainer for new instrument
         """
-        self.parameters = ParameterContainer()
+        self.parameters = CalculatorParameters()
 
     def _read_calibration(self):
         """
@@ -399,7 +392,7 @@ class McCode_instr(BaseCalculator):
         Method for adding input parameter to instrument
 
         Type does not need to be specified, McStas considers that a floating
-        point value with the type double.
+        point value with the type double. Uses libpyvinyl Parameter object.
 
         Examples
         --------
@@ -422,29 +415,114 @@ class McCode_instr(BaseCalculator):
             name of parameter
 
         keyword arguments
-            value : any
+            value : float, int or str
                 Default value of parameter
+
+            unit : str
+                Unit to be displayed
 
             comment : str
                 Comment displayed next to declaration of parameter
         """
-        # ParameterVariable class documented independently
-        par = ParameterVariable(*args, ** kwargs)
+        par = provide_parameter(*args, **kwargs)
         self.parameters.add(par)
+
         return par
 
     def show_parameters(self, line_length=None):
+
         """
         Method for displaying current instrument parameters
 
-        keyword arguments
-            line_length : int
-                Maximum line length for terminal output
+        line_limit : int
+            Maximum line length for terminal output
         """
+
+        if len(self.parameters.parameters) == 0:
+            print("No instrument parameters available")
+            return
+
         if line_length is None:
             line_length = self.line_limit
 
-        self.parameters.show_parameters(line_length)
+        # Find longest fields
+        types = []
+        names = []
+        values = []
+        comments = []
+        for parameter in self.parameters.parameters.values():
+            types.append(str(parameter.type))
+            names.append(str(parameter.name))
+            values.append(str(parameter.value))
+            if parameter.comment is None:
+                comments.append("")
+            else:
+                comments.append(str(parameter.comment))
+
+        longest_type = len(max(types, key=len))
+        longest_name = len(max(names, key=len))
+        longest_value = len(max(values, key=len))
+        # In addition to the data 11 characters are added before the comment
+        comment_start_point = longest_type + longest_name + longest_value + 11
+        longest_comment = len(max(comments, key=len))
+        length_for_comment = line_length - comment_start_point
+
+        # Print to console
+        for parameter in self.parameters.parameters.values():
+            print(str(parameter.type).ljust(longest_type), end=' ')
+            print(str(parameter.name).ljust(longest_name), end=' ')
+            if parameter.value is None:
+                print("  ", end=' ')
+                print(" ".ljust(longest_value + 1), end=' ')
+            else:
+                print(" =", end=' ')
+                print(str(parameter.value).ljust(longest_value + 1), end=' ')
+
+            if parameter.comment is None:
+                c_comment = ""
+            else:
+                c_comment = "// " + str(parameter.comment)
+
+            if (length_for_comment < 5
+                    or length_for_comment > len(c_comment)):
+                print(c_comment)
+            else:
+                # Split comment into several lines
+                comment = c_comment
+                words = comment.split(" ")
+                words_left = len(words)
+                last_index = 0
+                current_index = 0
+                comment = ""
+                iterations = 0
+                max_iterations = 50
+                while words_left > 0:
+                    iterations += 1
+                    if iterations > max_iterations:
+                        #  Something went long, print on one line
+                        break
+
+                    line_left = length_for_comment
+
+                    while line_left > 0:
+                        if current_index >= len(words):
+                            current_index = len(words) + 1
+                            break
+                        line_left -= len(str(words[current_index])) + 1
+                        current_index += 1
+
+                    current_index -= 1
+                    for word in words[last_index:current_index]:
+                        comment += word + " "
+                    words_left = len(words) - current_index
+                    if words_left > 0:
+                        comment += "\n" + " " * comment_start_point
+                        last_index = current_index
+
+                if not iterations == max_iterations + 1:
+                    print(comment)
+                else:
+                    print(c_comment.ljust(longest_comment))
 
     def show_variables(self):
         """
@@ -1548,12 +1626,13 @@ class McCode_instr(BaseCalculator):
         fo.write("\n")
         fo.write("DEFINE INSTRUMENT %s (" % self.name)
         fo.write("\n")
-        # Add loop that inserts parameters here
+        # Insert parameters
         parameter_list = list(self.parameters)
-        for variable in parameter_list[0:-1]:
-            variable.write_parameter(fo, ", ")
-        if len(parameter_list) > 0:
-            parameter_list[-1].write_parameter(fo, " ")
+        end_chars = [", "]*len(parameter_list)
+        if len(end_chars) >= 1:
+            end_chars[-1] = " "
+        for variable, end_char in zip(parameter_list, end_chars):
+            write_parameter(fo, variable, end_char)
         fo.write(")\n")
         fo.write("\n")
 
