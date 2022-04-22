@@ -5,7 +5,7 @@ import io
 from mcstasscript.jb_interface.widget_helpers import HiddenPrints
 from mcstasscript.jb_interface.widget_helpers import parameter_has_default
 from mcstasscript.jb_interface.widget_helpers import get_parameter_default
-from mcstasscript.helper.mcstas_objects import ParameterVariable
+from mcstasscript.helper.mcstas_objects import provide_parameter
 
 
 class TestWidgetHelpers(unittest.TestCase):
@@ -35,7 +35,7 @@ class TestWidgetHelpers(unittest.TestCase):
         Check for parameter that does not have default, should be false
         """
 
-        par = ParameterVariable("test")
+        par = provide_parameter("test")
         self.assertFalse(parameter_has_default(par))
 
     def test_parameter_has_default_true(self):
@@ -43,7 +43,7 @@ class TestWidgetHelpers(unittest.TestCase):
         Check for parameter that has default, should be true
         """
 
-        par = ParameterVariable("test", value=8)
+        par = provide_parameter("test", value=8)
         self.assertTrue(parameter_has_default(par))
 
     def test_get_parameter_default_string(self):
@@ -51,7 +51,7 @@ class TestWidgetHelpers(unittest.TestCase):
         Get the default for string parameter
         """
 
-        par = ParameterVariable("string", "test", value="variable")
+        par = provide_parameter("string", "test", value="variable")
         self.assertEqual(get_parameter_default(par), "variable")
 
     def test_get_parameter_default_double_specified(self):
@@ -59,7 +59,7 @@ class TestWidgetHelpers(unittest.TestCase):
         Get the default for specified double parameter
         """
 
-        par = ParameterVariable("double", "test", value=5.5)
+        par = provide_parameter("double", "test", value=5.5)
         self.assertEqual(get_parameter_default(par), 5.5)
 
     def test_get_parameter_default_double(self):
@@ -67,7 +67,7 @@ class TestWidgetHelpers(unittest.TestCase):
         Get the default for parameter that was double by default
         """
 
-        par = ParameterVariable("test", value=5.7)
+        par = provide_parameter("test", value=5.7)
         self.assertEqual(get_parameter_default(par), 5.7)
 
     def test_get_parameter_default_int(self):
@@ -75,7 +75,7 @@ class TestWidgetHelpers(unittest.TestCase):
         Get default value from integer value, should be rounded
         """
 
-        par = ParameterVariable("int", "test", value=5.7)
+        par = provide_parameter("int", "test", value=5.7)
         self.assertEqual(get_parameter_default(par), 5)
 
 

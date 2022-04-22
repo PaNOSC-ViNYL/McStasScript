@@ -5,10 +5,12 @@ import unittest
 import unittest.mock
 import datetime
 
+from libpyvinyl.Parameters.Collections import CalculatorParameters
+
 from mcstasscript.interface.instr import McStas_instr
 from mcstasscript.interface.instr import McXtrace_instr
 from mcstasscript.helper.formatting import bcolors
-from .helpers_for_tests import WorkInTestDir
+from mcstasscript.tests.helpers_for_tests import WorkInTestDir
 
 run_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '.')
 
@@ -347,6 +349,32 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(my_instrument._run_settings["executable_path"], correct_mxrun_path)
         self.assertEqual(my_instrument._run_settings["package_path"], correct_mcxtrace_path)
         self.assertEqual(my_instrument.line_limit, correct_n_of_characters)
+
+    def test_load_libpyvinyl_parameters(self):
+        parameters = CalculatorParameters()
+        int_par = parameters.new_parameter("int_parameter", comment="integer parameter")
+        int_par.value = 3
+
+        double_par = parameters.new_parameter("double_parameter", unit="meV")
+        double_par.value = 3.0
+
+        string_par = parameters.new_parameter("string_parameter")
+        string_par.value = "hello world"
+
+        secret_par = parameters.new_parameter("no_value_par")
+
+        instr = McStas_instr("test_instr", parameters=parameters)
+
+        self.assertEqual(int_par.type, "double")
+        self.assertEqual(double_par.type, "double")
+        self.assertEqual(string_par.type, "string")
+        self.assertEqual(secret_par.type, None)
+
+        instr.set_parameters(int_parameter=4)
+        self.assertEqual(int_par.value, 4)
+
+        int_par.value = 5
+        self.assertEqual(instr.parameters["int_parameter"].value, 5)
 
     def test_simple_add_parameter(self):
         """

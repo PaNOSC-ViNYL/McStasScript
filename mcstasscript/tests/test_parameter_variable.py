@@ -1,8 +1,8 @@
 import unittest
 import unittest.mock
 
-from mcstasscript.helper.mcstas_objects import ParameterVariable
-
+from mcstasscript.helper.mcstas_objects import provide_parameter
+from mcstasscript.helper.mcstas_objects import write_parameter
 
 class Test_ParameterVariable(unittest.TestCase):
     """
@@ -16,7 +16,7 @@ class Test_ParameterVariable(unittest.TestCase):
         Smallest possible initialization
         """
 
-        par = ParameterVariable("test")
+        par = provide_parameter("test")
         self.assertEqual(par.name, "test")
 
     def test_ParameterVariable_init_basic_type(self):
@@ -24,7 +24,7 @@ class Test_ParameterVariable(unittest.TestCase):
         Initialization with a type
         """
 
-        par = ParameterVariable("double", "test")
+        par = provide_parameter("double", "test")
 
         self.assertEqual(par.name, "test")
         self.assertEqual(par.type, "double")
@@ -34,7 +34,7 @@ class Test_ParameterVariable(unittest.TestCase):
         Initialization with type and value
         """
 
-        par = ParameterVariable("double", "test", value=518)
+        par = provide_parameter("double", "test", value=518)
 
         self.assertEqual(par.name, "test")
         self.assertEqual(par.type, "double")
@@ -45,7 +45,7 @@ class Test_ParameterVariable(unittest.TestCase):
         Initialization with type, value and comment
         """
 
-        par = ParameterVariable("double", "test", value=518,
+        par = provide_parameter("double", "test", value=518,
                                 comment="test comment /")
 
         self.assertEqual(par.name, "test")
@@ -58,7 +58,7 @@ class Test_ParameterVariable(unittest.TestCase):
         Initialization with value and comment
         """
 
-        par = ParameterVariable("test", value=518,
+        par = provide_parameter("test", value=518,
                                 comment="test comment /")
 
         self.assertEqual(par.name, "test")
@@ -71,7 +71,7 @@ class Test_ParameterVariable(unittest.TestCase):
         Initialization with value and comment
         """
 
-        par = ParameterVariable("test", value=2,
+        par = provide_parameter("test", value=2,
                                 options=[1, 2, 3.1])
 
         self.assertEqual(par.name, "test")
@@ -89,9 +89,9 @@ class Test_ParameterVariable(unittest.TestCase):
         used.
         """
 
-        par = ParameterVariable("double", "test")
+        par = provide_parameter("double", "test")
         with mock_f('test.txt', 'w') as m_fo:
-            par.write_parameter(m_fo, "")
+            write_parameter(m_fo, parameter=par, stop_character="")
 
         expected_writes = [unittest.mock.call("double test"),
                            unittest.mock.call(""),
@@ -112,11 +112,11 @@ class Test_ParameterVariable(unittest.TestCase):
         is used. (float value)
         """
 
-        par = ParameterVariable("double", "test", value=5.4,
+        par = provide_parameter("double", "test", value=5.4,
                                 comment="test comment")
 
         with mock_f('test.txt', 'w') as m_fo:
-            par.write_parameter(m_fo, ")")
+            write_parameter(m_fo, parameter=par, stop_character=")")
 
         expected_writes = [unittest.mock.call("double test"),
                            unittest.mock.call(" = 5.4"),
@@ -138,11 +138,11 @@ class Test_ParameterVariable(unittest.TestCase):
         is used. (integer value)
         """
 
-        par = ParameterVariable("double", "test", value=5,
+        par = provide_parameter("double", "test", value=5,
                                 comment="test comment")
 
         with mock_f('test.txt', 'w') as m_fo:
-            par.write_parameter(m_fo, ")")
+            write_parameter(m_fo, parameter=par, stop_character=")")
 
         expected_writes = [unittest.mock.call("double test"),
                            unittest.mock.call(" = 5"),
@@ -164,11 +164,11 @@ class Test_ParameterVariable(unittest.TestCase):
         is used. (string value)
         """
 
-        par = ParameterVariable("double", "test", value="\"Al\"",
+        par = provide_parameter("double", "test", value="\"Al\"",
                                 comment="test comment")
 
         with mock_f('test.txt', 'w') as m_fo:
-            par.write_parameter(m_fo, ",")
+            write_parameter(m_fo, parameter=par, stop_character=",")
 
         expected_writes = [unittest.mock.call("double test"),
                            unittest.mock.call(" = \"Al\""),
