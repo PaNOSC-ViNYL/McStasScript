@@ -350,6 +350,10 @@ class ComponentReader:
                             temp_par_type = "string"
                             # remove string from part
                             part = "".join(possible_declare[1:])
+                        if "double" == possible_type:
+                            temp_par_type = "double"
+                            # remove double from part
+                            part = "".join(possible_declare[1:])
 
                         part = part.replace(" ", "")
                         if part == "":
