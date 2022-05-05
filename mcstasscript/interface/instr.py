@@ -346,6 +346,9 @@ class McCode_instr(BaseCalculator):
         if "custom_flags" in kwargs:
             provided_run_settings["custom_flags"] = kwargs["custom_flags"]
 
+        if "suppress_output" in kwargs:
+            provided_run_settings["suppress_output"] = kwargs["suppress_output"]
+
         # Set run_settings, perform input sanitation
         self.settings(**provided_run_settings)
 
