@@ -68,6 +68,8 @@ class ManagedMcrun:
                 Sets ncount
             mpi : int, default None
                 Sets thread count, None to disable mpi
+            gravity : bool, default False
+                Enables gravity if True
             parameters : dict
                 Sets parameters
             custom_flags : str, default ""
@@ -88,6 +90,7 @@ class ManagedMcrun:
         self.data_folder_name = ""
         self.ncount = int(1E6)
         self.mpi = None
+        self.gravity = False
         self.parameters = {}
         self.custom_flags = ""
         self.executable_path = ""
@@ -121,7 +124,7 @@ class ManagedMcrun:
             self.mpi = kwargs["mpi"]
             try:
                 self.mpi = int(self.mpi)
-            except ValueError:
+            except (TypeError, ValueError) as e:
                 if self.mpi is not None:
                     raise RuntimeError("MPI should be an integer, was "
                                        + str(self.mpi))
@@ -130,6 +133,9 @@ class ManagedMcrun:
                 if self.mpi < 1:
                     raise ValueError("MPI should be an integer larger than"
                                      + " 0, was " + str(self.mpi))
+
+        if "gravity" in kwargs:
+            self.gravity = kwargs["gravity"]
 
         if "seed" in kwargs:
             self.seed = kwargs["seed"]
@@ -192,7 +198,10 @@ class ManagedMcrun:
         # construct command to run
         option_string = ""
         if self.compile:
-            option_string = "-c "
+            option_string += "-c "
+
+        if self.gravity:
+            option_string += "-g "
 
         if self.mpi is not None:
             mpi_string = "--mpi=" + str(self.mpi) + " "  # Set mpi

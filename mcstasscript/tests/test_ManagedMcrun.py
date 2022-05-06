@@ -258,6 +258,43 @@ class TestManagedMcrun(unittest.TestCase):
                                          cwd=mcrun_obj.run_path)
 
     @unittest.mock.patch("subprocess.run")
+    def test_ManagedMcrun_run_simulation_with_gravity(self, mock_sub):
+        """
+        Check a non standard system call is correct when including gravity
+
+        Here multiple options are used and ncount is a float that should
+        be rounded by the class.
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        with WorkInTestDir() as handler:
+            mcrun_obj = ManagedMcrun("test.instr",
+                                     output_path="test_folder",
+                                     executable_path=executable_path,
+                                     executable="mcrun",
+                                     gravity=True,
+                                     mpi=7, seed=300,
+                                     ncount=48.4,
+                                     custom_flags="-fo")
+
+        mcrun_obj.run_simulation()
+
+        expected_folder_path = os.path.join(THIS_DIR, "test_folder")
+
+        # a double space because of a missing option
+        executable = os.path.join(executable_path, "mcrun")
+        expected_call = (executable + " -c -g -n 48 --mpi=7 --seed=300 "
+                         + "-d " + expected_folder_path + " -fo test.instr")
+
+        mock_sub.assert_called_once_with(expected_call,
+                                         shell=True,
+                                         stderr=-1, stdout=-1,
+                                         universal_newlines=True,
+                                         cwd=mcrun_obj.run_path)
+
+    @unittest.mock.patch("subprocess.run")
     def test_ManagedMcrun_run_simulation_parameters(self, mock_sub):
         """
         Check a run with parameters is correct

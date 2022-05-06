@@ -340,6 +340,9 @@ class McCode_instr(BaseCalculator):
         if "mpi" in kwargs:
             provided_run_settings["mpi"] = kwargs["mpi"]
 
+        if "gravity" in kwargs:
+            provided_run_settings["gravity"] = kwargs["gravity"]
+
         if "seed" in kwargs:
             provided_run_settings["seed"] = str(kwargs["seed"])
 
@@ -1684,7 +1687,7 @@ class McCode_instr(BaseCalculator):
                  force_compile=None, output_path=None,
                  increment_folder_name=None, custom_flags=None,
                  executable=None, executable_path=None,
-                 suppress_output=None):
+                 suppress_output=None, gravity=None):
         """
         Sets settings for McStas run performed with backengine
 
@@ -1715,6 +1718,8 @@ class McCode_instr(BaseCalculator):
                 Path to mcrun command, "" if already in path
             suppress_output : bool
                 Set to True to surpress output
+            gravity : bool
+                If True, gravity will be simulated
         """
 
         settings = {}
@@ -1751,6 +1756,9 @@ class McCode_instr(BaseCalculator):
                 raise TypeError("mpi must be an integer or None.")
             settings["mpi"] = mpi
 
+        if gravity is not None:
+            settings["gravity"] = bool(gravity)
+
         if custom_flags is not None:
             str(custom_flags)  # Check a string is given
             settings["custom_flags"] = custom_flags
@@ -1781,8 +1789,14 @@ class McCode_instr(BaseCalculator):
 
         if "mpi" in self._run_settings:
             value = self._run_settings["mpi"]
-            description += "  mpi:".ljust(variable_space)
-            description += str(int(value)) + "\n"
+            if value is not None:
+                description += "  mpi:".ljust(variable_space)
+                description += str(int(value)) + "\n"
+
+        if "gravity" in self._run_settings:
+            value = self._run_settings["gravity"]
+            description += "  gravity:".ljust(variable_space)
+            description += str(value) + "\n"
 
         if "seed" in self._run_settings:
             value = self._run_settings["seed"]

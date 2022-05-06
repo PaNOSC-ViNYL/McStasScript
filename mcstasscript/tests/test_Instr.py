@@ -1898,6 +1898,7 @@ class TestMcStas_instr(unittest.TestCase):
                                       mpi=7,
                                       seed=300,
                                       ncount=48.4,
+                                      gravity=True,
                                       custom_flags="-fo",
                                       parameters={"A": 2,
                                                   "BC": "car",
@@ -1907,7 +1908,7 @@ class TestMcStas_instr(unittest.TestCase):
         expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
         # a double space because of a missing option
-        expected_call = (expected_path + " -c -n 48 --mpi=7 --seed=300 "
+        expected_call = (expected_path + " -c -g -n 48 --mpi=7 --seed=300 "
                          + "-d " + expected_folder_path
                          + " -fo test_instrument.instr "
                          + "theta=\"toy\" has_default=37 A=2 BC=car")
