@@ -346,6 +346,9 @@ class McCode_instr(BaseCalculator):
         if "custom_flags" in kwargs:
             provided_run_settings["custom_flags"] = kwargs["custom_flags"]
 
+        if "suppress_output" in kwargs:
+            provided_run_settings["suppress_output"] = kwargs["suppress_output"]
+
         # Set run_settings, perform input sanitation
         self.settings(**provided_run_settings)
 
@@ -1680,7 +1683,8 @@ class McCode_instr(BaseCalculator):
     def settings(self, ncount=None, mpi="not_set", seed=None,
                  force_compile=None, output_path=None,
                  increment_folder_name=None, custom_flags=None,
-                 executable=None, executable_path=None):
+                 executable=None, executable_path=None,
+                 suppress_output=None):
         """
         Sets settings for McStas run performed with backengine
 
@@ -1709,6 +1713,8 @@ class McCode_instr(BaseCalculator):
                 Name of the executable
             executable_path : str
                 Path to mcrun command, "" if already in path
+            suppress_output : bool
+                Set to True to surpress output
         """
 
         settings = {}
@@ -1751,6 +1757,9 @@ class McCode_instr(BaseCalculator):
 
         if seed is not None:
             settings["seed"] = seed
+
+        if suppress_output is not None:
+            settings["suppress_output"] = suppress_output
 
         if output_path is not None:
             self.output_path = output_path
