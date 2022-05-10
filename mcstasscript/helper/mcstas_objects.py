@@ -469,7 +469,11 @@ class Component:
 
     __isfrozen = False  # When frozen, no new attributes allowed
 
-    def __init__(self, instance_name, component_name, **kwargs):
+    def __init__(self, instance_name, component_name, AT=None,
+                 AT_RELATIVE=None, ROTATED=None, ROTATED_RELATIVE=None,
+                 RELATIVE=None, WHEN=None, EXTEND=None, GROUP=None,
+                 JUMP=None, SPLIT=None, comment=None, c_code_before=None,
+                 c_code_after=None):
         """
         Initializes McStas component with specified name and component
 
@@ -514,6 +518,12 @@ class Component:
 
             comment: str, default ""
                 Sets comment string
+
+            c_code_before: str, default ""
+                Sets c code before component
+
+            c_code_after: str, default ""
+                Sets c code after component
         """
 
         # Allow addition of attributes in init
@@ -538,7 +548,12 @@ class Component:
         self.c_code_after = ""
 
         # If any keywords are set in kwargs, update these
-        self.set_keyword_input(**kwargs)
+        self.set_keyword_input(AT=AT, AT_RELATIVE=AT_RELATIVE, ROTATED=ROTATED,
+                               ROTATED_RELATIVE=ROTATED_RELATIVE,
+                               RELATIVE=RELATIVE, WHEN=WHEN, EXTEND=EXTEND,
+                               GROUP=GROUP, JUMP=JUMP, SPLIT=SPLIT,
+                               comment=comment, c_code_before=c_code_before,
+                               c_code_after=c_code_after)
 
         """
         Could store an option for whether this component should be
@@ -549,49 +564,52 @@ class Component:
         # Do not allow addition of attributes after init
         self._freeze()
 
-    def set_keyword_input(self, **kwargs):
+    def set_keyword_input(self, AT=None, AT_RELATIVE=None, ROTATED=None,
+                          ROTATED_RELATIVE=None, RELATIVE=None, WHEN=None,
+                          EXTEND=None, GROUP=None, JUMP=None, SPLIT=None,
+                          comment=None, c_code_before=None, c_code_after=None):
         # Allow addition of attributes in init
         self._unfreeze()
 
-        if "AT" in kwargs:
-            self.set_AT(kwargs["AT"])
+        if AT is not None:
+            self.set_AT(AT)
 
-        if "AT_RELATIVE" in kwargs:
-            self.set_AT_RELATIVE(kwargs["AT_RELATIVE"])
+        if AT_RELATIVE is not None:
+            self.set_AT_RELATIVE(AT_RELATIVE)
 
         self.ROTATED_specified = False
-        if "ROTATED" in kwargs:
-            self.set_ROTATED(kwargs["ROTATED"])
+        if ROTATED is not None:
+            self.set_ROTATED(ROTATED)
 
-        if "ROTATED_RELATIVE" in kwargs:
-            self.set_ROTATED_RELATIVE(kwargs["ROTATED_RELATIVE"])
+        if ROTATED_RELATIVE is not None:
+            self.set_ROTATED_RELATIVE(ROTATED_RELATIVE)
 
-        if "RELATIVE" in kwargs:
-            self.set_RELATIVE(kwargs["RELATIVE"])
+        if RELATIVE is not None:
+            self.set_RELATIVE(RELATIVE)
 
-        if "WHEN" in kwargs:
-            self.set_WHEN(kwargs["WHEN"])
+        if WHEN is not None:
+            self.set_WHEN(WHEN)
 
-        if "EXTEND" in kwargs:
-            self.append_EXTEND(kwargs["EXTEND"])
+        if EXTEND is not None:
+            self.append_EXTEND(EXTEND)
 
-        if "GROUP" in kwargs:
-            self.set_GROUP(kwargs["GROUP"])
+        if GROUP is not None:
+            self.set_GROUP(GROUP)
 
-        if "JUMP" in kwargs:
-            self.set_JUMP(kwargs["JUMP"])
+        if JUMP is not None:
+            self.set_JUMP(JUMP)
 
-        if "SPLIT" in kwargs:
-            self.set_SPLIT(kwargs["SPLIT"])
+        if SPLIT is not None:
+            self.set_SPLIT(SPLIT)
 
-        if "comment" in kwargs:
-            self.set_comment(kwargs["comment"])
+        if comment is not None:
+            self.set_comment(comment)
 
-        if "c_code_before" in kwargs:
-            self.set_c_code_before(kwargs["c_code_before"])
+        if c_code_before is not None:
+            self.set_c_code_before(c_code_before)
 
-        if "c_code_after" in kwargs:
-            self.set_c_code_after(kwargs["c_code_after"])
+        if c_code_after is not None:
+            self.set_c_code_after(c_code_after)
 
     def __setattr__(self, key, value):
         if self.__isfrozen and not hasattr(self, key):

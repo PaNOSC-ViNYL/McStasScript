@@ -641,7 +641,7 @@ class TestMcStas_instr(unittest.TestCase):
                          + "ABCD")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_show_components_simple(self, mock_stdout):
+    def test_available_components_simple(self, mock_stdout):
         """
         Simple test of show components to show component categories
         """
@@ -653,7 +653,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_instr_with_path()
 
-        instr.show_components()
+        instr.available_components()
 
         os.chdir(current_work_dir)
 
@@ -673,7 +673,7 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[6], " work directory")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_show_components_folder(self, mock_stdout):
+    def test_available_components_folder(self, mock_stdout):
         """
         Simple test of show components to show components in current work
         directory.
@@ -685,7 +685,7 @@ class TestMcStas_instr(unittest.TestCase):
         current_work_dir = os.getcwd()
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
-        instr.show_components("work directory")
+        instr.available_components("work directory")
 
         os.chdir(current_work_dir)
 
@@ -705,14 +705,14 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[5], "")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_show_components_input_path_simple(self, mock_stdout):
+    def test_available_components_input_path_simple(self, mock_stdout):
         """
         Simple test of input_path being recognized and passed
         to component_reader so PSDlin_monitor is overwritten
         """
         instr = setup_instr_with_input_path()
 
-        instr.show_components()
+        instr.available_components()
 
         output = mock_stdout.getvalue()
         output = output.split("\n")
@@ -730,7 +730,7 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[6], " work directory")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_show_components_input_path_custom(self, mock_stdout):
+    def test_available_components_input_path_custom(self, mock_stdout):
         """
         Simple test of input_path being recognized and passed
         to component_reader so PSDlin_monitor is overwritten
@@ -739,7 +739,7 @@ class TestMcStas_instr(unittest.TestCase):
         """
         instr = setup_instr_with_input_path_relative()
 
-        instr.show_components()
+        instr.available_components()
 
         output = mock_stdout.getvalue()
         output = output.split("\n")
@@ -1388,17 +1388,17 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[0], expected)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_print_components_simple(self, mock_stdout):
+    def test_show_components_simple(self, mock_stdout):
         """
-        Tests print_components for simple case
+        Tests show_components for simple case
 
-        print_components calls the print_short method in the component
+        show_components calls the print_short method in the component
         class for each component and aligns the data for display
         """
 
         instr = setup_populated_instr()
 
-        instr.print_components(line_length=300)
+        instr.show_components(line_length=300)
 
         output = mock_stdout.getvalue().split("\n")
 
@@ -1415,11 +1415,11 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[2], expected)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_print_components_complex(self, mock_stdout):
+    def test_show_components_complex(self, mock_stdout):
         """
-        Tests print_components for complex case
+        Tests show_components for complex case
 
-        print_components calls the print_short method in the component
+        show_components calls the print_short method in the component
         class for each component and aligns the data for display
         """
 
@@ -1434,7 +1434,7 @@ class TestMcStas_instr(unittest.TestCase):
         comp = instr.get_last_component()
         comp.component_name = "test_name"
 
-        instr.print_components(line_length=300)
+        instr.show_components(line_length=300)
 
         output = mock_stdout.getvalue().split("\n")
 
@@ -1452,9 +1452,9 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[2], expected)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_print_components_complex_2lines(self, mock_stdout):
+    def test_show_components_complex_2lines(self, mock_stdout):
         """
-        print_components calls the print_short method in the component
+        show_components calls the print_short method in the component
         class for each component and aligns the data for display
 
         This version of the tests forces two lines of output.
@@ -1471,7 +1471,7 @@ class TestMcStas_instr(unittest.TestCase):
         comp = instr.get_last_component()
         comp.component_name = "test_name"
 
-        instr.print_components(line_length=80)
+        instr.show_components(line_length=80)
 
         output = mock_stdout.getvalue().split("\n")
 
@@ -1492,9 +1492,9 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[3], expected)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_print_components_complex_3lines(self, mock_stdout):
+    def test_show_components_complex_3lines(self, mock_stdout):
         """
-        print_components calls the print_short method in the component
+        show_components calls the print_short method in the component
         class for each component and aligns the data for display
 
         This version of the tests forces three lines of output.
@@ -1511,7 +1511,7 @@ class TestMcStas_instr(unittest.TestCase):
         comp = instr.get_last_component()
         comp.component_name = "test_name"
 
-        instr.print_components(line_length=1)  # Three lines maximum
+        instr.show_components(line_length=1)  # Three lines maximum
 
         output = mock_stdout.getvalue().split("\n")
 

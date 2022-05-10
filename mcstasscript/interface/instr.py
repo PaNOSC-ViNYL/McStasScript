@@ -135,7 +135,7 @@ class McCode_instr(BaseCalculator):
     append_trace_no_new_line(string)
         Obsolete method, add components instead (used in write_c_files)
 
-    show_components(string)
+    available_components(string)
         Shows available components in given category
 
     component_help(name)
@@ -195,7 +195,7 @@ class McCode_instr(BaseCalculator):
     print_component_short(instance_name)
         Prints short overview of current state of named component
 
-    print_components()
+    show_components()
         Prints overview of postion / rotation of all components
 
     write_c_files()
@@ -752,7 +752,7 @@ class McCode_instr(BaseCalculator):
 
         self.trace_section = self.trace_section + string
 
-    def show_components(self, *args):
+    def available_components(self, *args):
         """
         Helper method that shows available components to the user
 
@@ -769,7 +769,7 @@ class McCode_instr(BaseCalculator):
         if len(args) == 0:
             print("Here are the available component categories:")
             self.component_reader.show_categories()
-            print("Call show_components(category_name) to display")
+            print("Call available_components(category_name) to display")
 
         else:
             category = args[0]
@@ -827,7 +827,11 @@ class McCode_instr(BaseCalculator):
         return self.component_class_lib[component_name](name, component_name,
                                                         **kwargs)
 
-    def add_component(self, name, component_name, **kwargs):
+    def add_component(self, name, component_name, before=None, after=None,
+                      AT=None, AT_RELATIVE=None, ROTATED=None,
+                      ROTATED_RELATIVE=None, RELATIVE=None, WHEN=None,
+                      EXTEND=None, GROUP=None, JUMP=None, SPLIT=None,
+                      comment=None, c_code_before=None, c_code_after=None):
         """
         Method for adding a new Component instance to the instrument
 
@@ -892,52 +896,84 @@ class McCode_instr(BaseCalculator):
                              + " Rename or remove one instance of this"
                              + " name."))
 
-        # Insert component after component with this name
-        if "after" in kwargs:
-            if kwargs["after"] not in self.component_name_list:
+        # Condense keyword input relating to component to a dict
+        component_input = {"AT": AT, "AT_RELATIVE": AT_RELATIVE,
+                           "ROTATED": ROTATED,
+                           "ROTATED_RELATIVE": ROTATED_RELATIVE,
+                           "RELATIVE": RELATIVE, "WHEN": WHEN,
+                           "EXTEND": EXTEND, "GROUP": GROUP, "JUMP": JUMP,
+                           "SPLIT": SPLIT, "comment": comment,
+                           "c_code_before": c_code_before,
+                           "c_code_after": c_code_after}
+
+        new_component = self._create_component_instance(name, component_name,
+                                                        **component_input)
+
+        self._insert_component(name, new_component, before=before, after=after)
+        return new_component
+
+    def _insert_component(self, name, component, before=None, after=None):
+        """
+        Inserts component into sequence of components held by instrument
+
+        Internal method to handle placement of a new component in the
+        list of components held by this instrument.
+
+        name : str
+            Instance name of component
+
+        component : Component object
+            Component object to be inserted
+
+        before : str or Component object
+            Reference to component to place this one before
+
+        after : str or Component object
+            Reference to coponent to place this one after
+        """
+
+        if before is not None and after is not None:
+            raise RuntimeError("Only specify either 'before' or 'after'.")
+
+        if after is not None:
+            if isinstance(after, Component):
+                after = after.name
+            # Insert component after component with this name
+            if after not in self.component_name_list:
                 raise NameError(("Trying to add a component after a component"
-                                 + " named \"" + str(kwargs["after"])
+                                 + " named \"" + str(after)
                                  + "\", but a component with that name was"
                                  + " not found."))
 
-            new_index = self.component_name_list.index(kwargs["after"])
-
-            new_component = self._create_component_instance(name,
-                                                            component_name,
-                                                            **kwargs)
-            self.component_list.insert(new_index + 1, new_component)
-
+            new_index = self.component_name_list.index(after)
+            self.component_list.insert(new_index + 1, component)
             self.component_name_list.insert(new_index+1, name)
 
-        # Insert component after component with this name
-        elif "before" in kwargs:
-            if kwargs["before"] not in self.component_name_list:
+        elif before is not None:
+            if isinstance(before, Component):
+                before = before.name
+            # Insert component before component with this name
+            if before not in self.component_name_list:
                 raise NameError(("Trying to add a component before a "
                                  + "component named \""
-                                 + str(kwargs["before"])
+                                 + str(before)
                                  + "\", but a component with that "
                                  + "name was not found."))
 
-            new_index = self.component_name_list.index(kwargs["before"])
-
-            new_component = self._create_component_instance(name,
-                                                            component_name,
-                                                            **kwargs)
-            self.component_list.insert(new_index, new_component)
-
+            new_index = self.component_name_list.index(before)
+            self.component_list.insert(new_index, component)
             self.component_name_list.insert(new_index, name)
 
-        # If after or before keywords absent, place component at the end
         else:
-            new_component = self._create_component_instance(name,
-                                                            component_name,
-                                                            **kwargs)
-            self.component_list.append(new_component)
+            # If after and before keywords absent, place component at the end
+            self.component_list.append(component)
             self.component_name_list.append(name)
 
-        return new_component
-
-    def copy_component(self, name, original_component, **kwargs):
+    def copy_component(self, name, original_component, before=None, after=None,
+                      AT=None, AT_RELATIVE=None, ROTATED=None,
+                      ROTATED_RELATIVE=None, RELATIVE=None, WHEN=None,
+                      EXTEND=None, GROUP=None, JUMP=None, SPLIT=None,
+                      comment=None, c_code_before=None, c_code_after=None):
         """
         Method for adding a copy of a Component instance to the instrument
 
@@ -996,6 +1032,17 @@ class McCode_instr(BaseCalculator):
         """
         if isinstance(original_component, Component):
             original_component = original_component.name
+
+        # Condense keyword input relating to component to a dict
+        component_input = {"AT": AT, "AT_RELATIVE": AT_RELATIVE,
+                           "ROTATED": ROTATED,
+                           "ROTATED_RELATIVE": ROTATED_RELATIVE,
+                           "RELATIVE": RELATIVE, "WHEN": WHEN,
+                           "EXTEND": EXTEND, "GROUP": GROUP, "JUMP": JUMP,
+                           "SPLIT": SPLIT, "comment": comment,
+                           "c_code_before": c_code_before,
+                           "c_code_after": c_code_after}
+
         """
         If the name starts with COPY, use unique naming as described in the
         McStas manual.
@@ -1025,50 +1072,13 @@ class McCode_instr(BaseCalculator):
         else:
             component_to_copy = self.get_component(original_component)
 
-        # Insert component after component with this name
-        if "after" in kwargs:
-            if kwargs["after"] not in self.component_name_list:
-                raise NameError("Trying to add a component after a component"
-                                + " named \"" + str(kwargs["after"])
-                                + "\", but a component with that name was"
-                                + " not found.")
+        new_component = copy.deepcopy(component_to_copy)
+        new_component.name = name  # Set new name, duplicate names not allowed
 
-            new_index = self.component_name_list.index(kwargs["after"])
+        self._insert_component(name, new_component, before=before, after=after)
 
-            new_component = copy.deepcopy(component_to_copy)
-            new_component.name = name
-            self.component_list.insert(new_index+1, new_component)
-
-            self.component_name_list.insert(new_index+1, name)
-
-        # Insert component after component with this name
-        elif "before" in kwargs:
-            if kwargs["before"] not in self.component_name_list:
-                raise NameError(("Trying to add a component before a "
-                                 + "component named \""
-                                 + str(kwargs["before"])
-                                 + "\", but a component with that "
-                                 + "name was not found."))
-
-            new_index = self.component_name_list.index(kwargs["before"])
-
-            new_component = copy.deepcopy(component_to_copy)
-            new_component.name = name
-            self.component_list.insert(new_index, new_component)
-
-            self.component_name_list.insert(new_index, name)
-
-        # If after or before keywords absent, place component at the end
-        else:
-            new_component = copy.deepcopy(component_to_copy)
-            new_component.name = name
-            self.component_list.append(new_component)
-            self.component_name_list.append(name)
-
-        # Set the new name of the instance
-        new_component.name = name
-        # Run set_keyword_input again for keyword arguments to take effect
-        new_component.set_keyword_input(**kwargs)
+        # Run set_keyword_input for keyword arguments to take effect
+        new_component.set_keyword_input(**component_input)
 
         return new_component
 
@@ -1332,11 +1342,26 @@ class McCode_instr(BaseCalculator):
         name : str
             Unique name of component to print
         """
-
         component = self.get_component(name)
         component.print_short()
 
-    def print_components(self, **kwargs):
+    def print_components(self, line_length=None):
+        """
+        Obsolete method, use show_components instead
+
+        Method for printing overview of all components in instrument
+
+        Provides overview of component names, what McStas component is
+        used for each and their position and rotation in space.
+
+        keyword arguments:
+        line_length : int
+            Maximum line length in console
+        """
+        warnings.warn("Print components is changing name to show_components for consistency.")
+        self.show_components(line_length)
+
+    def show_components(self, line_length=None):
         """
         Method for printing overview of all components in instrument
 
@@ -1352,10 +1377,10 @@ class McCode_instr(BaseCalculator):
             print("No components added to instrument object yet.")
             return
 
-        if "line_length" in kwargs:
-            line_limit = kwargs["line_length"]
-        else:
+        if line_length is None:
             line_limit = self.line_limit
+        else:
+            line_limit = line_length
 
         longest_name = len(max(self.component_name_list, key=len))
 
@@ -2155,7 +2180,7 @@ class McStas_instr(McCode_instr):
     append_trace_no_new_line(string)
         Obsolete method, add components instead (used in write_c_files)
 
-    show_components(string)
+    available_components(string)
         Shows available components in given category
 
     component_help(name)
@@ -2215,7 +2240,7 @@ class McStas_instr(McCode_instr):
     print_component_short(instance_name)
         Prints short overview of current state of named component
 
-    print_components()
+    show_components()
         Prints overview of postion / rotation of all components
 
     write_c_files()
@@ -2417,7 +2442,7 @@ class McXtrace_instr(McCode_instr):
     append_trace_no_new_line(string)
         Obsolete method, add components instead (used in write_c_files)
 
-    show_components(string)
+    available_components(string)
         Shows available components in given category
 
     component_help(name)
@@ -2477,7 +2502,7 @@ class McXtrace_instr(McCode_instr):
     print_component_short(instance_name)
         Prints short overview of current state of named component
 
-    print_components()
+    show_components()
         Prints overview of postion / rotation of all components
 
     write_c_files()
