@@ -226,8 +226,13 @@ class McCode_instr(BaseCalculator):
         Returns data set from latest simulation in widget
     """
 
-    def __init__(self, name, parameters=None, executable=None,
-                 author=None, origin=None,  **kwargs):
+    def __init__(self, name, parameters=None, author=None,
+                 origin=None, ncount=None, mpi="not_set", seed=None,
+                 force_compile=None, output_path=None,
+                 increment_folder_name=None, custom_flags=None,
+                 executable_path=None, executable=None,
+                 suppress_output=None, gravity=None, input_path=None,
+                 package_path=None):
         """
         Initialization of McStas Instrument
 
@@ -246,20 +251,41 @@ class McCode_instr(BaseCalculator):
             origin : str
                 Affiliation of author, written in instrument file
 
-            executable : str
-                Name of simulation executable (mcrun or mxrun)
-
-            executable_path : str
-                Absolute path of mcrun or empty if already in path
-
             input_path : str
                 Work directory, will load components from this folder
 
-            ncount : int
-                Number of rays to simulate
-
             mpi : int
                 Number of mpi threads to use in simulation
+
+            output_path : str
+                Sets data_folder_name
+
+            increment_folder_name : bool
+                Will update output_path if folder already exists, default True
+
+            ncount : int
+                Sets ncount
+
+            mpi : int
+                Sets thread count
+
+            force_compile : bool
+                If True (default) new instrument file is written, otherwise not
+
+            custom_flags : str
+                Sets custom_flags passed to mcrun
+
+            executable : str
+                Name of the executable
+
+            executable_path : str
+                Path to mcrun command, "" if already in path
+
+            suppress_output : bool
+                Set to True to surpress output
+
+            gravity : bool
+                If True, gravity will be simulated
         """
 
         super().__init__(name, input=[],
@@ -307,8 +333,8 @@ class McCode_instr(BaseCalculator):
         self._read_calibration()
 
         # Settings that can't be changed later
-        if "input_path" in kwargs:
-            self.input_path = str(kwargs["input_path"])
+        if input_path is not None:
+            self.input_path = str(input_path)
             if not os.path.isdir(self.input_path):
                 raise RuntimeError("Given input_path does not point to a "
                                    + "folder:\"" + self.input_path + '"')
@@ -316,41 +342,47 @@ class McCode_instr(BaseCalculator):
             self.input_path = "."
         self._run_settings["run_path"] = self.input_path
 
-        if "package_path" in kwargs:
-            if not os.path.isdir(str(kwargs["package_path"])):
+        if package_path is not None:
+            if not os.path.isdir(str(package_path)):
                 raise RuntimeError("The package_path provided to mccode_instr "
                                    + " does not point to a + directory: \""
-                                   + str(kwargs["package_path"]) + "\"")
-            self._run_settings["package_path"] = kwargs["package_path"]
+                                   + str(package_path) + "\"")
+            self._run_settings["package_path"] = package_path
 
         # Settings for run that can be adjusted by user
         provided_run_settings = {"executable": executable}
 
-        if "executable_path" in kwargs:
-            provided_run_settings["executable_path"] = str(kwargs["executable_path"])
+        if executable_path is not None:
+            provided_run_settings["executable_path"] = str(executable_path)
 
-        if "force_compile" in kwargs:
-            provided_run_settings["force_compile"] = kwargs["force_compile"]
+        if force_compile is not None:
+            provided_run_settings["force_compile"] = force_compile
         else:
             provided_run_settings["force_compile"] = True
 
-        if "ncount" in kwargs:
-            provided_run_settings["ncount"] = kwargs["ncount"]
+        if ncount is not None:
+            provided_run_settings["ncount"] = ncount
 
-        if "mpi" in kwargs:
-            provided_run_settings["mpi"] = kwargs["mpi"]
+        if mpi != "not_set":
+            provided_run_settings["mpi"] = mpi
 
-        if "gravity" in kwargs:
-            provided_run_settings["gravity"] = kwargs["gravity"]
+        if gravity is not None:
+            provided_run_settings["gravity"] = gravity
 
-        if "seed" in kwargs:
-            provided_run_settings["seed"] = str(kwargs["seed"])
+        if seed is not None:
+            provided_run_settings["seed"] = str(seed)
 
-        if "custom_flags" in kwargs:
-            provided_run_settings["custom_flags"] = kwargs["custom_flags"]
+        if custom_flags is not None:
+            provided_run_settings["custom_flags"] = custom_flags
 
-        if "suppress_output" in kwargs:
-            provided_run_settings["suppress_output"] = kwargs["suppress_output"]
+        if suppress_output is not None:
+            provided_run_settings["suppress_output"] = suppress_output
+
+        if output_path is not None:
+            provided_run_settings["output_path"] = output_path
+
+        if increment_folder_name is not None:
+            provided_run_settings["increment_folder_name"] = increment_folder_name
 
         # Set run_settings, perform input sanitation
         self.settings(**provided_run_settings)
