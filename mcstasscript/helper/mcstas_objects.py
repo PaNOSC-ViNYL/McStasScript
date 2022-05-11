@@ -547,6 +547,10 @@ class Component:
         self.c_code_before = ""
         self.c_code_after = ""
 
+        # references to component names
+        self.AT_reference = None
+        self.ROTATED_reference = None
+
         # If any keywords are set in kwargs, update these
         self.set_keyword_input(AT=AT, AT_RELATIVE=AT_RELATIVE, ROTATED=ROTATED,
                                ROTATED_RELATIVE=ROTATED_RELATIVE,
@@ -693,8 +697,10 @@ class Component:
         # Set AT relative
         if relative == "ABSOLUTE":
             self.AT_relative = "ABSOLUTE"
+            self.AT_reference = None
         else:
-            self.AT_relative = relative
+            self.AT_relative = "RELATIVE " + relative
+            self.AT_reference = relative
 
     def set_ROTATED(self, rotated_list, RELATIVE=None):
         """
@@ -754,8 +760,10 @@ class Component:
         # Set ROTATED relative
         if relative == "ABSOLUTE":
             self.ROTATED_relative = "ABSOLUTE"
+            self.ROTATED_reference = None
         else:
-            self.ROTATED_relative = relative
+            self.ROTATED_relative = "RELATIVE " + relative
+            self.ROTATED_reference = relative
 
     def set_RELATIVE(self, relative):
         """
@@ -778,10 +786,14 @@ class Component:
 
         if relative == "ABSOLUTE":
             self.AT_relative = "ABSOLUTE"
+            self.AT_reference = None
             self.ROTATED_relative = "ABSOLUTE"
+            self.ROTATED_reference = None
         else:
-            self.AT_relative = relative
-            self.ROTATED_relative = relative
+            self.AT_relative = "RELATIVE " + relative
+            self.AT_reference = relative
+            self.ROTATED_relative = "RELATIVE " + relative
+            self.ROTATED_reference = relative
 
     def set_parameters(self, args_as_dict=None, **kwargs):
         """
@@ -1010,23 +1022,14 @@ class Component:
         fo.write("AT (%s,%s,%s)" % (str(self.AT_data[0]),
                                     str(self.AT_data[1]),
                                     str(self.AT_data[2])))
-        if self.AT_relative == "ABSOLUTE":
-            relative = self.AT_relative
-        else:
-            relative = "RELATIVE " + self.AT_relative
 
-        fo.write(" %s\n" % relative)
+        fo.write(" %s\n" % self.AT_relative)
 
         if self.ROTATED_specified:
-            if self.ROTATED_relative == "ABSOLUTE":
-                relative = self.ROTATED_relative
-            else:
-                relative = "RELATIVE " + self.ROTATED_relative
-
             fo.write("ROTATED (%s,%s,%s)" % (str(self.ROTATED_data[0]),
                                              str(self.ROTATED_data[1]),
                                              str(self.ROTATED_data[2])))
-            fo.write(" %s\n" % relative)
+            fo.write(" %s\n" % self.ROTATED_relative)
 
         if not self.GROUP == "":
             fo.write("GROUP %s\n" % self.GROUP)

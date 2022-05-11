@@ -1452,14 +1452,25 @@ class McCode_instr(BaseCalculator):
         """
 
         # Check RELATIVE exists
-        seen_instrument_names = ["ABSOLUTE"]
+        seen_instrument_names = []
         for component in self.component_list:
             seen_instrument_names.append(component.name)
-            component.AT_relative
-            component.ROTATED_relative
 
+            if component.AT_reference is not None:
+                if component.AT_reference not in seen_instrument_names:
+                    raise RuntimeError("Component '" + str(component.name)
+                                       + "' referenced unknown component"
+                                       + " named '"
+                                       + str(component.AT_reference)
+                                       + "'.")
 
-
+            if component.ROTATED_reference is not None:
+                if component.ROTATED_reference not in seen_instrument_names:
+                    raise RuntimeError("Component '" + str(component.name)
+                                       + "' referenced unknown component"
+                                       + " named '"
+                                       + str(component.ROTATED_reference)
+                                       + "'.")
 
     def write_full_instrument(self):
         """
@@ -1469,6 +1480,9 @@ class McCode_instr(BaseCalculator):
         objects to disk with the name specified in the initialization of
         the object.
         """
+
+        # Catch common errors before writing the instrument
+        self.check_for_errors()
 
         # Create file identifier
         fo = open(os.path.join(self.input_path, self.name + ".instr"), "w")
