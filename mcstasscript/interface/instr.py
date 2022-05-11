@@ -23,7 +23,6 @@ from mcstasscript.helper.component_reader import ComponentReader
 from mcstasscript.helper.managed_mcrun import ManagedMcrun
 from mcstasscript.helper.formatting import is_legal_filename
 from mcstasscript.helper.formatting import bcolors
-from mcstasscript.jb_interface.simulation_interface import SimInterface
 from mcstasscript.helper.unpickler import CustomMcStasUnpickler, CustomMcXtraceUnpickler
 
 
@@ -1881,31 +1880,6 @@ class McCode_instr(BaseCalculator):
         # Create IFrame in ipython that shows instrument
 
         return IFrame(src=html_path, width=width, height=height)
-
-    def interface(self):
-        """
-        Shows simulation interface in jupyter notebook interface
-
-        Needs "%matplotlib widget" in notebook to work correctly
-        """
-        self.write_full_instrument()
-        self.widget_interface = SimInterface(self)
-        return self.widget_interface.show_interface()
-
-    def get_interface_data(self):
-        """
-        Returns data from last run performed with the widget interface
-        """
-
-        if self.widget_interface is None:
-            print("No widget interface initialized, use interface method.")
-            return []
-
-        if self.widget_interface.plot_interface.data is None:
-            print("No run has been performed with the interface widget yet")
-            return []
-
-        return self.widget_interface.plot_interface.data
 
     def saveH5(self, filename: str, openpmd: bool = True):
         """
