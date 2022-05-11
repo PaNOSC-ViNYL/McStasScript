@@ -1047,15 +1047,15 @@ class Component:
     def __repr__(self):
         return self.__str__()
 
-    def print_short(self, **kwargs):
+    def print_short(self, longest_name=None):
         """Prints short description of component to list print"""
         if self.ROTATED_specified:
             print_rotate_rel = self.ROTATED_relative
         else:
             print_rotate_rel = self.AT_relative
 
-        if "longest_name" in kwargs:
-            number_of_spaces = 3+kwargs["longest_name"]-len(self.name)
+        if longest_name is not None:
+            number_of_spaces = 3+longest_name-len(self.name)
             print(str(self.name) + " "*number_of_spaces, end='')
             print(str(self.component_name),
                   "\tAT", self.AT_data, self.AT_relative,
@@ -1065,7 +1065,7 @@ class Component:
                   "\tAT", self.AT_data, self.AT_relative,
                   "ROTATED", self.ROTATED_data, print_rotate_rel)
 
-    def show_parameters(self, **kwargs):
+    def show_parameters(self, line_length=None):
         """
         Shows available parameters and their defaults for the component
 
@@ -1075,18 +1075,17 @@ class Component:
         this method.
         """
 
-        if "line_length" in kwargs:
-            line_limit = kwargs["line_length"]
-        else:
-            line_limit = self.line_limit
+        # line_limit created in _create_component_instance on instr
+        if line_length is None:
+            line_length = self.line_limit
 
         # Minimum reasonable line length
-        if line_limit < 74:
-            line_limit = 74
+        if line_length < 74:
+            line_length = 74
 
         print(" ___ Help "
               + self.component_name + " "
-              + (line_limit - 11 - len(self.component_name))*"_")
+              + (line_length - 11 - len(self.component_name))*"_")
         print("|"
               + bcolors.BOLD + "optional parameter" + bcolors.ENDC + "|"
               + bcolors.BOLD
@@ -1147,10 +1146,10 @@ class Component:
 
             print(parameter_name + value + unit, end="")
 
-            if characters_before_comment + len(comment) < line_limit:
+            if characters_before_comment + len(comment) < line_length:
                 print(comment)
             else:
-                length_for_comment = line_limit - characters_before_comment
+                length_for_comment = line_length - characters_before_comment
                 # Split comment into several lines
                 original_comment = comment
                 words = comment.split(" ")
@@ -1188,7 +1187,7 @@ class Component:
                 else:
                     print(str(original_comment))
 
-        print(line_limit*"-")
+        print(line_length*"-")
 
     def show_parameters_simple(self):
         """
