@@ -1456,20 +1456,19 @@ class McCode_instr(BaseCalculator):
         for component in self.component_list:
             seen_instrument_names.append(component.name)
 
-            if component.AT_reference is not None:
-                if component.AT_reference not in seen_instrument_names:
+            references = []
+            if component.AT_reference not in (None, "PREVIOUS"):
+                references.append(component.AT_reference)
+
+            if component.ROTATED_reference not in (None, "PREVIOUS"):
+                references.append(component.ROTATED_reference)
+
+            for ref in references:
+                if ref not in seen_instrument_names:
                     raise RuntimeError("Component '" + str(component.name)
                                        + "' referenced unknown component"
                                        + " named '"
                                        + str(component.AT_reference)
-                                       + "'.")
-
-            if component.ROTATED_reference is not None:
-                if component.ROTATED_reference not in seen_instrument_names:
-                    raise RuntimeError("Component '" + str(component.name)
-                                       + "' referenced unknown component"
-                                       + " named '"
-                                       + str(component.ROTATED_reference)
                                        + "'.")
 
     def write_full_instrument(self):
