@@ -629,7 +629,24 @@ class Component:
         self.__isfrozen = False
 
     def set_AT(self, at_list, RELATIVE=None):
-        """Sets AT data, List of 3 floats or single float for z only"""
+        """
+        Method for setting position of component
+
+        Sets the position of the component using provided length 3 list as a
+        vector. If only a float is given, it is considered along the beam
+        direction, [0, 0, z]. The RELATIVE keyword is used to specify in
+        relation to what the position is given, and can take either a string
+        with a component name or a Component object.
+
+        Parameters
+        ----------
+        at_list : List of 3 floats or float
+            Position of component relative to reference component
+
+        keyword arguments:
+            RELATIVE : str
+                Sets reference component for position
+        """
         if isinstance(at_list, (int, float)):
             at_list = [0, 0, at_list]
 
@@ -652,7 +669,19 @@ class Component:
             self.set_AT_RELATIVE(RELATIVE)
 
     def set_AT_RELATIVE(self, relative):
-        """Sets AT RELATIVE with string or component instance"""
+        """
+        Sets AT RELATIVE with string or Component instance
+
+        Set relative which becomes the reference for this components position,
+        it is possible to use a string that match another component name or
+        use a Component object where the name is used as the reference.
+
+        Parameters
+        ----------
+
+        relative : str or Component object
+            Used as reference for component position
+        """
 
         # Extract name if Component instance is given
         if isinstance(relative, Component):
@@ -668,7 +697,18 @@ class Component:
             self.AT_relative = "RELATIVE " + relative
 
     def set_ROTATED(self, rotated_list, RELATIVE=None):
-        """Sets ROTATED data, List of 3 floats"""
+        """
+        Method for setting rotation of component
+
+        Parameters
+        ----------
+        rotated_list : List of 3 floats
+            Rotation of component relative to reference component
+
+        keyword arguments:
+            RELATIVE : str
+                Sets reference component for rotation
+        """
         if not isinstance(rotated_list, list):
             raise RuntimeError("set_ROTATED should be given a list "
                                + " but received "
@@ -689,7 +729,19 @@ class Component:
             self.set_ROTATED_RELATIVE(RELATIVE)
 
     def set_ROTATED_RELATIVE(self, relative):
-        """Sets ROTATED RELATIVE with string or Component instance"""
+        """
+        Sets ROTATED RELATIVE with string or Component instance
+
+        Set relative which becomes the reference for this components rotation,
+        it is possible to use a string that match another component name or
+        use a Component object where the name is used as the reference.
+
+        Parameters
+        ----------
+
+        relative : str or Component object
+            Used as reference for component rotation
+        """
 
         self.ROTATED_specified = True
         # Extract name if a Component instance is given
@@ -706,7 +758,17 @@ class Component:
             self.ROTATED_relative = "RELATIVE " + relative
 
     def set_RELATIVE(self, relative):
-        """Sets both AT_relative and ROTATED_relative"""
+        """
+        Method for setting reference of component position and rotation
+
+        Input can be either a string matching an earlier component or a
+        Component object.
+
+        Parameters
+        ----------
+        relative : str
+            Reference component for position and rotation
+        """
         # Extract name if a Component instance is given
         if isinstance(relative, Component):
             relative = relative.name
@@ -725,11 +787,16 @@ class Component:
         """
         Set Component parameters from dictionary input or keyword arguments
 
-        Relies on attributes added when McStas_Instr creates a subclass from
+        Relies on attributes added when McCode_Instr creates a subclass from
         the Component class where each component parameter is added as an
         attribute.
 
         An error is raised if trying to set a parameter that does not exist
+
+        Parameters
+        ----------
+        args_as_dict : dict
+            Parameters names and their values as dictionary
         """
         if args_as_dict is not None:
             parameter_dict = args_as_dict
@@ -749,28 +816,58 @@ class Component:
                 setattr(self, key, val)
 
     def set_WHEN(self, string):
-        """Sets WHEN string, should be a c logical expression"""
+        """
+        Method for setting WHEN c expression of this component
+
+        Parameters
+        ----------
+        WHEN : str
+            Sets WHEN c expression for named McStas component
+        """
         if not isinstance(string, str):
             raise RuntimeError("set_WHEN expect a string, but was "
                                + "given " + str(type(string)))
         self.WHEN = "WHEN (" + string + ")"
 
     def set_GROUP(self, string):
-        """Sets GROUP name"""
+        """
+        Method for setting GROUP keyword of this component
+
+        Parameters
+        ----------
+        GROUP : str
+            Sets GROUP name for named McStas component
+        """
         if not isinstance(string, str):
             raise RuntimeError("set_GROUP expect a string, but was "
                                + "given " + str(type(string)))
         self.GROUP = string
 
     def set_JUMP(self, string):
-        """Sets JUMP string, should contain all text after JUMP"""
+        """
+        Method for setting JUMP expression of this component
+
+        Should contain all code needed after JUMP
+
+        Parameters
+        ----------
+        JUMP : str
+            Sets JUMP expression for named McStas component
+        """
         if not isinstance(string, str):
             raise RuntimeError("set_JUMP expect a string, but was "
                                + "given " + str(type(string)))
         self.JUMP = string
 
     def set_SPLIT(self, value):
-        """Sets SPLIT value, needs to be an integer"""
+        """
+        Method for setting SPLIT value of this component
+
+        Parameters
+        ----------
+        SPLIT : int or str
+            Sets SPLIT value for named McStas component
+        """
         if not isinstance(value, (int, str)):
             raise RuntimeError("set_SPLIT expect a integer or string, but "
                                + "was given " + str(type(value)))
@@ -784,28 +881,56 @@ class Component:
         self.SPLIT = value
 
     def append_EXTEND(self, string):
-        """Appends a line of code to EXTEND block of component"""
+        """
+        Method for adding line of c to EXTEND section of this component
+
+        Parameters
+        ----------
+        EXTEND : str
+            Line of c code added to EXTEND section of named component
+        """
         if not isinstance(string, str):
             raise RuntimeError("append_EXTEND expect a string, but was "
                                + "given " + str(type(string)))
         self.EXTEND = self.EXTEND + string + "\n"
 
     def set_comment(self, string):
-        """Method that sets a comment to be written to instrument file"""
+        """
+        Sets a comment displayed before the component in written files
+
+        Parameters
+        ----------
+        string : str
+            Comment string
+        """
         if not isinstance(string, str):
             raise RuntimeError("set_comment expect a string, but was "
                                + "given " + str(type(string)))
         self.comment = string
 
     def set_c_code_before(self, string):
-        """Method that sets c code to be written before the component"""
+        """
+        Method for setting c code before this component
+
+        Parameters
+        ----------
+        code : str
+            Code to be pasted before component
+        """
         if not isinstance(string, str):
             raise RuntimeError("set_c_code_before expect a string, but was "
                                + "given " + str(type(string)))
         self.c_code_before = string
 
     def set_c_code_after(self, string):
-        """Method that sets c code to be written after the component"""
+        """
+        Method for setting c code after this component
+
+        Parameters
+        ----------
+        code : str
+            Code to be pasted after component
+        """
         if not isinstance(string, str):
             raise RuntimeError("set_c_code_after expect a string, but was "
                                + "given " + str(type(string)))
@@ -912,59 +1037,6 @@ class Component:
 
         # Leave a new line between components for readability
         fo.write("\n")
-
-    def print_long_deprecated(self):
-        """
-        Prints contained information to Python terminal
-
-        Includes information on required parameters if they are not yet
-        specified. Information on the components are added when the
-        class is used as a superclass for classes describing each
-        McStas component.
-        """
-        if len(self.c_code_before) > 1:
-            print(self.c_code_before)
-        if len(self.comment) > 1:
-            print("// " + self.comment)
-        if self.SPLIT != 0:
-            print("SPLIT " + str(self.SPLIT) + " ", end="")
-        print("COMPONENT", str(self.name),
-              "=", str(self.component_name))
-        for key in self.parameter_names:
-            val = getattr(self, key)
-            parameter_name = bcolors.BOLD + key + bcolors.ENDC
-            if val is not None:
-                unit = ""
-                if key in self.parameter_units:
-                    unit = "[" + self.parameter_units[key] + "]"
-                value = (bcolors.BOLD
-                         + bcolors.OKGREEN
-                         + str(val)
-                         + bcolors.ENDC
-                         + bcolors.ENDC)
-                print(" ", parameter_name, "=", value, unit)
-            else:
-                if self.parameter_defaults[key] is None:
-                    print("  "
-                          + parameter_name
-                          + bcolors.FAIL
-                          + " : Required parameter not yet specified"
-                          + bcolors.ENDC)
-
-        if not self.WHEN == "":
-            print(self.WHEN)
-        print("AT", self.AT_data, self.AT_relative)
-        if self.ROTATED_specified:
-            print("ROTATED", self.ROTATED_data, self.ROTATED_relative)
-        if not self.GROUP == "":
-            print("GROUP " + self.GROUP)
-        if not self.EXTEND == "":
-            print("EXTEND %{")
-            print(self.EXTEND + "%}")
-        if not self.JUMP == "":
-            print("JUMP " + self.JUMP)
-        if len(self.c_code_after) > 1:
-            print(self.c_code_after)
 
     def __str__(self):
         """

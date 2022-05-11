@@ -1124,211 +1124,6 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(comp.name, "third_component")
 
-    def test_set_component_parameter(self):
-        """
-        Tests simple case of set_component_parameter
-
-        set_component_parameter passes a dict from instrument level
-        to a contained component with the given name. It uses the
-        get_component method.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_parameter("second_component",
-                                      {"radius": 5.8,
-                                       "dist": "text"})
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.radius, 5.8)
-        self.assertEqual(comp.dist, "text")
-
-    def test_set_component_parameter_error(self):
-        """
-        Tests set_component_parameter fails when trying to set a parameter
-        that does not exist
-
-        set_component_parameter passes a dict from instrument level
-        to a contained component with the given name. It uses the
-        get_component method.
-        """
-
-        instr = setup_populated_instr()
-
-        with self.assertRaises(NameError):
-            instr.set_component_parameter("second_component",
-                                          {"non_existent_par": 5.8,
-                                           "dist": "text"})
-
-    def test_set_component_AT(self):
-        """
-        set_component_AT passes the argument to the similar method
-        in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_AT("second_component",
-                               [1, 2, 3.2], RELATIVE="home")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.AT_data, [1, 2, 3.2])
-        self.assertEqual(comp.AT_relative, "RELATIVE home")
-        self.assertEqual(comp.ROTATED_relative, "ABSOLUTE")
-
-    def test_set_component_ROTATED(self):
-        """
-        set_component_ROTATED passes the argument to the similar
-        method in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_ROTATED("second_component",
-                                    [4, 1, -29], RELATIVE="home")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.ROTATED_data, [4, 1, -29])
-        self.assertEqual(comp.ROTATED_relative, "RELATIVE home")
-        self.assertEqual(comp.AT_relative, "ABSOLUTE")
-
-    def test_set_component_RELATIVE(self):
-        """
-        set_component_RELATIVE passes the argument to the similar
-        method in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_RELATIVE("second_component", "home")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.ROTATED_data, [0, 0, 0])
-        self.assertEqual(comp.ROTATED_relative, "RELATIVE home")
-        self.assertEqual(comp.AT_relative, "RELATIVE home")
-
-    def test_set_component_WHEN(self):
-        """
-        set_component_WHEN passes the argument to the similar method
-        in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_WHEN("second_component", "2>1")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.WHEN, "WHEN (2>1)")
-
-    def test_append_component_EXTEND(self):
-        """
-        append_component_EXTEND passes the argument to the similar
-        method in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.append_component_EXTEND("second_component", "line1")
-        instr.append_component_EXTEND("second_component", "line2")
-
-        comp = instr.get_component("second_component")
-
-        output = comp.EXTEND.split("\n")
-
-        self.assertEqual(output[0], "line1")
-        self.assertEqual(output[1], "line2")
-
-    def test_set_component_GROUP(self):
-        """
-        set_component_GROUP passes the argument to the similar method
-        in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_GROUP("second_component", "developers")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.GROUP, "developers")
-
-    def test_set_component_JUMP(self):
-        """
-        set_component_JUMP passes the argument to the similar method
-        in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_JUMP("second_component", "myself 8")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.JUMP, "myself 8")
-
-    def test_set_component_SPLIT(self):
-        """
-        set_component_SPLIT passes the argument to the similar method
-        in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_SPLIT("second_component", 3)
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.SPLIT, 3)
-
-    def test_set_component_comment(self):
-        """
-        set_component_comment passes the argument to the similar
-        method in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_comment("second_component", "test comment")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.comment, "test comment")
-
-    def test_set_c_code_before(self):
-        """
-        set_component_c_code_before passes the argument to the similar
-        method in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_c_code_before("second_component",
-                                          "%include before.instr")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.c_code_before, "%include before.instr")
-
-    def test_set_c_code_after(self):
-        """
-        set_component_c_code_after passes the argument to the similar
-        method in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_c_code_after("second_component",
-                                         "%include after.instr")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.c_code_after, "%include after.instr")
-
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_print_component(self, mock_stdout):
         """
@@ -1337,8 +1132,7 @@ class TestMcStas_instr(unittest.TestCase):
         """
 
         instr = setup_populated_instr()
-        instr.set_component_parameter("second_component",
-                                      {"dist": 5})
+        instr.get_component("second_component").set_parameters(dist=5)
 
         instr.print_component("second_component")
 
@@ -1374,8 +1168,8 @@ class TestMcStas_instr(unittest.TestCase):
         """
 
         instr = setup_populated_instr()
-        instr.set_component_AT("second_component",
-                               [-1, 2, 3.4], RELATIVE="home")
+        instr.get_component("second_component").set_AT([-1, 2, 3.4],
+                                                       RELATIVE="home")
 
         instr.print_component_short("second_component")
 
@@ -1425,12 +1219,10 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_populated_instr()
 
-        instr.set_component_AT("first_component",
-                               [-0.1, 12, "dist"],
-                               RELATIVE="home")
-        instr.set_component_ROTATED("second_component",
-                                    [-4, 0.001, "theta"],
-                                    RELATIVE="etc")
+        instr.get_component("first_component").set_AT([-0.1, 12, "dist"],
+                                                      RELATIVE="home")
+        instr.get_component("second_component").set_ROTATED([-4, 0.001, "theta"],
+                                                            RELATIVE="etc")
         comp = instr.get_last_component()
         comp.component_name = "test_name"
 
@@ -1462,12 +1254,10 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_populated_instr()
 
-        instr.set_component_AT("first_component",
-                               [-0.1, 12, "dist"],
-                               RELATIVE="home")
-        instr.set_component_ROTATED("second_component",
-                                    [-4, 0.001, "theta"],
-                                    RELATIVE="etc")
+        instr.get_component("first_component").set_AT([-0.1, 12, "dist"],
+                                                      RELATIVE="home")
+        instr.get_component("second_component").set_ROTATED([-4, 0.001, "theta"],
+                                                            RELATIVE="etc")
         comp = instr.get_last_component()
         comp.component_name = "test_name"
 
@@ -1502,12 +1292,10 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_populated_instr()
 
-        instr.set_component_AT("first_component",
-                               [-0.1, 12, "dist"],
-                               RELATIVE="home")
-        instr.set_component_ROTATED("second_component",
-                                    [-4, 0.001, "theta"],
-                                    RELATIVE="etc")
+        instr.get_component("first_component").set_AT([-0.1, 12, "dist"],
+                                                      RELATIVE="home")
+        instr.get_component("second_component").set_ROTATED([-4, 0.001, "theta"],
+                                                            RELATIVE="etc")
         comp = instr.get_last_component()
         comp.component_name = "test_name"
 
