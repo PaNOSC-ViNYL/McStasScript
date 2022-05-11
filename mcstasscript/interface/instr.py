@@ -410,7 +410,6 @@ class McCode_instr(BaseCalculator):
                                     + name + "\n")
             # Handle components
             self.component_list = []  # List of components (have to be ordered)
-            self.component_name_list = []  # List of component names
 
     def init_parameters(self):
         """
@@ -920,7 +919,7 @@ class McCode_instr(BaseCalculator):
                 Comment that will be displayed before the component
         """
 
-        if name in self.component_name_list:
+        if name in [x.name for x in self.component_list]:
             raise NameError(("Component name \"" + str(name)
                              + "\" used twice, " + self.package_name
                              + " does not allow this."
@@ -970,35 +969,34 @@ class McCode_instr(BaseCalculator):
             if isinstance(after, Component):
                 after = after.name
             # Insert component after component with this name
-            if after not in self.component_name_list:
+            if after not in [x.name for x in self.component_list]:
                 raise NameError(("Trying to add a component after a component"
                                  + " named \"" + str(after)
                                  + "\", but a component with that name was"
                                  + " not found."))
 
-            new_index = self.component_name_list.index(after)
+            component_names = [x.name for x in self.component_list]
+            new_index = component_names.index(after)
             self.component_list.insert(new_index + 1, component)
-            self.component_name_list.insert(new_index+1, name)
 
         elif before is not None:
             if isinstance(before, Component):
                 before = before.name
             # Insert component before component with this name
-            if before not in self.component_name_list:
+            if before not in [x.name for x in self.component_list]:
                 raise NameError(("Trying to add a component before a "
                                  + "component named \""
                                  + str(before)
                                  + "\", but a component with that "
                                  + "name was not found."))
 
-            new_index = self.component_name_list.index(before)
+            component_names = [x.name for x in self.component_list]
+            new_index = component_names.index(before)
             self.component_list.insert(new_index, component)
-            self.component_name_list.insert(new_index, name)
 
         else:
             # If after and before keywords absent, place component at the end
             self.component_list.append(component)
-            self.component_name_list.append(name)
 
     def copy_component(self, name, original_component, before=None, after=None,
                       AT=None, AT_RELATIVE=None, ROTATED=None,
@@ -1078,6 +1076,8 @@ class McCode_instr(BaseCalculator):
         If the name starts with COPY, use unique naming as described in the
         McStas manual.
         """
+        component_names = [x.name for x in self.component_list]
+
         if name.startswith("COPY("):
             target_name = name.split("(", 1)[1]
             target_name = target_name.split(")", 1)[0]
@@ -1085,18 +1085,18 @@ class McCode_instr(BaseCalculator):
 
             label = 0
             instance_name = target_name + "_" + str(label)
-            while instance_name in self.component_name_list:
+            while instance_name in component_names:
                 instance_name = target_name + "_" + str(label)
                 label += 1
 
-        if name in self.component_name_list:
+        if name in component_names:
             raise NameError(("Component name \"" + str(name)
                              + "\" used twice, " + self.package_name
                              + " does not allow this."
                              + " Rename or remove one instance of this"
                              + " name."))
 
-        if original_component not in self.component_name_list:
+        if original_component not in component_names:
             raise NameError("Component name \"" + str(original_component)
                             + "\" was not found in the " + self.package_name
                             + " instrument. and thus can not be copied.")
@@ -1128,8 +1128,9 @@ class McCode_instr(BaseCalculator):
             Unique name of component whose instance should be returned
         """
 
-        if name in self.component_name_list:
-            index = self.component_name_list.index(name)
+        component_names = [x.name for x in self.component_list]
+        if name in component_names:
+            index = component_names.index(name)
             return self.component_list[index]
         else:
             raise NameError(("No component was found with name \""
@@ -1200,7 +1201,7 @@ class McCode_instr(BaseCalculator):
             Maximum line length in console
         """
 
-        if len(self.component_name_list) == 0:
+        if len(self.component_list) == 0:
             print("No components added to instrument object yet.")
             return
 
@@ -1209,7 +1210,8 @@ class McCode_instr(BaseCalculator):
         else:
             line_limit = line_length
 
-        longest_name = len(max(self.component_name_list, key=len))
+        component_names = [x.name for x in self.component_list]
+        longest_name = len(max(component_names, key=len))
 
         # todo Investigate how this could have been done in a better way
         # Find longest field for each type of data printed
@@ -1935,9 +1937,6 @@ class McStas_instr(McCode_instr):
     component_list : list of component instances
         list of components in the instrument
 
-    component_name_list : list of strings
-        list of names of the components in the instrument
-
     component_class_lib : dict
         dict of custom Component classes made at run time
 
@@ -2160,9 +2159,6 @@ class McXtrace_instr(McCode_instr):
 
     component_list : list of component instances
         list of components in the instrument
-
-    component_name_list : list of strings
-        list of names of the components in the instrument
 
     component_class_lib : dict
         dict of custom Component classes made at run time
