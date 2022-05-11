@@ -694,7 +694,7 @@ class Component:
         if relative == "ABSOLUTE":
             self.AT_relative = "ABSOLUTE"
         else:
-            self.AT_relative = "RELATIVE " + relative
+            self.AT_relative = relative
 
     def set_ROTATED(self, rotated_list, RELATIVE=None):
         """
@@ -755,7 +755,7 @@ class Component:
         if relative == "ABSOLUTE":
             self.ROTATED_relative = "ABSOLUTE"
         else:
-            self.ROTATED_relative = "RELATIVE " + relative
+            self.ROTATED_relative = relative
 
     def set_RELATIVE(self, relative):
         """
@@ -780,8 +780,8 @@ class Component:
             self.AT_relative = "ABSOLUTE"
             self.ROTATED_relative = "ABSOLUTE"
         else:
-            self.AT_relative = "RELATIVE " + relative
-            self.ROTATED_relative = "RELATIVE " + relative
+            self.AT_relative = relative
+            self.ROTATED_relative = relative
 
     def set_parameters(self, args_as_dict=None, **kwargs):
         """
@@ -1010,13 +1010,23 @@ class Component:
         fo.write("AT (%s,%s,%s)" % (str(self.AT_data[0]),
                                     str(self.AT_data[1]),
                                     str(self.AT_data[2])))
-        fo.write(" %s\n" % self.AT_relative)
+        if self.AT_relative == "ABSOLUTE":
+            relative = self.AT_relative
+        else:
+            relative = "RELATIVE " + self.AT_relative
+
+        fo.write(" %s\n" % relative)
 
         if self.ROTATED_specified:
+            if self.ROTATED_relative == "ABSOLUTE":
+                relative = self.ROTATED_relative
+            else:
+                relative = "RELATIVE " + self.ROTATED_relative
+
             fo.write("ROTATED (%s,%s,%s)" % (str(self.ROTATED_data[0]),
                                              str(self.ROTATED_data[1]),
                                              str(self.ROTATED_data[2])))
-            fo.write(" %s\n" % self.ROTATED_relative)
+            fo.write(" %s\n" % relative)
 
         if not self.GROUP == "":
             fo.write("GROUP %s\n" % self.GROUP)

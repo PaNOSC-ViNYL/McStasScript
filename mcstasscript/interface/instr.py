@@ -1446,6 +1446,21 @@ class McCode_instr(BaseCalculator):
             for component in self.component_list:
                 component.write_component(fo)
 
+    def check_for_errors(self):
+        """
+        Methods that checks for common McStas errors
+        """
+
+        # Check RELATIVE exists
+        seen_instrument_names = ["ABSOLUTE"]
+        for component in self.component_list:
+            seen_instrument_names.append(component.name)
+            component.AT_relative
+            component.ROTATED_relative
+
+
+
+
     def write_full_instrument(self):
         """
         Method for writing full instrument file to disk
