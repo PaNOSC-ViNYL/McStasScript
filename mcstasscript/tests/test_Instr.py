@@ -11,6 +11,7 @@ from mcstasscript.interface.instr import McStas_instr
 from mcstasscript.interface.instr import McXtrace_instr
 from mcstasscript.helper.formatting import bcolors
 from mcstasscript.tests.helpers_for_tests import WorkInTestDir
+from mcstasscript.helper.exceptions import McStasError
 
 run_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '.')
 
@@ -1088,6 +1089,66 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(original.AT_data[1], 0)
         self.assertEqual(original.AT_data[2], 2)
         self.assertEqual(original.SPLIT, 0)
+
+    def test_remove_component(self):
+        """
+        Ensure a component can be removed
+        """
+        instr = setup_populated_instr()
+
+        instr.remove_component("second_component")
+
+        self.assertEqual(len(instr.component_list), 2)
+        self.assertEqual(instr.component_list[0].name, "first_component")
+        self.assertEqual(instr.component_list[1].name, "third_component")
+
+    def test_move_component(self):
+        """
+        Ensure a component can be moved
+        """
+        instr = setup_populated_instr()
+
+        instr.move_component("second_component", before="first_component")
+
+        self.assertEqual(len(instr.component_list), 3)
+        self.assertEqual(instr.component_list[0].name, "second_component")
+        self.assertEqual(instr.component_list[1].name, "first_component")
+        self.assertEqual(instr.component_list[2].name, "third_component")
+
+    def test_RELATIVE_error(self):
+        """
+        Ensure check_for_errors finds impossible relative statement
+        """
+
+        instr = setup_populated_instr()
+
+        second_component = instr.get_component("second_component")
+        second_component.set_AT([0, 0, 0], RELATIVE="third_component")
+
+        self.assertTrue(instr.has_errors())
+
+        with self.assertRaises(McStasError):
+            instr.check_for_errors()
+
+    @unittest.mock.patch('__main__.__builtins__.open',
+                         new_callable=unittest.mock.mock_open)
+    def test_RELATIVE_error_and_checks_false(self, mock_f):
+        """
+        Ensure check_for_errors finds impossible relative statement
+        """
+
+        instr = setup_populated_instr()
+
+        second_component = instr.get_component("second_component")
+        second_component.set_AT([0, 0, 0], RELATIVE="third_component")
+
+        self.assertTrue(instr.has_errors())
+
+        with self.assertRaises(McStasError):
+            instr.write_full_instrument()
+
+        instr.settings(checks=False)
+        instr.write_full_instrument()
 
     def test_get_component_simple(self):
         """

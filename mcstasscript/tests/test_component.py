@@ -4,6 +4,7 @@ import unittest.mock
 
 from mcstasscript.helper.mcstas_objects import Component
 from mcstasscript.helper.formatting import bcolors
+from mcstasscript.helper.exceptions import McStasError
 
 
 def setup_Component_all_keywords():
@@ -834,6 +835,21 @@ class TestComponent(unittest.TestCase):
         comment = ""
         self.assertEqual(output[5],
                          par_name + " = " + value + " [1]" + comment)
+
+    def test_component_error_check(self):
+
+        comp = setup_Component_with_parameters()
+
+        # Currently no ilegal parameters
+        comp.check_parameters([])
+
+        # Introduce illegal parameter
+        comp.new_par1 = "wrong"
+        with self.assertRaises(McStasError):
+            comp.check_parameters([])
+
+        # Check no error is raised when on whitelist
+        comp.check_parameters(["wrong"])
 
 
 if __name__ == '__main__':

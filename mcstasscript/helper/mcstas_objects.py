@@ -1,5 +1,6 @@
 from mcstasscript.helper.formatting import bcolors
 from mcstasscript.helper.formatting import is_legal_parameter
+from mcstasscript.helper.exceptions import McStasError
 
 from libpyvinyl.Parameters.Parameter import Parameter
 
@@ -1303,3 +1304,47 @@ class Component:
             print(parameter + value + unit + comment)
 
         print("----------" + "-"*len(self.component_name) + "------")
+
+    def check_parameters(self, instrument_variables):
+        """
+        Checks the current component parameters are in given name list
+
+        The name list will typically be a list of instrument parameters and
+        declared variables.
+
+        Parameters
+        ----------
+
+        instrument_variables : list of str
+            List of instrument variable names
+        """
+        McStas_constants = ["DEG2RAD", "RAD2DEG", "MIN2RAD", "RAD2MIN", "V2K",
+                            "K2V", "VS2E", "SE2V", "FWHM2RMS", "RMS2FWHM",
+                            "MNEUTRON" "HBAR", "PI", "FLT_MAX"]
+
+        # parameter_names attribute added in _create_component_instance
+        for par_name in self.parameter_names:
+            par = getattr(self, par_name)
+            if isinstance(par, str):
+                if not par.isalpha():
+                    # Allow numbers and strings with math symbols
+                    # They may have errors, but can't be easily checked
+                    continue
+
+                if par in McStas_constants:
+                    # Allow McStas defined constants
+                    continue
+
+                if par in instrument_variables:
+                    # Allow variables on given whitelist
+                    continue
+
+                # If none of the above approves the variable, raise error
+                raise McStasError("Variable not recognized.\n"
+                                  f"Unrecognized variable '{par}' "
+                                  "assigned to component parameter "
+                                  f"'{par_name}' in component "
+                                  f"'{self.name}' of type "
+                                  f"'{self.component_name}'.\n"
+                                  "This check can be skipped with "
+                                  "settings(checks=False)")

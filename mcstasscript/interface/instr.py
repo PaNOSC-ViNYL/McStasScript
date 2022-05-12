@@ -24,6 +24,7 @@ from mcstasscript.helper.managed_mcrun import ManagedMcrun
 from mcstasscript.helper.formatting import is_legal_filename
 from mcstasscript.helper.formatting import bcolors
 from mcstasscript.helper.unpickler import CustomMcStasUnpickler, CustomMcXtraceUnpickler
+from mcstasscript.helper.exceptions import McStasError
 
 
 class McCode_instr(BaseCalculator):
@@ -231,7 +232,7 @@ class McCode_instr(BaseCalculator):
                  increment_folder_name=None, custom_flags=None,
                  executable_path=None, executable=None,
                  suppress_output=None, gravity=None, input_path=None,
-                 package_path=None):
+                 package_path=None, checks=None):
         """
         Initialization of McStas Instrument
 
@@ -349,7 +350,7 @@ class McCode_instr(BaseCalculator):
             self._run_settings["package_path"] = package_path
 
         # Settings for run that can be adjusted by user
-        provided_run_settings = {"executable": executable}
+        provided_run_settings = {"executable": executable, "checks": True}
 
         if executable_path is not None:
             provided_run_settings["executable_path"] = str(executable_path)
@@ -376,6 +377,9 @@ class McCode_instr(BaseCalculator):
 
         if suppress_output is not None:
             provided_run_settings["suppress_output"] = suppress_output
+
+        if checks is not None:
+            provided_run_settings["checks"] = checks
 
         if output_path is not None:
             provided_run_settings["output_path"] = output_path
@@ -470,7 +474,6 @@ class McCode_instr(BaseCalculator):
         return par
 
     def show_parameters(self, line_length=None):
-
         """
         Method for displaying current instrument parameters
 
@@ -939,70 +942,14 @@ class McCode_instr(BaseCalculator):
         new_component = self._create_component_instance(name, component_name,
                                                         **component_input)
 
-        self._insert_component(name, new_component, before=before, after=after)
+        self._insert_component(new_component, before=before, after=after)
         return new_component
 
-    def _insert_component(self, name, component, before=None, after=None):
-        """
-        Inserts component into sequence of components held by instrument
-
-        Internal method to handle placement of a new component in the
-        list of components held by this instrument.
-
-        name : str
-            Instance name of component
-
-        component : Component object
-            Component object to be inserted
-
-        before : str or Component object
-            Reference to component to place this one before
-
-        after : str or Component object
-            Reference to coponent to place this one after
-        """
-
-        if before is not None and after is not None:
-            raise RuntimeError("Only specify either 'before' or 'after'.")
-
-        if after is not None:
-            if isinstance(after, Component):
-                after = after.name
-            # Insert component after component with this name
-            if after not in [x.name for x in self.component_list]:
-                raise NameError(("Trying to add a component after a component"
-                                 + " named \"" + str(after)
-                                 + "\", but a component with that name was"
-                                 + " not found."))
-
-            component_names = [x.name for x in self.component_list]
-            new_index = component_names.index(after)
-            self.component_list.insert(new_index + 1, component)
-
-        elif before is not None:
-            if isinstance(before, Component):
-                before = before.name
-            # Insert component before component with this name
-            if before not in [x.name for x in self.component_list]:
-                raise NameError(("Trying to add a component before a "
-                                 + "component named \""
-                                 + str(before)
-                                 + "\", but a component with that "
-                                 + "name was not found."))
-
-            component_names = [x.name for x in self.component_list]
-            new_index = component_names.index(before)
-            self.component_list.insert(new_index, component)
-
-        else:
-            # If after and before keywords absent, place component at the end
-            self.component_list.append(component)
-
     def copy_component(self, name, original_component, before=None, after=None,
-                      AT=None, AT_RELATIVE=None, ROTATED=None,
-                      ROTATED_RELATIVE=None, RELATIVE=None, WHEN=None,
-                      EXTEND=None, GROUP=None, JUMP=None, SPLIT=None,
-                      comment=None, c_code_before=None, c_code_after=None):
+                       AT=None, AT_RELATIVE=None, ROTATED=None,
+                       ROTATED_RELATIVE=None, RELATIVE=None, WHEN=None,
+                       EXTEND=None, GROUP=None, JUMP=None, SPLIT=None,
+                       comment=None, c_code_before=None, c_code_after=None):
         """
         Method for adding a copy of a Component instance to the instrument
 
@@ -1106,12 +1053,115 @@ class McCode_instr(BaseCalculator):
         new_component = copy.deepcopy(component_to_copy)
         new_component.name = name  # Set new name, duplicate names not allowed
 
-        self._insert_component(name, new_component, before=before, after=after)
+        self._insert_component(new_component, before=before, after=after)
 
         # Run set_keyword_input for keyword arguments to take effect
         new_component.set_keyword_input(**component_input)
 
         return new_component
+
+    def remove_component(self, name):
+        """
+        Removes component with given name from instrument
+        """
+
+        # Check for errors before
+        errors_before = self.has_errors()
+
+        if isinstance(name, Component):
+            name = name.name
+
+        component_names = [x.name for x in self.component_list]
+        index_to_remove = component_names.index(name)
+        self.component_list.pop(index_to_remove)
+
+        # Check for errors after removing
+        errors_after = self.has_errors()
+
+        if not errors_before and errors_after:
+            print("Removing the component '" + name + "' introduced errors in "
+                  "the instrument, run check_for_errors() for more "
+                  "information.")
+
+    def move_component(self, name, before=None, after=None):
+        """
+        Moves component with given name to before or after
+        """
+        if isinstance(name, Component):
+            name = name.name
+
+        if before is None and after is None:
+            raise RuntimeError("Must specify 'before' or 'after' when moving "
+                               "a component.")
+
+        # Check for errors before
+        errors_before = self.has_errors()
+
+        if isinstance(name, Component):
+            name = name.name
+
+        component_names = [x.name for x in self.component_list]
+        index_to_remove = component_names.index(name)
+        moved_component = self.component_list.pop(index_to_remove)
+        self._insert_component(moved_component, before=before, after=after)
+
+        # Check for errors after moving
+        errors_after = self.has_errors()
+
+        if not errors_before and errors_after:
+            print("Moving the component '" + name + "' introduced errors in "
+                  "the instrument, run check_for_errors() for more "
+                  "information.")
+
+    def _insert_component(self, component, before=None, after=None):
+        """
+        Inserts component into sequence of components held by instrument
+
+        Internal method to handle placement of a new component in the
+        list of components held by this instrument.
+
+        name : str
+            Instance name of component
+
+        component : Component object
+            Component object to be inserted
+
+        before : str or Component object
+            Reference to component to place this one before
+
+        after : str or Component object
+            Reference to coponent to place this one after
+        """
+
+        if before is not None and after is not None:
+            raise RuntimeError("Only specify either 'before' or 'after'.")
+
+        if before is None and after is None:
+            # If after and before keywords absent, place component at the end
+            self.component_list.append(component)
+            return
+
+        if after is not None:
+            index_addition = 1
+            reference = after
+            description = "after"
+        if before is not None:
+            index_addition = 0
+            reference = before
+            description = "before"
+
+        if isinstance(reference, Component):
+            reference = reference.name
+
+        component_names = [x.name for x in self.component_list]
+        if reference not in component_names:
+            raise NameError("Trying to add a component " + description
+                            + " a component named '" + str(after)
+                            + "', but a component with that name was"
+                            + " not found.")
+
+        new_index = component_names.index(reference) + index_addition
+        self.component_list.insert(new_index, component)
 
     def get_component(self, name):
         """
@@ -1446,9 +1496,29 @@ class McCode_instr(BaseCalculator):
             for component in self.component_list:
                 component.write_component(fo)
 
+    def has_errors(self):
+        """
+        Method that returns true if errors are found in instrument
+        """
+
+        has_errors = True
+        try:
+            self.check_for_errors()
+            has_errors = False
+        except:
+            pass
+
+        return has_errors
+
     def check_for_errors(self):
         """
         Methods that checks for common McStas errors
+
+        Currently checks for:
+        RELATIVE for AT and ROTATED reference a component that have not yet
+        been defined.
+
+        Using variables in components that have not been defined.
         """
 
         # Check RELATIVE exists
@@ -1465,11 +1535,21 @@ class McCode_instr(BaseCalculator):
 
             for ref in references:
                 if ref not in seen_instrument_names:
-                    raise RuntimeError("Component '" + str(component.name)
-                                       + "' referenced unknown component"
-                                       + " named '"
-                                       + str(component.AT_reference)
-                                       + "'.")
+                    raise McStasError("Component '" + str(component.name) +
+                                      "' referenced unknown component"
+                                      " named '"
+                                      + str(component.AT_reference) + "'.\n"
+                                      "This check can be skipped with"
+                                      " settings(checks=False)")
+
+        # Check variables used have been declared
+        parameters = [x.name for x in self.parameters]
+        variables = [x.name for x in self.declare_list]
+        pars_and_vars = parameters + variables
+
+        # Check component parameters
+        for component in self.component_list:
+            component.check_parameters(pars_and_vars)
 
     def write_full_instrument(self):
         """
@@ -1481,7 +1561,8 @@ class McCode_instr(BaseCalculator):
         """
 
         # Catch common errors before writing the instrument
-        self.check_for_errors()
+        if self._run_settings["checks"]:
+            self.check_for_errors()
 
         # Create file identifier
         fo = open(os.path.join(self.input_path, self.name + ".instr"), "w")
@@ -1569,7 +1650,7 @@ class McCode_instr(BaseCalculator):
                  force_compile=None, output_path=None,
                  increment_folder_name=None, custom_flags=None,
                  executable=None, executable_path=None,
-                 suppress_output=None, gravity=None):
+                 suppress_output=None, gravity=None, checks=None):
         """
         Sets settings for McStas run performed with backengine
 
@@ -1650,6 +1731,9 @@ class McCode_instr(BaseCalculator):
 
         if suppress_output is not None:
             settings["suppress_output"] = suppress_output
+
+        if checks is not None:
+            settings["checks"] = checks
 
         if output_path is not None:
             self.output_path = output_path
