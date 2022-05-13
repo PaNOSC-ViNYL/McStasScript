@@ -289,7 +289,7 @@ class McCode_instr(BaseCalculator):
         """
 
         super().__init__(name, input=[],
-                         output_keys=["simulation_data"],
+                         output_keys=[name + "_data"],
                          output_data_types=[pyvinylMcStasData],
                          parameters=parameters)
 
@@ -399,9 +399,6 @@ class McCode_instr(BaseCalculator):
         self.component_class_lib = {}
         self.widget_interface = None
 
-        # Ensure output_path field exist (not ensured by BaseCalculator)
-        if not hasattr(self, "output_path"):
-            self.output_path = self.name + "_data"
 
         # Avoid initializing if loading from dump
         if not hasattr(self, "declare_list"):
@@ -414,6 +411,19 @@ class McCode_instr(BaseCalculator):
                                     + name + "\n")
             # Handle components
             self.component_list = []  # List of components (have to be ordered)
+
+    @property
+    def output_path(self) -> str:
+        return self.base_dir
+
+    @output_path.setter
+    def output_path(self, value: str) -> None:
+        if os.path.isabs(value):
+            commonpart = os.path.commonpath(os.path.abspath(self.instrument_base_dir))
+            self.instrument_base_dir = commonpart
+            self.calculator_base_dir = os.path.relpath(value, commonpart)
+        else:
+            self.calculator_base_dir = value
 
     def init_parameters(self):
         """
