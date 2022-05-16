@@ -8,7 +8,6 @@ from mcstasscript.helper.plot_helper import _fmt
 from mcstasscript.helper.plot_helper import _find_min_max_I
 from mcstasscript.helper.plot_helper import _plot_fig_ax
 from mcstasscript.helper.plot_helper import _handle_kwargs
-from mcstasscript.jb_interface.plot_interface import PlotInterface
 
 
 def make_plot(data_list, **kwargs):
@@ -161,15 +160,3 @@ def make_animation(data_list, **kwargs):
         # check if imagemagick available?
         print("Saving animation with filename : \"" + filename + "\"")
         anim.save(filename, writer="imagemagick")
-
-def interface(data):
-    """
-    Shows plot interface to explore data
-
-    Parameters
-    ----------
-    data : List of McStasData objects
-    """
-
-    interface = PlotInterface(data)
-    return interface.show_interface()

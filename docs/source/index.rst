@@ -13,6 +13,7 @@ Documentation
    
    getting_started/overview
    getting_started/installation
+   getting_started/version_history
    getting_started/quick_start
    
 .. toctree::

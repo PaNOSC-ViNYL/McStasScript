@@ -11,6 +11,7 @@ from mcstasscript.interface.instr import McStas_instr
 from mcstasscript.interface.instr import McXtrace_instr
 from mcstasscript.helper.formatting import bcolors
 from mcstasscript.tests.helpers_for_tests import WorkInTestDir
+from mcstasscript.helper.exceptions import McStasError
 
 run_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '.')
 
@@ -641,7 +642,7 @@ class TestMcStas_instr(unittest.TestCase):
                          + "ABCD")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_show_components_simple(self, mock_stdout):
+    def test_available_components_simple(self, mock_stdout):
         """
         Simple test of show components to show component categories
         """
@@ -653,7 +654,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_instr_with_path()
 
-        instr.show_components()
+        instr.available_components()
 
         os.chdir(current_work_dir)
 
@@ -673,7 +674,7 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[6], " work directory")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_show_components_folder(self, mock_stdout):
+    def test_available_components_folder(self, mock_stdout):
         """
         Simple test of show components to show components in current work
         directory.
@@ -685,7 +686,7 @@ class TestMcStas_instr(unittest.TestCase):
         current_work_dir = os.getcwd()
         os.chdir(THIS_DIR)  # Set work directory to test folder
 
-        instr.show_components("work directory")
+        instr.available_components("work directory")
 
         os.chdir(current_work_dir)
 
@@ -705,14 +706,14 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[5], "")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_show_components_input_path_simple(self, mock_stdout):
+    def test_available_components_input_path_simple(self, mock_stdout):
         """
         Simple test of input_path being recognized and passed
         to component_reader so PSDlin_monitor is overwritten
         """
         instr = setup_instr_with_input_path()
 
-        instr.show_components()
+        instr.available_components()
 
         output = mock_stdout.getvalue()
         output = output.split("\n")
@@ -730,7 +731,7 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[6], " work directory")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_show_components_input_path_custom(self, mock_stdout):
+    def test_available_components_input_path_custom(self, mock_stdout):
         """
         Simple test of input_path being recognized and passed
         to component_reader so PSDlin_monitor is overwritten
@@ -739,7 +740,7 @@ class TestMcStas_instr(unittest.TestCase):
         """
         instr = setup_instr_with_input_path_relative()
 
-        instr.show_components()
+        instr.available_components()
 
         output = mock_stdout.getvalue()
         output = output.split("\n")
@@ -1089,6 +1090,66 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(original.AT_data[2], 2)
         self.assertEqual(original.SPLIT, 0)
 
+    def test_remove_component(self):
+        """
+        Ensure a component can be removed
+        """
+        instr = setup_populated_instr()
+
+        instr.remove_component("second_component")
+
+        self.assertEqual(len(instr.component_list), 2)
+        self.assertEqual(instr.component_list[0].name, "first_component")
+        self.assertEqual(instr.component_list[1].name, "third_component")
+
+    def test_move_component(self):
+        """
+        Ensure a component can be moved
+        """
+        instr = setup_populated_instr()
+
+        instr.move_component("second_component", before="first_component")
+
+        self.assertEqual(len(instr.component_list), 3)
+        self.assertEqual(instr.component_list[0].name, "second_component")
+        self.assertEqual(instr.component_list[1].name, "first_component")
+        self.assertEqual(instr.component_list[2].name, "third_component")
+
+    def test_RELATIVE_error(self):
+        """
+        Ensure check_for_errors finds impossible relative statement
+        """
+
+        instr = setup_populated_instr()
+
+        second_component = instr.get_component("second_component")
+        second_component.set_AT([0, 0, 0], RELATIVE="third_component")
+
+        self.assertTrue(instr.has_errors())
+
+        with self.assertRaises(McStasError):
+            instr.check_for_errors()
+
+    @unittest.mock.patch('__main__.__builtins__.open',
+                         new_callable=unittest.mock.mock_open)
+    def test_RELATIVE_error_and_checks_false(self, mock_f):
+        """
+        Ensure check_for_errors finds impossible relative statement
+        """
+
+        instr = setup_populated_instr()
+
+        second_component = instr.get_component("second_component")
+        second_component.set_AT([0, 0, 0], RELATIVE="third_component")
+
+        self.assertTrue(instr.has_errors())
+
+        with self.assertRaises(McStasError):
+            instr.write_full_instrument()
+
+        instr.settings(checks=False)
+        instr.write_full_instrument()
+
     def test_get_component_simple(self):
         """
         get_component retrieves a component with a given name for
@@ -1124,211 +1185,6 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(comp.name, "third_component")
 
-    def test_set_component_parameter(self):
-        """
-        Tests simple case of set_component_parameter
-
-        set_component_parameter passes a dict from instrument level
-        to a contained component with the given name. It uses the
-        get_component method.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_parameter("second_component",
-                                      {"radius": 5.8,
-                                       "dist": "text"})
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.radius, 5.8)
-        self.assertEqual(comp.dist, "text")
-
-    def test_set_component_parameter_error(self):
-        """
-        Tests set_component_parameter fails when trying to set a parameter
-        that does not exist
-
-        set_component_parameter passes a dict from instrument level
-        to a contained component with the given name. It uses the
-        get_component method.
-        """
-
-        instr = setup_populated_instr()
-
-        with self.assertRaises(NameError):
-            instr.set_component_parameter("second_component",
-                                          {"non_existent_par": 5.8,
-                                           "dist": "text"})
-
-    def test_set_component_AT(self):
-        """
-        set_component_AT passes the argument to the similar method
-        in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_AT("second_component",
-                               [1, 2, 3.2], RELATIVE="home")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.AT_data, [1, 2, 3.2])
-        self.assertEqual(comp.AT_relative, "RELATIVE home")
-        self.assertEqual(comp.ROTATED_relative, "ABSOLUTE")
-
-    def test_set_component_ROTATED(self):
-        """
-        set_component_ROTATED passes the argument to the similar
-        method in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_ROTATED("second_component",
-                                    [4, 1, -29], RELATIVE="home")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.ROTATED_data, [4, 1, -29])
-        self.assertEqual(comp.ROTATED_relative, "RELATIVE home")
-        self.assertEqual(comp.AT_relative, "ABSOLUTE")
-
-    def test_set_component_RELATIVE(self):
-        """
-        set_component_RELATIVE passes the argument to the similar
-        method in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_RELATIVE("second_component", "home")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.ROTATED_data, [0, 0, 0])
-        self.assertEqual(comp.ROTATED_relative, "RELATIVE home")
-        self.assertEqual(comp.AT_relative, "RELATIVE home")
-
-    def test_set_component_WHEN(self):
-        """
-        set_component_WHEN passes the argument to the similar method
-        in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_WHEN("second_component", "2>1")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.WHEN, "WHEN (2>1)")
-
-    def test_append_component_EXTEND(self):
-        """
-        append_component_EXTEND passes the argument to the similar
-        method in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.append_component_EXTEND("second_component", "line1")
-        instr.append_component_EXTEND("second_component", "line2")
-
-        comp = instr.get_component("second_component")
-
-        output = comp.EXTEND.split("\n")
-
-        self.assertEqual(output[0], "line1")
-        self.assertEqual(output[1], "line2")
-
-    def test_set_component_GROUP(self):
-        """
-        set_component_GROUP passes the argument to the similar method
-        in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_GROUP("second_component", "developers")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.GROUP, "developers")
-
-    def test_set_component_JUMP(self):
-        """
-        set_component_JUMP passes the argument to the similar method
-        in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_JUMP("second_component", "myself 8")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.JUMP, "myself 8")
-
-    def test_set_component_SPLIT(self):
-        """
-        set_component_SPLIT passes the argument to the similar method
-        in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_SPLIT("second_component", 3)
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.SPLIT, 3)
-
-    def test_set_component_comment(self):
-        """
-        set_component_comment passes the argument to the similar
-        method in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_comment("second_component", "test comment")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.comment, "test comment")
-
-    def test_set_c_code_before(self):
-        """
-        set_component_c_code_before passes the argument to the similar
-        method in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_c_code_before("second_component",
-                                          "%include before.instr")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.c_code_before, "%include before.instr")
-
-    def test_set_c_code_after(self):
-        """
-        set_component_c_code_after passes the argument to the similar
-        method in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_c_code_after("second_component",
-                                         "%include after.instr")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.c_code_after, "%include after.instr")
-
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_print_component(self, mock_stdout):
         """
@@ -1337,8 +1193,7 @@ class TestMcStas_instr(unittest.TestCase):
         """
 
         instr = setup_populated_instr()
-        instr.set_component_parameter("second_component",
-                                      {"dist": 5})
+        instr.get_component("second_component").set_parameters(dist=5)
 
         instr.print_component("second_component")
 
@@ -1374,8 +1229,8 @@ class TestMcStas_instr(unittest.TestCase):
         """
 
         instr = setup_populated_instr()
-        instr.set_component_AT("second_component",
-                               [-1, 2, 3.4], RELATIVE="home")
+        instr.get_component("second_component").set_AT([-1, 2, 3.4],
+                                                       RELATIVE="home")
 
         instr.print_component_short("second_component")
 
@@ -1388,17 +1243,17 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[0], expected)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_print_components_simple(self, mock_stdout):
+    def test_show_components_simple(self, mock_stdout):
         """
-        Tests print_components for simple case
+        Tests show_components for simple case
 
-        print_components calls the print_short method in the component
+        show_components calls the print_short method in the component
         class for each component and aligns the data for display
         """
 
         instr = setup_populated_instr()
 
-        instr.print_components(line_length=300)
+        instr.show_components(line_length=300)
 
         output = mock_stdout.getvalue().split("\n")
 
@@ -1415,26 +1270,24 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[2], expected)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_print_components_complex(self, mock_stdout):
+    def test_show_components_complex(self, mock_stdout):
         """
-        Tests print_components for complex case
+        Tests show_components for complex case
 
-        print_components calls the print_short method in the component
+        show_components calls the print_short method in the component
         class for each component and aligns the data for display
         """
 
         instr = setup_populated_instr()
 
-        instr.set_component_AT("first_component",
-                               [-0.1, 12, "dist"],
-                               RELATIVE="home")
-        instr.set_component_ROTATED("second_component",
-                                    [-4, 0.001, "theta"],
-                                    RELATIVE="etc")
+        instr.get_component("first_component").set_AT([-0.1, 12, "dist"],
+                                                      RELATIVE="home")
+        instr.get_component("second_component").set_ROTATED([-4, 0.001, "theta"],
+                                                            RELATIVE="etc")
         comp = instr.get_last_component()
         comp.component_name = "test_name"
 
-        instr.print_components(line_length=300)
+        instr.show_components(line_length=300)
 
         output = mock_stdout.getvalue().split("\n")
 
@@ -1452,9 +1305,9 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[2], expected)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_print_components_complex_2lines(self, mock_stdout):
+    def test_show_components_complex_2lines(self, mock_stdout):
         """
-        print_components calls the print_short method in the component
+        show_components calls the print_short method in the component
         class for each component and aligns the data for display
 
         This version of the tests forces two lines of output.
@@ -1462,16 +1315,14 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_populated_instr()
 
-        instr.set_component_AT("first_component",
-                               [-0.1, 12, "dist"],
-                               RELATIVE="home")
-        instr.set_component_ROTATED("second_component",
-                                    [-4, 0.001, "theta"],
-                                    RELATIVE="etc")
+        instr.get_component("first_component").set_AT([-0.1, 12, "dist"],
+                                                      RELATIVE="home")
+        instr.get_component("second_component").set_ROTATED([-4, 0.001, "theta"],
+                                                            RELATIVE="etc")
         comp = instr.get_last_component()
         comp.component_name = "test_name"
 
-        instr.print_components(line_length=80)
+        instr.show_components(line_length=80)
 
         output = mock_stdout.getvalue().split("\n")
 
@@ -1492,9 +1343,9 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[3], expected)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_print_components_complex_3lines(self, mock_stdout):
+    def test_show_components_complex_3lines(self, mock_stdout):
         """
-        print_components calls the print_short method in the component
+        show_components calls the print_short method in the component
         class for each component and aligns the data for display
 
         This version of the tests forces three lines of output.
@@ -1502,16 +1353,14 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_populated_instr()
 
-        instr.set_component_AT("first_component",
-                               [-0.1, 12, "dist"],
-                               RELATIVE="home")
-        instr.set_component_ROTATED("second_component",
-                                    [-4, 0.001, "theta"],
-                                    RELATIVE="etc")
+        instr.get_component("first_component").set_AT([-0.1, 12, "dist"],
+                                                      RELATIVE="home")
+        instr.get_component("second_component").set_ROTATED([-4, 0.001, "theta"],
+                                                            RELATIVE="etc")
         comp = instr.get_last_component()
         comp.component_name = "test_name"
 
-        instr.print_components(line_length=1)  # Three lines maximum
+        instr.show_components(line_length=1)  # Three lines maximum
 
         output = mock_stdout.getvalue().split("\n")
 

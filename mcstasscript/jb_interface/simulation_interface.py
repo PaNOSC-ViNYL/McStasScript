@@ -272,6 +272,20 @@ class SimInterface:
 
         return widget
 
+    def get_data(self):
+        """
+        Returns last data set from this interface
+        """
+        if self.plot_interface is None:
+            print("No widget interface initialized, use show_interface method.")
+            return []
+
+        if self.plot_interface.data is None:
+            print("No run has been performed with the interface widget yet")
+            return []
+
+        return self.plot_interface.data
+
     def show_interface(self):
         """
         Builds and shows widget interface

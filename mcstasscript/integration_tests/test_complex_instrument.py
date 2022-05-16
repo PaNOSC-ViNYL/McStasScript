@@ -57,16 +57,15 @@ def setup_complex_instrument():
     slit1.append_EXTEND("}")
     slit1.set_GROUP("entrance_slits")
 
-    # Add second slit with instr methods
-    Instr.add_component("slit2", "Slit")
-    Instr.set_component_AT("slit2", ["-1.3*guide_width", 0, 1.5])
-    Instr.set_component_RELATIVE("slit2", "source")
-    Instr.set_component_parameter("slit2", {"xwidth": "guide_width",
-                                            "yheight": 0.05})
-    Instr.append_component_EXTEND("slit2", "if (SCATTERED) {")
-    Instr.append_component_EXTEND("slit2", "  guide_choice = 2;")
-    Instr.append_component_EXTEND("slit2", "}")
-    Instr.set_component_GROUP("slit2", "entrance_slits")
+    # Add second slit with set_parameters
+    slit2 = Instr.add_component("slit2", "Slit")
+    slit2.set_AT(["-1.3*guide_width", 0, 1.5])
+    slit2.set_RELATIVE("source")
+    slit2.set_parameters(xwidth="guide_width", yheight=0.05)
+    slit2.append_EXTEND("if (SCATTERED) {")
+    slit2.append_EXTEND("  guide_choice = 2;")
+    slit2.append_EXTEND("}")
+    slit2.set_GROUP("entrance_slits")
 
     select1 = Instr.add_component("select1", "Arm", RELATIVE="after_guide")
     select1.set_JUMP("select2 WHEN guide_choice == 2")

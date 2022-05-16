@@ -11,7 +11,6 @@ from .interface.functions import name_plot_options
 from .interface.functions import name_search
 from .interface.functions import Configurator
 
-from .interface.plotter import interface
 from .interface.plotter import make_animation
 from .interface.plotter import make_plot
 from .interface.plotter import make_sub_plot

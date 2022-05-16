@@ -14,6 +14,7 @@ from mcstasscript.helper.plot_helper import _plot_fig_ax
 
 from mcstasscript.jb_interface.widget_helpers import HiddenPrints
 
+
 class PlotInterface:
     """
     Class for providing plotting interface given McStasScript data
@@ -296,6 +297,7 @@ class ColormapDropdown:
         Updates the colormap with the set_colormap function in attributes
         """
         self.set_colormap(change.new)
+
 
 class MonitorDropdown:
     """
