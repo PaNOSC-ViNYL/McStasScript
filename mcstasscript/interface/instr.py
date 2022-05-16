@@ -1906,7 +1906,7 @@ class McCode_instr(BaseCalculator):
 
         return self.backengine()
 
-    def show_instrument(self, format="webgl", width=800, height=450):
+    def show_instrument(self, format="webgl", width=800, height=450, new_tab=False):
         """
         Uses mcdisplay to show the instrument in web browser
 
@@ -1921,6 +1921,8 @@ class McCode_instr(BaseCalculator):
                 width of IFrame if used in notebook
             height : int
                 height of IFrame if used in notebook
+            new_tab : bool
+                Open webgl in new browser tab
         """
 
         parameters = {}
@@ -1961,8 +1963,19 @@ class McCode_instr(BaseCalculator):
         instr_path = os.path.join(self.input_path, self.name + ".instr")
         instr_path = os.path.abspath(instr_path)
 
+        try:
+            shell = get_ipython().__class__.__name__
+            is_notebook = shell == "ZMQInteractiveShell"
+        except:
+            is_notebook = False
+
+        options = ""
+        if is_notebook and executable == "mcdisplay-webgl" and not new_tab:
+            options += "--nobrowse "
+
         full_command = (bin_path + executable + " "
                         + dir_control
+                        + options
                         + instr_path
                         + " " + parameter_string)
 
@@ -1971,12 +1984,6 @@ class McCode_instr(BaseCalculator):
                                  stderr=subprocess.PIPE,
                                  universal_newlines=True,
                                  cwd=self.input_path)
-
-        try:
-            shell = get_ipython().__class__.__name__
-            is_notebook = shell == "ZMQInteractiveShell"
-        except:
-            is_notebook = False
 
         if not is_notebook or executable != "mcdisplay-webgl":
             print(process.stderr)
