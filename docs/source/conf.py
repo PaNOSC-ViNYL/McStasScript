@@ -50,6 +50,8 @@ master_doc = 'index'
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+execution_timeout = 200
+
 
 # -- Options for HTML output -------------------------------------------------
 

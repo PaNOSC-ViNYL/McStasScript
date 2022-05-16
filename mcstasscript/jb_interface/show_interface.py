@@ -15,7 +15,7 @@ def show(function_input):
     Parameters
     ----------
 
-    function_input : McCode_instr, list or McStasData
+    function_input : McCode_instr, list of McStasData
 
     """
 
