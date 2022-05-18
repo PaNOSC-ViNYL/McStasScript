@@ -1,10 +1,17 @@
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def instrument_diagram(instrument):
-    lane_width = 0.033 # spacing between lanes
-    margin = 0.01 # Margin on figure at top and bottom
+    """
+    Plots diagram of components in instrument with RELATIVE connections
+
+    All components in the instrument are shown as text fields and arrows are
+    drawn showing the AT RELATIVE and ROTATED RELATIVE connections between
+    components.
+    """
+    lane_width = 0.033  # spacing between lanes
+    margin = 0.01  # Margin on figure at top and bottom
 
     components = instrument.component_list
     n_components = len(components) + 1
@@ -18,14 +25,11 @@ def instrument_diagram(instrument):
         component_boxes.append(box)
         component_box_dict[component.name] = box
 
-
     box_height_centers = np.linspace(1-margin, margin, n_components)
     box_height = (1 - 2*margin)/n_components
     for box, y_pos in zip(component_boxes, box_height_centers):
         box.set_y(y_pos)
         box.set_box_height(box_height)
-
-
 
     arrows = []
     box_names = [x.name for x in component_boxes]
@@ -56,7 +60,7 @@ def instrument_diagram(instrument):
 
         ROTATED_connections[origin] = target
 
-
+    # Make arrows for AT connections
     for origin, target in AT_connections.items():
         lane_number = find_lane_number(origin=origin, target=target, box_names=box_names,
                                        connections=AT_connections,
@@ -68,9 +72,11 @@ def instrument_diagram(instrument):
         arrow.set_box_offset_origin(0.24 * box_height)
         arrow.set_box_offset_target(-0.2 * box_height)
         arrow.set_lane(lane_number)
+        #arrow.set_linestyle("--")
 
         arrows.append(arrow)
 
+    # Make arrows for ROTATED connections
     for origin, target in ROTATED_connections.items():
         lane_number = find_lane_number(origin=origin, target=target, box_names=box_names,
                                        connections=ROTATED_connections,
@@ -83,6 +89,7 @@ def instrument_diagram(instrument):
         arrow.set_box_offset_origin(0.16 * box_height)
         arrow.set_box_offset_target(-0.05 * box_height)
         arrow.color = "red"
+        #arrow.set_linestyle("--")
 
         arrow.set_lane(lane_number)
         arrows.append(arrow)
@@ -93,11 +100,12 @@ def instrument_diagram(instrument):
         highest_lane = max(arrow.lane, highest_lane)
 
     lane_width = highest_lane/3
+    lane_width = max(0.6, lane_width)
     name_width = 3  # Reserve space of 3 for component names
     graph_width = lane_width + name_width
 
     for box in component_boxes:
-        box.set_x(lane_width / graph_width) # Places boxes so they get name_width space
+        box.set_x(lane_width / graph_width)  # Places boxes so they get name_width space
 
     fig, ax = plt.subplots(figsize=(graph_width, graph_height))
     ax.set(xlim=(0, 1), ylim=(0, 1))
@@ -113,6 +121,9 @@ def instrument_diagram(instrument):
 
 
 def find_lane_number(origin, target, box_names, connections, lane_numbers, component_box_dict):
+    """
+    Helper function for finding how many lanes the current connection should go
+    """
     origin_index = box_names.index(origin.name)
     target_index = box_names.index(target.name)
     names_between = box_names[target_index + 1:origin_index]
@@ -136,8 +147,15 @@ def find_lane_number(origin, target, box_names, connections, lane_numbers, compo
     lane_numbers[origin] = lane_number
     return lane_number
 
+
 class Component_box:
+    """
+    Helper class for creating text boxes
+    """
     def __init__(self, component_object=None, name=None):
+        """
+        Text box object
+        """
         self.component_object = component_object
         if component_object is None:
             self.name = name
@@ -156,18 +174,6 @@ class Component_box:
     def set_y(self, y):
         self.position_y = y
 
-    def get_origin_x(self):
-        return self.position_x
-
-    def get_origin_y(self):
-        return self.position_y + 0.2 * self.box_height
-
-    def get_target_x(self):
-        return self.position_x
-
-    def get_target_y(self):
-        return self.position_y - 0.15 * self.box_height
-
     def plot_box(self, ax):
         bbox = dict(boxstyle="round", facecolor="white", edgecolor="black")
 
@@ -176,16 +182,24 @@ class Component_box:
 
 
 class Arrow:
+    """
+    Helper class for creating arrows with connections
+    """
     def __init__(self, origin, target):
+        """
+        Arrow object with origin Component_box and target component_box
+        """
         self.origin = origin
         self.target = target
         self.lane = None
         self.lane_width = None
-        self.color = "blue"
         self.lane_offset = 0
 
         self.box_offset_origin = 0
         self.box_offset_target = 0
+
+        self.origin_linestyle = "-"
+        self.color = "blue"
         self.arrow_width = 0.003
 
     def set_lane(self, lane):
@@ -209,6 +223,9 @@ class Arrow:
     def set_arrow_width(self, value):
         self.arrow_width = value
 
+    def set_linestyle(self, value):
+        self.origin_linestyle = value
+
     def plot(self, ax):
         origin_x = self.origin.position_x
         origin_y = self.origin.position_y + self.box_offset_origin
@@ -216,7 +233,8 @@ class Arrow:
         origin_lane_x = origin_x - self.get_lane_value()
         origin_lane_y = origin_y
 
-        ax.plot([origin_x + 0.05, origin_lane_x], [origin_y, origin_lane_y], color=self.color)
+        ax.plot([origin_x + 0.05, origin_lane_x], [origin_y, origin_lane_y],
+                color=self.color, linestyle=self.origin_linestyle)
 
         target_x = self.target.position_x
         target_y = self.target.position_y + self.box_offset_target
