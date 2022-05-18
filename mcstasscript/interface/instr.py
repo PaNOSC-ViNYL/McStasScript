@@ -25,6 +25,7 @@ from mcstasscript.helper.formatting import is_legal_filename
 from mcstasscript.helper.formatting import bcolors
 from mcstasscript.helper.unpickler import CustomMcStasUnpickler, CustomMcXtraceUnpickler
 from mcstasscript.helper.exceptions import McStasError
+from mcstasscript.helper.instrument_diagram import instrument_diagram
 
 
 class McCode_instr(BaseCalculator):
@@ -2015,6 +2016,22 @@ class McCode_instr(BaseCalculator):
         # Create IFrame in ipython that shows instrument
 
         return IFrame(src=html_path, width=width, height=height)
+
+    def show_diagram(self):
+        """
+        Shows diagram of component connections in insrument
+
+        Shows a diagram with all components as text fields and arrows between
+        them showing the AT RELATIVE and ROTATED RELATIVE connections. Spatial
+        connections are shown in blue, and rotational in red. ROTATED
+        connections are only shown when they are specified.
+        """
+        if self.has_errors():
+            print("The instrument has some error, this diagram is still"
+                  "shown as it may help find the bug.")
+
+        instrument_diagram(self)
+        self.check_for_errors()
 
     def saveH5(self, filename: str, openpmd: bool = True):
         """
