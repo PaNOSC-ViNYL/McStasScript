@@ -9,6 +9,12 @@ def instrument_diagram(instrument):
     All components in the instrument are shown as text fields and arrows are
     drawn showing the AT RELATIVE and ROTATED RELATIVE connections between
     components.
+
+    Parameters
+    ----------
+
+    instrument : McCode_instr
+        Instrument object from which the component list is taken
     """
     lane_width = 0.033  # spacing between lanes
     margin = 0.01  # Margin on figure at top and bottom
