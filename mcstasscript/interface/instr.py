@@ -306,6 +306,10 @@ class McCode_instr(BaseCalculator):
                             + self.name + ".instr"
                             + "\" which is not a legal filename")
 
+        if self.calculator_base_dir == "BaseCalculator":
+            # If the base_dir was not set, set default to depend on instrument name
+            self.calculator_base_dir = self.name + "_data"
+
         if author is None:
             self.author = "Python " + self.package_name
             self.author += " Instrument Generator"
@@ -1255,7 +1259,6 @@ class McCode_instr(BaseCalculator):
         line_length : int
             Maximum line length in console
         """
-
         if len(self.component_list) == 0:
             print("No components added to instrument object yet.")
             return
@@ -1263,6 +1266,12 @@ class McCode_instr(BaseCalculator):
         if line_length is None:
             line_limit = self.line_limit
         else:
+            if not isinstance(line_length, int):
+                raise ValueError("Show components now shows components in"
+                                 " instrument instead of help. For help,"
+                                 " use available_components instead. \n"
+                                 "The argument for show_components is"
+                                 " line_length and has to be an integer.")
             line_limit = line_length
 
         component_names = [x.name for x in self.component_list]
