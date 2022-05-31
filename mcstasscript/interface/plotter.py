@@ -62,6 +62,7 @@ def make_sub_plot(data_list, **kwargs):
 
     if "filename" in kwargs:
         fig.savefig(kwargs["filename"])
+        plt.close(fig)
     else:
         plt.show()
 
