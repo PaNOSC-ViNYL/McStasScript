@@ -25,7 +25,7 @@ from mcstasscript.helper.formatting import is_legal_filename
 from mcstasscript.helper.formatting import bcolors
 from mcstasscript.helper.unpickler import CustomMcStasUnpickler, CustomMcXtraceUnpickler
 from mcstasscript.helper.exceptions import McStasError
-from mcstasscript.helper.instrument_diagram import instrument_diagram
+from mcstasscript.instrument_diagram.make_diagram import instrument_diagram
 
 
 class McCode_instr(BaseCalculator):
