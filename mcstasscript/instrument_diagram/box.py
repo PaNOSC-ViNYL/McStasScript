@@ -9,24 +9,35 @@ class ComponentBox:
         """
         Text box object
         """
+        # set defaults
+        self.position_x = None
+        self.position_y = None
+        self.box_height = None
+        self.box_indent = None
+        self.background_color = "white"
+        self.outline_style = "-"
+        self.outline_width = 1
+
+        self.t = None  # text object
+        self.graph_box_end = None  # graph position where text ends
+        self.graph_box_start = None  # graph position where text ends
+
+        # Load component
         self.component_object = component_object
         if component_object is None:
             self.name = name
         else:
             self.name = self.component_object.name
 
+            # Decorate the box depending on the McStas features used
+            if self.component_object.WHEN != "":
+                self.outline_style = "--"
+
+            if self.component_object.EXTEND != "":
+                self.outline_width = 2.5
+
         # Produced weighted length of name, capital letters count for 1.2
         self.weighted_name_length = len(self.name) + 0.2*sum(1 for c in self.name if c.isupper())
-
-        self.position_x = None
-        self.position_y = None
-        self.box_height = None
-        self.box_indent = None
-        self.background_color = "white"
-
-        self.t = None # text object
-        self.graph_box_end = None # graph position where text ends
-        self.graph_box_start = None  # graph position where text ends
 
     def set_box_height(self, box_height):
         self.box_height = box_height
@@ -44,7 +55,9 @@ class ComponentBox:
         self.background_color = value
 
     def plot_box(self, ax):
-        bbox = dict(boxstyle="round", facecolor=self.background_color, edgecolor="black")
+        bbox = dict(boxstyle="round", facecolor=self.background_color,
+                    edgecolor="black", linestyle=self.outline_style,
+                    linewidth=self.outline_width)
 
         self.t = ax.text(self.position_x + self.box_indent, self.position_y, self.name,
                          va="center", fontweight="semibold", color="black", #font="monospace",

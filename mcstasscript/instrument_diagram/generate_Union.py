@@ -14,6 +14,7 @@ def generate_Union_arrows(components, component_box_dict, box_names, component_c
     process_names = []
     material_names = []
     geometry_names = []
+    simulated_geometry_names = []
     master_names = []
     geometry_activation_counters = {}
     for component in components:
@@ -51,10 +52,13 @@ def generate_Union_arrows(components, component_box_dict, box_names, component_c
 
                 geometry_activation_counters[component.name] = number_of_activations
 
+                if component.material_string is not None:
+                    simulated_geometry_names.append(component.name)
+
                 if isinstance(component.material_string, str):
                     material = component.material_string.strip('"')
                     if material not in material_names:
-                        if material not in ["Vacuum", "vacuum"]:
+                        if material not in ["Vacuum", "vacuum", "Exit", "exit"]:
                             print("Didn't find material of name '" + material + "'")
                             print(material_names)
                     else:
@@ -87,7 +91,7 @@ def generate_Union_arrows(components, component_box_dict, box_names, component_c
                 # Master
                 master_names.append(component.name)
 
-                for geometry in geometry_names:
+                for geometry in simulated_geometry_names:
                     if geometry_activation_counters[geometry] > 0:  # May need to account for floating point precision
                         # Only include if activation counter for this geometry is still positive
                         geometry_activation_counters[geometry] -= 1

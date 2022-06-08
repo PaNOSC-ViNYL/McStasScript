@@ -11,18 +11,10 @@ class IndexConnection:
             self.interval_end = start_index
 
     def compatible_with(self, new):
-        # Three ways the two intervals can overlap:
-
-        if self.interval_start < new.interval_start < self.interval_end:
-            # Start point included in existing interval
-            return False
-
-        if self.interval_start < new.interval_end < self.interval_end:
-            # End point included in existing interval
-            return False
-
-        if self.interval_start > new.interval_start and self.interval_end < new.interval_end:
-            # New interval includes existing interval
+        """
+        Check if the new interval can coexist with the existing
+        """
+        if new.interval_end > self.interval_start and new.interval_start < self.interval_end:
             return False
 
         return True
