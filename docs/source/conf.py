@@ -67,7 +67,7 @@ html_theme = 'sphinx_book_theme'
 html_theme_options = {
     #"logo_only": True,
     "repository_url": "https://github.com/PaNOSC-ViNYL/McStasScript",
-    "repository_branch": "mcstasscript_on_libpyvinyl",
+    "repository_branch": "master",
     "path_to_docs": "docs",
     "use_repository_button": True,
     "use_issues_button": True,

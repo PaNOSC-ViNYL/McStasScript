@@ -26,6 +26,7 @@ Documentation
    user_guide/data
    user_guide/plotting
    user_guide/functions
+   user_guide/widgets
    user_guide/instrument_reader
 
 .. toctree::
