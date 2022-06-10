@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
-
+from mcstasscript.helper.mcstas_objects import Component
 
 class ComponentBox:
     """
     Helper class for creating text boxes describing components
     """
-    def __init__(self, component_object=None, name=None):
+    def __init__(self, box_input):
         """
         Text box object
         """
@@ -23,10 +23,11 @@ class ComponentBox:
         self.graph_box_start = None  # graph position where text ends
 
         # Load component
-        self.component_object = component_object
-        if component_object is None:
-            self.name = name
-        else:
+        if isinstance(box_input, str):
+            self.component_object = None
+            self.name = box_input
+        elif isinstance(box_input, Component):
+            self.component_object = box_input
             self.name = self.component_object.name
 
             # Decorate the box depending on the McStas features used
@@ -35,6 +36,9 @@ class ComponentBox:
 
             if self.component_object.EXTEND != "":
                 self.outline_width = 2.5
+        else:
+            raise ValueError("Input for box needs to be of type Component or str, not "
+                             + str(type(box_input)))
 
         # Produced weighted length of name, capital letters count for 1.2
         self.weighted_name_length = len(self.name) + 0.2*sum(1 for c in self.name if c.isupper())

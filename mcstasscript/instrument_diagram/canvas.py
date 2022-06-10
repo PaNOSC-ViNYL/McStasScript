@@ -1,3 +1,5 @@
+import copy
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -160,23 +162,22 @@ class DiagramCanvas:
 
         self.legend_height = self.FIG_LEGEND_HEADLINE + self.FIG_HEIGHT_PER_BOX * (len(all_categories) // 2)
 
-        self.make_legend()
-
     def make_legend(self):
 
         box_top = 1 - self.FIG_LEGEND_HEADLINE / self.legend_height
 
-        fig, ax = plt.subplots(figsize=(7.0, self.legend_height))
+        fig, ax = plt.subplots(figsize=(6.2, self.legend_height))
         ax.set(xlim=(0, 1), ylim=(0, 1))
-        ax.axis("off")
+        ax.get_xaxis().set_ticks([])
+        ax.get_yaxis().set_ticks([])
 
         bbox = dict(boxstyle="round", facecolor="white", edgecolor="white")
 
-        ax.text(0.37, 1.05, "Legend", va="center", ha="center", fontweight="semibold", bbox=bbox, fontsize="large")
+        ax.text(0.385, 1.03, "Legend", va="center", ha="center", fontweight="semibold", bbox=bbox, fontsize="large")
 
-        legend_boxes = [ComponentBox(name="Arm")]
+        legend_boxes = [ComponentBox("Arm")]
         for category, color in self.category_color_dict.items():
-            box = ComponentBox(name=category)
+            box = ComponentBox(category)
             box.set_background_color(color)
             legend_boxes.append(box)
 
@@ -229,7 +230,7 @@ class DiagramCanvas:
 
         arrow_width = 0.012
         AT_HEIGHT = 0.83
-        START_WIDTH = 0.45
+        START_WIDTH = 0.47
         TEXT_WIDTH_INDENT = 0.01
         DISPLACEMENT = 0.2
         TEXT_DISPLACEMENT = 0.08
@@ -272,7 +273,36 @@ class DiagramCanvas:
             ax.text(START_WIDTH + TEXT_WIDTH_INDENT, AT_HEIGHT + current_displacement + TEXT_DISPLACEMENT,
                     "GROUP", va="center", weight="semibold")
 
+        box_y_coordinates = list(np.linspace(margin, box_top, 5))
+        box_x_coordinate = 0.83
+
+        # Check if any boxes are decorated for EXTEND or WHEN
+        for box in self.component_boxes:
+            if box.component_object is not None:
+                if box.component_object.EXTEND != "":
+                    EXTEND_box = copy.deepcopy(box)
+                    EXTEND_box.name = "EXTEND"
+                    EXTEND_box.background_color = "white"
+                    EXTEND_box.set_x(box_x_coordinate)
+                    EXTEND_box.set_y(box_y_coordinates.pop())
+                    EXTEND_box.plot_box(ax)
+                    break
+
+        for box in self.component_boxes:
+            if box.component_object is not None:
+                if box.component_object.WHEN != "":
+                    WHEN_box = copy.deepcopy(box)
+                    WHEN_box.name = "WHEN"
+                    WHEN_box.background_color = "white"
+                    WHEN_box.set_x(box_x_coordinate)
+                    WHEN_box.set_y(box_y_coordinates.pop())
+                    WHEN_box.plot_box(ax)
+                    break
+
     def plot(self):
+
+        self.make_legend()
+
         fig, ax = plt.subplots(figsize=(self.graph_width, self.graph_height))
         ax.set(xlim=(0, 1), ylim=(0, 1))
         ax.axis("off")
@@ -312,13 +342,21 @@ class DiagramCanvas:
 
         # Create anotation box that will be shown when hovering the mouse over a box
         annot = ax.annotate("", xy=(0, 0), xytext=(20, 10), textcoords="offset points",
-                            bbox=dict(boxstyle="round", fc="w"), annotation_clip=False)
+                            va="center", annotation_clip=False,
+                            bbox=dict(boxstyle="round", fc="w"))
         annot.set_visible(False)
 
         # Helper function to update the anotation box with correct text
         def update_annot(ind):
             pos = sc.get_offsets()[ind["ind"][0]]
             annot.xy = pos
+
+            n_lines_in_info = len(box_info[ind["ind"][0]].split("\n"))
+            if n_lines_in_info > 4:
+                annot.set_position((20, n_lines_in_info*(5 - pos[1]*10)))
+            else:
+                annot.set_position((20, 0))
+
             text = "{}".format(" ".join([box_info[n] for n in ind["ind"]]))
             annot.set_text(text)
             annot.get_bbox_patch().set_facecolor([0.95, 0.95, 0.95])

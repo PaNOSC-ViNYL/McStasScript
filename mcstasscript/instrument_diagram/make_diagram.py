@@ -33,7 +33,7 @@ def instrument_diagram(instrument):
     component_reader = instrument.component_reader
     component_categories = copy.deepcopy(component_reader.component_category)
 
-    absolute_box = ComponentBox(name="ABSOLUTE")
+    absolute_box = ComponentBox("ABSOLUTE")
     component_boxes = [absolute_box]
     component_box_dict = {"ABSOLUTE": absolute_box}
     for component in components:

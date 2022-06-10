@@ -148,10 +148,10 @@ class SimInterface:
         self.progress_bar.value = 0
         plot_data = None
         for index in range(sim_parts):
+            self.instrument.settings(**run_arguments)
+            self.instrument.set_parameters(self.parameters)
             try:
                 with HiddenPrints():
-                    self.instrument.settings(**run_arguments)
-                    self.instrument.set_parameters(self.parameters)
                     self.instrument.backengine()
             except NameError:
                 print("McStas run failed.")
@@ -397,7 +397,11 @@ class ParameterWidget:
                 if not (new_value[0] == '"' or new_value[0] == "'"):
                     new_value = '"' + new_value + '"'
         else:
-            new_value = float(new_value)
+
+            try:
+                new_value = float(new_value)
+            except:
+                return
 
         self.parameters[self.name] = new_value
 

@@ -15,6 +15,9 @@ def generate_Union_arrows(components, component_box_dict, box_names, component_c
     material_names = []
     geometry_names = []
     simulated_geometry_names = []
+    abs_loggers = []
+    loggers = []
+    conditionals = []
     master_names = []
     geometry_activation_counters = {}
     for component in components:
@@ -75,17 +78,60 @@ def generate_Union_arrows(components, component_box_dict, box_names, component_c
                             target = component_box_dict[mask]
                             connections.add(component_box_dict[component.name], target)
 
-            elif "_abs_logger" in component.parameter_names:
-                # Abs logger
-                pass
+            elif "_logger" in component.component_name:
 
-            elif "_logger" in component.parameter_names:
-                # Logger
-                pass
+                if "_abs_logger" in component.component_name:
+                    # Absoption logger
+                    abs_loggers.append(component.name)
+                    abs_logger = True
+                else:
+                    # Scattering logger
+                    loggers.append(component.name)
+                    abs_logger = False
+
+                target_geometry = component.target_geometry
+                if isinstance(target_geometry, str):
+                    geometries = target_geometry.strip('"').split(",")
+                    for geometry in geometries:
+                        if geometry not in simulated_geometry_names:
+                            print(component.name)
+                            print("Didn't find geometry of name '" + geometry + "'")
+                            print(simulated_geometry_names)
+                        else:
+                            origin = component_box_dict[geometry]
+                            connections.add(origin, component_box_dict[component.name])
+
+                if abs_logger:
+                    # Abs loggers do not have target_process, as they target absorption
+                    continue
+
+                target_process = component.target_process
+                if isinstance(target_process, str):
+                    processes = target_process.strip('"').split(",")
+                    for process in processes:
+                        if process not in process_names:
+                            print(component.name)
+                            print("Didn't find process of name '" + process + "'")
+                            print(process_names)
+                        else:
+                            origin = component_box_dict[process]
+                            connections.add(origin, component_box_dict[component.name])
 
             elif "target_loggers" in component.parameter_names:
                 # Conditional
-                pass
+                conditionals.append(component.name)
+
+                target_loggers = component.target_loggers
+                if isinstance(target_loggers, str):
+                    loggers = target_loggers.strip('"').split(",")
+                    for logger in loggers:
+                        if logger not in loggers + abs_loggers:
+                            print(component.name)
+                            print("Didn't find logger with name '" + logger + "'")
+                            print(loggers, abs_loggers)
+                        else:
+                            target = component_box_dict[logger]
+                            connections.add(component_box_dict[component.name], target)
 
             elif component.component_name == "Union_master":
                 # Master

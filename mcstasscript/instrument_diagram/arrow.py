@@ -84,60 +84,102 @@ class Arrow:
         self.alpha = value
 
     def plot_left_side(self, ax):
+        # stop a bit before the lane and make a little triangle
+        triangle_leg_x = 0.25 * self.arrow_length
+        triangle_leg_y = 2.0 * self.arrow_width
+
+        # box to lane
         origin_x = self.origin.get_text_start()
         origin_y = self.origin.position_y + self.get_box_offset_origin()
 
         origin_lane_x = origin_x - self.get_lane_value()
         origin_lane_y = origin_y
 
-        ax.plot([origin_x, origin_lane_x], [origin_y, origin_lane_y],
-                color=self.color, linestyle=self.origin_linestyle)
+        entry_point_x = origin_lane_x + triangle_leg_x
 
+        x_points = [origin_x, entry_point_x]
+        y_points = [origin_y, origin_lane_y]
+
+        # lane
         target_x = self.target.get_text_start()
         target_y = self.target.position_y + self.get_box_offset_target()
 
         target_lane_x = target_x - self.get_lane_value()
         target_lane_y = target_y
 
-        ax.plot([origin_lane_x, target_lane_x], [origin_lane_y, target_lane_y], color=self.color)
+        exit_point_x = target_lane_x + triangle_leg_x
 
-        arrow_length = self.target.get_text_start() - target_lane_x
-        ax.arrow(x=target_lane_x, y=target_lane_y,
+        # Plot lane but ease in and out of the lane with a small triangle
+        x_points += [entry_point_x, origin_lane_x, origin_lane_x, target_lane_x, origin_lane_x, exit_point_x]
+        y_points += [origin_lane_y, origin_lane_y + triangle_leg_y, origin_lane_y + triangle_leg_y,
+                     target_lane_y - triangle_leg_y, target_lane_y - triangle_leg_y, target_lane_y]
+        ax.plot(x_points, y_points, color=self.color, linestyle=self.origin_linestyle)
+
+        # lane to box
+        arrow_length = self.target.get_text_start() - target_lane_x - triangle_leg_x
+        ax.arrow(x=target_lane_x + triangle_leg_x, y=target_lane_y,
                  dx=arrow_length, dy=0,
                  color=self.color, length_includes_head=True,
                  width=self.arrow_width, head_width=5.0*self.arrow_width,
                  head_length=self.arrow_length)
 
     def plot_right_side(self, ax, text_end):
+        # stop a bit before the lane and make a little triangle
+        triangle_leg_x = 0.25 * self.arrow_length
+        triangle_leg_y = 2.0 * self.arrow_width
+
+        # origin to lane
         origin_x = self.origin.get_text_end()
         origin_y = self.origin.position_y + self.get_box_offset_origin()
 
         origin_lane_x = text_end + self.get_lane_value()
         origin_lane_y = origin_y
 
-        ax.plot([origin_x, origin_lane_x], [origin_y, origin_lane_y],
+        entry_point_x = origin_lane_x - triangle_leg_x
+
+        x_points = [origin_x, entry_point_x]
+        y_points = [origin_y, origin_lane_y]
+
+        """
+        ax.plot([origin_x, entry_point_x], [origin_y, origin_lane_y],
                 color=self.color, linestyle=self.origin_linestyle, alpha=self.alpha)
+        """
 
         if self.description is not None and not self.origin_congested:
             bbox = dict(boxstyle="round", facecolor="white", edgecolor="white", alpha=0.85)
             ax.text(0.5*(origin_x + origin_lane_x), origin_lane_y,
                     self.description, ha="center", va="center", bbox=bbox)
 
+        # lane
         target_y = self.target.position_y + self.get_box_offset_target()
 
         target_lane_x = text_end + self.get_lane_value()
         target_lane_y = target_y
 
-        ax.plot([origin_lane_x, target_lane_x], [origin_lane_y, target_lane_y], color=self.color, alpha=self.alpha)
+        exit_point_x = target_lane_x - triangle_leg_x
 
+        if target_lane_y < origin_lane_y:
+            leg_dir = 1
+        else:
+            leg_dir = -1
+
+        triangle_leg_y_dir = leg_dir * triangle_leg_y
+
+        # Plot lane but ease in and out of it with a small triangle
+        x_points += [entry_point_x, target_lane_x, origin_lane_x, target_lane_x, origin_lane_x, exit_point_x]
+        y_points += [origin_lane_y, origin_lane_y - triangle_leg_y_dir, origin_lane_y - triangle_leg_y_dir,
+                     target_lane_y + triangle_leg_y_dir, target_lane_y + triangle_leg_y_dir, target_lane_y]
+        ax.plot(x_points, y_points, color=self.color, alpha=self.alpha, linestyle=self.origin_linestyle)
+
+        # target
         if self.connection:
             mid_point = 0.5*(target_lane_x + self.target.get_text_end())
-            ax.plot([target_lane_x, self.target.get_text_end()],
+            ax.plot([target_lane_x - triangle_leg_x, self.target.get_text_end()],
                     [target_lane_y, target_lane_y], color=self.color, alpha=self.alpha)
         else:
-            arrow_length = target_lane_x - self.target.get_text_end()
+            arrow_length = target_lane_x - self.target.get_text_end() - triangle_leg_x
             mid_point = target_lane_x - 0.5*arrow_length
-            ax.arrow(x=target_lane_x, y=target_lane_y,
+            ax.arrow(x=target_lane_x - triangle_leg_x, y=target_lane_y,
                      dx=-arrow_length, dy=0,
                      color=self.color, length_includes_head=True,
                      width=self.arrow_width, head_width=5.0*self.arrow_width,
