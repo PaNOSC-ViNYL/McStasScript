@@ -1988,7 +1988,7 @@ class McCode_instr(BaseCalculator):
         if is_notebook and executable == "mcdisplay-webgl" and not new_tab:
             options += "--nobrowse "
 
-        full_command = (bin_path + executable + " "
+        full_command = ('"' + bin_path + executable + '" '
                         + dir_control
                         + options
                         + instr_path

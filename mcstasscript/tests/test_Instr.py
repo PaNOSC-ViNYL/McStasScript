@@ -1631,6 +1631,7 @@ class TestMcStas_instr(unittest.TestCase):
                                       parameters={"theta": 1})
 
         expected_path = os.path.join(executable_path, "mxrun")
+        expected_path = '"' + expected_path + '"'
 
         expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
@@ -1699,6 +1700,7 @@ class TestMcStas_instr(unittest.TestCase):
             instr.backengine()
 
         expected_path = os.path.join(executable_path, "mcrun")
+        expected_path = '"' + expected_path + '"'
 
         expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
@@ -1754,6 +1756,7 @@ class TestMcStas_instr(unittest.TestCase):
                                                   "theta": "\"toy\""})
 
         expected_path = os.path.join(executable_path, "mcrun")
+        expected_path = '"' + expected_path + '"'
         expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
         # a double space because of a missing option
@@ -1805,6 +1808,7 @@ class TestMcStas_instr(unittest.TestCase):
                                                   "has_default": 10})
 
         expected_path = os.path.join(executable_path, "mcrun")
+        expected_path = '"' + expected_path + '"'
         expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
         # a double space because of a missing option
@@ -1848,6 +1852,7 @@ class TestMcStas_instr(unittest.TestCase):
                                       parameters={"theta": 1})
 
         expected_path = os.path.join(executable_path, "mxrun")
+        expected_path = '"' + expected_path + '"'
         expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
         # a double space because of a missing option
@@ -1883,6 +1888,7 @@ class TestMcStas_instr(unittest.TestCase):
         os.chdir(current_work_dir)
 
         expected_path = os.path.join(executable_path, "bin", "mcdisplay-webgl")
+        expected_path = '"' + expected_path + '"'
         expected_instr_path = os.path.join(THIS_DIR, "test_instrument.instr")
 
         # a double space because of a missing option

@@ -182,6 +182,8 @@ class TestManagedMcrun(unittest.TestCase):
 
         # a double space because of a missing option
         executable = os.path.join(executable_path, "mcrun")
+        executable = '"' + executable + '"'
+
         expected_call = (executable + " -c -n 1000000 "
                          + "-d " + expected_folder_path + "  test.instr")
 
@@ -211,6 +213,7 @@ class TestManagedMcrun(unittest.TestCase):
         expected_folder_path = os.path.join(THIS_DIR, "test_folder")
 
         executable = os.path.join(executable_path, "mcrun")
+        executable = '"' + executable + '"'
         # a double space because of a missing option
         expected_call = (executable + " -c -n 1000000 "
                          + "-d " + expected_folder_path + "  test.instr")
@@ -248,6 +251,7 @@ class TestManagedMcrun(unittest.TestCase):
 
         # a double space because of a missing option
         executable = os.path.join(executable_path, "mcrun")
+        executable = '"' + executable + '"'
         expected_call = (executable + " -c -n 48 --mpi=7 --seed=300 "
                          + "-d " + expected_folder_path + " -fo test.instr")
 
@@ -285,6 +289,7 @@ class TestManagedMcrun(unittest.TestCase):
 
         # a double space because of a missing option
         executable = os.path.join(executable_path, "mcrun")
+        executable = '"' + executable + '"'
         expected_call = (executable + " -c -g -n 48 --mpi=7 --seed=300 "
                          + "-d " + expected_folder_path + " -fo test.instr")
 
@@ -320,6 +325,7 @@ class TestManagedMcrun(unittest.TestCase):
         expected_folder_path = os.path.join(THIS_DIR, "test_folder")
         # a double space because of a missing option
         executable = os.path.join(executable_path, "mcrun")
+        executable = '"' + executable + '"'
 
         expected_call = (executable + " -c -n 48 --mpi=7 "
                          + "-d " + expected_folder_path + " -fo test.instr "
@@ -358,6 +364,7 @@ class TestManagedMcrun(unittest.TestCase):
         expected_folder_path = os.path.join(THIS_DIR, "test_folder")
 
         executable = os.path.join(executable_path, "mcrun")
+        executable = '"' + executable + '"'
         # a double space because of a missing option
         expected_call = (executable + " -n 48 --mpi=7 "
                          + "-d " + expected_folder_path + " -fo test.instr "

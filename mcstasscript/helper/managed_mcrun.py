@@ -250,6 +250,7 @@ class ManagedMcrun:
                     or self.executable_path[-1] == "/"):
                 mcrun_full_path = os.path.join(self.executable_path,
                                                self.executable)
+        mcrun_full_path = '"' + mcrun_full_path + '"' # Path in quotes to allow spaces
 
         # Run the mcrun command on the system
         full_command = (mcrun_full_path + " "
@@ -257,6 +258,8 @@ class ManagedMcrun:
                         + self.custom_flags + " "
                         + self.name_of_instrumentfile
                         + parameter_string)
+
+        print(full_command)
 
         process = subprocess.run(full_command, shell=True,
                                  stdout=subprocess.PIPE,
