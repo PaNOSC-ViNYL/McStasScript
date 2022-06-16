@@ -259,8 +259,6 @@ class ManagedMcrun:
                         + self.name_of_instrumentfile
                         + parameter_string)
 
-        print(full_command)
-
         process = subprocess.run(full_command, shell=True,
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE,
