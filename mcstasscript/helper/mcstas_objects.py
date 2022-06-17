@@ -178,6 +178,7 @@ class DeclareVariable:
     This class is initialized with type, name.  Using keyword
     arguments, the variable can become an array and have its initial
     value set.
+    Can also be used as a user variable in uservars (McStas 3.0)
 
     Attributes
     ----------
@@ -203,7 +204,7 @@ class DeclareVariable:
     """
     def __init__(self, type, name, **kwargs):
         """
-        Initializing mcstas parameter object
+        Initializing mcstas declare variable or user variable object
 
         Examples
         --------

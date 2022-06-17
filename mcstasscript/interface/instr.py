@@ -408,6 +408,7 @@ class McCode_instr(BaseCalculator):
         # Avoid initializing if loading from dump
         if not hasattr(self, "declare_list"):
             self.declare_list = []
+            self.user_var_list = []
             self.initialize_section = ("// Start of initialize for generated "
                                        + name + "\n")
             self.trace_section = ("// Start of trace section for generated "
@@ -478,7 +479,18 @@ class McCode_instr(BaseCalculator):
             options : list or value
                 list or value of allowed values for this parameter
         """
+        names = [x.name for x in self.declare_list
+                 if isinstance(x, DeclareVariable)]
+        names += [x.name for x in self.user_var_list
+                  if isinstance(x, DeclareVariable)]
+        names += [x.name for x in self.parameters.parameters.values()]
+
         par = provide_parameter(*args, **kwargs)
+
+        if par.name in names:
+            raise NameError(f"A parameter or variable with name '{par.name}'"
+                            f" already exists!")
+
         self.parameters.add(par)
 
         return par
@@ -582,52 +594,68 @@ class McCode_instr(BaseCalculator):
         Shows declared variables in instrument
         """
 
+        all_variables = [x for x in self.declare_list + self.user_var_list
+                         if isinstance(x, DeclareVariable)]
+
         type_heading = "type"
-        variable_types = [x.type for x in self.declare_list]
+        variable_types = [x.type for x in all_variables]
         variable_types.append(type_heading)
         max_type_length = len(max(variable_types, key=len))
 
         name_heading = "variable name"
-        variable_names = [x.name for x in self.declare_list]
+        variable_names = [x.name for x in all_variables]
         variable_names.append(name_heading)
         max_name_length = len(max(variable_names, key=len))
 
-        value_heading = "value"
-        variable_values = [str(x.value) for x in self.declare_list]
-        variable_values.append(value_heading)
-        max_value_length = len(max(variable_values, key=len))
-
         vector_heading = "array length"
-        variable_vector = [str(x.vector) for x in self.declare_list]
+        variable_vector = [str(x.vector) for x in all_variables]
         variable_vector.append(vector_heading)
         max_vector_length = len(max(variable_vector, key=len))
 
-        padding = 2
-        string = ""
-        string += type_heading.ljust(max_type_length + padding)
-        string += name_heading.ljust(max_name_length + padding)
-        string += value_heading.ljust(max_value_length + padding)
-        string += vector_heading.ljust(max_vector_length + padding)
-        string += "\n"
-        string += "-"*(max_type_length + max_name_length + max_value_length
-                       + max_vector_length + 3*padding)
-        string += "\n"
+        value_heading = "value"
+        variable_values = [str(x.value) for x in all_variables]
+        variable_values.append(value_heading)
+        max_value_length = len(max(variable_values, key=len))
 
-        for variable in self.declare_list:
+        padding = 2
+        header = ""
+        header += type_heading.ljust(max_type_length + padding)
+        header += name_heading.ljust(max_name_length + padding)
+        header += vector_heading.ljust(max_vector_length + padding)
+        header += value_heading.ljust(max_value_length + padding)
+        header += "\n"
+        header += "-"*(max_type_length + max_name_length + max_value_length
+                       + max_vector_length + 3*padding)
+        header += "\n"
+
+        string = "DECLARE VARIABLES \n"
+        string += header
+
+        if len(self.user_var_list) > 0:
+            first_user_var = self.user_var_list[0]
+        else:
+            first_user_var = None
+
+        for variable in all_variables:
+            if variable is first_user_var:
+                string += "\n"
+                string += "USER VARIABLES (per neutron, only use in EXTEND)\n"
+                string += header
+
             string += str(variable.type).ljust(max_type_length + padding)
             string += str(variable.name).ljust(max_name_length + padding)
-
-            if variable.value != "":
-                value_string = str(variable.value)
-            else:
-                value_string = ""
-            string += value_string.ljust(max_value_length + padding)
 
             if variable.vector != 0:
                 vector_string = str(variable.vector)
             else:
                 vector_string = ""
             string += vector_string.ljust(max_vector_length + padding)
+
+            if variable.value != "":
+                value_string = str(variable.value)
+            else:
+                value_string = ""
+            string += value_string.ljust(max_value_length + padding)
             string += "\n"
 
         print(string)
@@ -662,6 +690,10 @@ class McCode_instr(BaseCalculator):
 
         names = [x.name for x in self.declare_list
                  if isinstance(x, DeclareVariable)]
+        names += [x.name for x in self.user_var_list
+                  if isinstance(x, DeclareVariable)]
+        names += [x.name for x in self.parameters.parameters.values()]
+
         if declare_par.name in names:
             raise NameError("Variable with name '" + declare_par.name
                             + "' already present in instrument!")
@@ -684,6 +716,57 @@ class McCode_instr(BaseCalculator):
         """
 
         self.declare_list.append(string)
+
+    def add_user_var(self, *args, **kwargs):
+        """
+        Method for adding user variable to instrument
+
+        Parameters
+        ----------
+
+        parameter type : str
+            type of input parameter
+
+        parameter name : str
+            name of parameter
+
+        keyword arguments
+            array : int
+                default 0 for scalar, if specified length of array
+
+            comment : str
+                Comment displayed next to declaration of parameter
+
+        """
+
+        if "value" in kwargs:
+            raise ValueError("Value not allowed for UserVars.")
+
+        # DeclareVariable class documented independently
+        user_par = DeclareVariable(*args, **kwargs)
+
+        names = [x.name for x in self.declare_list
+                 if isinstance(x, DeclareVariable)]
+        names += [x.name for x in self.user_var_list
+                  if isinstance(x, DeclareVariable)]
+        names += [x.name for x in self.parameters.parameters.values()]
+
+        if user_par.name in names:
+            raise NameError("Variable with name '" + user_par.name
+                            + "' already present in instrument!")
+
+        self.user_var_list.append(user_par)
+        return user_par
+
+    def move_user_vars_to_declare(self):
+        """
+        Moves all uservars to declare for compatibility with McStas 2.X
+        """
+
+        for var in self.user_var_list:
+            self.declare_list.append(var)
+
+        self.user_var_list = []
 
     def append_initialize(self, string):
         """
@@ -1566,6 +1649,44 @@ class McCode_instr(BaseCalculator):
         for component in self.component_list:
             component.check_parameters(pars_and_vars)
 
+    def read_instrument_file(self):
+        """
+        Reads current instrument file if it exists, otherwise creates one first
+        """
+
+        instrument_path = os.path.join(self.input_path, self.name + ".instr")
+        if not os.path.exists(instrument_path):
+            self.write_full_instrument()
+            if not os.path.exists(instrument_path):
+                raise RuntimeError("Failing to write instrument file.")
+
+        with open(instrument_path, "r") as fo:
+            return fo.read()
+
+    def show_instrument_file(self, line_numbers=False):
+        """
+        Displays the current instrument file
+
+        Parameters
+        ----------
+        line_numbers : bool
+            Select whether line numbers should be displayed
+        """
+
+        instrument_code = self.read_instrument_file()
+
+        if not line_numbers:
+            print(instrument_code)
+            return
+        else:
+            lines = instrument_code.split("\n")
+            number_of_lines = len(lines)
+            line_space = len(str(number_of_lines))
+            for index, line in enumerate(lines):
+                line_number = str(index + 1).ljust(line_space) + " | "
+                full_line = line_number + line
+                print(full_line.replace("\n", ""))
+
     def write_full_instrument(self):
         """
         Method for writing full instrument file to disk
@@ -1634,6 +1755,15 @@ class McCode_instr(BaseCalculator):
                 dec_line.write_line(fo)
             fo.write("\n")
         fo.write("%}\n\n")
+
+        # Write uservars
+        if len(self.user_var_list) > 0:
+            fo.write("USERVARS \n%{\n")
+            for user_var in self.user_var_list:
+                user_var.value = ""  # Ensure no value
+                user_var.write_line(fo)
+                fo.write("\n")
+            fo.write("%}\n\n")
 
         # Write initialize
         fo.write("INITIALIZE \n%{\n")
