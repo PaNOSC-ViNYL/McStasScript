@@ -30,13 +30,29 @@ class Lane:
         """
         new_connection = IndexConnection(start_index, end_index)
 
+        # A line can skip on either start or end, not both
+        skipped_end = False
+        skipped_start = False
+
         # Check if there is room for this lane
         for connection in self.connections:
-            if not connection.end_index == new_connection.end_index:
+            # Check for number of reasons for connection being allowed
+            if connection.start_index == new_connection.start_index and not skipped_end:
+                # Allow connections to collide when the start index matches
+                skipped_start = True
+                continue
+
+            if connection.end_index == new_connection.end_index and not skipped_start:
                 # Allow connections to collide when the end index matches
-                if not connection.compatible_with(new_connection):
-                    # If connection incompatible, return false
-                    return False
+                skipped_end = True
+                continue
+
+            if connection.compatible_with(new_connection):
+                # Allow if there are no index overlap in lane
+                continue
+
+            # If connection incompatible, return false
+            return False
 
         # No problems, this connection can be included in this lane
         self.connections.append(new_connection)

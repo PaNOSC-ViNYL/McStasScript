@@ -386,11 +386,35 @@ class TestMcStas_instr(unittest.TestCase):
         """
         instr = setup_instr_root_path()
 
-        instr.add_parameter("double", "theta", comment="test par")
+        parameter = instr.add_parameter("double", "theta", comment="test par")
 
-        parameter = instr.parameters["theta"]
         self.assertEqual(parameter.name, "theta")
         self.assertEqual(parameter.comment, "test par")
+
+    def test_user_var_block_add_parameter(self):
+        """
+        Checks that adding a parameter with a name already used for a
+        user variable fails with NameError
+        """
+        instr = setup_instr_root_path()
+
+        instr.add_user_var("double", "theta")
+
+        with self.assertRaises(NameError):
+            instr.add_parameter("double", "theta", comment="test par")
+
+
+    def test_declare_var_block_add_parameter(self):
+        """
+        Checks that adding a parameter with a name already used for a
+        declared variable fails with NameError
+        """
+        instr = setup_instr_root_path()
+
+        instr.add_declare_var("double", "theta")
+
+        with self.assertRaises(NameError):
+            instr.add_parameter("double", "theta", comment="test par")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_show_parameters(self, mock_stdout):
@@ -461,7 +485,7 @@ class TestMcStas_instr(unittest.TestCase):
         comment_line = "lines in order to ensure it really works. "
         self.assertEqual(output[8], " "*33 + comment_line)
 
-    def test_simple_add_declare_parameter(self):
+    def test_simple_add_declare_variable(self):
         """
         This is just an interface to a function that is tested
         elsewhere, so only a basic test is performed here.
@@ -474,6 +498,69 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(instr.declare_list[0].name, "two_theta")
         self.assertEqual(instr.declare_list[0].comment, " // test par")
+
+    def test_parameter_block_add_declare_variable(self):
+        """
+        Checks a NameError is raised when using declare variable of same
+        name as instrument parameter.
+        """
+        instr = setup_instr_root_path()
+
+        instr.add_parameter("two_theta")
+        with self.assertRaises(NameError):
+            instr.add_declare_var("double", "two_theta")
+
+    def test_user_var_block_add_declare_variable(self):
+        """
+        Checks a NameError is raised when using declare variable of same
+        name as declared variable.
+        """
+        instr = setup_instr_root_path()
+
+        instr.add_user_var("double", "two_theta")
+        with self.assertRaises(NameError):
+            instr.add_declare_var("double", "two_theta")
+
+    def test_simple_add_user_variable(self):
+        """
+        This is just an interface to a function that is tested
+        elsewhere, so only a basic test is performed here.
+
+        DeclareVariable is tested in test_declare_variable.
+        """
+        instr = setup_instr_root_path()
+
+        user_var = instr.add_user_var("double", "two_theta_user", comment="test par")
+
+        self.assertEqual(user_var.name, "two_theta_user")
+        self.assertEqual(user_var.comment, " // test par")
+        self.assertEqual(instr.user_var_list[0].name, "two_theta_user")
+        self.assertEqual(instr.user_var_list[0].comment, " // test par")
+
+        with self.assertRaises(ValueError):
+            instr.add_user_var("double", "illegal", value=8)
+
+    def test_declare_block_add_user_variable(self):
+        """
+        Checks a NameError is raised when using user variable of same
+        name as declare variable already defined.
+        """
+        instr = setup_instr_root_path()
+
+        instr.add_declare_var("double", "two_theta")
+        with self.assertRaises(NameError):
+            instr.add_user_var("double", "two_theta")
+
+    def test_parameter_block_add_user_variable(self):
+        """
+        Checks a NameError is raised when using user variable of same
+        name as parameter already defined.
+        """
+        instr = setup_instr_root_path()
+
+        instr.add_parameter("two_theta")
+        with self.assertRaises(NameError):
+            instr.add_user_var("double", "two_theta")
 
     def test_simple_append_declare(self):
         """
