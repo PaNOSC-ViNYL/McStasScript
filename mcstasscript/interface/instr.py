@@ -1642,7 +1642,8 @@ class McCode_instr(BaseCalculator):
 
         # Check variables used have been declared
         parameters = [x.name for x in self.parameters]
-        variables = [x.name for x in self.declare_list]
+        variables = [x.name for x in self.declare_list
+                     if isinstance(x, DeclareVariable)]
         pars_and_vars = parameters + variables
 
         # Check component parameters
@@ -2157,7 +2158,7 @@ class McCode_instr(BaseCalculator):
         connections are only shown when they are specified.
         """
         if self.has_errors():
-            print("The instrument has some error, this diagram is still"
+            print("The instrument has some error, this diagram is still "
                   "shown as it may help find the bug.")
 
         instrument_diagram(self)

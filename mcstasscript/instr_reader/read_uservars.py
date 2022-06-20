@@ -1,9 +1,9 @@
 from mcstasscript.instr_reader.util import SectionReader
 
 
-class DeclareReader(SectionReader):
+class UservarsReader(SectionReader):
     """
-    Reads the declare section of a McStas instrument file and adds
+    Reads the uservars section of a McStas instrument file and adds
     the found parameters / functions / structs to the McStasScript
     Instr instance. The information can also be written to a python
     file for reproduction of a McStas instrument.
@@ -15,20 +15,20 @@ class DeclareReader(SectionReader):
         super().__init__(Instr, write_file, product_filename,
                          get_next_line, return_line)
 
-        self.in_declare_function = False
+        self.in_uservars_function = False
         self.in_struct_definition = False
         self.bracket_counter = 0
 
-    def read_declare_line(self, line):
+    def read_uservars_line(self, line):
         """
-        Reads line of instrument declare, returns bolean.  If it encounters
-        the end of the declare section, it returns False, otherwise True.
+        Reads line of instrument uservars, returns bolean.  If it encounters
+        the end of the uservars section, it returns False, otherwise True.
 
-        The contents of the declare section is written to the McStasScript
+        The contents of the uservars section is written to the McStasScript
         Instr object.
         """
 
-        continue_declare = True
+        continue_uservars = True
 
         # Remove comments
         if "//" in line:
@@ -36,13 +36,13 @@ class DeclareReader(SectionReader):
 
         # Remove %} and signify end if this is found
         if "%}" in line:
-            continue_declare = False
+            continue_uservars = False
             line = line.split("%}", 1)[0]
 
         if "/*" in line:
             line = line.split("/*", 1)[0].strip()
 
-        if self.in_declare_function:
+        if self.in_uservars_function:
             if "{" in line:
                 self.bracket_counter += 1
 
@@ -50,14 +50,14 @@ class DeclareReader(SectionReader):
                 self.bracket_counter -= 1
 
             if self.bracket_counter == 0:
-                self.in_declare_function = False
+                self.in_uservars_function = False
 
-            self.Instr.append_declare(line)
-            self._write_declare_line(line)
+            self.Instr.append_uservars(line)
+            self._write_uservars_line(line)
 
         # Check for functions
         if ("(" in line and ";" not in line and " " in line.strip()
-                and not self.in_declare_function and "#pragma" not in line):
+                and not self.in_uservars_function):
 
             # If in function, it will define a block
             n_curly_brackets = line.count("{")
@@ -72,13 +72,13 @@ class DeclareReader(SectionReader):
 
             after_curly_bracket = line.split("}")[-1]
 
-            declare_lines = line.split("\n")
-            for declare_line in declare_lines:
-                declare_line = declare_line.rstrip()
-                declare_line = declare_line.replace('\\n', "\\\\n")
-                declare_line = declare_line.replace('"', "\\\"")
-                self.Instr.append_declare(declare_line)
-                self._write_declare_line(declare_line)
+            uservars_lines = line.split("\n")
+            for uservars_line in uservars_lines:
+                uservars_line = uservars_line.rstrip()
+                uservars_line = uservars_line.replace('\\n', "\\\\n")
+                uservars_line = uservars_line.replace('"', "\\\"")
+                self.Instr.append_uservars(uservars_line)
+                self._write_uservars_line(uservars_line)
 
             line = after_curly_bracket
 
@@ -103,46 +103,46 @@ class DeclareReader(SectionReader):
                     before_curly_bracket = line.split("{", 1)[0]
                     if "(" in before_curly_bracket and ")" in before_curly_bracket:
                         # This is a function that returns a struct!
-                        self.in_declare_function = True
+                        self.in_uservars_function = True
 
             after_curly_bracket = line.split("}")[-1]
 
             # if not in function, add until ; is found
-            while ";" not in after_curly_bracket and not self.in_declare_function:
+            while ";" not in after_curly_bracket and not self.in_uservars_function:
                 # It is surely a struct, find ;
                 line += self.get_next_line()
                 after_curly_bracket = line.split("}")[-1]
 
-            declare_lines = line.split("\n")
-            for declare_line in declare_lines:
-                declare_line = declare_line.rstrip()
-                declare_line = declare_line.replace('\\n', "\\\\n")
-                declare_line = declare_line.replace('"', "\\\"")
-                self.Instr.append_declare(declare_line)
-                self._write_declare_line(declare_line)
+            uservars_lines = line.split("\n")
+            for uservars_line in uservars_lines:
+                uservars_line = uservars_line.rstrip()
+                uservars_line = uservars_line.replace('\\n', "\\\\n")
+                uservars_line = uservars_line.replace('"', "\\\"")
+                self.Instr.append_uservars(uservars_line)
+                self._write_uservars_line(uservars_line)
 
-            if self.in_declare_function:
+            if self.in_uservars_function:
                 line = line.split("}")[-1].strip()
             else:
                 line = line.split(";")[-1].strip()
 
             # if in function, stop now
-            self.in_declare_function = False
+            self.in_uservars_function = False
 
-        # Grab defines and pragmas
-        if line.strip().startswith("#define") or line.strip().startswith("#pragma"):
-            # Include define statements as declare append
+        # Grab defines
+        if line.strip().startswith("#define"):
+            # Include define statements as uservars append
             line = line.rstrip()
             line = line.replace('\\n', "\\\\n")
             line = line.replace('"', "\\\"")
-            self.Instr.append_declare(line)
-            self._write_declare_line(line)
+            self.Instr.append_uservars(line)
+            self._write_uservars_line(line)
 
         if "\n" in line:
             line = line.strip("\n")
 
         # Read single line parameter definitions
-        if ";" in line and not self.in_declare_function:
+        if ";" in line and not self.in_uservars_function:
             # This line contains c statements
             statements = line.split(";")
 
@@ -150,13 +150,13 @@ class DeclareReader(SectionReader):
                 statement = statement.strip()
                 if (statement != "\n" and statement != " "
                         and len(statement) > 1):
-                    self._read_declare_statement(statement)
+                    self._read_uservars_statement(statement)
 
-        return continue_declare
+        return continue_uservars
 
-    def _read_declare_statement(self, statement):
+    def _read_uservars_statement(self, statement):
         """
-        Reads single declare statements, which can have multiple
+        Reads single uservars statements, which can have multiple
         variables.
         """
 
@@ -238,10 +238,10 @@ class DeclareReader(SectionReader):
                     if "]" in array_size_string:
                         this_size = array_size_string.split("]")[0]
                         try:
-                            # Size declared normally
+                            # Size uservarsd normally
                             array_sizes.append(int(this_size))
                         except:
-                            # No size declared means the size is automatic
+                            # No size uservarsd means the size is automatic
                             dynamic_size = True
 
                 if len(array_sizes) > 1:
@@ -256,28 +256,28 @@ class DeclareReader(SectionReader):
 
             # value, array and typeremoved, all that remians is the name
             variable_name = variable
-            self.Instr.add_declare_var(this_type, variable_name, **kw_args)
+            self.Instr.add_user_var(this_type, variable_name, **kw_args)
 
             # Also write it to a file?
             write_string = []
             write_string.append(self.instr_name)
-            write_string.append(".add_declare_var(")
+            write_string.append(".add_user_var(")
             write_string.append("\"" + this_type + "\"")
             write_string.append(", ")
             write_string.append("\"" + variable_name + "\"")
             write_string.append(self._kw_to_string(kw_args))
             write_string.append(")\n")
 
-            # Write declare parameter to python file
+            # Write uservars parameter to python file
             self._write_to_file(write_string)
 
-    def _write_declare_line(self, string):
+    def _write_uservars_line(self, string):
 
         string = string.rstrip()
 
         write_string = []
         write_string.append(self.instr_name)
-        write_string.append(".append_declare(")
+        write_string.append(".append_uservars(")
         write_string.append("\"" + string + "\"")
         write_string.append(")\n")
 
