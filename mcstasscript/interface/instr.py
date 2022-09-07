@@ -292,7 +292,7 @@ class McCode_instr(BaseCalculator):
         """
 
         super().__init__(name, input=[],
-                         output_keys=["simulation_data"],
+                         output_keys=[name + "_data"],
                          output_data_types=[pyvinylMcStasData],
                          parameters=parameters)
 
