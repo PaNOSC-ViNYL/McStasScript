@@ -4,6 +4,7 @@ import subprocess
 import mmap
 import warnings
 
+from mcstasscript.helper.formatting import bcolors
 from mcstasscript.data.data import McStasMetaData
 from mcstasscript.data.data import McStasDataBinned
 from mcstasscript.data.data import McStasDataEvent
@@ -261,17 +262,15 @@ class ManagedMcrun:
 
         process = subprocess.run(full_command, shell=True,
                                  stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT,
                                  universal_newlines=True,
                                  cwd=self.run_path)
 
         if "suppress_output" in kwargs:
             if kwargs["suppress_output"] is False:
-                print(process.stderr)
-                print(process.stdout)
+                print_sim_output(process.stdout)
         else:
-            print(process.stderr)
-            print(process.stdout)
+            print_sim_output(process.stdout)
 
         if not os.path.isdir(self.data_folder_name):
             warnings.warn("Simulation did not create data folder, most likely failed.")
@@ -499,3 +498,82 @@ def load_monitor(metadata, data_folder_name):
             + "connected to monitor named "
             + metadata.component_name)
 
+
+def print_sim_output(sim_output):
+    print(highlight(sim_output, "error", return_section=True, after_lines=10, highlight_type="FAIL"))
+    print(highlight(sim_output, "error", return_section=False, highlight_type="FAIL"))
+
+
+def highlight(string, search_term, return_section=False, highlight_type=None, after_lines=5):
+    """
+    Highlights search term in string and returns it, if return_section only sections with term is returned
+    """
+
+    search_term = search_term.lower()
+
+    if not isinstance(string, str):
+        return None
+
+    # Early exit if search term is not in string
+    output = string.lower().find(search_term)
+    if output == -1:
+        if return_section:
+            return ""
+        else:
+            return string
+
+    if return_section:
+        instances = list(findall(string, search_term))
+        n_instances = len(instances)
+        print(f"---- Found {n_instances} places in McStas output with "
+              f"keyword '{search_term}'. \n")
+
+    if highlight_type is None:
+        highlight_start = ""
+        highlight_end = ""
+    else:
+        if not hasattr(bcolors, highlight_type):
+            raise RuntimeError(f"Used highlight_type {highlight_type} "
+                               f"in highlight not found in bcolors.")
+        else:
+            highlight_start = getattr(bcolors, highlight_type)
+            highlight_end = bcolors.ENDC
+
+    return_string = ""
+
+    lines = string.split("\n")
+    total_lines = len(lines)
+    for index, line in enumerate(lines):
+        output = line.lower().find(search_term)
+        if output == -1:
+            if not return_section:
+                return_string += line + "\n"
+        else:
+            replaced_string = line[:output]
+            replaced_string += highlight_start
+            replaced_string += line[output:output + len(search_term)]
+            replaced_string += highlight_end
+            replaced_string += line[output + len(search_term):]
+            replaced_string += "\n"
+
+            return_string += replaced_string
+            if return_section:
+                extra_lines = min(total_lines - index, after_lines)
+                for line_index in range(1, extra_lines):
+                    line_to_include = lines[index + line_index]
+                    if line_to_include.lower().find(search_term) != -1:
+                        break
+                    return_string += line_to_include + "\n"
+                return_string += "-"*70 + "\n"
+
+    return return_string
+
+
+def findall(s, p):
+    """
+    Yields all the positions of the pattern p in the string s.
+    """
+    i = s.lower().find(p)
+    while i != -1:
+        yield i
+        i = s.lower().find(p, i+1)

@@ -1733,7 +1733,7 @@ class TestMcStas_instr(unittest.TestCase):
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
                                          cwd=expected_run_path,
-                                         stderr=-1, stdout=-1,
+                                         stderr=-2, stdout=-1,
                                          universal_newlines=True)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
@@ -1799,7 +1799,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
-                                         stderr=-1, stdout=-1,
+                                         stderr=-2, stdout=-1,
                                          universal_newlines=True,
                                          cwd=run_path)
 
@@ -1854,7 +1854,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
-                                         stderr=-1, stdout=-1,
+                                         stderr=-2, stdout=-1,
                                          universal_newlines=True,
                                          cwd=run_path)
 
@@ -1906,7 +1906,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
-                                         stderr=-1, stdout=-1,
+                                         stderr=-2, stdout=-1,
                                          universal_newlines=True,
                                          cwd=run_path)
 
@@ -1950,7 +1950,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
-                                         stderr=-1, stdout=-1,
+                                         stderr=-2, stdout=-1,
                                          universal_newlines=True,
                                          cwd=run_path)
 

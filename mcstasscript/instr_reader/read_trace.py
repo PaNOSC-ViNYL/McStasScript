@@ -89,12 +89,13 @@ class TraceReader(SectionReader):
             line = line.split("SPLIT", 1)[1].strip()
             if line.startswith("COMPONENT"):
                 # Default split without indicating amount
-                self.SPLIT = "\"\""
+                self.SPLIT = ""
             else:
                 try:
                     self.SPLIT = int(line.split(" ", 1)[0].strip())
                 except:
-                    self.SPLIT = "\"" + line.split(" ", 1)[0].strip() + "\""
+                    #self.SPLIT = "\"" + line.split(" ", 1)[0].strip() + "\""
+                    self.SPLIT = line.split(" ", 1)[0].strip()
 
                 if " " in line:
                     # If the line continues, remove the SPLIT number
@@ -244,7 +245,7 @@ class TraceReader(SectionReader):
             self.current_component.set_parameters(par_dict)
 
         # Read keywords given after parameters but before position (WHEN)
-        if line.strip().startswith("WHEN"):
+        if line.strip().upper().startswith("WHEN"):
             if "(" in line:
                 line = line.split("(", 1)[1].strip()
                 # need to find the closing parenthesis
@@ -344,7 +345,7 @@ class TraceReader(SectionReader):
                                                RELATIVE=relative_name)
 
         # Read keywords after component position (GROUP, EXTEND, JUMP)
-        if line.strip().startswith("GROUP"):
+        if line.strip().upper().startswith("GROUP"):
             line = line.strip()
 
             group_name = line.split(" ", 1)[1].strip()
@@ -355,7 +356,7 @@ class TraceReader(SectionReader):
 
             self.current_component.set_GROUP(group_name)
 
-        if line.strip().startswith("EXTEND"):
+        if line.strip().upper().startswith("EXTEND"):
             line = line.split("EXTEND", 1)[1].strip()
             self.EXTEND_mode = True
 
@@ -372,7 +373,7 @@ class TraceReader(SectionReader):
                 line = line.replace('"', "\\\"")
                 self.current_component.append_EXTEND(line)
 
-        if line.strip().startswith("JUMP "):
+        if line.strip().upper().startswith("JUMP "):
             line = line.strip().split(" ", 1)[1]
             self.current_component.set_JUMP(line)
 
@@ -464,7 +465,13 @@ class TraceReader(SectionReader):
                 write_string = []
                 write_string.append(self.current_component.name)
                 write_string.append(".set_SPLIT(")
-                write_string.append(str(self.current_component.SPLIT))
+                if self.current_component.SPLIT == "":
+                    write_string.append('""')
+                else:
+                    if isinstance(self.current_component.SPLIT, str) and self.current_component.SPLIT != "":
+                        write_string.append('"' + str(self.current_component.SPLIT) + '"')
+                    else:
+                        write_string.append(str(self.current_component.SPLIT))
                 write_string.append(")\n")
 
                 self._write_to_file(write_string)

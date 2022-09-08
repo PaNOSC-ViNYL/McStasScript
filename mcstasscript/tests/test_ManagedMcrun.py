@@ -6,7 +6,7 @@ from mcstasscript.helper.managed_mcrun import ManagedMcrun
 from mcstasscript.helper.managed_mcrun import load_results
 from mcstasscript.helper.managed_mcrun import load_metadata
 from mcstasscript.helper.managed_mcrun import load_monitor
-from .helpers_for_tests import WorkInTestDir
+from mcstasscript.tests.helpers_for_tests import WorkInTestDir
 
 class TestManagedMcrun(unittest.TestCase):
     """
@@ -189,7 +189,7 @@ class TestManagedMcrun(unittest.TestCase):
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
-                                         stderr=-1, stdout=-1,
+                                         stderr=-2, stdout=-1,
                                          universal_newlines=True,
                                          cwd=mcrun_obj.run_path)
 
@@ -220,7 +220,7 @@ class TestManagedMcrun(unittest.TestCase):
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
-                                         stderr=-1, stdout=-1,
+                                         stderr=-2, stdout=-1,
                                          universal_newlines=True,
                                          cwd=mcrun_obj.run_path)
 
@@ -257,7 +257,7 @@ class TestManagedMcrun(unittest.TestCase):
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
-                                         stderr=-1, stdout=-1,
+                                         stderr=-2, stdout=-1,
                                          universal_newlines=True,
                                          cwd=mcrun_obj.run_path)
 
@@ -295,7 +295,7 @@ class TestManagedMcrun(unittest.TestCase):
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
-                                         stderr=-1, stdout=-1,
+                                         stderr=-2, stdout=-1,
                                          universal_newlines=True,
                                          cwd=mcrun_obj.run_path)
 
@@ -333,7 +333,7 @@ class TestManagedMcrun(unittest.TestCase):
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
-                                         stderr=-1, stdout=-1,
+                                         stderr=-2, stdout=-1,
                                          universal_newlines=True,
                                          cwd=mcrun_obj.run_path)
 
@@ -372,7 +372,7 @@ class TestManagedMcrun(unittest.TestCase):
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
-                                         stderr=-1, stdout=-1,
+                                         stderr=-2, stdout=-1,
                                          universal_newlines=True,
                                          cwd=mcrun_obj.run_path)
 

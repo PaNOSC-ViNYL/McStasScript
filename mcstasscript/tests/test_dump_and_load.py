@@ -8,8 +8,7 @@ import datetime
 from mcstasscript.interface.instr import McStas_instr
 from mcstasscript.interface.instr import McXtrace_instr
 
-from .helpers_for_tests import WorkInTestDir
-
+from mcstasscript.tests.helpers_for_tests import WorkInTestDir
 
 run_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '.')
 
