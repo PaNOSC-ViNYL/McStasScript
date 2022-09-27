@@ -1965,7 +1965,8 @@ class McCode_instr(BaseCalculator):
         method.
         """
 
-        if self._run_settings["force_compile"]:
+        instrument_path = os.path.join(self.input_path, self.name + ".instr")
+        if not os.path.exists(instrument_path) or self._run_settings["force_compile"]:
             self.write_full_instrument()
 
         parameters = {}
