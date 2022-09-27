@@ -418,6 +418,9 @@ class McCode_instr(BaseCalculator):
             # Handle components
             self.component_list = []  # List of components (have to be ordered)
 
+            self.run_from_ref = None
+            self.run_to_ref = None
+
     @property
     def output_path(self) -> str:
         return self.base_dir
@@ -438,6 +441,78 @@ class McCode_instr(BaseCalculator):
         that inherit from McCode_instr.
         """
         pass
+
+    def run_to(self, component_ref, **kwargs):
+        """
+        Set limit for instrument, only run to given component, save MCPL there
+        """
+
+        if isinstance(component_ref, Component):
+            component_ref = component_ref.name
+
+        # Check references are valid
+        self.subset_check(start_ref=self.run_from_ref, end_ref=component_ref)
+
+        self.run_to_ref = component_ref
+
+        if component_ref is not None:
+            if "filename" not in kwargs:
+                kwargs["filename"] = '"' + self.name + "_" + component_ref + ".mcpl" + '"'
+
+            self.run_to_component_parameters = kwargs
+
+    def run_from(self, component_ref, **kwargs):
+        """
+        Set limit for instrument, only run from given component, loads MCPL there
+        """
+
+        if isinstance(component_ref, Component):
+            component_ref = component_ref.name
+
+        # Check references are valid
+        self.subset_check(start_ref=component_ref, end_ref=self.run_to_ref)
+
+        self.run_from_ref = component_ref
+
+        if component_ref is not None:
+            if "filename" not in kwargs:
+                kwargs["filename"] = '"' + self.name + "_" + component_ref + ".mcpl" + '"'
+
+            self.run_from_component_parameters = kwargs
+
+    def subset_check(self, start_ref, end_ref):
+        """
+        Checks that when the instrument is broken into subsets, it is still valid
+        """
+
+        # Check current subset of instrument is self contained
+        is_self_contained = True
+        try:
+            self.check_for_relative_errors(start_ref=start_ref, end_ref=end_ref)
+        except McStasError:
+            is_self_contained = False
+
+        if not is_self_contained:
+            print("When using a subset of the instrument, component references "
+                  "must be only internal as these sections are split into separate "
+                  "files. When seeing only the specified subset of the instrument, "
+                  "this reference can not be resolved.")
+            self.check_for_relative_errors(start_ref=start_ref, end_ref=end_ref)
+
+        # Check the part after is self consistent
+        is_self_contained = True
+        try:
+            self.check_for_relative_errors(start_ref=end_ref)
+        except McStasError:
+            is_self_contained = False
+
+        if not is_self_contained:
+            print("When using a subset of the instrument, component references "
+                  "must be only internal as these sections are split into separate "
+                  "files. When seeing only the specified subset of the instrument, "
+                  "this reference can not be resolved. \n"
+                  "In this case the remaining instrument would fail.")
+            self.check_for_relative_errors(start_ref=end_ref)
 
     def add_parameter(self, *args, **kwargs):
         """
@@ -1620,9 +1695,45 @@ class McCode_instr(BaseCalculator):
         """
 
         # Check RELATIVE exists
-        seen_instrument_names = []
+        self.check_for_relative_errors()
+
+        # Check variables used have been declared
+        parameters = [x.name for x in self.parameters]
+        variables = [x.name for x in self.declare_list
+                     if isinstance(x, DeclareVariable)]
+        pars_and_vars = parameters + variables
+
+        # Check component parameters
         for component in self.component_list:
+            component.check_parameters(pars_and_vars)
+
+    def check_for_relative_errors(self, start_ref=None, end_ref=None):
+        """
+        Method for checking if RELATIVE locations does not contain unknown references
+
+        Using the start_ref and end_ref keyword arguments, a subset of the
+        instrument can be checked for internal consistency.
+        """
+        if start_ref is not None or end_ref is not None:
+            component_names = [x.name for x in self.component_list]
+
+        if start_ref is not None:
+            start_index = component_names.index(start_ref)
+        else:
+            start_index = 0
+
+        if end_ref is not None:
+            end_index = component_names.index(end_ref)
+        else:
+            end_index = len(self.component_list)
+
+        seen_instrument_names = []
+        for component in self.component_list[start_index:end_index]:
             seen_instrument_names.append(component.name)
+
+            if component.name == start_ref:
+                # Avoid checking first component when start_ref != 0
+                continue
 
             references = []
             if component.AT_reference not in (None, "PREVIOUS"):
@@ -1635,20 +1746,9 @@ class McCode_instr(BaseCalculator):
                 if ref not in seen_instrument_names:
                     raise McStasError("Component '" + str(component.name) +
                                       "' referenced unknown component"
-                                      " named '"
-                                      + str(component.AT_reference) + "'.\n"
+                                      " named '" + str(ref) + "'.\n"
                                       "This check can be skipped with"
                                       " settings(checks=False)")
-
-        # Check variables used have been declared
-        parameters = [x.name for x in self.parameters]
-        variables = [x.name for x in self.declare_list
-                     if isinstance(x, DeclareVariable)]
-        pars_and_vars = parameters + variables
-
-        # Check component parameters
-        for component in self.component_list:
-            component.check_parameters(pars_and_vars)
 
     def read_instrument_file(self):
         """
@@ -1778,8 +1878,40 @@ class McCode_instr(BaseCalculator):
 
         # Write trace
         fo.write("TRACE \n")
-        for component in self.component_list:
+        component_names = [x.name for x in self.component_list]
+
+        start_index = 0
+        end_index = len(self.component_list)
+        if self.run_from_ref is not None:
+            start_index = component_names.index(self.run_from_ref)
+            # Add MCPL input component
+            MCPL_in = self._create_component_instance("MCPL_" + self.run_from_ref, "MCPL_input")
+            MCPL_in.set_comment("Automatically inserted to split instrument into parts")
+            MCPL_in.set_parameters(**self.run_from_component_parameters)
+            MCPL_in.write_component(fo)
+
+            # Ensure from component reset to MCPL position
+            self.component_list[start_index].write_component(fo, overwrite_location=True)
+            start_index += 1 # skip this component in component writing loop
+
+        if self.run_to_ref is not None:
+            end_index = component_names.index(self.run_to_ref)
+
+        # Main component loop
+        for component in self.component_list[start_index:end_index]:
             component.write_component(fo)
+
+        if self.run_to_ref is not None:
+            replaced_component = self.component_list[end_index]
+
+            # Add MCPL output component
+            MCPL_out = self._create_component_instance("MCPL_" + self.run_to_ref, "MCPL_output")
+            MCPL_out.set_comment("Automatically inserted to split instrument into parts")
+            MCPL_out.set_parameters(**self.run_to_component_parameters)
+            MCPL_out.set_AT(replaced_component.AT_data, RELATIVE=replaced_component.AT_reference)
+            if replaced_component.ROTATED_specified:
+                MCPL_out.set_ROTATED(replaced_component.ROTATED_data, RELATIVE=replaced_component.ROTATED_reference)
+            MCPL_out.write_component(fo)
 
         # Write finally
         fo.write("FINALLY \n%{\n")
