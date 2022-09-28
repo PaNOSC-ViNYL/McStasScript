@@ -1029,6 +1029,7 @@ class Component:
             written_AT_data = self.AT_data
             written_AT_relative = self.AT_relative
             written_ROTATED_data = self.ROTATED_data
+            written_ROTATED_relative = self.ROTATED_relative
 
         # Write AT and ROTATED section
         fo.write("AT (%s,%s,%s)" % (str(written_AT_data[0]),

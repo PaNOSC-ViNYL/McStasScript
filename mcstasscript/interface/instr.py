@@ -1422,6 +1422,17 @@ class McCode_instr(BaseCalculator):
             print("No components added to instrument object yet.")
             return
 
+        printed_components = self.make_component_subset()
+
+        if len(printed_components) == 0:
+            print("No components in subset.")
+            return
+
+        if self.run_from_ref is not None:
+            print("Showing subset of instrument after cut at '"
+                  + self.run_from_ref
+                  + "' component.")
+
         if line_length is None:
             line_limit = self.line_limit
         else:
@@ -1433,7 +1444,7 @@ class McCode_instr(BaseCalculator):
                                  " line_length and has to be an integer.")
             line_limit = line_length
 
-        component_names = [x.name for x in self.component_list]
+        component_names = [x.name for x in printed_components]
         longest_name = len(max(component_names, key=len))
 
         # todo Investigate how this could have been done in a better way
@@ -1443,7 +1454,7 @@ class McCode_instr(BaseCalculator):
         at_relative_list = []
         rotated_xyz_list = []
         rotated_relative_list = []
-        for component in self.component_list:
+        for component in printed_components:
             component_type_list.append(component.component_name)
             at_xyz_list.append(str(component.AT_data[0])
                                + str(component.AT_data[1])
@@ -1528,7 +1539,7 @@ class McCode_instr(BaseCalculator):
                 n_lines = 3
 
         if n_lines == 1:
-            for component in self.component_list:
+            for component in printed_components:
                 p_name = str(component.name)
                 p_name = p_name.ljust(longest_name + name_pad)
 
@@ -1557,7 +1568,7 @@ class McCode_instr(BaseCalculator):
                     print(p_name, p_comp_name, "AT", p_AT, p_AT_RELATIVE)
 
         elif n_lines == 2:
-            for component in self.component_list:
+            for component in printed_components:
                 p_name = str(component.name)
                 p_name = p_name.ljust(longest_name + name_pad)
 
@@ -1593,7 +1604,7 @@ class McCode_instr(BaseCalculator):
                           "AT     ", p_AT, p_AT_RELATIVE)
 
         elif n_lines == 3:
-            for component in self.component_list:
+            for component in printed_components:
                 p_name = bcolors.BOLD + str(component.name) + bcolors.ENDC
 
                 p_comp_name = (bcolors.BOLD
@@ -1615,6 +1626,11 @@ class McCode_instr(BaseCalculator):
                 else:
                     print(p_name + " ", p_comp_name, "\n",
                           " AT     ", p_AT, p_AT_RELATIVE)
+
+        if self.run_to_ref is not None:
+            print("Showing subset of instrument until cut at '"
+                  + self.run_to_ref
+                  + "' component.")
 
     def write_c_files(self):
         """
@@ -1878,40 +1894,9 @@ class McCode_instr(BaseCalculator):
 
         # Write trace
         fo.write("TRACE \n")
-        component_names = [x.name for x in self.component_list]
 
-        start_index = 0
-        end_index = len(self.component_list)
-        if self.run_from_ref is not None:
-            start_index = component_names.index(self.run_from_ref)
-            # Add MCPL input component
-            MCPL_in = self._create_component_instance("MCPL_" + self.run_from_ref, "MCPL_input")
-            MCPL_in.set_comment("Automatically inserted to split instrument into parts")
-            MCPL_in.set_parameters(**self.run_from_component_parameters)
-            MCPL_in.write_component(fo)
-
-            # Ensure from component reset to MCPL position
-            self.component_list[start_index].write_component(fo, overwrite_location=True)
-            start_index += 1 # skip this component in component writing loop
-
-        if self.run_to_ref is not None:
-            end_index = component_names.index(self.run_to_ref)
-
-        # Main component loop
-        for component in self.component_list[start_index:end_index]:
+        for component in self.make_component_subset():
             component.write_component(fo)
-
-        if self.run_to_ref is not None:
-            replaced_component = self.component_list[end_index]
-
-            # Add MCPL output component
-            MCPL_out = self._create_component_instance("MCPL_" + self.run_to_ref, "MCPL_output")
-            MCPL_out.set_comment("Automatically inserted to split instrument into parts")
-            MCPL_out.set_parameters(**self.run_to_component_parameters)
-            MCPL_out.set_AT(replaced_component.AT_data, RELATIVE=replaced_component.AT_reference)
-            if replaced_component.ROTATED_specified:
-                MCPL_out.set_ROTATED(replaced_component.ROTATED_data, RELATIVE=replaced_component.ROTATED_reference)
-            MCPL_out.write_component(fo)
 
         # Write finally
         fo.write("FINALLY \n%{\n")
@@ -1923,6 +1908,66 @@ class McCode_instr(BaseCalculator):
         fo.write("\nEND\n")
 
         fo.close()
+
+    def make_component_subset(self):
+        """
+        Uses run_from and run_to specifications to extract subset of components
+
+        Adds MCPL component at start and/or end as needed, and adjusts the
+        surrounding components as necessary.
+        """
+
+        if self.run_from_ref is None and self.run_to_ref is None:
+            # Simple case, just return full component list
+            return self.component_list
+
+        # Need to extract subset
+        # Starting with component named run_from_ref, ending with run_to_ref
+        component_names = [x.name for x in self.component_list]
+        start_index = 0
+        end_index = len(self.component_list)
+        if self.run_from_ref is not None:
+            start_index = component_names.index(self.run_from_ref)
+
+        if self.run_to_ref is not None:
+            end_index = component_names.index(self.run_to_ref)
+
+        # Create a copy of the used component instances
+        component_subset = copy.deepcopy(self.component_list[start_index:end_index])
+
+        if self.run_from_ref is not None:
+            # Add MCPL input component
+            MCPL_in = self._create_component_instance("MCPL_" + self.run_from_ref, "MCPL_input")
+            MCPL_in.set_comment("Automatically inserted to split instrument into parts")
+            MCPL_in.set_parameters(**self.run_from_component_parameters)
+            #MCPL_in.write_component(fo)
+
+            # Ensure from component reset to MCPL position
+            first_component = component_subset[0]
+
+            # Since a copy of the component is used, we can alter some properties safely
+            first_component.set_AT([0, 0, 0], "ABSOLUTE")
+            if first_component.ROTATED_specified:
+                first_component.set_ROTATED([0, 0, 0], "ABSOLUTE")
+
+            component_subset = [MCPL_in] + component_subset
+
+        if self.run_to_ref is not None:
+            # MCPL component will replace the component after the last included
+            replaced_component = self.component_list[end_index]
+
+            # Add MCPL output component
+            MCPL_out = self._create_component_instance("MCPL_" + self.run_to_ref, "MCPL_output")
+            MCPL_out.set_comment("Automatically inserted to split instrument into parts")
+            MCPL_out.set_parameters(**self.run_to_component_parameters)
+            MCPL_out.set_AT(replaced_component.AT_data, RELATIVE=replaced_component.AT_reference)
+            if replaced_component.ROTATED_specified:
+                MCPL_out.set_ROTATED(replaced_component.ROTATED_data, RELATIVE=replaced_component.ROTATED_reference)
+            #MCPL_out.write_component(fo)
+
+            component_subset += [MCPL_out]
+
+        return component_subset
 
     def settings(self, ncount=None, mpi="not_set", seed=None,
                  force_compile=None, output_path=None,
