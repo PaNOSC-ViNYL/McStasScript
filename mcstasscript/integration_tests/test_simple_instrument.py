@@ -1,9 +1,8 @@
 import io
 import os
-import unittest
 import unittest.mock
 
-from mcstasscript.interface import instr, functions, plotter
+from mcstasscript.interface import instr
 
 
 def setup_simple_instrument():
@@ -29,6 +28,7 @@ def setup_simple_instrument():
     PSD.restore_neutron = 1
 
     return Instr
+
 
 def setup_simple_instrument_input_path():
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -99,7 +99,7 @@ class TestSimpleInstrument(unittest.TestCase):
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_simple_instrument(self, mock_stdout):
         """
-        Test that an instrument can run and that the results matches
+        Test that an instrument can run and that the results match
         expectations. Here beam in small area in the middle of the
         detector.
         """
@@ -127,7 +127,7 @@ class TestSimpleInstrument(unittest.TestCase):
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_simple_instrument_input(self, mock_stdout):
         """
-        Test that an instrument can run and that the results matches
+        Test that an instrument can run and that the results match
         expectations. Here beam in small area in the middle of the
         detector.
         """
@@ -137,7 +137,8 @@ class TestSimpleInstrument(unittest.TestCase):
 
         Instr = setup_simple_instrument_input_path()
 
-        data = Instr.run_full_instrument(foldername="integration_test_simple_input",
+        foldername = "integration_test_simple_input"
+        data = Instr.run_full_instrument(foldername=foldername,
                                          ncount=1E6, mpi=1,
                                          increment_folder_name=True)
 
@@ -187,7 +188,7 @@ class TestSimpleInstrument(unittest.TestCase):
     def test_slit_instrument(self, mock_stdout):
         """
         Test parameters can be controlled through McStasScript.  Here
-        a slit is can be moved, but the default value of 0 should be
+        a slit can be moved, but the default value of 0 should be
         used.
         """
         CURRENT_DIR = os.getcwd()
@@ -196,7 +197,8 @@ class TestSimpleInstrument(unittest.TestCase):
 
         Instr = setup_simple_slit_instrument()
 
-        data = Instr.run_full_instrument(foldername="integration_test_slit",
+        foldername = "integration_test_slit"
+        data = Instr.run_full_instrument(foldername=foldername,
                                          ncount=2E6, mpi=2,
                                          increment_folder_name=True)
 
@@ -237,6 +239,7 @@ class TestSimpleInstrument(unittest.TestCase):
         sum_inside_beam = sum(intensity_data[75:85])
 
         self.assertTrue(1000*sum_outside_beam < sum_inside_beam)
+
 
 if __name__ == '__main__':
     unittest.main()

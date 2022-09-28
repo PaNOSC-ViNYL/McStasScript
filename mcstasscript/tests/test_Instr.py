@@ -1,84 +1,128 @@
 import os
+import os.path
 import io
-import builtins
 import unittest
 import unittest.mock
 import datetime
 
-from mcstasscript.interface.instr import McStas_instr
-from mcstasscript.helper.formatting import bcolors
+from libpyvinyl.Parameters.Collections import CalculatorParameters
 
+from mcstasscript.interface.instr import McStas_instr
+from mcstasscript.interface.instr import McXtrace_instr
+from mcstasscript.helper.formatting import bcolors
+from mcstasscript.tests.helpers_for_tests import WorkInTestDir
+from mcstasscript.helper.exceptions import McStasError
+
+run_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '.')
 
 def setup_instr_no_path():
     """
-    Sets up a instrument without a mcstas_path
+    Sets up a neutron instrument without a package_path
     """
-    return McStas_instr("test_instrument")
+
+    with WorkInTestDir() as handler:
+        instrument = McStas_instr("test_instrument")
+
+    return instrument
+
+
+def setup_x_ray_instr_no_path():
+    """
+    Sets up a X-ray instrument without a package_path
+    """
+
+    with WorkInTestDir() as handler:
+        instrument = McXtrace_instr("test_instrument")
+
+    return instrument
 
 
 def setup_instr_root_path():
     """
-    Sets up a instrument with root mcstas_path
+    Sets up a neutron instrument with root package_path
     """
-    return McStas_instr("test_instrument", mcstas_path="/")
+    with WorkInTestDir() as handler:
+        instrument = McStas_instr("test_instrument", package_path="/")
+
+    return instrument
+
+
+def setup_x_ray_instr_root_path():
+    """
+    Sets up a X-ray instrument with root package_path
+    """
+    with WorkInTestDir() as handler:
+        instrument = McXtrace_instr("test_instrument", package_path="/")
+
+    return instrument
 
 
 def setup_instr_with_path():
     """
-    Sets up a instrument with a valid mcstas_path, but it points to
+    Sets up an instrument with a valid package_path, but it points to
+    the dummy installation in the test folder.
+    """
+
+    with WorkInTestDir() as handler:
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
+        instrument = McStas_instr("test_instrument", package_path=dummy_path)
+
+    return instrument
+
+
+def setup_x_ray_instr_with_path():
+    """
+    Sets up an instrument with a valid package_path, but it points to
     the dummy installation in the test folder.
     """
 
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
+    with WorkInTestDir() as handler:
+        instrument = McXtrace_instr("test_instrument", package_path=dummy_path)
 
-    return McStas_instr("test_instrument", mcstas_path=dummy_path)
+    return instrument
 
-    os.chdir(current_work_dir)  # Return to previous workdir
 
 def setup_instr_with_input_path():
     """
-    Sets up a instrument with a valid mcstas_path, but it points to
-    the dummy installation in the test folder.
+    Sets up an instrument with a valid package_path, but it points to
+    the dummy installation in the test folder. In addition the input_path
+    is set to a folder in the test directory using an absolute path.
     """
 
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
     input_path = os.path.join(THIS_DIR, "test_input_folder")
 
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
+    with WorkInTestDir() as handler:
+        instrument = McStas_instr("test_instrument",
+                                  package_path=dummy_path,
+                                  input_path=input_path)
 
-    return McStas_instr("test_instrument",
-                        mcstas_path=dummy_path,
-                        input_path=input_path)
+    return instrument
 
-    os.chdir(current_work_dir)  # Return to previous workdir
 
 def setup_instr_with_input_path_relative():
     """
-    Sets up a instrument with a valid mcstas_path, but it points to
-    the dummy installation in the test folder.
+    Sets up an instrument with a valid package_path, but it points to
+    the dummy installation in the test folder. In addition the input_path
+    is set to a folder in the test directory using a relative path.
     """
 
-    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+    with WorkInTestDir() as handler:
+        instrument = McStas_instr("test_instrument",
+                                  package_path="dummy_mcstas",
+                                  input_path="test_input_folder")
 
-    current_work_dir = os.getcwd()
-    os.chdir(THIS_DIR)  # Set work directory to test folder
-
-    return McStas_instr("test_instrument",
-                        mcstas_path="dummy_mcstas",
-                        input_path="test_input_folder")
-
-    os.chdir(current_work_dir)  # Return to previous workdir
+    return instrument
 
 
 def setup_populated_instr():
     """
-    Sets up a instrument with some features used and two components
+    Sets up a neutron instrument with some features used and three components
     """
     instr = setup_instr_root_path()
 
@@ -87,15 +131,88 @@ def setup_populated_instr():
     instr.add_declare_var("double", "two_theta")
     instr.append_initialize("two_theta = 2.0*theta;")
 
-    comp1 = instr.add_component("first_component", "test_for_reading")
-    comp2 = instr.add_component("second_component", "test_for_reading")
-    comp3 = instr.add_component("third_component", "test_for_reading")
+    instr.add_component("first_component", "test_for_reading")
+    instr.add_component("second_component", "test_for_reading")
+    instr.add_component("third_component", "test_for_reading")
 
     return instr
 
+
+def setup_populated_instr_with_dummy_path():
+    """
+    Sets up a neutron instrument with some features used and three components
+
+    Here uses the dummy mcstas installation as path and sets required
+    parameters so that a run is possible.
+    """
+    instr = setup_instr_with_path()
+
+    instr.add_parameter("double", "theta")
+    instr.add_parameter("double", "has_default", value=37)
+    instr.add_declare_var("double", "two_theta")
+    instr.append_initialize("two_theta = 2.0*theta;")
+
+    comp1 = instr.add_component("first_component", "test_for_reading")
+    comp1.gauss = 1.2
+    comp1.test_string = "a_string"
+    comp2 = instr.add_component("second_component", "test_for_reading")
+    comp2.gauss = 1.4
+    comp2.test_string = "b_string"
+    comp3 = instr.add_component("third_component", "test_for_reading")
+    comp3.gauss = 1.6
+    comp3.test_string = "c_string"
+
+    return instr
+
+
+def setup_populated_x_ray_instr():
+    """
+    Sets up a X-ray instrument with some features used and three components
+    """
+    instr = setup_x_ray_instr_root_path()
+
+    instr.add_parameter("double", "theta")
+    instr.add_parameter("double", "has_default", value=37)
+    instr.add_declare_var("double", "two_theta")
+    instr.append_initialize("two_theta = 2.0*theta;")
+
+    instr.add_component("first_component", "test_for_reading")
+    instr.add_component("second_component", "test_for_reading")
+    instr.add_component("third_component", "test_for_reading")
+
+    return instr
+
+
+def setup_populated_x_ray_instr_with_dummy_path():
+    """
+    Sets up a x-ray instrument with some features used and three components
+
+    Here uses the dummy mcstas installation as path and sets required
+    parameters so that a run is possible.
+    """
+    instr = setup_x_ray_instr_with_path()
+
+    instr.add_parameter("double", "theta")
+    instr.add_parameter("double", "has_default", value=37)
+    instr.add_declare_var("double", "two_theta")
+    instr.append_initialize("two_theta = 2.0*theta;")
+
+    comp1 = instr.add_component("first_component", "test_for_reading")
+    comp1.gauss = 1.2
+    comp1.test_string = "a_string"
+    comp2 = instr.add_component("second_component", "test_for_reading")
+    comp2.gauss = 1.4
+    comp2.test_string = "b_string"
+    comp3 = instr.add_component("third_component", "test_for_reading")
+    comp3.gauss = 1.6
+    comp3.test_string = "c_string"
+
+    return instr
+
+
 def setup_populated_with_some_options_instr():
     """
-    Sets up a instrument with some features used and two components
+    Sets up a neutron instrument with some features used and two components
     """
     instr = setup_instr_root_path()
 
@@ -105,14 +222,14 @@ def setup_populated_with_some_options_instr():
     instr.append_initialize("two_theta = 2.0*theta;")
 
     comp1 = instr.add_component("first_component", "test_for_reading")
-    comp1.set_AT([0,0,1])
+    comp1.set_AT([0, 0, 1])
     comp1.set_GROUP("Starters")
     comp2 = instr.add_component("second_component", "test_for_reading")
-    comp2.set_AT([0,0,2], RELATIVE="first_component")
-    comp2.set_ROTATED([0,30,0])
+    comp2.set_AT([0, 0, 2], RELATIVE="first_component")
+    comp2.set_ROTATED([0, 30, 0])
     comp2.set_WHEN("1==1")
-    comp2.yheight=1.23
-    comp3 = instr.add_component("third_component", "test_for_reading")
+    comp2.yheight = 1.23
+    instr.add_component("third_component", "test_for_reading")
 
     return instr
 
@@ -134,16 +251,25 @@ class TestMcStas_instr(unittest.TestCase):
         """
         Tests all keywords work in initialization
         """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         my_instrument = McStas_instr("test_instrument",
                                      author="Mads",
                                      origin="DMSC",
-                                     mcrun_path="/path/to/mcrun",
-                                     mcstas_path="/path/to/mcstas")
+                                     executable_path="./dummy_mcstas/contrib",
+                                     package_path="./dummy_mcstas/misc")
+
+        os.chdir(current_work_dir)
 
         self.assertEqual(my_instrument.author, "Mads")
         self.assertEqual(my_instrument.origin, "DMSC")
-        self.assertEqual(my_instrument.mcrun_path, "/path/to/mcrun")
-        self.assertEqual(my_instrument.mcstas_path, "/path/to/mcstas")
+        self.assertEqual(my_instrument._run_settings["executable_path"],
+                         "./dummy_mcstas/contrib")
+        self.assertEqual(my_instrument._run_settings["package_path"],
+                         "./dummy_mcstas/misc")
 
     def test_load_config_file(self):
         """
@@ -181,21 +307,114 @@ class TestMcStas_instr(unittest.TestCase):
         # Check the value matches what is loaded by initialization
         my_instrument = setup_instr_no_path()
 
-        self.assertEqual(my_instrument.mcrun_path, correct_mcrun_path)
-        self.assertEqual(my_instrument.mcstas_path, correct_mcstas_path)
+        self.assertEqual(my_instrument._run_settings["executable_path"], correct_mcrun_path)
+        self.assertEqual(my_instrument._run_settings["package_path"], correct_mcstas_path)
         self.assertEqual(my_instrument.line_limit, correct_n_of_characters)
+
+    def test_load_config_file_x_ray(self):
+        """
+        Test that configuration file is read correctly. In order to have
+        an independent test, the yaml file is read manually instead of
+        using the yaml package.
+        """
+        # Load configuration file and read manually
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        configuration_file_name = os.path.join(THIS_DIR,
+                                               "..", "configuration.yaml")
+
+        if not os.path.isfile(configuration_file_name):
+            raise NameError("Could not find configuration file!")
+
+        f = open(configuration_file_name, "r")
+
+        lines = f.readlines()
+        for line in lines:
+            line = line.strip()
+            if line.startswith("mxrun_path:"):
+                parts = line.split(" ")
+                correct_mxrun_path = parts[1]
+
+            if line.startswith("mcxtrace_path:"):
+                parts = line.split(" ")
+                correct_mcxtrace_path = parts[1]
+
+            if line.startswith("characters_per_line:"):
+                parts = line.split(" ")
+                correct_n_of_characters = int(parts[1])
+
+        f.close()
+
+        # Check the value matches what is loaded by initialization
+        my_instrument = setup_x_ray_instr_no_path()
+
+        self.assertEqual(my_instrument._run_settings["executable_path"], correct_mxrun_path)
+        self.assertEqual(my_instrument._run_settings["package_path"], correct_mcxtrace_path)
+        self.assertEqual(my_instrument.line_limit, correct_n_of_characters)
+
+    def test_load_libpyvinyl_parameters(self):
+        parameters = CalculatorParameters()
+        int_par = parameters.new_parameter("int_parameter", comment="integer parameter")
+        int_par.value = 3
+
+        double_par = parameters.new_parameter("double_parameter", unit="meV")
+        double_par.value = 3.0
+
+        string_par = parameters.new_parameter("string_parameter")
+        string_par.value = "hello world"
+
+        secret_par = parameters.new_parameter("no_value_par")
+
+        instr = McStas_instr("test_instr", parameters=parameters)
+
+        self.assertEqual(int_par.type, "double")
+        self.assertEqual(double_par.type, "double")
+        self.assertEqual(string_par.type, "string")
+        self.assertEqual(secret_par.type, None)
+
+        instr.set_parameters(int_parameter=4)
+        self.assertEqual(int_par.value, 4)
+
+        int_par.value = 5
+        self.assertEqual(instr.parameters["int_parameter"].value, 5)
 
     def test_simple_add_parameter(self):
         """
         This is just an interface to a function that is tested
         elsewhere, so only a basic test is performed here.
+
+        ParameterVariable is tested in test_parameter_variable.
         """
         instr = setup_instr_root_path()
 
-        instr.add_parameter("double", "theta", comment="test par")
+        parameter = instr.add_parameter("double", "theta", comment="test par")
 
-        self.assertEqual(instr.parameter_list[0].name, "theta")
-        self.assertEqual(instr.parameter_list[0].comment, "// test par")
+        self.assertEqual(parameter.name, "theta")
+        self.assertEqual(parameter.comment, "test par")
+
+    def test_user_var_block_add_parameter(self):
+        """
+        Checks that adding a parameter with a name already used for a
+        user variable fails with NameError
+        """
+        instr = setup_instr_root_path()
+
+        instr.add_user_var("double", "theta")
+
+        with self.assertRaises(NameError):
+            instr.add_parameter("double", "theta", comment="test par")
+
+
+    def test_declare_var_block_add_parameter(self):
+        """
+        Checks that adding a parameter with a name already used for a
+        declared variable fails with NameError
+        """
+        instr = setup_instr_root_path()
+
+        instr.add_declare_var("double", "theta")
+
+        with self.assertRaises(NameError):
+            instr.add_parameter("double", "theta", comment="test par")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_show_parameters(self, mock_stdout):
@@ -204,9 +423,9 @@ class TestMcStas_instr(unittest.TestCase):
         """
         instr = setup_instr_root_path()
 
-        instr.add_parameter("double", "theta", comment="test par")
-        instr.add_parameter("single", "theta", comment="test par")
-        instr.add_parameter("float", "theta", value=8, comment="test par")
+        instr.add_parameter("theta", comment="test par")
+        instr.add_parameter("double", "par_double", comment="test par")
+        instr.add_parameter("int", "int_par", value=8, comment="test par")
         instr.add_parameter("int", "slits", comment="test par")
         instr.add_parameter("string", "ref",
                             value="string", comment="new string")
@@ -215,11 +434,11 @@ class TestMcStas_instr(unittest.TestCase):
 
         output = mock_stdout.getvalue().split("\n")
 
-        self.assertEqual(output[0], "double  theta             // test par")
-        self.assertEqual(output[1], "single  theta             // test par")
-        self.assertEqual(output[2], "float   theta  =  8       // test par")
-        self.assertEqual(output[3], "int     slits             // test par")
-        self.assertEqual(output[4], "string  ref    =  string  // new string")
+        self.assertEqual(output[0], "       theta                 // test par")
+        self.assertEqual(output[1], "double par_double            // test par")
+        self.assertEqual(output[2], "int    int_par     = 8       // test par")
+        self.assertEqual(output[3], "int    slits                 // test par")
+        self.assertEqual(output[4], "string ref         = string  // new string")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_show_parameters_line_break(self, mock_stdout):
@@ -231,9 +450,9 @@ class TestMcStas_instr(unittest.TestCase):
         """
         instr = setup_instr_root_path()
 
-        instr.add_parameter("double", "theta", comment="test par")
-        instr.add_parameter("single", "theta", comment="test par")
-        instr.add_parameter("float", "theta", value=8, comment="test par")
+        instr.add_parameter("theta", comment="test par")
+        instr.add_parameter("double", "par_double", comment="test par")
+        instr.add_parameter("int", "int_par", value=8, comment="test par")
         instr.add_parameter("int", "slits", comment="test par")
         instr.add_parameter("string", "ref",
                             value="string", comment="new string")
@@ -251,28 +470,27 @@ class TestMcStas_instr(unittest.TestCase):
 
         output = mock_stdout.getvalue().split("\n")
 
-        self.assertEqual(output[0], "double  theta             // test par")
-        self.assertEqual(output[1], "single  theta             // test par")
-        self.assertEqual(output[2], "float   theta  =  8       // test par")
-        self.assertEqual(output[3], "int     slits             // test par")
-        self.assertEqual(output[4], "string  ref    =  string  // new string")
-        comment_line = "This is a very long comment meant for testing "
-        self.assertEqual(output[5], "double  value  =  37      // "
+        self.assertEqual(output[0], "       theta                 // test par")
+        self.assertEqual(output[1], "double par_double            // test par")
+        self.assertEqual(output[2], "int    int_par     = 8       // test par")
+        self.assertEqual(output[3], "int    slits                 // test par")
+        self.assertEqual(output[4], "string ref         = string  // new string")
+        comment_line = "This is a very long comment meant for "
+        self.assertEqual(output[5], "double value       = 37      // "
                                     + comment_line)
-        comment_line = "the dynamic line breaking that is used in this "
-        self.assertEqual(output[6], "                             "
-                                    + comment_line)
-        comment_line = "method. It needs to have many lines in order to "
-        self.assertEqual(output[7], "                             "
-                                    + comment_line)
-        comment_line = "ensure it really works. "
-        self.assertEqual(output[8], "                             "
-                                    + comment_line)
+        comment_line = "testing the dynamic line breaking that is "
+        self.assertEqual(output[6], " "*33 + comment_line)
+        comment_line = "used in this method. It needs to have many "
+        self.assertEqual(output[7], " "*33 + comment_line)
+        comment_line = "lines in order to ensure it really works. "
+        self.assertEqual(output[8], " "*33 + comment_line)
 
-    def test_simple_add_declare_parameter(self):
+    def test_simple_add_declare_variable(self):
         """
         This is just an interface to a function that is tested
         elsewhere, so only a basic test is performed here.
+
+        DeclareVariable is tested in test_declare_variable.
         """
         instr = setup_instr_root_path()
 
@@ -280,11 +498,75 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(instr.declare_list[0].name, "two_theta")
         self.assertEqual(instr.declare_list[0].comment, " // test par")
-        
+
+    def test_parameter_block_add_declare_variable(self):
+        """
+        Checks a NameError is raised when using declare variable of same
+        name as instrument parameter.
+        """
+        instr = setup_instr_root_path()
+
+        instr.add_parameter("two_theta")
+        with self.assertRaises(NameError):
+            instr.add_declare_var("double", "two_theta")
+
+    def test_user_var_block_add_declare_variable(self):
+        """
+        Checks a NameError is raised when using declare variable of same
+        name as declared variable.
+        """
+        instr = setup_instr_root_path()
+
+        instr.add_user_var("double", "two_theta")
+        with self.assertRaises(NameError):
+            instr.add_declare_var("double", "two_theta")
+
+    def test_simple_add_user_variable(self):
+        """
+        This is just an interface to a function that is tested
+        elsewhere, so only a basic test is performed here.
+
+        DeclareVariable is tested in test_declare_variable.
+        """
+        instr = setup_instr_root_path()
+
+        user_var = instr.add_user_var("double", "two_theta_user", comment="test par")
+
+        self.assertEqual(user_var.name, "two_theta_user")
+        self.assertEqual(user_var.comment, " // test par")
+        self.assertEqual(instr.user_var_list[0].name, "two_theta_user")
+        self.assertEqual(instr.user_var_list[0].comment, " // test par")
+
+        with self.assertRaises(ValueError):
+            instr.add_user_var("double", "illegal", value=8)
+
+    def test_declare_block_add_user_variable(self):
+        """
+        Checks a NameError is raised when using user variable of same
+        name as declare variable already defined.
+        """
+        instr = setup_instr_root_path()
+
+        instr.add_declare_var("double", "two_theta")
+        with self.assertRaises(NameError):
+            instr.add_user_var("double", "two_theta")
+
+    def test_parameter_block_add_user_variable(self):
+        """
+        Checks a NameError is raised when using user variable of same
+        name as parameter already defined.
+        """
+        instr = setup_instr_root_path()
+
+        instr.add_parameter("two_theta")
+        with self.assertRaises(NameError):
+            instr.add_user_var("double", "two_theta")
+
     def test_simple_append_declare(self):
         """
-        The declare lines are held as a string. This method
-        appends that string.
+        Appending to declare adds an object to the declare list, and the
+        allowed types are either strings or DeclareVariable objects.
+        Here only strings are added.
         """
         instr = setup_instr_root_path()
 
@@ -294,15 +576,16 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(instr.declare_list[0],
                          "First line of declare")
-        self.assertEqual(instr.declare_list[1], 
+        self.assertEqual(instr.declare_list[1],
                          "Second line of declare")
-        self.assertEqual(instr.declare_list[2], 
+        self.assertEqual(instr.declare_list[2],
                          "Third line of declare")
-        
+
     def test_simple_append_declare_var_mix(self):
         """
-        The declare lines are held as a string. This method
-        appends that string.
+        Appending to declare adds an object to the declare list, and the
+        allowed types are either strings or DeclareVariable objects.
+        Here a mix of strings and DeclareVariable objects are added.
         """
         instr = setup_instr_root_path()
 
@@ -314,8 +597,8 @@ class TestMcStas_instr(unittest.TestCase):
                          "First line of declare")
         self.assertEqual(instr.declare_list[1].name, "two_theta")
         self.assertEqual(instr.declare_list[1].comment, " // test par")
-        self.assertEqual(instr.declare_list[2], 
-                         "Third line of declare")        
+        self.assertEqual(instr.declare_list[2],
+                         "Third line of declare")
 
     def test_simple_append_initialize(self):
         """
@@ -342,7 +625,7 @@ class TestMcStas_instr(unittest.TestCase):
     def test_simple_append_initialize_no_new_line(self):
         """
         The initialize section is held as a string. This method
-        appends that string.
+        appends that string without making a new line.
         """
         instr = setup_instr_root_path()
 
@@ -361,7 +644,7 @@ class TestMcStas_instr(unittest.TestCase):
 
     def test_simple_append_finally(self):
         """
-        The initialize section is held as a string. This method
+        The finally section is held as a string. This method
         appends that string.
         """
         instr = setup_instr_root_path()
@@ -383,8 +666,8 @@ class TestMcStas_instr(unittest.TestCase):
 
     def test_simple_append_finally_no_new_line(self):
         """
-        The initialize section is held as a string. This method
-        appends that string.
+        The finally section is held as a string. This method
+        appends that string without making a new line.
         """
         instr = setup_instr_root_path()
 
@@ -403,8 +686,9 @@ class TestMcStas_instr(unittest.TestCase):
 
     def test_simple_append_trace(self):
         """
-        The initialize section is held as a string. This method
-        appends that string.
+        The trace section is held as a string. This method
+        appends that string. Only used for writing c files, which is not
+        the main way to use McStasScript.
         """
         instr = setup_instr_root_path()
 
@@ -425,8 +709,9 @@ class TestMcStas_instr(unittest.TestCase):
 
     def test_simple_append_trace_no_new_line(self):
         """
-        The initialize section is held as a string. This method
-        appends that string.
+        The trace section is held as a string. This method appends that string
+        without making a new line. Only used for writing c files, which is not
+        the main way to use McStasScript.
         """
         instr = setup_instr_root_path()
 
@@ -444,37 +729,21 @@ class TestMcStas_instr(unittest.TestCase):
                          + "ABCD")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_show_components_simple(self, mock_stdout):
+    def test_available_components_simple(self, mock_stdout):
         """
-        Simple test of show components to show categories
+        Simple test of show components to show component categories
         """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         instr = setup_instr_with_path()
 
-        instr.show_components()
+        instr.available_components()
 
-        output = mock_stdout.getvalue()
-        output = output.split("\n")
-
-        self.assertEqual(output[0],
-                         "The following components are found in the "
-                         + "work_directory / input_path:")
-        self.assertEqual(output[1], "     test_for_reading.comp")
-        self.assertEqual(output[2], "These definitions will be used "
-                                    +"instead of the installed versions.")
-        self.assertEqual(output[3],
-                         "Here are the available component categories:")
-        self.assertEqual(output[4], " sources")
-        self.assertEqual(output[5], " Work directory")
-        self.assertEqual(output[6], " misc")
-
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_show_components_folder(self, mock_stdout):
-        """
-        Simple test of show components to show categories
-        """
-        instr = setup_instr_with_path()
-
-        instr.show_components("Work directory")
+        os.chdir(current_work_dir)
 
         output = mock_stdout.getvalue()
         output = output.split("\n")
@@ -486,20 +755,52 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[2], "These definitions will be used "
                          + "instead of the installed versions.")
         self.assertEqual(output[3],
-                         "Here are all components in the Work directory "
+                         "Here are the available component categories:")
+        self.assertEqual(output[4], " misc")
+        self.assertEqual(output[5], " sources")
+        self.assertEqual(output[6], " work directory")
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_available_components_folder(self, mock_stdout):
+        """
+        Simple test of show components to show components in current work
+        directory.
+        """
+        instr = setup_instr_with_path()
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
+        instr.available_components("work directory")
+
+        os.chdir(current_work_dir)
+
+        output = mock_stdout.getvalue()
+        output = output.split("\n")
+
+        self.assertEqual(output[0],
+                         "The following components are found in the "
+                         + "work_directory / input_path:")
+        self.assertEqual(output[1], "     test_for_reading.comp")
+        self.assertEqual(output[2], "These definitions will be used "
+                         + "instead of the installed versions.")
+        self.assertEqual(output[3],
+                         "Here are all components in the work directory "
                          + "category.")
         self.assertEqual(output[4], " test_for_reading")
         self.assertEqual(output[5], "")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_show_components_input_path_simple(self, mock_stdout):
+    def test_available_components_input_path_simple(self, mock_stdout):
         """
-        Simple test of input_path being recoignized and passed
+        Simple test of input_path being recognized and passed
         to component_reader so PSDlin_monitor is overwritten
         """
         instr = setup_instr_with_input_path()
 
-        instr.show_components()
+        instr.available_components()
 
         output = mock_stdout.getvalue()
         output = output.split("\n")
@@ -509,24 +810,24 @@ class TestMcStas_instr(unittest.TestCase):
                          + "work_directory / input_path:")
         self.assertEqual(output[1], "     test_for_structure.comp")
         self.assertEqual(output[2], "These definitions will be used "
-                                    +"instead of the installed versions.")
+                         + "instead of the installed versions.")
         self.assertEqual(output[3],
                          "Here are the available component categories:")
-        self.assertEqual(output[4], " sources")
-        self.assertEqual(output[5], " misc")
-        self.assertEqual(output[6], " Work directory")
+        self.assertEqual(output[4], " misc")
+        self.assertEqual(output[5], " sources")
+        self.assertEqual(output[6], " work directory")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_show_components_input_path_simple(self, mock_stdout):
+    def test_available_components_input_path_custom(self, mock_stdout):
         """
-        Simple test of input_path being recoignized and passed
+        Simple test of input_path being recognized and passed
         to component_reader so PSDlin_monitor is overwritten
-        Here dummy_mcstas and input_path is set using relative
+        Here dummy_mcstas and input_path are set using relative
         paths instead of absolute paths.
         """
         instr = setup_instr_with_input_path_relative()
 
-        instr.show_components()
+        instr.available_components()
 
         output = mock_stdout.getvalue()
         output = output.split("\n")
@@ -536,12 +837,12 @@ class TestMcStas_instr(unittest.TestCase):
                          + "work_directory / input_path:")
         self.assertEqual(output[1], "     test_for_structure.comp")
         self.assertEqual(output[2], "These definitions will be used "
-                                    +"instead of the installed versions.")
+                         + "instead of the installed versions.")
         self.assertEqual(output[3],
                          "Here are the available component categories:")
-        self.assertEqual(output[4], " sources")
-        self.assertEqual(output[5], " misc")
-        self.assertEqual(output[6], " Work directory")
+        self.assertEqual(output[4], " misc")
+        self.assertEqual(output[5], " sources")
+        self.assertEqual(output[6], " work directory")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_component_help(self, mock_stdout):
@@ -553,7 +854,7 @@ class TestMcStas_instr(unittest.TestCase):
         instr.component_help("test_for_reading", line_length=90)
         # This call creates a dummy component and calls its
         # show_parameter method which has been tested. Here we
-        # need to ensure the call is succesful, not test all
+        # need to ensure the call is successful, not test all
         # output from the call.
 
         output = mock_stdout.getvalue()
@@ -590,13 +891,22 @@ class TestMcStas_instr(unittest.TestCase):
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_create_component_instance_simple(self, mock_stdout):
         """
+        Tests successful use of _create_component_instance
+
         _create_component_instance will make a dynamic subclass of
         component with the information from the component files read
-        from disk.  The subclasses is saved in a dict for reuse in
+        from disk.  The subclass is saved in a dict for reuse in
         case the same component type is requested again.
         """
 
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         instr = setup_instr_with_path()
+
+        os.chdir(current_work_dir)
 
         comp = instr._create_component_instance("test_component",
                                                 "test_for_reading")
@@ -610,32 +920,28 @@ class TestMcStas_instr(unittest.TestCase):
         comment = ("Radius of circle in (x,y,0) plane where "
                    + "neutrons are generated.")
         self.assertEqual(comp.parameter_comments["radius"], comment)
-        self.assertEqual(comp.category, "Work directory")
-
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_create_component_instance_simple_error(self, mock_stdout):
-        """
-        _create_component_instance will make a dynamic subclass of
-        component with the information from the component files read
-        from disk.  The subclasses is saved in a dict for reuse in
-        case the same component type is requested again.
-        """
-
-        instr = setup_instr_with_path()
-
-        with self.assertRaises(NameError):
-            comp = instr._create_component_instance("test_component")
+        self.assertEqual(comp.category, "work directory")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_create_component_instance_complex(self, mock_stdout):
         """
+        Tests successful use of _create_component_instance while using
+        keyword arguments in creation
+
         _create_component_instance will make a dynamic subclass of
         component with the information from the component files read
         from disk.  The subclasses is saved in a dict for reuse in
         case the same component type is requested again.
         """
 
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
         instr = setup_instr_with_path()
+
+        os.chdir(current_work_dir)
 
         # Setting relative to home, should be passed to component
         comp = instr._create_component_instance("test_component",
@@ -651,7 +957,7 @@ class TestMcStas_instr(unittest.TestCase):
         comment = ("Radius of circle in (x,y,0) plane where "
                    + "neutrons are generated.")
         self.assertEqual(comp.parameter_comments["radius"], comment)
-        self.assertEqual(comp.category, "Work directory")
+        self.assertEqual(comp.category, "work directory")
 
         # The keyword arguments of the call should be passed to the
         # new instance of the component. This is checked by reading
@@ -662,6 +968,8 @@ class TestMcStas_instr(unittest.TestCase):
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_add_component_simple(self, mock_stdout):
         """
+        Testing add_component in simple case.
+
         The add_component method adds a new component object to the
         instrument and keeps track of its location within the
         sequence of components.  Normally a new component is added to
@@ -683,6 +991,8 @@ class TestMcStas_instr(unittest.TestCase):
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_add_component_simple_keyword(self, mock_stdout):
         """
+        Testing add_component with keyword argument for the component
+
         The add_component method adds a new component object to the
         instrument and keeps track of its location within the
         sequence of components.  Normally a new component is added to
@@ -693,9 +1003,9 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_instr_with_path()
 
-        comp = instr.add_component("test_component",
-                                   "test_for_reading",
-                                   WHEN="1<2")
+        instr.add_component("test_component",
+                            "test_for_reading",
+                            WHEN="1<2")
 
         self.assertEqual(len(instr.component_list), 1)
         self.assertEqual(instr.component_list[0].name, "test_component")
@@ -704,104 +1014,104 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(instr.component_list[0].WHEN, "WHEN (1<2)")
 
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_add_component_simple_before(self, mock_stdout):
+    def test_add_component_simple_before(self):
         """
+        Testing add_component with before keyword argument for the method
+
         The add_component method adds a new component object to the
         instrument and keeps track of its location within the
         sequence of components.  Normally a new component is added to
         the end of the sequence, but the before and after keywords can
-        be used to select another location. Here keyword passing is
-        tested.
+        be used to select another location, here before is tested.
         """
 
         instr = setup_populated_instr()
 
-        comp = instr.add_component("test_component",
-                                   "test_for_reading",
-                                   before="first_component")
+        instr.add_component("test_component",
+                            "test_for_reading",
+                            before="first_component")
 
         self.assertEqual(len(instr.component_list), 4)
         self.assertEqual(instr.component_list[0].name, "test_component")
         self.assertEqual(instr.component_list[3].name, "third_component")
 
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_add_component_simple_after(self, mock_stdout):
+    def test_add_component_simple_after(self):
         """
+        Testing add_component with after keyword argument for the method
+
         The add_component method adds a new component object to the
         instrument and keeps track of its location within the
         sequence of components.  Normally a new component is added to
         the end of the sequence, but the before and after keywords can
-        be used to select another location. Here keyword passing is
-        tested.
+        be used to select another location, here after is tested.
         """
 
         instr = setup_populated_instr()
 
-        comp = instr.add_component("test_component",
-                                   "test_for_reading",
-                                   after="first_component")
+        instr.add_component("test_component",
+                            "test_for_reading",
+                            after="first_component")
 
         self.assertEqual(len(instr.component_list), 4)
         self.assertEqual(instr.component_list[1].name, "test_component")
         self.assertEqual(instr.component_list[3].name, "third_component")
 
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_add_component_simple_after_error(self, mock_stdout):
+    def test_add_component_simple_after_error(self):
         """
+        Checks add_component raises a NameError if after keyword specifies a
+        non-existent component
+
         The add_component method adds a new component object to the
         instrument and keeps track of its location within the
         sequence of components.  Normally a new component is added to
         the end of the sequence, but the before and after keywords can
-        be used to select another location. Here keyword passing is
-        tested.
+        be used to select another location, here before is tested.
         """
 
         instr = setup_populated_instr()
 
         with self.assertRaises(NameError):
-            comp = instr.add_component("test_component",
-                                       "test_for_reading",
-                                       after="non_exsistent_component")
+            instr.add_component("test_component",
+                                "test_for_reading",
+                                after="non_existent_component")
 
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_add_component_simple_before_error(self, mock_stdout):
+    def test_add_component_simple_before_error(self):
         """
+        Checks add_component raises a NameError if before keyword specifies a
+        non-existent component
+
         The add_component method adds a new component object to the
         instrument and keeps track of its location within the
         sequence of components.  Normally a new component is added to
         the end of the sequence, but the before and after keywords can
-        be used to select another location. Here keyword passing is
-        tested.
+        be used to select another location, here after is tested.
         """
 
         instr = setup_populated_instr()
 
         with self.assertRaises(NameError):
-            comp = instr.add_component("test_component",
-                                       "test_for_reading",
-                                       before="non_exsistent_component")
+            instr.add_component("test_component",
+                                "test_for_reading",
+                                before="non_existent_component")
 
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_add_component_simple_double_naming_error(self, mock_stdout):
+    def test_add_component_simple_double_naming_error(self):
         """
-        This tests checks that an error occurs when giving the new
+        This tests checks that an error occurs when giving a new
         component a name which has already been used.
         """
 
         instr = setup_populated_instr()
 
         with self.assertRaises(NameError):
-            comp = instr.add_component("first_component", "test_for_reading")
-            
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_copy_component_simple(self, mock_stdout):
+            instr.add_component("first_component", "test_for_reading")
+
+    def test_copy_component_simple(self):
         """
-        Checks that a component can be copied
+        Checks that a component can be copied using the name
         """
 
         instr = setup_populated_with_some_options_instr()
-        
+
         comp = instr.copy_component("copy_of_second_comp", "second_component")
 
         self.assertEqual(comp.name, "copy_of_second_comp")
@@ -809,20 +1119,47 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(comp.AT_data[0], 0)
         self.assertEqual(comp.AT_data[1], 0)
         self.assertEqual(comp.AT_data[2], 2)
-        
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_copy_component_keywords(self, mock_stdout):
+
+    def test_copy_component_simple_fail(self):
+        """
+        Checks a NameError is raised if trying to copy a component that does
+        not exist
+        """
+
+        instr = setup_populated_with_some_options_instr()
+
+        with self.assertRaises(NameError):
+            instr.copy_component("copy_of_second_comp", "unknown_component")
+
+    def test_copy_component_simple_object(self):
+        """
+        Checks that a component can be copied using the object
+        """
+
+        instr = setup_populated_with_some_options_instr()
+
+        comp = instr.get_component("second_component")
+
+        comp = instr.copy_component("copy_of_second_comp", comp)
+
+        self.assertEqual(comp.name, "copy_of_second_comp")
+        self.assertEqual(comp.yheight, 1.23)
+        self.assertEqual(comp.AT_data[0], 0)
+        self.assertEqual(comp.AT_data[1], 0)
+        self.assertEqual(comp.AT_data[2], 2)
+
+    def test_copy_component_keywords(self):
         """
         Checks that a component can be copied and that keyword
-        arguments given under copy operation is sucessfully 
-        applied to the new component. A check is also made to 
+        arguments given under copy operation is successfully
+        applied to the new component. A check is also made to
         ensure that the original component was not modified.
         """
 
         instr = setup_populated_with_some_options_instr()
 
         comp = instr.copy_component("copy_of_second_comp", "second_component",
-                                    AT=[1,2,3], SPLIT=10)
+                                    AT=[1, 2, 3], SPLIT=10)
 
         self.assertEqual(comp.name, "copy_of_second_comp")
         self.assertEqual(comp.yheight, 1.23)
@@ -830,7 +1167,7 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(comp.AT_data[1], 2)
         self.assertEqual(comp.AT_data[2], 3)
         self.assertEqual(comp.SPLIT, 10)
-        
+
         # ensure original component was not changed
         original = instr.get_component("second_component")
         self.assertEqual(original.name, "second_component")
@@ -839,13 +1176,71 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(original.AT_data[1], 0)
         self.assertEqual(original.AT_data[2], 2)
         self.assertEqual(original.SPLIT, 0)
-        
 
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_get_component_simple(self, mock_stdout):
+    def test_remove_component(self):
+        """
+        Ensure a component can be removed
+        """
+        instr = setup_populated_instr()
+
+        instr.remove_component("second_component")
+
+        self.assertEqual(len(instr.component_list), 2)
+        self.assertEqual(instr.component_list[0].name, "first_component")
+        self.assertEqual(instr.component_list[1].name, "third_component")
+
+    def test_move_component(self):
+        """
+        Ensure a component can be moved
+        """
+        instr = setup_populated_instr()
+
+        instr.move_component("second_component", before="first_component")
+
+        self.assertEqual(len(instr.component_list), 3)
+        self.assertEqual(instr.component_list[0].name, "second_component")
+        self.assertEqual(instr.component_list[1].name, "first_component")
+        self.assertEqual(instr.component_list[2].name, "third_component")
+
+    def test_RELATIVE_error(self):
+        """
+        Ensure check_for_errors finds impossible relative statement
+        """
+
+        instr = setup_populated_instr()
+
+        second_component = instr.get_component("second_component")
+        second_component.set_AT([0, 0, 0], RELATIVE="third_component")
+
+        self.assertTrue(instr.has_errors())
+
+        with self.assertRaises(McStasError):
+            instr.check_for_errors()
+
+    @unittest.mock.patch('__main__.__builtins__.open',
+                         new_callable=unittest.mock.mock_open)
+    def test_RELATIVE_error_and_checks_false(self, mock_f):
+        """
+        Ensure check_for_errors finds impossible relative statement
+        """
+
+        instr = setup_populated_instr()
+
+        second_component = instr.get_component("second_component")
+        second_component.set_AT([0, 0, 0], RELATIVE="third_component")
+
+        self.assertTrue(instr.has_errors())
+
+        with self.assertRaises(McStasError):
+            instr.write_full_instrument()
+
+        instr.settings(checks=False)
+        instr.write_full_instrument()
+
+    def test_get_component_simple(self):
         """
         get_component retrieves a component with a given name for
-        easier manipulation.
+        easier manipulation. Check it works as intended.
         """
 
         instr = setup_populated_instr()
@@ -854,23 +1249,21 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(comp.name, "second_component")
 
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_get_component_simple_error(self, mock_stdout):
+    def test_get_component_simple_error(self):
         """
         get_component retrieves a component with a given name for
-        easier manipulation.
+        easier manipulation. Check it fails when the component name
+        doesn't correspond to a component in the instrument.
         """
 
         instr = setup_populated_instr()
 
         with self.assertRaises(NameError):
-            comp = instr.get_component("non_existing_component")
+            instr.get_component("non_existing_component")
 
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_get_last_component_simple(self, mock_stdout):
+    def test_get_last_component_simple(self):
         """
-        get_component retrieves the last component for easier
-        manipulation.
+        Check get_last_component retrieves the last component
         """
 
         instr = setup_populated_instr()
@@ -880,217 +1273,6 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(comp.name, "third_component")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_set_component_parameter(self, mock_stdout):
-        """
-        Set component parameter passes a dict from instrument level
-        to a contained component with the given name. It uses the
-        get_component method.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_parameter("second_component",
-                                      {"radius": 5.8,
-                                       "dist": "text"})
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.radius, 5.8)
-        self.assertEqual(comp.dist, "text")
-
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_set_component_parameter_error(self, mock_stdout):
-        """
-        Set component parameter passes a dict from instrument level
-        to a contained component with the given name. It uses the
-        get_component method.
-        """
-
-        instr = setup_populated_instr()
-
-        with self.assertRaises(NameError):
-            instr.set_component_parameter("second_component",
-                                          {"non_exsistant_par": 5.8,
-                                           "dist": "text"})
-
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_set_component_AT(self, mock_stdout):
-        """
-        set_component_AT passes the argument to the similar method
-        in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_AT("second_component",
-                               [1, 2, 3.2], RELATIVE="home")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.AT_data, [1, 2, 3.2])
-        self.assertEqual(comp.AT_relative, "RELATIVE home")
-        self.assertEqual(comp.ROTATED_relative, "ABSOLUTE")
-
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_set_component_ROTATED(self, mock_stdout):
-        """
-        set_component_ROTATED passes the argument to the similar
-        method in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_ROTATED("second_component",
-                                    [1, 2, 3.2], RELATIVE="home")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.ROTATED_data, [1, 2, 3.2])
-        self.assertEqual(comp.ROTATED_relative, "RELATIVE home")
-        self.assertEqual(comp.AT_relative, "ABSOLUTE")
-
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_set_component_RELATIVE(self, mock_stdout):
-        """
-        set_component_RELATIVE passes the argument to the similar
-        method in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_RELATIVE("second_component", "home")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.ROTATED_data, [0, 0, 0])
-        self.assertEqual(comp.ROTATED_relative, "RELATIVE home")
-        self.assertEqual(comp.AT_relative, "RELATIVE home")
-
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_set_component_WHEN(self, mock_stdout):
-        """
-        set_component_WHEN passes the argument to the similar method
-        in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_WHEN("second_component", "2>1")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.WHEN, "WHEN (2>1)")
-
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_append_component_EXTEND(self, mock_stdout):
-        """
-        append_component_EXTEND passes the argument to the similar
-        method in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.append_component_EXTEND("second_component", "line1")
-        instr.append_component_EXTEND("second_component", "line2")
-
-        comp = instr.get_component("second_component")
-
-        output = comp.EXTEND.split("\n")
-
-        self.assertEqual(output[0], "line1")
-        self.assertEqual(output[1], "line2")
-
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_set_component_GROUP(self, mock_stdout):
-        """
-        set_component_GROUP passes the argument to the similar method
-        in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_GROUP("second_component", "developers")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.GROUP, "developers")
-
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_set_component_JUMP(self, mock_stdout):
-        """
-        set_component_JUMP passes the argument to the similar method
-        in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_JUMP("second_component", "myself 8")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.JUMP, "myself 8")
-        
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_set_component_SPLIT(self, mock_stdout):
-        """
-        set_component_SPLIT passes the argument to the similar method
-        in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_SPLIT("second_component", 3)
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.SPLIT, 3)
-
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_set_component_comment(self, mock_stdout):
-        """
-        set_component_comment passes the argument to the similar
-        method in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_comment("second_component", "test comment")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.comment, "test comment")
-        
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_set_c_code_before(self, mock_stdout):
-        """
-        set_component_c_code_before passes the argument to the similar
-        method in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_c_code_before("second_component", "%include before.instr")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.c_code_before, "%include before.instr")
-        
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_set_c_code_after(self, mock_stdout):
-        """
-        set_component_c_code_after passes the argument to the similar
-        method in the component class.
-        """
-
-        instr = setup_populated_instr()
-
-        instr.set_component_c_code_after("second_component", "%include after.instr")
-
-        comp = instr.get_component("second_component")
-
-        self.assertEqual(comp.c_code_after, "%include after.instr")
-
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_print_component(self, mock_stdout):
         """
         print_component calls the print_long method in the component
@@ -1098,8 +1280,7 @@ class TestMcStas_instr(unittest.TestCase):
         """
 
         instr = setup_populated_instr()
-        instr.set_component_parameter("second_component",
-                                      {"dist": 5})
+        instr.get_component("second_component").set_parameters(dist=5)
 
         instr.print_component("second_component")
 
@@ -1126,8 +1307,6 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[3], "  " + par_name + warning)
 
         self.assertEqual(output[4], "AT [0, 0, 0] ABSOLUTE")
-        # Rotation not printed since it was never specified
-        #self.assertEqual(output[5], "ROTATED [0, 0, 0] ABSOLUTE")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_print_component_short(self, mock_stdout):
@@ -1137,8 +1316,8 @@ class TestMcStas_instr(unittest.TestCase):
         """
 
         instr = setup_populated_instr()
-        instr.set_component_AT("second_component",
-                               [-1, 2, 3.4], RELATIVE="home")
+        instr.get_component("second_component").set_AT([-1, 2, 3.4],
+                                                       RELATIVE="home")
 
         instr.print_component_short("second_component")
 
@@ -1151,15 +1330,17 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[0], expected)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_print_components_simple(self, mock_stdout):
+    def test_show_components_simple(self, mock_stdout):
         """
-        print_components calls the print_short method in the component
+        Tests show_components for simple case
+
+        show_components calls the print_short method in the component
         class for each component and aligns the data for display
         """
 
         instr = setup_populated_instr()
 
-        instr.print_components(line_length=300)
+        instr.show_components(line_length=300)
 
         output = mock_stdout.getvalue().split("\n")
 
@@ -1176,24 +1357,24 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[2], expected)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_print_components_complex(self, mock_stdout):
+    def test_show_components_complex(self, mock_stdout):
         """
-        print_components calls the print_short method in the component
+        Tests show_components for complex case
+
+        show_components calls the print_short method in the component
         class for each component and aligns the data for display
         """
 
         instr = setup_populated_instr()
 
-        instr.set_component_AT("first_component",
-                               [-0.1, 12, "dist"],
-                               RELATIVE="home")
-        instr.set_component_ROTATED("second_component",
-                                    [-4, 0.001, "theta"],
-                                    RELATIVE="etc")
+        instr.get_component("first_component").set_AT([-0.1, 12, "dist"],
+                                                      RELATIVE="home")
+        instr.get_component("second_component").set_ROTATED([-4, 0.001, "theta"],
+                                                            RELATIVE="etc")
         comp = instr.get_last_component()
         comp.component_name = "test_name"
 
-        instr.print_components(line_length=300)
+        instr.show_components(line_length=300)
 
         output = mock_stdout.getvalue().split("\n")
 
@@ -1211,9 +1392,9 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[2], expected)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_print_components_complex_2lines(self, mock_stdout):
+    def test_show_components_complex_2lines(self, mock_stdout):
         """
-        print_components calls the print_short method in the component
+        show_components calls the print_short method in the component
         class for each component and aligns the data for display
 
         This version of the tests forces two lines of output.
@@ -1221,16 +1402,14 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_populated_instr()
 
-        instr.set_component_AT("first_component",
-                               [-0.1, 12, "dist"],
-                               RELATIVE="home")
-        instr.set_component_ROTATED("second_component",
-                                    [-4, 0.001, "theta"],
-                                    RELATIVE="etc")
+        instr.get_component("first_component").set_AT([-0.1, 12, "dist"],
+                                                      RELATIVE="home")
+        instr.get_component("second_component").set_ROTATED([-4, 0.001, "theta"],
+                                                            RELATIVE="etc")
         comp = instr.get_last_component()
         comp.component_name = "test_name"
 
-        instr.print_components(line_length=80)
+        instr.show_components(line_length=80)
 
         output = mock_stdout.getvalue().split("\n")
 
@@ -1251,9 +1430,9 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(output[3], expected)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_print_components_complex_3lines(self, mock_stdout):
+    def test_show_components_complex_3lines(self, mock_stdout):
         """
-        print_components calls the print_short method in the component
+        show_components calls the print_short method in the component
         class for each component and aligns the data for display
 
         This version of the tests forces three lines of output.
@@ -1261,16 +1440,14 @@ class TestMcStas_instr(unittest.TestCase):
 
         instr = setup_populated_instr()
 
-        instr.set_component_AT("first_component",
-                               [-0.1, 12, "dist"],
-                               RELATIVE="home")
-        instr.set_component_ROTATED("second_component",
-                                    [-4, 0.001, "theta"],
-                                    RELATIVE="etc")
+        instr.get_component("first_component").set_AT([-0.1, 12, "dist"],
+                                                      RELATIVE="home")
+        instr.get_component("second_component").set_ROTATED([-4, 0.001, "theta"],
+                                                            RELATIVE="etc")
         comp = instr.get_last_component()
         comp.component_name = "test_name"
 
-        instr.print_components(line_length=1)  # Three lines maximum
+        instr.show_components(line_length=1)  # Three lines maximum
 
         output = mock_stdout.getvalue().split("\n")
 
@@ -1284,7 +1461,7 @@ class TestMcStas_instr(unittest.TestCase):
                     + " ")
         self.assertEqual(output[0], expected)
 
-        expected = ("  AT      (-0.1, 12, dist) RELATIVE home")
+        expected = "  AT      (-0.1, 12, dist) RELATIVE home"
         self.assertEqual(output[1], expected)
 
         expected = (bcolors.BOLD
@@ -1297,10 +1474,10 @@ class TestMcStas_instr(unittest.TestCase):
                     + " ")
         self.assertEqual(output[2], expected)
 
-        expected = ("  AT      (0, 0, 0) ABSOLUTE ")
+        expected = "  AT      (0, 0, 0) ABSOLUTE "
         self.assertEqual(output[3], expected)
 
-        expected = ("  ROTATED (-4, 0.001, theta) RELATIVE etc")
+        expected = "  ROTATED (-4, 0.001, theta) RELATIVE etc"
         self.assertEqual(output[4], expected)
 
         expected = (bcolors.BOLD
@@ -1313,13 +1490,12 @@ class TestMcStas_instr(unittest.TestCase):
                     + " ")
         self.assertEqual(output[5], expected)
 
-        expected = ("  AT      (0, 0, 0) ABSOLUTE")
+        expected = "  AT      (0, 0, 0) ABSOLUTE"
         self.assertEqual(output[6], expected)
 
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
-    def test_write_c_files_simple(self, mock_f, mock_stdout):
+    def test_write_c_files_simple(self, mock_f):
         """
         Write_c_files writes the strings for declare, initialize,
         and trace to files that are then included in McStas files.
@@ -1333,18 +1509,29 @@ class TestMcStas_instr(unittest.TestCase):
         """
 
         instr = setup_populated_instr()
-        instr.write_c_files()
 
-        mock_f.assert_any_call("./generated_includes/"
-                               + "test_instrument_declare.c", "w")
-        mock_f.assert_any_call("./generated_includes/"
-                               + "test_instrument_declare.c", "a")
-        mock_f.assert_any_call("./generated_includes/"
-                               + "test_instrument_initialize.c", "w")
-        mock_f.assert_any_call("./generated_includes/"
-                               + "test_instrument_trace.c", "w")
-        mock_f.assert_any_call("./generated_includes/"
-                               + "test_instrument_component_trace.c", "w")
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        current_directory = os.getcwd()
+        os.chdir(THIS_DIR)
+
+        try:
+            instr.write_c_files()
+        finally:
+            os.chdir(current_directory)
+
+        base_path = os.path.join(".", "generated_includes")
+        expected_path = os.path.join(base_path, "test_instrument_declare.c")
+        mock_f.assert_any_call(expected_path, "w")
+        mock_f.assert_any_call(expected_path, "a")
+
+        expected_path = os.path.join(base_path, "test_instrument_initialize.c")
+        mock_f.assert_any_call(expected_path, "w")
+
+        expected_path = os.path.join(base_path, "test_instrument_trace.c")
+        mock_f.assert_any_call(expected_path, "w")
+
+        expected_path = os.path.join(base_path, "test_instrument_component_trace.c")
+        mock_f.assert_any_call(expected_path, "w")
 
         # This does not check that the right thing is written to the
         # right file. Can be improved by splitting the method into
@@ -1354,7 +1541,6 @@ class TestMcStas_instr(unittest.TestCase):
         call = unittest.mock.call
         wrts = [
          call("// declare section for test_instrument \n"),
-         #call(""),
          call("double two_theta;"),
          call("\n"),
          call("// Start of initialize for generated test_instrument\n"
@@ -1378,17 +1564,16 @@ class TestMcStas_instr(unittest.TestCase):
 
         handle.write.assert_has_calls(wrts, any_order=False)
 
-    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
-    def test_write_full_instrument_simple(self, mock_f, mock_stdout):
+    def test_write_full_instrument_simple(self, mock_f):
         """
-        The write_full_instrument methods writes the information
+        The write_full_instrument method write the information
         contained in the instrument instance to a file with McStas
         syntax.
 
         The test includes a time stamp in the written and expected
-        data that has an accuracy of 1 second.  It is unlikey to fail
+        data that has an accuracy of 1 second.  It is unlikely to fail
         due to this, but it can happen.
         """
 
@@ -1429,7 +1614,7 @@ class TestMcStas_instr(unittest.TestCase):
          my_call("DEFINE INSTRUMENT test_instrument ("),
          my_call("\n"),
          my_call("double theta"),
-         my_call(","),
+         my_call(", "),
          my_call(""),
          my_call("\n"),
          my_call("double has_default"),
@@ -1440,7 +1625,6 @@ class TestMcStas_instr(unittest.TestCase):
          my_call(")\n"),
          my_call("\n"),
          my_call("DECLARE \n%{\n"),
-         #my_call(""),
          my_call("double two_theta;"),
          my_call("\n"),
          my_call("%}\n\n"),
@@ -1469,135 +1653,342 @@ class TestMcStas_instr(unittest.TestCase):
          my_call("%}\n"),
          my_call("\nEND\n")]
 
-        mock_f.assert_called_with("./test_instrument.instr", "w")
+        expected_path = os.path.join(".", "test_instrument.instr")
+        mock_f.assert_called_with(expected_path, "w")
         handle = mock_f()
         handle.write.assert_has_calls(wrts, any_order=False)
 
+    # mock sys.stdout to avoid printing to terminal
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_run_full_instrument_required_par_error(self, mock_stdout):
         """
+        Tests run_full_instrument raises error when lacking required parameter
+
         The populated instr has a required parameter, and when not
         given it should raise an error.
         """
-
         instr = setup_populated_instr()
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
         with self.assertRaises(NameError):
-            instr.run_full_instrument("test_instrument.instr",
-                                      foldername="test_data_set",
-                                      mcrun_path="path")
+            instr.run_full_instrument(output_path="test_data_set",
+                                      increment_folder_name=False,
+                                      executable_path=executable_path)
+
+    def test_run_full_instrument_junk_par_error(self):
+        """
+        Check run_full_instrument raises a NameError if a unrecognized
+        parameter is provided, here junk.
+        """
+        instr = setup_populated_instr()
+
+        pars = {"theta": 2, "junk": "test"}
+
+        with self.assertRaises(KeyError):
+            instr.run_full_instrument(output_path="test_data_set",
+                                      increment_folder_name=False,
+                                      parameters=pars)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    @unittest.mock.patch('__main__.__builtins__.open',
-                         new_callable=unittest.mock.mock_open)
     @unittest.mock.patch("subprocess.run")
-    def test_run_full_instrument_basic(self, mock_sub,
-                                       mock_f, mock_stdout,):
+    def test_x_ray_run_full_instrument_basic(self, mock_sub, mock_stdout):
         """
+        Tests x-ray run_full_instrument
+
         Check a simple run performs the correct system call.  Here
-        the target directory is set to the test data set so that some
-        data is loaded even though the system call is not executed.
+        the output_path is set to a name that does not correspond to a
+        existing file so no error is thrown.
         """
 
-        instr = setup_populated_instr()
-        instr.run_full_instrument("test_instrument.instr",
-                                  foldername="test_data_set",
-                                  mcrun_path="path",
-                                  parameters={"theta": 1})
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
-        expected_path = os.path.join("path","mcrun")
+        with WorkInTestDir() as handler:
+            new_folder_name = "folder_name_which_is_unused"
+            if os.path.exists(new_folder_name):
+                raise RuntimeError("Folder_name was supposed to not "
+                                   + "exist before "
+                                   + "test_run_backengine_basic")
+            instr = setup_populated_x_ray_instr_with_dummy_path()
+            instr.run_full_instrument(output_path=new_folder_name,
+                                      increment_folder_name=False,
+                                      executable_path=executable_path,
+                                      parameters={"theta": 1})
 
-        current_directory = os.getcwd()
-        expected_folder_path = os.path.join(current_directory, "test_data_set")
+        expected_path = os.path.join(executable_path, "mxrun")
+        expected_path = '"' + expected_path + '"'
+
+        expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 1000000 "
                          + "-d " + expected_folder_path
                          + "  test_instrument.instr"
-                         + " has_default=37 theta=1")
+                         + " theta=1 has_default=37")
+
+        expected_run_path = os.path.join(THIS_DIR, ".")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
-                                         stderr=-1, stdout=-1,
+                                         cwd=expected_run_path,
+                                         stderr=-2, stdout=-1,
                                          universal_newlines=True)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    @unittest.mock.patch('__main__.__builtins__.open',
-                         new_callable=unittest.mock.mock_open)
+    def test_run_backengine_existing_folder(self, mock_stdout):
+        """
+        Test neutron run of backengine fails if using existing folder
+        for output_path and with increment_folder_name disabled.
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        with WorkInTestDir() as handler:
+            instr = setup_populated_instr_with_dummy_path()
+
+            instr.set_parameters({"theta": 1})
+            instr.settings(output_path="test_data_set",
+                           increment_folder_name=False,
+                           executable_path=executable_path)
+
+            with self.assertRaises(NameError):
+                instr.backengine()
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch("subprocess.run")
-    def test_run_full_instrument_complex(self, mock_sub,
-                                         mock_f, mock_stdout,):
+    def test_run_backengine_basic(self, mock_sub, mock_stdout):
         """
-        Check a complex run performs the correct system call.  Here
-        the target directory is set to the test data set so that some
-        data is loaded even though the system call is not executed.
+        Test neutron run_full_instrument
+
+        Check a simple run performs the correct system call. Here
+        the output_path is set to a name that does not correspond to a
+        existing file so no error is thrown.
         """
 
-        instr = setup_populated_instr()
-        instr.run_full_instrument("test_instrument.instr",
-                                  foldername="test_data_set",
-                                  mcrun_path="path",
-                                  mpi=7,
-                                  ncount=48.4,
-                                  custom_flags="-fo",
-                                  parameters={"A": 2,
-                                              "BC": "car",
-                                              "theta": "\"toy\""})
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
-        expected_path = os.path.join("path","mcrun")
+        with WorkInTestDir() as handler:
+            new_folder_name = "folder_name_which_is_unused"
+            if os.path.exists(new_folder_name):
+                raise RuntimeError("Folder_name was supposed to not "
+                                   + "exist before "
+                                   + "test_run_backengine_basic")
 
-        current_directory = os.getcwd()
-        expected_folder_path = os.path.join(current_directory, "test_data_set")
+            instr = setup_populated_instr_with_dummy_path()
+
+            instr.set_parameters({"theta": 1})
+            instr.settings(output_path=new_folder_name,
+                           increment_folder_name=True,
+                           executable_path=executable_path)
+            instr.backengine()
+
+        expected_path = os.path.join(executable_path, "mcrun")
+        expected_path = '"' + expected_path + '"'
+
+        expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
         # a double space because of a missing option
-        expected_call = (expected_path + " -c -n 48 --mpi=7 "
+        expected_call = (expected_path + " -c -n 1000000 "
                          + "-d " + expected_folder_path
-                         + " -fo test_instrument.instr "
-                         + "has_default=37 A=2 BC=car theta=\"toy\"")
+                         + "  test_instrument.instr"
+                         + " theta=1 has_default=37")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
-                                         stderr=-1, stdout=-1,
-                                         universal_newlines=True)
+                                         stderr=-2, stdout=-1,
+                                         universal_newlines=True,
+                                         cwd=run_path)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    @unittest.mock.patch('__main__.__builtins__.open',
-                         new_callable=unittest.mock.mock_open)
+    @unittest.mock.patch("subprocess.run")
+    def test_run_full_instrument_complex(self, mock_sub, mock_stdout):
+        """
+        Test neutron run_full_instrument in more complex case
+
+        Check a complex run performs the correct system call. Here
+        the output_path is set to a name that does not correspond to a
+        existing file so no error is thrown.
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        with WorkInTestDir() as handler:
+            new_folder_name = "folder_name_which_is_unused"
+            if os.path.exists(new_folder_name):
+                raise RuntimeError("Folder_name was supposed to not "
+                                   + "exist before "
+                                   + "test_run_backengine_basic")
+
+            instr = setup_populated_instr_with_dummy_path()
+
+            # Add some extra parameters for testing
+            instr.add_parameter("A")
+            instr.add_parameter("BC")
+
+            instr.run_full_instrument(output_path=new_folder_name,
+                                      increment_folder_name=False,
+                                      executable_path=executable_path,
+                                      mpi=7,
+                                      seed=300,
+                                      ncount=48.4,
+                                      gravity=True,
+                                      custom_flags="-fo",
+                                      parameters={"A": 2,
+                                                  "BC": "car",
+                                                  "theta": "\"toy\""})
+
+        expected_path = os.path.join(executable_path, "mcrun")
+        expected_path = '"' + expected_path + '"'
+        expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
+
+        # a double space because of a missing option
+        expected_call = (expected_path + " -c -g -n 48 --mpi=7 --seed=300 "
+                         + "-d " + expected_folder_path
+                         + " -fo test_instrument.instr "
+                         + "theta=\"toy\" has_default=37 A=2 BC=car")
+
+        mock_sub.assert_called_once_with(expected_call,
+                                         shell=True,
+                                         stderr=-2, stdout=-1,
+                                         universal_newlines=True,
+                                         cwd=run_path)
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch("subprocess.run")
     def test_run_full_instrument_overwrite_default(self, mock_sub,
-                                                   mock_f, mock_stdout,):
+                                                   mock_stdout):
         """
         Check that default parameters are overwritten by given
-        parameters.
+        parameters in run_full_instrument.
         """
 
-        instr = setup_populated_instr()
-        instr.run_full_instrument("test_instrument.instr",
-                                  foldername="test_data_set",
-                                  mcrun_path="path",
-                                  mpi=7,
-                                  ncount=48.4,
-                                  custom_flags="-fo",
-                                  parameters={"A": 2,
-                                              "BC": "car",
-                                              "theta": "\"toy\"",
-                                              "has_default": 10})
-        
-        expected_path = os.path.join("path","mcrun")
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
-        current_directory = os.getcwd()
-        expected_folder_path = os.path.join(current_directory, "test_data_set")
+        with WorkInTestDir() as handler:
+            new_folder_name = "folder_name_which_is_unused"
+            if os.path.exists(new_folder_name):
+                raise RuntimeError("Folder_name was supposed to not "
+                                   + "exist before "
+                                   + "test_run_backengine_basic")
+
+            instr = setup_populated_instr_with_dummy_path()
+
+            # Add some extra parameters for testing
+            instr.add_parameter("A")
+            instr.add_parameter("BC")
+
+            instr.run_full_instrument(output_path=new_folder_name,
+                                      increment_folder_name=False,
+                                      executable_path=executable_path,
+                                      mpi=7,
+                                      ncount=48.4,
+                                      custom_flags="-fo",
+                                      parameters={"A": 2,
+                                                  "BC": "car",
+                                                  "theta": "\"toy\"",
+                                                  "has_default": 10})
+
+        expected_path = os.path.join(executable_path, "mcrun")
+        expected_path = '"' + expected_path + '"'
+        expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
 
         # a double space because of a missing option
         expected_call = (expected_path + " -c -n 48 --mpi=7 "
                          + "-d " + expected_folder_path
                          + " -fo test_instrument.instr "
-                         + "has_default=10 A=2 BC=car theta=\"toy\"")
+                         + "theta=\"toy\" has_default=10 A=2 BC=car")
+
+        mock_sub.assert_called_once_with(expected_call,
+                                         shell=True,
+                                         stderr=-2, stdout=-1,
+                                         universal_newlines=True,
+                                         cwd=run_path)
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    @unittest.mock.patch("subprocess.run")
+    def test_run_full_instrument_x_ray_basic(self, mock_sub, mock_stdout):
+        """
+        Test x-ray run_full_instrument
+
+        Check a simple run performs the correct system call.  Here
+        the output_path is set to a name that does not correspond to a
+        existing file so no error is thrown.
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        with WorkInTestDir() as handler:
+            new_folder_name = "folder_name_which_is_unused"
+            if os.path.exists(new_folder_name):
+                raise RuntimeError("Folder_name was supposed to not "
+                                   + "exist before "
+                                   + "test_run_backengine_basic")
+
+            instr = setup_populated_x_ray_instr_with_dummy_path()
+
+            instr.run_full_instrument(output_path=new_folder_name,
+                                      increment_folder_name=False,
+                                      executable_path=executable_path,
+                                      parameters={"theta": 1})
+
+        expected_path = os.path.join(executable_path, "mxrun")
+        expected_path = '"' + expected_path + '"'
+        expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
+
+        # a double space because of a missing option
+        expected_call = (expected_path + " -c -n 1000000 "
+                         + "-d " + expected_folder_path
+                         + "  test_instrument.instr"
+                         + " theta=1 has_default=37")
+
+        mock_sub.assert_called_once_with(expected_call,
+                                         shell=True,
+                                         stderr=-2, stdout=-1,
+                                         universal_newlines=True,
+                                         cwd=run_path)
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    @unittest.mock.patch("subprocess.run")
+    def test_show_instrument_basic(self, mock_sub, mock_stdout):
+        """
+        Test show_instrument methods makes correct system calls
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        current_work_dir = os.getcwd()
+        os.chdir(THIS_DIR)  # Set work directory to test folder
+
+        instr = setup_populated_instr_with_dummy_path()
+
+        instr.set_parameters(theta=1.2)
+        instr.show_instrument()
+
+        os.chdir(current_work_dir)
+
+        expected_path = os.path.join(executable_path, "bin", "mcdisplay-webgl")
+        expected_path = '"' + expected_path + '"'
+        expected_instr_path = os.path.join(THIS_DIR, "test_instrument.instr")
+
+        # a double space because of a missing option
+        expected_call = (expected_path
+                         + " --dirname test_instrument_mcdisplay"
+                         + " " + expected_instr_path
+                         + "  theta=1.2 has_default=37")
 
         mock_sub.assert_called_once_with(expected_call,
                                          shell=True,
                                          stderr=-1, stdout=-1,
-                                         universal_newlines=True)
+                                         universal_newlines=True,
+                                         cwd=".")
 
 
 if __name__ == '__main__':

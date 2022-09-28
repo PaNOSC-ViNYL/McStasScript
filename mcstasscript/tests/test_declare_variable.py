@@ -1,59 +1,57 @@
-import io
-import builtins
 import unittest
 import unittest.mock
 
-from mcstasscript.helper.mcstas_objects import declare_variable
+from mcstasscript.helper.mcstas_objects import DeclareVariable
 
 
-class Test_declare_variable(unittest.TestCase):
+class Test_DeclareVariable(unittest.TestCase):
     """
-    Tests the declare_variable class that holds a declared variable
+    Tests the DeclareVariable class that holds a declared variable
     that will be written to the McStas declare section.
 
     """
 
-    def test_declare_variable_init_basic_type(self):
+    def test_DeclareVariable_init_basic_type(self):
         """
         Initialization with a type
         """
 
-        var = declare_variable("double", "test")
+        var = DeclareVariable("double", "test")
 
         self.assertEqual(var.name, "test")
-        self.assertEqual(var.type, "double")  # space for easier writing
+        self.assertEqual(var.type, "double")
 
-    def test_declare_variable_init_basic_type_value(self):
+    def test_DeclareVariable_init_basic_type_value(self):
         """
         Initialization with type and value
         """
 
-        var = declare_variable("double", "test", value=518)
+        var = DeclareVariable("double", "test", value=518)
 
         self.assertEqual(var.name, "test")
-        self.assertEqual(var.type, "double")  # space for easier writing
+        self.assertEqual(var.type, "double")
         self.assertEqual(var.value, 518)
 
-    def test_declare_variable_init_basic_type_vector(self):
+    def test_DeclareVariable_init_basic_type_vector(self):
         """
         Initialization with type and value
         """
 
-        var = declare_variable("double", "test",
-                               array=6, value=[1, 2.2, 3, 3.3, 4, 4.4])
+        var = DeclareVariable("double", "test",
+                              array=6, value=[1, 2.2, 3, 3.3, 4, 4.4])
 
         self.assertEqual(var.name, "test")
         self.assertEqual(var.type, "double")  # space for easier writing
         self.assertEqual(var.vector, 6)
         self.assertEqual(var.value, [1, 2.2, 3, 3.3, 4, 4.4])
 
-    def test_declare_variable_init_basic_type_value_comment(self):
+    def test_DeclareVariable_init_basic_type_value_comment(self):
         """
         Initialization with type, value and comment
         """
 
-        var = declare_variable("double", "test",
-                               value=518, comment="test comment /")
+        var = DeclareVariable("double", "test",
+                              value=518, comment="test comment /")
 
         self.assertEqual(var.name, "test")
         self.assertEqual(var.type, "double")  # Space for easier writing
@@ -62,7 +60,7 @@ class Test_declare_variable(unittest.TestCase):
 
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
-    def test_declare_variable_write_basic(self, mock_f):
+    def test_DeclareVariable_write_basic(self, mock_f):
         """
         Testing that write to file is correct. Here a line is in a
         instrument declare section. The write file operation is
@@ -70,7 +68,7 @@ class Test_declare_variable(unittest.TestCase):
         used.
         """
 
-        var = declare_variable("double", "test")
+        var = DeclareVariable("double", "test")
         with mock_f('test.txt', 'w') as m_fo:
             var.write_line(m_fo)
 
@@ -80,18 +78,18 @@ class Test_declare_variable(unittest.TestCase):
 
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
-    def test_declare_variable_write_complex_float(self, mock_f):
+    def test_DeclareVariable_write_complex_float(self, mock_f):
         """
-        Testing that write to file is correct. Here a line is in a
+        Testing that write to file is correct. Here a line is in an
         instrument declare section. The write file operation is
         mocked and check using a patch. Here a declare with a value
         is used. (float value)
         """
 
-        var = declare_variable("double",
-                               "test",
-                               value=5.4,
-                               comment="test comment")
+        var = DeclareVariable("double",
+                              "test",
+                              value=5.4,
+                              comment="test comment")
 
         with mock_f('test.txt', 'w') as m_fo:
             var.write_line(m_fo)
@@ -104,18 +102,18 @@ class Test_declare_variable(unittest.TestCase):
 
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
-    def test_declare_variable_write_complex_int(self, mock_f):
+    def test_DeclareVariable_write_complex_int(self, mock_f):
         """
-        Testing that write to file is correct. Here a line is in a
+        Testing that write to file is correct. Here a line is in an
         instrument declare section. The write file operation is
         mocked and check using a patch. Here a declare with a value
         is used. (integer value)
         """
 
-        var = declare_variable("double",
-                               "test",
-                               value=5,
-                               comment="test comment")
+        var = DeclareVariable("double",
+                              "test",
+                              value=5,
+                              comment="test comment")
 
         with mock_f('test.txt', 'w') as m_fo:
             var.write_line(m_fo)
@@ -128,17 +126,17 @@ class Test_declare_variable(unittest.TestCase):
 
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
-    def test_declare_variable_write_simple_array(self, mock_f):
+    def test_DeclareVariable_write_simple_array(self, mock_f):
         """
-        Testing that write to file is correct. Here a line is in a
+        Testing that write to file is correct. Here a line is in an
         instrument declare section. The write file operation is
         mocked and check using a patch. Here an array is declared.
         """
 
-        var = declare_variable("double",
-                               "test",
-                               array=29,
-                               comment="test comment")
+        var = DeclareVariable("double",
+                              "test",
+                              array=29,
+                              comment="test comment")
 
         with mock_f('test.txt', 'w') as m_fo:
             var.write_line(m_fo)
@@ -151,19 +149,19 @@ class Test_declare_variable(unittest.TestCase):
 
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
-    def test_declare_variable_write_complex_array(self, mock_f):
+    def test_DeclareVariable_write_complex_array(self, mock_f):
         """
-        Testing that write to file is correct. Here a line is in a
+        Testing that write to file is correct. Here a line is in an
         instrument declare section. The write file operation is
-        mocked and check using a patch. Here an array is decalred and
+        mocked and check using a patch. Here an array is declared and
         populated with the selected values.
         """
 
-        var = declare_variable("double",
-                               "test",
-                               array=3,
-                               value=[5, 4, 3.1],
-                               comment="test comment")
+        var = DeclareVariable("double",
+                              "test",
+                              array=3,
+                              value=[5, 4, 3.1],
+                              comment="test comment")
 
         with mock_f('test.txt', 'w') as m_fo:
             var.write_line(m_fo)

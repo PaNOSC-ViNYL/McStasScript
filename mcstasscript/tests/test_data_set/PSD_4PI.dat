@@ -23,7 +23,7 @@
 # xvar: Lo
 # yvar: La
 # xlabel: Longitude [deg]
-# ylabel: Lattitude [deg]
+# ylabel: Latitude [deg]
 # zvar: I
 # zlabel: Signal per bin
 # xylimits: -180 180 -90 90

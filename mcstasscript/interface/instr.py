@@ -5,44 +5,76 @@ import datetime
 import yaml
 import subprocess
 import copy
+import warnings
 
-from mcstasscript.data.data import McStasData
-from mcstasscript.helper.mcstas_objects import declare_variable
-from mcstasscript.helper.mcstas_objects import parameter_variable
-from mcstasscript.helper.mcstas_objects import component
+from IPython.display import IFrame
+
+from libpyvinyl.BaseCalculator import BaseCalculator
+from libpyvinyl.Parameters.Collections import CalculatorParameters
+
+from mcstasscript.data.pyvinylData import pyvinylMcStasData
+
+from mcstasscript.helper.mcstas_objects import DeclareVariable
+from mcstasscript.helper.mcstas_objects import provide_parameter
+from mcstasscript.helper.mcstas_objects import write_parameter
+from mcstasscript.helper.mcstas_objects import Component
+
 from mcstasscript.helper.component_reader import ComponentReader
 from mcstasscript.helper.managed_mcrun import ManagedMcrun
 from mcstasscript.helper.formatting import is_legal_filename
 from mcstasscript.helper.formatting import bcolors
+from mcstasscript.helper.unpickler import CustomMcStasUnpickler, CustomMcXtraceUnpickler
+from mcstasscript.helper.exceptions import McStasError
+from mcstasscript.instrument_diagram.make_diagram import instrument_diagram
 
 
-class McStas_instr:
+class McCode_instr(BaseCalculator):
     """
-    Main class for writing a McStas instrument using McStasScript
+    Main class for writing a McCode instrument using McStasScript
 
-    Initialization of McStas_instr sets the name of the instrument file
+    Initialization of McCode_instr sets the name of the instrument file
     and its methods are used to add all aspects of the instrument file.
     The class also holds methods for writing the finished instrument
-    file to disk and to run the simulation.
+    file to disk and to run the simulation. This is meant as a base class
+    that McStas_instr and McXtrace_instr inherits from, these have to provide
+    some attributes. Inherits from libpyvinyl BaseCalculator in order to
+    harmonize input with other simulation engines.
+
+    Required attributes in superclass
+    ---------------------------------
+    executable : str
+        Name of executable, mcrun or mxrun
+
+    particle : str
+        Name of probe particle, "neutron" or "x-ray"
+
+    package_name : str
+        Name of package, "McStas" or "McXtrace"
 
     Attributes
     ----------
     name : str
         name of instrument file
 
-    author : str
+    author : str, default "Python Instrument Generator"
         name of user of McStasScript, written to the file
 
-    origin : str
+    origin : str, default "ESS DMSC"
         origin of instrument file (affiliation)
 
-    mcrun_path : str
+    input_path : str, default "."
+        directory in which simulation is executed, uses components found there
+
+    output_path : str
+        directory in which the data is written
+
+    executable_path : str
         absolute path of mcrun command, or empty if it is in path
 
-    parameter_list : list of parameter_variable instances
+    parameters : ParameterContainer
         contains all input parameters to be written to file
 
-    declare_list : list of declare_variable instances
+    declare_list : list of DeclareVariable instances
         contains all declare parrameters to be written to file
 
     initialize_section : str
@@ -60,13 +92,31 @@ class McStas_instr:
     component_name_list : list of strings
         list of names of the components in the instrument
 
+    component_class_lib : dict
+        dict of custom Component classes made at run time
+
+    component_reader : ComponentReader
+        ComponentReader instance for reading component files
+
+    package_path : str
+        Path to mccode package containing component folders
+
+    run_settings : dict
+        Dict of options set with settings
+
+    data : list
+        List of McStasData objects produced by last run
+
     Methods
     -------
     add_parameter(*args, **kwargs)
         Adds input parameter to the define section
 
-    add_declare_var()
-        Adds declared variable ot the declare section
+    add_declare_var(type, name)
+        Add declared variable called name of given type to the declare section
+
+    append_declare(string)
+        Appends to the declare section
 
     append_initialize(string)
         Appends a string to the initialize section, then adds new line
@@ -83,11 +133,20 @@ class McStas_instr:
     append_trace(string)
         Obsolete method, add components instead (used in write_c_files)
 
-    show_components(string)
+    append_trace_no_new_line(string)
+        Obsolete method, add components instead (used in write_c_files)
+
+    available_components(string)
         Shows available components in given category
+
+    component_help(name)
+        Shows help on component of given name
 
     add_component(instance_name, component_name, **kwargs)
         Add a component to the instrument file
+
+    copy_component(new_component_name, original_component, **kwargs)
+        Makes a copy of original_component with new_component_name
 
     get_component(instance_name)
         Returns component instance with name instance_name
@@ -121,13 +180,13 @@ class McStas_instr:
 
     set_component_SPLIT(instance_name, string)
         Sets SPLIT value for named component
-        
+
     set_component_c_code_before(instance_name, string)
         Sets c code before the component
-        
+
     set_component_c_code_after(instance_name, string)
         Sets c code after the component
-        
+
     set_component_comment(instance_name, string)
         Sets comment to be written before named component
 
@@ -137,7 +196,7 @@ class McStas_instr:
     print_component_short(instance_name)
         Prints short overview of current state of named component
 
-    print_components()
+    show_components()
         Prints overview of postion / rotation of all components
 
     write_c_files()
@@ -146,12 +205,35 @@ class McStas_instr:
     write_full_instrument()
         Writes full instrument file to current directory
 
+    show_instrument()
+        Shows instrument using mcdisplay
+
+    set_parameters(dict)
+        Inherited from libpyvinyl BaseCalculator
+
+    settings(**kwargs)
+        Sets settings for performing simulation
+
+    backengine()
+        Performs simulation, saves in data attribute
+
     run_full_instrument(**kwargs)
-        Writes instrument files and runs simulation.
-        Returns list of McStasData
+        Depricated method for performing the simulation
+
+    interface()
+        Shows interface with jupyter notebook widgets
+
+    get_interface_data()
+        Returns data set from latest simulation in widget
     """
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, parameters=None, author=None,
+                 origin=None, ncount=None, mpi="not_set", seed=None,
+                 force_compile=None, output_path=None,
+                 increment_folder_name=None, custom_flags=None,
+                 executable_path=None, executable=None,
+                 suppress_output=None, gravity=None, input_path=None,
+                 package_path=None, checks=None):
         """
         Initialization of McStas Instrument
 
@@ -161,20 +243,62 @@ class McStas_instr:
             Name of project, instrument file will be name + ".instr"
 
         keyword arguments:
+            parameters : ParameterContainer or CalculatorParameters
+                Parameters for this instrument
+
             author : str
                 Name of author, written in instrument file
 
             origin : str
                 Affiliation of author, written in instrument file
 
-            mcrun_path : str
-                Absolute path of mcrun or empty if already in path
-
             input_path : str
                 Work directory, will load components from this folder
+
+            mpi : int
+                Number of mpi threads to use in simulation
+
+            output_path : str
+                Sets data_folder_name
+
+            increment_folder_name : bool
+                Will update output_path if folder already exists, default True
+
+            ncount : int
+                Sets ncount
+
+            mpi : int
+                Sets thread count
+
+            force_compile : bool
+                If True (default) new instrument file is written, otherwise not
+
+            custom_flags : str
+                Sets custom_flags passed to mcrun
+
+            executable : str
+                Name of the executable
+
+            executable_path : str
+                Path to mcrun command, "" if already in path
+
+            suppress_output : bool
+                Set to True to surpress output
+
+            gravity : bool
+                If True, gravity will be simulated
         """
 
-        self.name = name
+        super().__init__(name, input=[],
+                         output_keys=["simulation_data"],
+                         output_data_types=[pyvinylMcStasData],
+                         parameters=parameters)
+
+        # Check required attributes has been set by class that inherits
+        if not (hasattr(self, "particle") or
+                hasattr(self, "package_name")):
+            raise AttributeError("McCode_instr is a base class, use "
+                                 + "McStas_instr or McXtrace_instr instead.")
 
         if not is_legal_filename(self.name + ".instr"):
             raise NameError("The instrument is called: \""
@@ -183,70 +307,155 @@ class McStas_instr:
                             + self.name + ".instr"
                             + "\" which is not a legal filename")
 
-        if "author" in kwargs:
-            self.author = kwargs["author"]
-        else:
-            self.author = "Python McStas Instrument Generator"
+        if self.calculator_base_dir == "BaseCalculator":
+            # If the base_dir was not set, set default to depend on instrument name
+            self.calculator_base_dir = self.name + "_data"
 
-        if "origin" in kwargs:
-            self.origin = kwargs["origin"]
+        if author is None:
+            self.author = "Python " + self.package_name
+            self.author += " Instrument Generator"
         else:
+            self.author = str(author)
+
+        if origin is None:
             self.origin = "ESS DMSC"
+        else:
+            self.origin = str(origin)
 
-        if "input_path" in kwargs:
-            self.input_path = kwargs["input_path"]
+        # Attempt to classify given parameters in McStas context
+        for parameter in self.parameters.parameters.values():
+            if isinstance(parameter.value, (float, int)):
+                parameter.type = "double"
+            elif isinstance(parameter.value, (str)):
+                parameter.type = "string"
+            else:
+                # They will be typed when the instrument is written
+                parameter.type = None
+
+        self._run_settings = {}  # Settings for running simulation
+
+        # Sets max_line_length and adds paths to run_settings
+        self._read_calibration()
+
+        # Settings that can't be changed later
+        if input_path is not None:
+            self.input_path = str(input_path)
+            if not os.path.isdir(self.input_path):
+                raise RuntimeError("Given input_path does not point to a "
+                                   + "folder:\"" + self.input_path + '"')
         else:
             self.input_path = "."
+        self._run_settings["run_path"] = self.input_path
 
-        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-        configuration_file_name = os.path.join(THIS_DIR, "..", "configuration.yaml")
-        if not os.path.isfile(configuration_file_name):
-            raise NameError("Could not find configuration file!")
-        with open(configuration_file_name, 'r') as ymlfile:
-            config = yaml.safe_load(ymlfile)
+        if package_path is not None:
+            if not os.path.isdir(str(package_path)):
+                raise RuntimeError("The package_path provided to mccode_instr "
+                                   + " does not point to a + directory: \""
+                                   + str(package_path) + "\"")
+            self._run_settings["package_path"] = package_path
 
-        if type(config) is dict:
-            self.mcrun_path = config["paths"]["mcrun_path"]
-            self.mcstas_path = config["paths"]["mcstas_path"]
-            self.line_limit = config["other"]["characters_per_line"]
+        # Settings for run that can be adjusted by user
+        provided_run_settings = {"executable": executable, "checks": True}
+
+        if executable_path is not None:
+            provided_run_settings["executable_path"] = str(executable_path)
+
+        if force_compile is not None:
+            provided_run_settings["force_compile"] = force_compile
         else:
-            # This happens in unit tests that mocks open
-            self.mcrun_path = ""
-            self.mcstas_path = ""
-            self.line_limit = 180
+            provided_run_settings["force_compile"] = True
 
-        if "mcrun_path" in kwargs:
-            self.mcrun_path = kwargs["mcrun_path"]
+        if ncount is not None:
+            provided_run_settings["ncount"] = ncount
 
-        if "mcstas_path" in kwargs:
-            self.mcstas_path = kwargs["mcstas_path"]
-        elif self.mcstas_path is "":
-            raise NameError("At this stage of development "
-                            + "McStasScript need the absolute path "
-                            + "for the McStas installation as keyword "
-                            + "named mcstas_path or in configuration.yaml")
+        if mpi != "not_set":
+            provided_run_settings["mpi"] = mpi
 
-        self.parameter_list = []
-        self.declare_list = []
-        #self.declare_section = ""
-        self.initialize_section = ("// Start of initialize for generated "
-                                   + name + "\n")
-        self.trace_section = ("// Start of trace section for generated "
-                              + name + "\n")
-        self.finally_section = ("// Start of finally for generated "
-                                + name + "\n")
-        # Handle components
-        self.component_list = []  # List of components (have to be ordered)
-        self.component_name_list = []  # List of component names
+        if gravity is not None:
+            provided_run_settings["gravity"] = gravity
+
+        if seed is not None:
+            provided_run_settings["seed"] = str(seed)
+
+        if custom_flags is not None:
+            provided_run_settings["custom_flags"] = custom_flags
+
+        if suppress_output is not None:
+            provided_run_settings["suppress_output"] = suppress_output
+
+        if checks is not None:
+            provided_run_settings["checks"] = checks
+
+        if output_path is not None:
+            provided_run_settings["output_path"] = output_path
+
+        if increment_folder_name is not None:
+            provided_run_settings["increment_folder_name"] = increment_folder_name
+
+        # Set run_settings, perform input sanitation
+        self.settings(**provided_run_settings)
 
         # Read info on active McStas components
-        self.component_reader = ComponentReader(self.mcstas_path,
-                                                input_path=self.input_path)
+        package_path = self._run_settings["package_path"]
+        run_path = self._run_settings["run_path"]
+        self.component_reader = ComponentReader(package_path,
+                                                input_path=run_path)
+
         self.component_class_lib = {}
+        self.widget_interface = None
+
+
+        # Avoid initializing if loading from dump
+        if not hasattr(self, "declare_list"):
+            self.declare_list = []
+            self.user_var_list = []
+            self.initialize_section = ("// Start of initialize for generated "
+                                       + name + "\n")
+            self.trace_section = ("// Start of trace section for generated "
+                                  + name + "\n")
+            self.finally_section = ("// Start of finally for generated "
+                                    + name + "\n")
+            # Handle components
+            self.component_list = []  # List of components (have to be ordered)
+
+    @property
+    def output_path(self) -> str:
+        return self.base_dir
+
+    @output_path.setter
+    def output_path(self, value: str) -> None:
+        self.calculator_base_dir = value
+
+    def init_parameters(self):
+        """
+        Create empty ParameterContainer for new instrument
+        """
+        self.parameters = CalculatorParameters()
+
+    def _read_calibration(self):
+        """
+        Place holder method that should be overwritten by classes
+        that inherit from McCode_instr.
+        """
+        pass
 
     def add_parameter(self, *args, **kwargs):
         """
         Method for adding input parameter to instrument
+
+        Type does not need to be specified, McStas considers that a floating
+        point value with the type 'double'. Uses libpyvinyl Parameter object.
+
+        Examples
+        --------
+        Creates a parameter with name wavelength and associated comment
+        add_parameter("wavelength", comment="wavelength in [AA]")
+
+        Creates a parameter with name A3 and default value
+        add_parameter("A3", value=30, comment="A3 angle in [deg]")
+
+        Creates a parameter with type string and name sample_name
+        add_parameter("string", "sample_name")
 
         Parameters
         ----------
@@ -258,65 +467,93 @@ class McStas_instr:
             name of parameter
 
         keyword arguments
-            value : any
+            value : float, int or str
                 Default value of parameter
+
+            unit : str
+                Unit to be displayed
 
             comment : str
                 Comment displayed next to declaration of parameter
-        """
-        # parameter_variable class documented independently
-        self.parameter_list.append(parameter_variable(*args, **kwargs))
 
-    def show_parameters(self, **kwargs):
+            options : list or value
+                list or value of allowed values for this parameter
+        """
+        names = [x.name for x in self.declare_list
+                 if isinstance(x, DeclareVariable)]
+        names += [x.name for x in self.user_var_list
+                  if isinstance(x, DeclareVariable)]
+        names += [x.name for x in self.parameters.parameters.values()]
+
+        par = provide_parameter(*args, **kwargs)
+
+        if par.name in names:
+            raise NameError(f"A parameter or variable with name '{par.name}'"
+                            f" already exists!")
+
+        self.parameters.add(par)
+
+        return par
+
+    def show_parameters(self, line_length=None):
         """
         Method for displaying current instrument parameters
 
-        keyword arguments
-            line_length : int
-                Maximum line length for terminal output
+        line_limit : int
+            Maximum line length for terminal output
         """
-        if "line_length" in kwargs:
-            line_limit = kwargs["line_length"]
-        else:
-            line_limit = self.line_limit
 
-        if len(self.parameter_list) == 0:
+        if len(self.parameters.parameters) == 0:
             print("No instrument parameters available")
             return
+
+        if line_length is None:
+            line_length = self.line_limit
 
         # Find longest fields
         types = []
         names = []
         values = []
         comments = []
-        for parameter in self.parameter_list:
+        for parameter in self.parameters.parameters.values():
             types.append(str(parameter.type))
             names.append(str(parameter.name))
             values.append(str(parameter.value))
-            comments.append(str(parameter.comment))
+            if parameter.comment is None:
+                comments.append("")
+            else:
+                comments.append(str(parameter.comment))
 
         longest_type = len(max(types, key=len))
         longest_name = len(max(names, key=len))
         longest_value = len(max(values, key=len))
+        # In addition to the data 11 characters are added before the comment
         comment_start_point = longest_type + longest_name + longest_value + 11
         longest_comment = len(max(comments, key=len))
-        length_for_comment = line_limit - comment_start_point
+        length_for_comment = line_length - comment_start_point
 
         # Print to console
-        for parameter in self.parameter_list:
+        for parameter in self.parameters.parameters.values():
             print(str(parameter.type).ljust(longest_type), end=' ')
             print(str(parameter.name).ljust(longest_name), end=' ')
-            if parameter.value is "":
-                print("   ", end=' ')
+            if parameter.value is None:
+                print("  ", end=' ')
+                print(" ".ljust(longest_value + 1), end=' ')
             else:
-                print(" = ", end=' ')
-            print(str(parameter.value).ljust(longest_value+1), end=' ')
+                print(" =", end=' ')
+                print(str(parameter.value).ljust(longest_value + 1), end=' ')
+
+            if parameter.comment is None:
+                c_comment = ""
+            else:
+                c_comment = "// " + str(parameter.comment)
+
             if (length_for_comment < 5
-                    or length_for_comment > len(str(parameter.comment))):
-                print(str(parameter.comment))
+                    or length_for_comment > len(c_comment)):
+                print(c_comment)
             else:
                 # Split comment into several lines
-                comment = str(parameter.comment)
+                comment = c_comment
                 words = comment.split(" ")
                 words_left = len(words)
                 last_index = 0
@@ -324,7 +561,7 @@ class McStas_instr:
                 comment = ""
                 iterations = 0
                 max_iterations = 50
-                while(words_left > 0):
+                while words_left > 0:
                     iterations += 1
                     if iterations > max_iterations:
                         #  Something went long, print on one line
@@ -332,7 +569,7 @@ class McStas_instr:
 
                     line_left = length_for_comment
 
-                    while(line_left > 0):
+                    while line_left > 0:
                         if current_index >= len(words):
                             current_index = len(words) + 1
                             break
@@ -344,13 +581,84 @@ class McStas_instr:
                         comment += word + " "
                     words_left = len(words) - current_index
                     if words_left > 0:
-                        comment += "\n" + " "*comment_start_point
+                        comment += "\n" + " " * comment_start_point
                         last_index = current_index
 
                 if not iterations == max_iterations + 1:
                     print(comment)
                 else:
-                    print(str(parameter.comment).ljust(longest_comment))
+                    print(c_comment.ljust(longest_comment))
+
+    def show_variables(self):
+        """
+        Shows declared variables in instrument
+        """
+
+        all_variables = [x for x in self.declare_list + self.user_var_list
+                         if isinstance(x, DeclareVariable)]
+
+        type_heading = "type"
+        variable_types = [x.type for x in all_variables]
+        variable_types.append(type_heading)
+        max_type_length = len(max(variable_types, key=len))
+
+        name_heading = "variable name"
+        variable_names = [x.name for x in all_variables]
+        variable_names.append(name_heading)
+        max_name_length = len(max(variable_names, key=len))
+
+        vector_heading = "array length"
+        variable_vector = [str(x.vector) for x in all_variables]
+        variable_vector.append(vector_heading)
+        max_vector_length = len(max(variable_vector, key=len))
+
+        value_heading = "value"
+        variable_values = [str(x.value) for x in all_variables]
+        variable_values.append(value_heading)
+        max_value_length = len(max(variable_values, key=len))
+
+        padding = 2
+        header = ""
+        header += type_heading.ljust(max_type_length + padding)
+        header += name_heading.ljust(max_name_length + padding)
+        header += vector_heading.ljust(max_vector_length + padding)
+        header += value_heading.ljust(max_value_length + padding)
+        header += "\n"
+        header += "-"*(max_type_length + max_name_length + max_value_length
+                       + max_vector_length + 3*padding)
+        header += "\n"
+
+        string = "DECLARE VARIABLES \n"
+        string += header
+
+        if len(self.user_var_list) > 0:
+            first_user_var = self.user_var_list[0]
+        else:
+            first_user_var = None
+
+        for variable in all_variables:
+            if variable is first_user_var:
+                string += "\n"
+                string += "USER VARIABLES (per neutron, only use in EXTEND)\n"
+                string += header
+
+            string += str(variable.type).ljust(max_type_length + padding)
+            string += str(variable.name).ljust(max_name_length + padding)
+
+            if variable.vector != 0:
+                vector_string = str(variable.vector)
+            else:
+                vector_string = ""
+            string += vector_string.ljust(max_vector_length + padding)
+
+            if variable.value != "":
+                value_string = str(variable.value)
+            else:
+                value_string = ""
+            string += value_string.ljust(max_value_length + padding)
+            string += "\n"
+
+        print(string)
 
     def add_declare_var(self, *args, **kwargs):
         """
@@ -376,32 +684,95 @@ class McStas_instr:
                 Comment displayed next to declaration of parameter
 
         """
-        # declare_variable class documented independently
-        self.declare_list.append(declare_variable(*args, **kwargs))
+
+        # DeclareVariable class documented independently
+        declare_par = DeclareVariable(*args, **kwargs)
+
+        names = [x.name for x in self.declare_list
+                 if isinstance(x, DeclareVariable)]
+        names += [x.name for x in self.user_var_list
+                  if isinstance(x, DeclareVariable)]
+        names += [x.name for x in self.parameters.parameters.values()]
+
+        if declare_par.name in names:
+            raise NameError("Variable with name '" + declare_par.name
+                            + "' already present in instrument!")
         
+        self.declare_list.append(declare_par)
+        return declare_par
+
     def append_declare(self, string):
         """
         Method for appending code to the declare section directly
-        
+
         This method is not meant for declaring simple variables which
         should be done using add_declare_var. This method can be used
         to declare functions, structures and unions directly.
-        
+
         Parameters
         ----------
         string : str
             code to be added to declare section
         """
-        
-        #self.declare_section = self.declare_section + string + "\n"
+
         self.declare_list.append(string)
-        
+
+    def add_user_var(self, *args, **kwargs):
+        """
+        Method for adding user variable to instrument
+
+        Parameters
+        ----------
+
+        parameter type : str
+            type of input parameter
+
+        parameter name : str
+            name of parameter
+
+        keyword arguments
+            array : int
+                default 0 for scalar, if specified length of array
+
+            comment : str
+                Comment displayed next to declaration of parameter
+
+        """
+
+        if "value" in kwargs:
+            raise ValueError("Value not allowed for UserVars.")
+
+        # DeclareVariable class documented independently
+        user_par = DeclareVariable(*args, **kwargs)
+
+        names = [x.name for x in self.declare_list
+                 if isinstance(x, DeclareVariable)]
+        names += [x.name for x in self.user_var_list
+                  if isinstance(x, DeclareVariable)]
+        names += [x.name for x in self.parameters.parameters.values()]
+
+        if user_par.name in names:
+            raise NameError("Variable with name '" + user_par.name
+                            + "' already present in instrument!")
+
+        self.user_var_list.append(user_par)
+        return user_par
+
+    def move_user_vars_to_declare(self):
+        """
+        Moves all uservars to declare for compatibility with McStas 2.X
+        """
+
+        for var in self.user_var_list:
+            self.declare_list.append(var)
+
+        self.user_var_list = []
 
     def append_initialize(self, string):
         """
-        Method for appending code to the intialize section
+        Method for appending code to the initialize section
 
-        The intialize section consists of c code and will be compiled,
+        The initialize section consists of c code and will be compiled,
         thus any syntax errors will crash the simulation. Code is added
         on a new line for each call to this method.
 
@@ -410,14 +781,14 @@ class McStas_instr:
         string : str
             code to be added to initialize section
         """
-        
+
         self.initialize_section = self.initialize_section + string + "\n"
 
     def append_initialize_no_new_line(self, string):
         """
-        Method for appending code to the intialize section, no new line
+        Method for appending code to the initialize section, no new line
 
-        The intialize section consists of c code and will be compiled,
+        The initialize section consists of c code and will be compiled,
         thus any syntax errors will crash the simulation. Code is added
         to the current line.
 
@@ -507,7 +878,7 @@ class McStas_instr:
 
         self.trace_section = self.trace_section + string
 
-    def show_components(self, *args):
+    def available_components(self, *args):
         """
         Helper method that shows available components to the user
 
@@ -524,7 +895,7 @@ class McStas_instr:
         if len(args) == 0:
             print("Here are the available component categories:")
             self.component_reader.show_categories()
-            print("Call show_components(category_name) to display")
+            print("Call available_components(category_name) to display")
 
         else:
             category = args[0]
@@ -549,25 +920,19 @@ class McStas_instr:
         dummy_instance = self._create_component_instance("dummy", name)
         dummy_instance.show_parameters(**kwargs)
 
-    def _create_component_instance(self, *args, **kwargs):
+    def _create_component_instance(self, name, component_name, **kwargs):
         """
         Dynamically creates a class for the requested component type
 
-        Created classses kept in dictionary, if the same component type
+        Created classes kept in dictionary, if the same component type
         is requested again, the class in the dictionary is used.  The
         method returns an instance of the created class that was
-        initialized with the paramters passed to this function.
+        initialized with the parameters passed to this function.
         """
-
-        if len(args) < 2:
-            raise NameError("Attempting to create component without name")
-
-        component_name = args[1]
 
         if component_name not in self.component_class_lib:
             comp_info = self.component_reader.read_name(component_name)
 
-            input_dict = {}
             input_dict = {key: None for key in comp_info.parameter_names}
             input_dict["parameter_names"] = comp_info.parameter_names
             input_dict["parameter_defaults"] = comp_info.parameter_defaults
@@ -577,30 +942,39 @@ class McStas_instr:
             input_dict["category"] = comp_info.category
             input_dict["line_limit"] = self.line_limit
 
-            self.component_class_lib[component_name] = type(component_name,
-                                                            (component,),
-                                                            input_dict)
+            dynamic_component_class = type(component_name, (Component,),
+                                           input_dict)
 
-        return self.component_class_lib[component_name](*args, **kwargs)
+            # add this class to globals to allow for pickling
+            globals()[component_name] = dynamic_component_class
 
-    def add_component(self, *args, **kwargs):
+            self.component_class_lib[component_name] = dynamic_component_class
+
+        return self.component_class_lib[component_name](name, component_name,
+                                                        **kwargs)
+
+    def add_component(self, name, component_name, before=None, after=None,
+                      AT=None, AT_RELATIVE=None, ROTATED=None,
+                      ROTATED_RELATIVE=None, RELATIVE=None, WHEN=None,
+                      EXTEND=None, GROUP=None, JUMP=None, SPLIT=None,
+                      comment=None, c_code_before=None, c_code_after=None):
         """
-        Method for adding a new component instance to the instrument
+        Method for adding a new Component instance to the instrument
 
-        Creates a new component instance in the instrument.  This
+        Creates a new Component instance in the instrument.  This
         requires a unique instance name of the component to be used for
         future reference and the name of the McStas component to be
         used.  The component is placed at the end of the instrument file
         unless otherwise specified with the after and before keywords.
-        The component may be initialized using other keyword arguments,
+        The Component may be initialized using other keyword arguments,
         but all attributes can be set with approrpiate methods.
 
         Parameters
         ----------
-        First positional argument : str
+        name : str
             Unique name of component instance
 
-        Second positional argument : str
+        component_name : str
             Name of McStas component to create instance of
 
         Keyword arguments:
@@ -641,56 +1015,38 @@ class McStas_instr:
                 Comment that will be displayed before the component
         """
 
-        if args[0] in self.component_name_list:
-            raise NameError(("Component name \"" + str(args[0])
-                             + "\" used twice, McStas does not allow this."
+        if name in [x.name for x in self.component_list]:
+            raise NameError(("Component name \"" + str(name)
+                             + "\" used twice, " + self.package_name
+                             + " does not allow this."
                              + " Rename or remove one instance of this"
                              + " name."))
 
-        # Insert component after component with this name
-        if "after" in kwargs:
-            if kwargs["after"] not in self.component_name_list:
-                raise NameError(("Trying to add a component after a component"
-                                 + " named \"" + str(kwargs["after"])
-                                 + "\", but a component with that name was"
-                                 + " not found."))
+        # Condense keyword input relating to component to a dict
+        component_input = {"AT": AT, "AT_RELATIVE": AT_RELATIVE,
+                           "ROTATED": ROTATED,
+                           "ROTATED_RELATIVE": ROTATED_RELATIVE,
+                           "RELATIVE": RELATIVE, "WHEN": WHEN,
+                           "EXTEND": EXTEND, "GROUP": GROUP, "JUMP": JUMP,
+                           "SPLIT": SPLIT, "comment": comment,
+                           "c_code_before": c_code_before,
+                           "c_code_after": c_code_after}
 
-            new_index = self.component_name_list.index(kwargs["after"])
+        new_component = self._create_component_instance(name, component_name,
+                                                        **component_input)
 
-            new_component = self._create_component_instance(*args, **kwargs)
-            self.component_list.insert(new_index + 1, new_component)
-
-            self.component_name_list.insert(new_index+1, args[0])
-
-        # Insert component after component with this name
-        elif "before" in kwargs:
-            if kwargs["before"] not in self.component_name_list:
-                raise NameError(("Trying to add a component before a "
-                                 + "component named \""
-                                 + str(kwargs["before"])
-                                 + "\", but a component with that "
-                                 + "name was not found."))
-
-            new_index = self.component_name_list.index(kwargs["before"])
-
-            new_component = self._create_component_instance(*args, **kwargs)
-            self.component_list.insert(new_index, new_component)
-
-            self.component_name_list.insert(new_index, args[0])
-
-        # If after or before keywords absent, place component at the end
-        else:
-            new_component = self._create_component_instance(*args, **kwargs)
-            self.component_list.append(new_component)
-            self.component_name_list.append(args[0])
-
+        self._insert_component(new_component, before=before, after=after)
         return new_component
-    
-    def copy_component(self, *args, **kwargs):
-        """
-        Method for adding a copy of a component instance to the instrument
 
-        Creates a copy of component instance in the instrument.  This
+    def copy_component(self, name, original_component, before=None, after=None,
+                       AT=None, AT_RELATIVE=None, ROTATED=None,
+                       ROTATED_RELATIVE=None, RELATIVE=None, WHEN=None,
+                       EXTEND=None, GROUP=None, JUMP=None, SPLIT=None,
+                       comment=None, c_code_before=None, c_code_after=None):
+        """
+        Method for adding a copy of a Component instance to the instrument
+
+        Creates a copy of Component instance in the instrument.  This
         requires a unique instance name of the component to be used for
         future reference and the name of the McStas component to be
         used.  The component is placed at the end of the instrument file
@@ -700,10 +1056,10 @@ class McStas_instr:
 
         Parameters
         ----------
-        First positional argument : str
+        name : str
             Unique name of component instance
 
-        Second positional argument : str
+        original_component : str
             Name of component instance to create copy of
 
         Keyword arguments:
@@ -743,84 +1099,162 @@ class McStas_instr:
             comment : str
                 Comment that will be displayed before the component
         """
+        if isinstance(original_component, Component):
+            original_component = original_component.name
 
-        # could also allow input of a component object        
-        
-        instance_name = args[0]
+        # Condense keyword input relating to component to a dict
+        component_input = {"AT": AT, "AT_RELATIVE": AT_RELATIVE,
+                           "ROTATED": ROTATED,
+                           "ROTATED_RELATIVE": ROTATED_RELATIVE,
+                           "RELATIVE": RELATIVE, "WHEN": WHEN,
+                           "EXTEND": EXTEND, "GROUP": GROUP, "JUMP": JUMP,
+                           "SPLIT": SPLIT, "comment": comment,
+                           "c_code_before": c_code_before,
+                           "c_code_after": c_code_after}
+
         """
         If the name starts with COPY, use unique naming as described in the
         McStas manual.
         """
-        if instance_name.startswith("COPY("):
-            target_name = instance_name.split("(", 1)[1]
+        component_names = [x.name for x in self.component_list]
+
+        if name.startswith("COPY("):
+            target_name = name.split("(", 1)[1]
             target_name = target_name.split(")", 1)[0]
             instance_name = target_name
 
             label = 0
             instance_name = target_name + "_" + str(label)
-            while instance_name in self.component_name_list:
+            while instance_name in component_names:
                 instance_name = target_name + "_" + str(label)
                 label += 1
 
-        if instance_name in self.component_name_list:
-            raise NameError(("Component name \"" + str(args[0])
-                             + "\" used twice, McStas does not allow this."
+        if name in component_names:
+            raise NameError(("Component name \"" + str(name)
+                             + "\" used twice, " + self.package_name
+                             + " does not allow this."
                              + " Rename or remove one instance of this"
                              + " name."))
-        
-        if not args[1] in self.component_name_list:
-            raise NameError("Component name \"" + str(args[1])
-                            + "\" was not found in the McStas instrument."
-                            + " and thus can not be copied.")
+
+        if original_component not in component_names:
+            raise NameError("Component name \"" + str(original_component)
+                            + "\" was not found in the " + self.package_name
+                            + " instrument. and thus can not be copied.")
         else:
-            component_to_copy = self.get_component(args[1])
-        
-        # Insert component after component with this name
-        if "after" in kwargs:
-            if kwargs["after"] not in self.component_name_list:
-                raise NameError("Trying to add a component after a component"
-                                + " named \"" + str(kwargs["after"])
-                                + "\", but a component with that name was"
-                                + " not found.")
+            component_to_copy = self.get_component(original_component)
 
-            new_index = self.component_name_list.index(kwargs["after"])
+        new_component = copy.deepcopy(component_to_copy)
+        new_component.name = name  # Set new name, duplicate names not allowed
 
-            new_component = copy.deepcopy(component_to_copy)
-            new_component.name = instance_name
-            self.component_list.insert(new_index+1, new_component)
+        self._insert_component(new_component, before=before, after=after)
 
-            self.component_name_list.insert(new_index+1, instance_name)
-
-        # Insert component after component with this name
-        elif "before" in kwargs:
-            if kwargs["before"] not in self.component_name_list:
-                raise NameError(("Trying to add a component before a "
-                                 + "component named \""
-                                 + str(kwargs["before"])
-                                 + "\", but a component with that "
-                                 + "name was not found."))
-
-            new_index = self.component_name_list.index(kwargs["before"])
-
-            new_component = copy.deepcopy(component_to_copy)
-            new_component.name = instance_name
-            self.component_list.insert(new_index, new_component)
-
-            self.component_name_list.insert(new_index, instance_name)
-
-        # If after or before keywords absent, place component at the end
-        else:
-            new_component = copy.deepcopy(component_to_copy)
-            new_component.name = instance_name
-            self.component_list.append(new_component)
-            self.component_name_list.append(instance_name)
-        
-        # Set the new name of the instance
-        new_component.name = instance_name
-        # Run set_keyword_input again for keyword arguments to take effect
-        new_component.set_keyword_input(**kwargs)
+        # Run set_keyword_input for keyword arguments to take effect
+        new_component.set_keyword_input(**component_input)
 
         return new_component
+
+    def remove_component(self, name):
+        """
+        Removes component with given name from instrument
+        """
+
+        # Check for errors before
+        errors_before = self.has_errors()
+
+        if isinstance(name, Component):
+            name = name.name
+
+        component_names = [x.name for x in self.component_list]
+        index_to_remove = component_names.index(name)
+        self.component_list.pop(index_to_remove)
+
+        # Check for errors after removing
+        errors_after = self.has_errors()
+
+        if not errors_before and errors_after:
+            print("Removing the component '" + name + "' introduced errors in "
+                  "the instrument, run check_for_errors() for more "
+                  "information.")
+
+    def move_component(self, name, before=None, after=None):
+        """
+        Moves component with given name to before or after
+        """
+        if isinstance(name, Component):
+            name = name.name
+
+        if before is None and after is None:
+            raise RuntimeError("Must specify 'before' or 'after' when moving "
+                               "a component.")
+
+        # Check for errors before
+        errors_before = self.has_errors()
+
+        if isinstance(name, Component):
+            name = name.name
+
+        component_names = [x.name for x in self.component_list]
+        index_to_remove = component_names.index(name)
+        moved_component = self.component_list.pop(index_to_remove)
+        self._insert_component(moved_component, before=before, after=after)
+
+        # Check for errors after moving
+        errors_after = self.has_errors()
+
+        if not errors_before and errors_after:
+            print("Moving the component '" + name + "' introduced errors in "
+                  "the instrument, run check_for_errors() for more "
+                  "information.")
+
+    def _insert_component(self, component, before=None, after=None):
+        """
+        Inserts component into sequence of components held by instrument
+
+        Internal method to handle placement of a new component in the
+        list of components held by this instrument.
+
+        name : str
+            Instance name of component
+
+        component : Component object
+            Component object to be inserted
+
+        before : str or Component object
+            Reference to component to place this one before
+
+        after : str or Component object
+            Reference to coponent to place this one after
+        """
+
+        if before is not None and after is not None:
+            raise RuntimeError("Only specify either 'before' or 'after'.")
+
+        if before is None and after is None:
+            # If after and before keywords absent, place component at the end
+            self.component_list.append(component)
+            return
+
+        if after is not None:
+            index_addition = 1
+            reference = after
+            description = "after"
+        if before is not None:
+            index_addition = 0
+            reference = before
+            description = "before"
+
+        if isinstance(reference, Component):
+            reference = reference.name
+
+        component_names = [x.name for x in self.component_list]
+        if reference not in component_names:
+            raise NameError("Trying to add a component " + description
+                            + " a component named '" + str(after)
+                            + "', but a component with that name was"
+                            + " not found.")
+
+        new_index = component_names.index(reference) + index_addition
+        self.component_list.insert(new_index, component)
 
     def get_component(self, name):
         """
@@ -834,11 +1268,12 @@ class McStas_instr:
         Parameters
         ----------
         name : str
-            Unique name of component whos instance should be returned
+            Unique name of component whose instance should be returned
         """
 
-        if name in self.component_name_list:
-            index = self.component_name_list.index(name)
+        component_names = [x.name for x in self.component_list]
+        if name in component_names:
+            index = component_names.index(name)
             return self.component_list[index]
         else:
             raise NameError(("No component was found with name \""
@@ -855,210 +1290,6 @@ class McStas_instr:
         """
 
         return self.component_list[-1]
-
-    def set_component_parameter(self, name, input_dict):
-        """
-        Add parameters and their values as dictionary to component
-
-        This method is the primary way of specifying parameters in a
-        component.  Parameters are added to a dictionary specifying
-        parameter name and value pairs.
-
-        Parameters
-        ----------
-        name : str
-            Unique name of component to modify
-
-        input_dict : dict
-            Set of new parameter name and value pairs to add
-        """
-
-        component = self.get_component(name)
-        component.set_parameters(input_dict)
-
-    def set_component_AT(self, name, at_list, **kwargs):
-        """
-        Method for setting position of component
-
-        Parameters
-        ----------
-        name : str
-            Unique name of component to modify
-
-        at_list : List of 3 floats
-            Position of component relative to reference component
-
-        keyword arguments:
-            RELATIVE : str
-                Sets reference component for position
-        """
-
-        component = self.get_component(name)
-        component.set_AT(at_list, **kwargs)
-
-    def set_component_ROTATED(self, name, rotated_list, **kwargs):
-        """
-        Method for setting rotiation of component
-
-        Parameters
-        ----------
-        name : str
-            Unique name of component to modify
-
-        rotated_list : List of 3 floats
-            Rotation of component relative to reference component
-
-        keyword arguments:
-            RELATIVE : str
-                Sets reference component for rotation
-        """
-
-        component = self.get_component(name)
-        component.set_ROTATED(rotated_list, **kwargs)
-
-    def set_component_RELATIVE(self, name, relative):
-        """
-        Method for setting reference of component position and rotation
-
-        Parameters
-        ----------
-        name : str
-            Unique name of component to modify
-
-        relative : str
-            Reference component for position and rotation
-        """
-
-        component = self.get_component(name)
-        component.set_RELATIVE(relative)
-
-    def set_component_WHEN(self, name, WHEN):
-        """
-        Method for setting WHEN c expression to named component
-
-        Parameters
-        ----------
-        name : str
-            Unique name of component to modify
-
-        WHEN : str
-            Sets WHEN c expression for named McStas component
-        """
-        component = self.get_component(name)
-        component.set_WHEN(WHEN)
-
-    def append_component_EXTEND(self, name, EXTEND):
-        """
-        Method for adding line of c to EXTEND section of named component
-
-        Parameters
-        ----------
-        name : str
-            Unique name of component to modify
-
-        EXTEND : str
-            Line of c code added to EXTEND section of named component
-        """
-
-        component = self.get_component(name)
-        component.append_EXTEND(EXTEND)
-
-    def set_component_GROUP(self, name, GROUP):
-        """
-        Method for setting GROUP name of named component
-
-        Parameters
-        ----------
-        name : str
-            Unique name of component to modify
-
-        GROUP : str
-            Sets GROUP name for named McStas component
-        """
-
-        component = self.get_component(name)
-        component.set_GROUP(GROUP)
-
-    def set_component_JUMP(self, name, JUMP):
-        """
-        Method for setting JUMP expression of named component
-
-        Parameters
-        ----------
-        name : str
-            Unique name of component to modify
-
-        JUMP : str
-            Sets JUMP expression for named McStas component
-        """
-
-        component = self.get_component(name)
-        component.set_JUMP(JUMP)
-        
-    def set_component_SPLIT(self, name, SPLIT):
-        """
-        Method for setting SPLIT value of named component
-
-        Parameters
-        ----------
-        name : str
-            Unique name of component to modify
-
-        SPLIT : int
-            Sets SPLIT value for named McStas component
-        """
-
-        component = self.get_component(name)
-        component.set_SPLIT(SPLIT)
-        
-    def set_component_c_code_before(self, name, code):
-        """
-        Method for setting c code before component
-
-        Parameters
-        ----------
-        name : str
-            Unique name of component to modify
-            
-        code : str
-            Code to be pasted before component
-        """
-
-        component = self.get_component(name)
-        component.set_c_code_before(code)
-        
-    def set_component_c_code_after(self, name, code):
-        """
-        Method for setting c code before component
-
-        Parameters
-        ----------
-        name : str
-            Unique name of component to modify
-        
-        code : str
-            Code to be pasted after component
-        """
-
-        component = self.get_component(name)
-        component.set_c_code_after(code)        
-
-    def set_component_comment(self, name, string):
-        """
-        Sets a comment displayed before the component in written files
-
-        Parameters
-        ----------
-        name : str
-            Unique name of component to modify
-
-        string : str
-            Comment string
-
-        """
-
-        component = self.get_component(name)
-        component.set_comment(string)
 
     def print_component(self, name):
         """
@@ -1082,11 +1313,26 @@ class McStas_instr:
         name : str
             Unique name of component to print
         """
-
         component = self.get_component(name)
         component.print_short()
 
-    def print_components(self, **kwargs):
+    def print_components(self, line_length=None):
+        """
+        Obsolete method, use show_components instead
+
+        Method for printing overview of all components in instrument
+
+        Provides overview of component names, what McStas component is
+        used for each and their position and rotation in space.
+
+        keyword arguments:
+        line_length : int
+            Maximum line length in console
+        """
+        warnings.warn("Print components is changing name to show_components for consistency.")
+        self.show_components(line_length)
+
+    def show_components(self, line_length=None):
         """
         Method for printing overview of all components in instrument
 
@@ -1097,15 +1343,25 @@ class McStas_instr:
         line_length : int
             Maximum line length in console
         """
+        if len(self.component_list) == 0:
+            print("No components added to instrument object yet.")
+            return
 
-        if "line_length" in kwargs:
-            line_limit = kwargs["line_length"]
-        else:
+        if line_length is None:
             line_limit = self.line_limit
+        else:
+            if not isinstance(line_length, int):
+                raise ValueError("Show components now shows components in"
+                                 " instrument instead of help. For help,"
+                                 " use available_components instead. \n"
+                                 "The argument for show_components is"
+                                 " line_length and has to be an integer.")
+            line_limit = line_length
 
-        longest_name = len(max(self.component_name_list, key=len))
+        component_names = [x.name for x in self.component_list]
+        longest_name = len(max(component_names, key=len))
 
-        # Investigate how this could have been done in a better way
+        # todo Investigate how this could have been done in a better way
         # Find longest field for each type of data printed
         component_type_list = []
         at_xyz_list = []
@@ -1136,6 +1392,9 @@ class McStas_instr:
         AT_pad = 6  # requires (, , ) in addition to data length
         RELATIVE_pad = 0
         ROTATED_pad = 6  # requires (, , ) in addition to data length
+        ROTATED_characters = 7  # ROTATED is 7 characters
+        AT_characters = 2  # AT is 2 characters
+        SPACING_between_strings = 7  # combining 8 strings, 7 spaces
 
         # Check if longest line length exceeded
         longest_line_length = (longest_name + name_pad
@@ -1143,7 +1402,10 @@ class McStas_instr:
                                + longest_at_xyz_name + AT_pad
                                + longest_at_relative_name + RELATIVE_pad
                                + longest_rotated_xyz_name + ROTATED_pad
-                               + longest_rotated_relative_name + 8 + 9)
+                               + longest_rotated_relative_name
+                               + ROTATED_characters
+                               + AT_characters
+                               + SPACING_between_strings)
 
         def coordinates_to_string(data):
             return ("("
@@ -1157,12 +1419,15 @@ class McStas_instr:
         configuration file, attempt to split the output over an
         additional line. This is hardcoded up to 3 lines.
         """
+
         if longest_line_length > line_limit:
             n_lines = 2
             longest_at_xyz_name = max([longest_at_xyz_name,
                                        longest_rotated_xyz_name])
             longest_rotated_xyz_name = longest_at_xyz_name
             RELATIVE_pad = 0
+
+            SPACING_between_strings = 4  # combining 5 strings, 4 spaces
 
             longest_line_length_at = (longest_name
                                       + comp_name_pad
@@ -1171,7 +1436,8 @@ class McStas_instr:
                                       + longest_at_xyz_name
                                       + AT_pad
                                       + longest_at_relative_name
-                                      + 7 + 6)
+                                      + ROTATED_characters
+                                      + SPACING_between_strings)
             longest_line_length_rotated = (longest_name
                                            + comp_name_pad
                                            + longest_component_name
@@ -1179,7 +1445,8 @@ class McStas_instr:
                                            + longest_rotated_xyz_name
                                            + ROTATED_pad
                                            + longest_rotated_relative_name
-                                           + 7 + 6)
+                                           + ROTATED_characters
+                                           + SPACING_between_strings)
 
             if (longest_line_length_at > line_limit
                     or longest_line_length_rotated > line_limit):
@@ -1240,7 +1507,7 @@ class McStas_instr:
                                             + ROTATED_pad)
 
                 p_ROTATED_RELATIVE = str(component.ROTATED_relative)
-                
+
                 if component.ROTATED_specified:
                     print(p_name, p_comp_name,
                           "AT     ", p_AT, p_AT_RELATIVE, "\n",
@@ -1272,7 +1539,7 @@ class McStas_instr:
                           " ROTATED", p_ROTATED, p_ROTATED_RELATIVE)
                 else:
                     print(p_name + " ", p_comp_name, "\n",
-                      " AT     ", p_AT, p_AT_RELATIVE)
+                          " AT     ", p_AT, p_AT_RELATIVE)
 
     def write_c_files(self):
         """
@@ -1293,42 +1560,133 @@ class McStas_instr:
                 print("Creation of the directory %s failed" % path)
 
         file_path = os.path.join(".", "generated_includes",
-                                self.name + "_declare.c") 
-        fo = open(file_path, "w")
-        fo.write("// declare section for %s \n" % self.name)
-        fo.close()
-        
-        file_path = os.path.join(".", "generated_includes",
-                                 self.name + "_declare.c") 
-        fo = open(file_path, "a")
-        #fo.write(self.declare_section)
-        for dec_line in self.declare_list:
-            if isinstance(dec_line, str):
-                # append declare section parts written here
-                fo.write(dec_line)
-            else:
-                dec_line.write_line(fo)
-            fo.write("\n")
-        fo.close()
+                                 self.name + "_declare.c")
+        with open(file_path, "w") as fo:
+            fo.write("// declare section for %s \n" % self.name)
 
         file_path = os.path.join(".", "generated_includes",
-                                 self.name + "_initialize.c")
-        fo = open(file_path, "w")
-        fo.write(self.initialize_section)
-        fo.close()
+                                 self.name + "_declare.c")
+        with open(file_path, "a") as fo:
+            for dec_line in self.declare_list:
+                if isinstance(dec_line, str):
+                    # append declare section parts written here
+                    fo.write(dec_line)
+                else:
+                    dec_line.write_line(fo)
+                fo.write("\n")
+            fo.close()
 
-        file_path = os.path.join(".", "generated_includes",
-                                 self.name + "_trace.c")
-        fo = open(file_path, "w")
-        fo.write(self.trace_section)
-        fo.close()
+            file_path = os.path.join(".", "generated_includes",
+                                     self.name + "_initialize.c")
+            fo = open(file_path, "w")
+            fo.write(self.initialize_section)
+            fo.close()
 
-        file_path = os.path.join(".", "generated_includes",
-                                 self.name + "_component_trace.c")
-        fo = open(file_path, "w")
+            file_path = os.path.join(".", "generated_includes",
+                                     self.name + "_trace.c")
+            fo = open(file_path, "w")
+            fo.write(self.trace_section)
+            fo.close()
+
+            file_path = os.path.join(".", "generated_includes",
+                                     self.name + "_component_trace.c")
+            fo = open(file_path, "w")
+            for component in self.component_list:
+                component.write_component(fo)
+
+    def has_errors(self):
+        """
+        Method that returns true if errors are found in instrument
+        """
+
+        has_errors = True
+        try:
+            self.check_for_errors()
+            has_errors = False
+        except:
+            pass
+
+        return has_errors
+
+    def check_for_errors(self):
+        """
+        Methods that checks for common McStas errors
+
+        Currently checks for:
+        RELATIVE for AT and ROTATED reference a component that have not yet
+        been defined.
+
+        Using variables in components that have not been defined.
+        """
+
+        # Check RELATIVE exists
+        seen_instrument_names = []
         for component in self.component_list:
-            component.write_component(fo)
-        fo.close()
+            seen_instrument_names.append(component.name)
+
+            references = []
+            if component.AT_reference not in (None, "PREVIOUS"):
+                references.append(component.AT_reference)
+
+            if component.ROTATED_reference not in (None, "PREVIOUS"):
+                references.append(component.ROTATED_reference)
+
+            for ref in references:
+                if ref not in seen_instrument_names:
+                    raise McStasError("Component '" + str(component.name) +
+                                      "' referenced unknown component"
+                                      " named '"
+                                      + str(component.AT_reference) + "'.\n"
+                                      "This check can be skipped with"
+                                      " settings(checks=False)")
+
+        # Check variables used have been declared
+        parameters = [x.name for x in self.parameters]
+        variables = [x.name for x in self.declare_list
+                     if isinstance(x, DeclareVariable)]
+        pars_and_vars = parameters + variables
+
+        # Check component parameters
+        for component in self.component_list:
+            component.check_parameters(pars_and_vars)
+
+    def read_instrument_file(self):
+        """
+        Reads current instrument file if it exists, otherwise creates one first
+        """
+
+        instrument_path = os.path.join(self.input_path, self.name + ".instr")
+        if not os.path.exists(instrument_path):
+            self.write_full_instrument()
+            if not os.path.exists(instrument_path):
+                raise RuntimeError("Failing to write instrument file.")
+
+        with open(instrument_path, "r") as fo:
+            return fo.read()
+
+    def show_instrument_file(self, line_numbers=False):
+        """
+        Displays the current instrument file
+
+        Parameters
+        ----------
+        line_numbers : bool
+            Select whether line numbers should be displayed
+        """
+
+        instrument_code = self.read_instrument_file()
+
+        if not line_numbers:
+            print(instrument_code)
+            return
+        else:
+            lines = instrument_code.split("\n")
+            number_of_lines = len(lines)
+            line_space = len(str(number_of_lines))
+            for index, line in enumerate(lines):
+                line_number = str(index + 1).ljust(line_space) + " | "
+                full_line = line_number + line
+                print(full_line.replace("\n", ""))
 
     def write_full_instrument(self):
         """
@@ -1338,6 +1696,10 @@ class McStas_instr:
         objects to disk with the name specified in the initialization of
         the object.
         """
+
+        # Catch common errors before writing the instrument
+        if self._run_settings["checks"]:
+            self.check_for_errors()
 
         # Create file identifier
         fo = open(os.path.join(self.input_path, self.name + ".instr"), "w")
@@ -1374,17 +1736,18 @@ class McStas_instr:
         fo.write("\n")
         fo.write("DEFINE INSTRUMENT %s (" % self.name)
         fo.write("\n")
-        # Add loop that inserts parameters here
-        for variable in self.parameter_list[0:-1]:
-            variable.write_parameter(fo, ",")
-        if len(self.parameter_list) > 0:
-            self.parameter_list[-1].write_parameter(fo, " ")
+        # Insert parameters
+        parameter_list = list(self.parameters)
+        end_chars = [", "]*len(parameter_list)
+        if len(end_chars) >= 1:
+            end_chars[-1] = " "
+        for variable, end_char in zip(parameter_list, end_chars):
+            write_parameter(fo, variable, end_char)
         fo.write(")\n")
         fo.write("\n")
 
         # Write declare
         fo.write("DECLARE \n%{\n")
-        #fo.write(self.declare_section)
         for dec_line in self.declare_list:
             if isinstance(dec_line, str):
                 # append declare section parts written here
@@ -1393,6 +1756,15 @@ class McStas_instr:
                 dec_line.write_line(fo)
             fo.write("\n")
         fo.write("%}\n\n")
+
+        # Write uservars
+        if len(self.user_var_list) > 0:
+            fo.write("USERVARS \n%{\n")
+            for user_var in self.user_var_list:
+                user_var.value = ""  # Ensure no value
+                user_var.write_line(fo)
+                fo.write("\n")
+            fo.write("%}\n\n")
 
         # Write initialize
         fo.write("INITIALIZE \n%{\n")
@@ -1419,52 +1791,218 @@ class McStas_instr:
         fo.write("\nEND\n")
 
         fo.close()
-        
-    def _handle_parameters(self, given_parameters):
+
+    def settings(self, ncount=None, mpi="not_set", seed=None,
+                 force_compile=None, output_path=None,
+                 increment_folder_name=None, custom_flags=None,
+                 executable=None, executable_path=None,
+                 suppress_output=None, gravity=None, checks=None):
         """
-        Internal helper function that handles which parameters to pass
-        when givne a certain set of parameters and values.
-        
+        Sets settings for McStas run performed with backengine
+
+        Some options are mandatory, for example output_path, which can not
+        already exist, if it does data will be read from this folder. If the
+        mcrun command is not in the PATH of the system, the absolute path can
+        be given with the executable_path keyword argument. This path could
+        also already have been set at initialization of the instrument object.
+
         Parameters
         ----------
-        given_parameters: dict
-            Parameters given by the user for simulation run
-        
+        Keyword arguments
+            output_path : str
+                Sets data_folder_name
+            increment_folder_name : bool
+                Will update output_path if folder already exists, default True
+            ncount : int
+                Sets ncount
+            mpi : int
+                Sets thread count
+            force_compile : bool
+                If True (default) new instrument file is written, otherwise not
+            custom_flags : str
+                Sets custom_flags passed to mcrun
+            executable : str
+                Name of the executable
+            executable_path : str
+                Path to mcrun command, "" if already in path
+            suppress_output : bool
+                Set to True to surpress output
+            gravity : bool
+                If True, gravity will be simulated
         """
-        
-        # Find required parameters
-        required_parameters = []
-        default_parameters = {}
 
-        for index in range(0, len(self.parameter_list)):
-            if self.parameter_list[index].value == "":
-                required_parameters.append(self.parameter_list[index].name)
-            else:
-                default_parameters.update({self.parameter_list[index].name:
-                                           self.parameter_list[index].value})
+        settings = {}
+        if executable_path is not None:
+            if not os.path.isdir(str(executable_path)):
+                raise RuntimeError("The executable_path provided in "
+                                   + "settings does not point to a"
+                                   + "directory: \""
+                                   + str(executable_path) + "\"")
+            settings["executable_path"] = executable_path
 
-        # Check if parameters are given
-        if len(given_parameters) is 0:
-            if len(required_parameters) > 0:
-                # print required parameters and raise error
-                print("Required instrument parameters:")
-                for name in required_parameters:
-                    print("  " + name)
-                raise NameError("Required parameters not provided.")
-            else:
-                # If all parameters have defaults, just run with the defaults.
-                return default_parameters
+        if executable is not None:
+            # check provided executable can be converted to string
+            str(executable)
+            settings["executable"] = executable
+
+        if force_compile is not None:
+            if not isinstance(force_compile, bool):
+                raise TypeError("force_compile must be a bool.")
+            settings["force_compile"] = force_compile
+
+        if increment_folder_name is not None:
+            if not isinstance(increment_folder_name, bool):
+                raise TypeError("increment_folder_name must be a bool.")
+            settings["increment_folder_name"] = increment_folder_name
+
+        if ncount is not None:
+            if not isinstance(ncount, (float, int)):
+                raise TypeError("ncount must be a number.")
+            settings["ncount"] = ncount
+
+        if mpi != "not_set":  # None is a legal value for mpi
+            if not isinstance(mpi, (type(None), int)):
+                raise TypeError("mpi must be an integer or None.")
+            settings["mpi"] = mpi
+
+        if gravity is not None:
+            settings["gravity"] = bool(gravity)
+
+        if custom_flags is not None:
+            str(custom_flags)  # Check a string is given
+            settings["custom_flags"] = custom_flags
+
+        if seed is not None:
+            settings["seed"] = seed
+
+        if suppress_output is not None:
+            settings["suppress_output"] = suppress_output
+
+        if checks is not None:
+            settings["checks"] = checks
+
+        if output_path is not None:
+            self.output_path = output_path
+
+        self._run_settings.update(settings)
+
+    def settings_string(self):
+        """
+        Returns a string describing settings stored in this instrument object
+        """
+
+        variable_space = 20
+        description = "Instrument settings:\n"
+
+        if "ncount" in self._run_settings:
+            value = self._run_settings["ncount"]
+            description += "  ncount:".ljust(variable_space)
+            description += "{:.2e}".format(value) + "\n"
+
+        if "mpi" in self._run_settings:
+            value = self._run_settings["mpi"]
+            if value is not None:
+                description += "  mpi:".ljust(variable_space)
+                description += str(int(value)) + "\n"
+
+        if "gravity" in self._run_settings:
+            value = self._run_settings["gravity"]
+            description += "  gravity:".ljust(variable_space)
+            description += str(value) + "\n"
+
+        if "seed" in self._run_settings:
+            value = self._run_settings["seed"]
+            description += "  seed:".ljust(variable_space)
+            description += str(int(value)) + "\n"
+
+        description += "  output_path:".ljust(variable_space)
+        description += str(self.output_path) + "\n"
+
+        if "increment_folder_name" in self._run_settings:
+            value = self._run_settings["increment_folder_name"]
+            description += "  increment_folder_name:".ljust(variable_space)
+            description += str(value) + "\n"
+
+        if "run_path" in self._run_settings:
+            value = self._run_settings["run_path"]
+            description += "  run_path:".ljust(variable_space)
+            description += str(value) + "\n"
+
+        if "package_path" in self._run_settings:
+            value = self._run_settings["package_path"]
+            description += "  package_path:".ljust(variable_space)
+            description += str(value) + "\n"
+
+        if "executable_path" in self._run_settings:
+            value = self._run_settings["executable_path"]
+            description += "  executable_path:".ljust(variable_space)
+            description += str(value) + "\n"
+
+        if "executable" in self._run_settings:
+            value = self._run_settings["executable"]
+            description += "  executable:".ljust(variable_space)
+            description += str(value) + "\n"
+
+        if "force_compile" in self._run_settings:
+            value = self._run_settings["force_compile"]
+            description += "  force_compile:".ljust(variable_space)
+            description += str(value) + "\n"
+
+        return description.strip()
+
+    def show_settings(self):
+        """
+        Prints settings stored in this instrument object
+        """
+        print(self.settings_string())
+
+    def backengine(self):
+        """
+        Runs instrument with McStas / McXtrace, saves data in data attribute
+
+        This method will write the instrument to disk and then run it using
+        the mcrun command of the system. Settings are set using settings
+        method.
+        """
+
+        if self._run_settings["force_compile"]:
+            self.write_full_instrument()
+
+        parameters = {}
+        for parameter in self.parameters:
+            if parameter.value is None:
+                raise RuntimeError("Unspecified parameter: '" + parameter.name
+                                   + "' set with set_parameters.")
+
+            parameters[parameter.name] = parameter.value
+
+        options = self._run_settings
+        options["parameters"] = parameters
+        options["output_path"] = self.output_path
+
+        # Set up the simulation
+        simulation = ManagedMcrun(self.name + ".instr", **options)
+
+        # Run the simulation and return data
+        simulation.run_simulation(**self._run_settings)
+
+        # Load data and store in __data
+        #data = simulation.load_results()
+        #self._set_data(data)
+
+        data = simulation.load_results()
+        data_dict = {"data": data}
+        key = self.output_keys[0]
+        output_data = self.output[key]
+        output_data.set_dict(data_dict)
+
+        if "data" not in self.output.get_data():
+            print("\n\nNo data returned.")
+            return None
         else:
-            for name in required_parameters:
-                if name not in given_parameters:
-                    raise NameError("The required instrument parameter "
-                                    + name
-                                    + " was not provided.")
-            # Overwrite default parameters with given parameters
-            default_parameters.update(given_parameters)
-            return default_parameters
+            return self.output.get_data()["data"]
 
-    def run_full_instrument(self, *args, **kwargs):
+    def run_full_instrument(self, **kwargs):
         """
         Runs McStas instrument described by this class, returns list of
         McStasData
@@ -1472,16 +2010,16 @@ class McStas_instr:
         This method will write the instrument to disk and then run it
         using the mcrun command of the system. Options are set using
         keyword arguments.  Some options are mandatory, for example
-        foldername, which can not already exist, if it does data will
+        output_path, which can not already exist, if it does data will
         be read from this folder.  If the mcrun command is not in the
         path of the system, the absolute path can be given with the
-        mcrun_path keyword argument.  This path could also already have
-        been set at initialization of the instrument object.
+        executable_path keyword argument.  This path could also already
+        have been set at initialization of the instrument object.
 
         Parameters
         ----------
         Keyword arguments
-            foldername : str
+            output_path : str
                 Sets data_folder_name
             ncount : int
                 Sets ncount
@@ -1491,46 +2029,55 @@ class McStas_instr:
                 Sets parameters
             custom_flags : str
                 Sets custom_flags passed to mcrun
-            mcrun_path : str
+            force_compile : bool
+                If True (default) new instrument file is written, otherwise not
+            executable_path : str
                 Path to mcrun command, "" if already in path
         """
-        # Make sure mcrun path is in kwargs
-        if "mcrun_path" not in kwargs:
-            kwargs["mcrun_path"] = self.mcrun_path
+        warnings.warn(
+            "run_full_instrument will be removed in future version of McStasScript. \n"
+            + "Instead supply parameters with set_parameters, set settings with "
+            + "settings and use backengine() to run. See examples in package. "
+            + "Documentation now at https://mads-bertelsen.github.io")
 
-        if "run_path" not in kwargs:
-            # path where mcrun is executed, will load components there
-            # if not set, use input_folder given
-            kwargs["run_path"] = self.input_path
-                    
+        if "foldername" in kwargs:
+            kwargs["output_path"] = kwargs["foldername"]
+            del kwargs["foldername"]
+
         if "parameters" in kwargs:
-            given_parameters = kwargs["parameters"]
-        else:
-            given_parameters = {}
+            self.set_parameters(kwargs["parameters"])
+            del kwargs["parameters"]
 
-        kwargs["parameters"] = self._handle_parameters(given_parameters)
+        self.settings(**kwargs)
 
-        # Write the instrument file
-        self.write_full_instrument()
+        return self.backengine()
 
-        # Set up the simulation
-        simulation = ManagedMcrun(self.name + ".instr", **kwargs)
-
-        # Run the simulation and return data
-        simulation.run_simulation(**kwargs)
-        return simulation.load_results()
-    
-    def show_instrument(self, *args, **kwargs):
+    def show_instrument(self, format="webgl", width=800, height=450, new_tab=False):
         """
-        Uses mcdisplay to show the instrument in webbroser
-        """
-        
-        if "parameters" in kwargs:
-            given_parameters = kwargs["parameters"]
-        else:
-            given_parameters = {}
+        Uses mcdisplay to show the instrument in web browser
 
-        parameters = self._handle_parameters(given_parameters)
+        If this method is performed from a jupyter notebook and use the webgl
+        format the interface will be shown in the notebook using an IFrame.
+
+        Keyword arguments
+        -----------------
+            format : str
+                'webgl' or 'window' format for display
+            width : int
+                width of IFrame if used in notebook
+            height : int
+                height of IFrame if used in notebook
+            new_tab : bool
+                Open webgl in new browser tab
+        """
+
+        parameters = {}
+        for parameter in self.parameters:
+            if parameter.value is None:
+                raise RuntimeError("Unspecified parameter: '" + parameter.name
+                                   + "' set with set_parameters.")
+
+            parameters[parameter.name] = parameter.value
 
         # add parameters to command
         parameter_string = ""
@@ -1540,22 +2087,531 @@ class McStas_instr:
                                 + "="
                                 + str(val))  # parameter value
 
-        bin_path = os.path.join(self.mcstas_path, "bin", "")
-        executable = "mcdisplay-webgl"
-        if "format" in kwargs:
-            if kwargs["format"] is "webgl":
-                executable = "mcdisplay-webgl"
-            elif kwargs["format"] is "window":
-                executable = "mcdisplay"
+        package_path = self._run_settings["package_path"]
+        bin_path = os.path.join(package_path, "bin", "")
 
-        full_command = (bin_path + executable + " "
-                        + os.path.join(self.input_path, self.name + ".instr")
-                        + " " + parameter_string) 
+        if format == "webgl":
+            executable = "mcdisplay-webgl"
+        elif format == "window":
+            executable = "mcdisplay"
+
+        dir_name_original = self.name + "_mcdisplay"
+        dir_name = dir_name_original
+        index = 0
+        while os.path.exists(os.path.join(self.input_path, dir_name)):
+            dir_name = dir_name_original + "_" + str(index)
+            index += 1
+
+        dir_control = "--dirname " + dir_name + " "
+
+        self.write_full_instrument()
+
+        instr_path = os.path.join(self.input_path, self.name + ".instr")
+        instr_path = os.path.abspath(instr_path)
+
+        try:
+            shell = get_ipython().__class__.__name__
+            is_notebook = shell == "ZMQInteractiveShell"
+        except:
+            is_notebook = False
+
+        options = ""
+        if is_notebook and executable == "mcdisplay-webgl" and not new_tab:
+            options += "--nobrowse "
+
+        full_command = ('"' + bin_path + executable + '" '
+                        + dir_control
+                        + options
+                        + instr_path
+                        + " " + parameter_string)
 
         process = subprocess.run(full_command, shell=True,
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE,
-                                 universal_newlines=True)
-        print(process.stderr)
-        print(process.stdout)
+                                 universal_newlines=True,
+                                 cwd=self.input_path)
 
+        if not is_notebook or executable != "mcdisplay-webgl":
+            print(process.stderr)
+            print(process.stdout)
+            return
+
+        html_path = os.path.join(self.input_path, dir_name, "index.html")
+        if not os.path.exists(html_path):
+            print(process.stderr)
+            print(process.stdout)
+            print("")
+            print("mcdisplay run failed.")
+            return
+
+        # Create IFrame in ipython that shows instrument
+
+        return IFrame(src=html_path, width=width, height=height)
+
+    def show_diagram(self):
+        """
+        Shows diagram of component connections in insrument
+
+        Shows a diagram with all components as text fields and arrows between
+        them showing the AT RELATIVE and ROTATED RELATIVE connections. Spatial
+        connections are shown in blue, and rotational in red. ROTATED
+        connections are only shown when they are specified.
+        """
+        if self.has_errors():
+            print("The instrument has some error, this diagram is still "
+                  "shown as it may help find the bug.")
+
+        instrument_diagram(self)
+        self.check_for_errors()
+
+    def saveH5(self, filename: str, openpmd: bool = True):
+        """
+        Not relevant, but required from BaseCalculator, will be removed
+        """
+        pass
+
+
+class McStas_instr(McCode_instr):
+    """
+    Main class for writing a McStas instrument using McStasScript
+
+    Initialization of McStas_instr sets the name of the instrument file
+    and its methods are used to add all aspects of the instrument file.
+    The class also holds methods for writing the finished instrument
+    file to disk and to run the simulation.
+
+    Attributes
+    ----------
+    name : str
+        name of instrument file
+
+    author : str, default "Python Instrument Generator"
+        name of user of McStasScript, written to the file
+
+    origin : str, default "ESS DMSC"
+        origin of instrument file (affiliation)
+
+    input_path : str, default "."
+        directory in which simulation is executed, uses components found there
+
+    output_path : str
+        directory in which the data is written
+
+    executable_path : str
+        absolute path of mcrun command, or empty if it is in path
+
+    parameters : ParameterContainer
+        contains all input parameters to be written to file
+
+    declare_list : list of DeclareVariable instances
+        contains all declare parrameters to be written to file
+
+    initialize_section : str
+        string containing entire initialize section to be written
+
+    trace_section : str
+        string containing trace section (OBSOLETE)
+
+    finally_section : str
+        string containing entire finally section to be written
+
+    component_list : list of component instances
+        list of components in the instrument
+
+    component_class_lib : dict
+        dict of custom Component classes made at run time
+
+    component_reader : ComponentReader
+        ComponentReader instance for reading component files
+
+    package_path : str
+        Path to mccode package containing component folders
+
+    run_settings : dict
+        Dict of options set with settings
+
+    data : list
+        List of McStasData objects produced by last run
+
+    Methods
+    -------
+    add_parameter(*args, **kwargs)
+        Adds input parameter to the define section
+
+    add_declare_var(type, name)
+        Add declared variable called name of given type to the declare section
+
+    append_declare(string)
+        Appends to the declare section
+
+    append_initialize(string)
+        Appends a string to the initialize section, then adds new line
+
+    append_initialize_no_new_line(string)
+        Appends a string to the initialize section
+
+    append_finally(string)
+        Appends a string to finally section, then adds new line
+
+    append_finally_no_new_line(string)
+        Appends a string to finally section
+
+    append_trace(string)
+        Obsolete method, add components instead (used in write_c_files)
+
+    append_trace_no_new_line(string)
+        Obsolete method, add components instead (used in write_c_files)
+
+    available_components(string)
+        Shows available components in given category
+
+    component_help(name)
+        Shows help on component of given name
+
+    add_component(instance_name, component_name, **kwargs)
+        Add a component to the instrument file
+
+    copy_component(new_component_name, original_component, **kwargs)
+        Makes a copy of original_component with new_component_name
+
+    get_component(instance_name)
+        Returns component instance with name instance_name
+
+    get_last_component()
+        Returns component instance of last component
+
+    print_component(instance_name)
+        Prints an overview of current state of named component
+
+    print_component_short(instance_name)
+        Prints short overview of current state of named component
+
+    show_components()
+        Prints overview of postion / rotation of all components
+
+    write_c_files()
+        Writes c files for %include in generated_includes folder
+
+    write_full_instrument()
+        Writes full instrument file to current directory
+
+    show_instrument()
+        Shows instrument using mcdisplay
+
+    set_parameters(dict)
+        Inherited from libpyvinyl BaseCalculator
+
+    settings(**kwargs)
+        Sets settings for performing simulation
+
+    backengine()
+        Performs simulation, saves in data attribute
+
+    run_full_instrument(**kwargs)
+        Deprecated method for performing the simulation
+
+    interface()
+        Shows interface with jupyter notebook widgets
+
+    get_interface_data()
+        Returns data set from latest simulation in widget
+    """
+    def __init__(self, name, **kwargs):
+        """
+        Initialization of McStas Instrument
+
+        Parameters
+        ----------
+        name : str
+            Name of project, instrument file will be name + ".instr"
+
+        keyword arguments:
+            parameters : ParameterContainer or CalculatorParameters
+                Parameters for this instrument
+
+            dumpfile: str
+                File path to dump file to be loaded
+
+            author : str
+                Name of author, written in instrument file
+
+            origin : str
+                Affiliation of author, written in instrument file
+
+            executable_path : str
+                Absolute path of mcrun or empty if already in path
+
+            input_path : str
+                Work directory, will load components from this folder
+        """
+        self.particle = "neutron"
+        self.package_name = "McStas"
+        executable = "mcrun"
+
+        super().__init__(name, executable=executable, **kwargs)
+
+    def _read_calibration(self):
+        this_dir = os.path.dirname(os.path.abspath(__file__))
+        configuration_file_name = os.path.join(this_dir, "..",
+                                               "configuration.yaml")
+        if not os.path.isfile(configuration_file_name):
+            raise NameError("Could not find configuration file!")
+        with open(configuration_file_name, 'r') as ymlfile:
+            config = yaml.safe_load(ymlfile)
+
+        if type(config) is dict:
+            self._run_settings["executable_path"] = config["paths"]["mcrun_path"]
+            self._run_settings["package_path"] = config["paths"]["mcstas_path"]
+            self.line_limit = config["other"]["characters_per_line"]
+        else:
+            # This happens in unit tests that mocks open
+            self._run_settings["executable_path"] = ""
+            self._run_settings["package_path"] = ""
+            self.line_limit = 180
+
+    @classmethod
+    def from_dump(cls, dumpfile: str):
+        """Load a dill dump from a dumpfile.
+
+        Overwrites a libpyvinyl method to load McStas components
+
+        :param dumpfile: The file name of the dumpfile.
+        :type dumpfile: str
+        :return: The calculator object restored from the dumpfile.
+        :rtype: CalcualtorClass
+        """
+
+        with open(dumpfile, "rb") as fhandle:
+            try:
+                # Loads necessary component classes from unpackers installation
+                tmp = CustomMcStasUnpickler(fhandle).load()
+            except:
+                raise IOError("Cannot load calculator from {}.".format(dumpfile))
+
+            if not isinstance(tmp, cls):
+                raise TypeError(f"The object in the file {dumpfile} is not a {cls}")
+
+        return tmp
+
+
+class McXtrace_instr(McCode_instr):
+    """
+    Main class for writing a McXtrace instrument using McStasScript
+
+    Initialization of McXtrace_instr sets the name of the instrument file
+    and its methods are used to add all aspects of the instrument file.
+    The class also holds methods for writing the finished instrument
+    file to disk and to run the simulation.
+
+    Attributes
+    ----------
+    name : str
+        name of instrument file
+
+    author : str, default "Python Instrument Generator"
+        name of user of McStasScript, written to the file
+
+    origin : str, default "ESS DMSC"
+        origin of instrument file (affiliation)
+
+    input_path : str, default "."
+        directory in which simulation is executed, uses components found there
+
+    output_path : str
+        directory in which the data is written
+
+    executable_path : str
+        absolute path of mcrun command, or empty if it is in path
+
+    parameters : ParameterContainer
+        contains all input parameters to be written to file
+
+    declare_list : list of DeclareVariable instances
+        contains all declare parrameters to be written to file
+
+    initialize_section : str
+        string containing entire initialize section to be written
+
+    trace_section : str
+        string containing trace section (OBSOLETE)
+
+    finally_section : str
+        string containing entire finally section to be written
+
+    component_list : list of component instances
+        list of components in the instrument
+
+    component_class_lib : dict
+        dict of custom Component classes made at run time
+
+    component_reader : ComponentReader
+        ComponentReader instance for reading component files
+
+    package_path : str
+        Path to mccode package containing component folders
+
+    run_settings : dict
+        Dict of options set with settings
+
+    data : list
+        List of McStasData objects produced by last run
+
+    Methods
+    -------
+    add_parameter(*args, **kwargs)
+        Adds input parameter to the define section
+
+    add_declare_var(type, name)
+        Add declared variable called name of given type to the declare section
+
+    append_declare(string)
+        Appends to the declare section
+
+    append_initialize(string)
+        Appends a string to the initialize section, then adds new line
+
+    append_initialize_no_new_line(string)
+        Appends a string to the initialize section
+
+    append_finally(string)
+        Appends a string to finally section, then adds new line
+
+    append_finally_no_new_line(string)
+        Appends a string to finally section
+
+    append_trace(string)
+        Obsolete method, add components instead (used in write_c_files)
+
+    append_trace_no_new_line(string)
+        Obsolete method, add components instead (used in write_c_files)
+
+    available_components(string)
+        Shows available components in given category
+
+    component_help(name)
+        Shows help on component of given name
+
+    add_component(instance_name, component_name, **kwargs)
+        Add a component to the instrument file
+
+    copy_component(new_component_name, original_component, **kwargs)
+        Makes a copy of original_component with new_component_name
+
+    get_component(instance_name)
+        Returns component instance with name instance_name
+
+    get_last_component()
+        Returns component instance of last component
+
+    print_component(instance_name)
+        Prints an overview of current state of named component
+
+    print_component_short(instance_name)
+        Prints short overview of current state of named component
+
+    show_components()
+        Prints overview of postion / rotation of all components
+
+    write_c_files()
+        Writes c files for %include in generated_includes folder
+
+    write_full_instrument()
+        Writes full instrument file to current directory
+
+    show_instrument()
+        Shows instrument using mcdisplay
+
+    set_parameters(dict)
+        Inherited from libpyvinyl BaseCalculator
+
+    settings(**kwargs)
+        Sets settings for performing simulation
+
+    backengine()
+        Performs simulation, saves in data attribute
+
+    run_full_instrument(**kwargs)
+        Deprecated method for performing the simulation
+
+    interface()
+        Shows interface with jupyter notebook widgets
+
+    get_interface_data()
+        Returns data set from latest simulation in widget
+    """
+    def __init__(self, name, **kwargs):
+        """
+        Initialization of McXtrace Instrument
+
+        Parameters
+        ----------
+        name : str
+            Name of project, instrument file will be name + ".instr"
+
+        keyword arguments:
+            parameters : ParameterContainer or CalculatorParameters
+                Parameters for this instrument
+
+            dumpfile: str
+                File path to dump file to be loaded
+
+            author : str
+                Name of author, written in instrument file
+
+            origin : str
+                Affiliation of author, written in instrument file
+
+            executable_path : str
+                Absolute path of mcrun or empty if already in path
+
+            input_path : str
+                Work directory, will load components from this folder
+        """
+        self.particle = "x-ray"
+        self.package_name = "McXtrace"
+        executable = "mxrun"
+
+        super().__init__(name, executable=executable, **kwargs)
+
+    def _read_calibration(self):
+        this_dir = os.path.dirname(os.path.abspath(__file__))
+        configuration_file_name = os.path.join(this_dir, "..",
+                                               "configuration.yaml")
+        if not os.path.isfile(configuration_file_name):
+            raise NameError("Could not find configuration file!")
+        with open(configuration_file_name, 'r') as ymlfile:
+            config = yaml.safe_load(ymlfile)
+
+        if type(config) is dict:
+            self._run_settings["executable_path"] = config["paths"]["mxrun_path"]
+            self._run_settings["package_path"] = config["paths"]["mcxtrace_path"]
+            self.line_limit = config["other"]["characters_per_line"]
+        else:
+            # This happens in unit tests that mocks open
+            self._run_settings["executable_path"] = ""
+            self._run_settings["package_path"] = ""
+            self.line_limit = 180
+
+    @classmethod
+    def from_dump(cls, dumpfile: str):
+        """Load a dill dump from a dumpfile.
+
+        Overwrites a libpyvinyl method to load McStas components
+
+        :param dumpfile: The file name of the dumpfile.
+        :type dumpfile: str
+        :return: The calculator object restored from the dumpfile.
+        :rtype: CalcualtorClass
+        """
+
+        with open(dumpfile, "rb") as fhandle:
+            try:
+                # Loads necessary component classes from unpackers installation
+                tmp = CustomMcXtraceUnpickler(fhandle).load()
+            except:
+                raise IOError("Cannot load calculator from {}.".format(dumpfile))
+
+            if not isinstance(tmp, cls):
+                raise TypeError(f"The object in the file {dumpfile} is not a {cls}")
+
+        return tmp

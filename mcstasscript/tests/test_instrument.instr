@@ -14,8 +14,8 @@
 * Instrument test_instrument
 * 
 * %Identification
-* Written by: Python McStas Instrument Generator
-* Date: 15:36:48 on May 27, 2019
+* Written by: Python McXtrace Instrument Generator
+* Date: 10:17:47 on December 14, 2021
 * Origin: ESS DMSC
 * %INSTRUMENT_SITE: Generated_instruments
 * 
@@ -26,7 +26,8 @@
 ********************************************************************************/
 
 DEFINE INSTRUMENT test_instrument (
-double theta 
+double theta = 1, 
+double has_default = 37 
 )
 
 DECLARE 
@@ -42,3 +43,20 @@ two_theta = 2.0*theta;
 
 TRACE 
 COMPONENT first_component = test_for_reading(
+ gauss = 1.2, test_string = a_string)
+AT (0,0,0) ABSOLUTE
+
+COMPONENT second_component = test_for_reading(
+ gauss = 1.4, test_string = b_string)
+AT (0,0,0) ABSOLUTE
+
+COMPONENT third_component = test_for_reading(
+ gauss = 1.6, test_string = c_string)
+AT (0,0,0) ABSOLUTE
+
+FINALLY 
+%{
+// Start of finally for generated test_instrument
+%}
+
+END

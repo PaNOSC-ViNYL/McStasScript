@@ -1,20 +1,24 @@
 # McStasScript
-[McStas](http://www.mcstas.org) API for creating and running McStas instruments from python scripting
+[McStas](http://www.mcstas.org) API for creating and running McStas/McXtrace instruments from python scripting.
 
 Prototype for an API that allow interaction with McStas through an interface like Jupyter Notebooks created under WP5 of PaNOSC.
 
+Full documentation can be found [here](https://mads-bertelsen.github.io)!
+
 ## Installation
-McStasScript does not include the McStas installation, so McStas should be installed separately, link to instructions [here](https://github.com/McStasMcXtrace/McCode/tree/master/INSTALL-McStas).
+McStasScript does not include the McStas installation, so McStas/McXtrace should be installed separately, link to instructions [here](https://github.com/McStasMcXtrace/McCode/tree/master/INSTALL-McStas).
 McStasScript can be installed using pip from a terminal,
 
     python3 -m pip install McStasScript --upgrade
 
-After installation it is necessary to configure the package so the McStas installation can be found, here we show how the appropriate code for an Ubuntu system as an example. The configuration is saved permanently, and only needs to be updated when McStas or McStasScript is updated. This has to be done from a python terminal or from within a python environment.
+After installation it is necessary to configure the package so the McStas/McXtrace installation can be found, here we show how the appropriate code for an Ubuntu system as an example. The configuration is saved permanently, and only needs to be updated when McStas or McStasScript is updated. This has to be done from a python terminal or from within a python environment.
 
-    from mcstasscript.interface import functions
-    my_configurator = functions.Configurator()
+    import mcstasscript as ms
+    my_configurator = ms.Configurator()
     my_configurator.set_mcrun_path("/usr/bin/")
     my_configurator.set_mcstas_path("/usr/share/mcstas/2.5/")
+    my_configurator.set_mxrun_path("/usr/bin/")
+    my_configurator.set_mcxtrace_path("/usr/share/mcxtrace/1.5/")
 
 To get a python terminal, run the command python in a terminal and then copy, paste and execute the lines above one at a time. Exit with ctrl+D.
 
@@ -28,10 +32,12 @@ On a Mac OS X system, the paths to the mcrun executable and mcstas folder are th
 
     my_configurator.set_mcrun_path("/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/bin/")
     my_configurator.set_mcstas_path("/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/")
+    my_configurator.set_mxrun_path("/Applications/McXtrace-1.5.app/Contents/Resources/mcxtrace/1.5/bin/")
+    my_configurator.set_mcxtrace_path("/Applications/McXtrace-1.5.app/Contents/Resources/mcxtrace/1.5/")
     
     
 ### Notes on windows installation
-McStasScript was tested on Windows 10 installed using this [guide](https://github.com/McStasMcXtrace/McCode/blob/master/INSTALL-McStas/Windows/README.md), it is necessary to include MPI using MSMpiSetup.exe and msmpisdk.msi located in the extras folder.
+McStasScript was tested on Windows 10 installed using this [guide](https://github.com/McStasMcXtrace/McCode/blob/master/INSTALL-McStas-2.x/Windows/README.md), it is necessary to include MPI using MSMpiSetup.exe and msmpisdk.msi located in the extras folder.
 
 Open the McStas-shell cmd (shortcut should be available on desktop) and install McStasScript / jupyter notebook with these commands:
 
@@ -44,10 +50,12 @@ Using the McStas-shell one can start a jupyter notebook server with this command
 
 For a standard McStas installation on Windows, the appropriate configuration can be set with these commands in a notebook:
 
-    from mcstasscript.interface import functions
-    my_configurator = functions.Configurator()
+    import mcstasscript as ms
+    my_configurator = ms.Configurator()
     my_configurator.set_mcrun_path("\\mcstas-2.6\\bin\\")
     my_configurator.set_mcstas_path("\\mcstas-2.6\\lib\\")
+    my_configurator.set_mxrun_path("\\mcxtrace-1.5\\bin\\")
+    my_configurator.set_mcxtrace_path("\\mcxtrace-1.5\\lib\\")    
     
 Double backslashes are necessary since backslash is the escape character in python strings.
 
@@ -56,13 +64,13 @@ This section provides a quick way to get started, a more in depth tutorial using
 
 Import the interface 
 
-    from mcstasscript.interface import instr, plotter, functions, reader
+    import mcstasscript as ms
 
-Now the package can be used. Start with creating a new instrument, just needs a name
+Now the package can be used. Start with creating a new instrument, just needs a name. For a McXtrace instrument use McXtrace_instr instead.
 
-    my_instrument = instr.McStas_instr("my_instrument_file")
+    my_instrument = ms.McStas_instr("my_instrument_file")
 
-Then McStas components can be added, here we add a source and ask for help on the parameters
+Then McStas components can be added, here we add a source and ask for help on the parameters.
 
     my_source = my_instrument.add_component("source", "Source_simple")
     my_source.show_parameters() # Can be used to show available parameters for Source simple
@@ -108,11 +116,15 @@ A monitor is added as well to get data out of the simulation (few bins so it is 
     PSD.yheight = 0.1
     PSD.nx = 5
     PSD.ny = 5
-    PSD.filename = "\"PSD.dat\""
+    PSD.filename = '"PSD.dat"'
 
-This simple simulation can be executed from the 
+Settings for the simulation can be adjusted with the *settings* method, an output_path for the data is needed.
 
-    data = my_instrument.run_full_instrument(foldername="first_run", increment_folder_name=True)
+    my_instrument.settings(output_path="first_run", ncount=1E7)
+
+The simulatiuon is performed with the *backengine* method. This returns the data generated from the simulation.
+
+    data = my_instrument.backengine()
 
 Results from the monitors would be stored as a list of McStasData objects in the returned data. The counts are stored as numpy arrays. We can read and change the intensity directly and manipulate the data before plotting.
 
@@ -128,12 +140,25 @@ In a python terminal this would display the data directly:
     
 Plotting is usually done in a subplot of all monitors recorded.    
 
-    plot = plotter.make_sub_plot(data)
+    plot = ms.make_sub_plot(data)
+    
+## Widgets in Jupyter Notebooks
+When using McStasScript in a jupyter notebook, it is possible to plot the data with a widget system instead.
+
+    ms.interface(data)
+    
+There is also a widget solution for performing the simulation which works as an alternative to *run_full_instrument*, this method is also called *interface* and is available directly on the instrument. This interface includes setting parameters, simulation options and plotting of the resulting data.
+
+    my_instrument.interface()
+    
+The data from the latest run performed in the simulation widget can be retrieved with *get_interface_data*.
+
+    data = my_instrument.get_interface_data()
 
 ## Use in existing project
 If one wish to work on existing projects using McStasScript, there is a reader included that will read a McStas Instrument file and write the corresponding McStasScript python instrument to disk. Here is an example where the PSI_DMC.instr example is converted:
 
-    Reader = reader.McStas_file("PSI_DMC.instr")
+    Reader = ms.McStas_file("PSI_DMC.instr")
     Reader.write_python_file("PSI_DMC_generated.py")
 
 It is highly advised to run a check between the output of the generated file and the original to ensure the process was sucessful.
@@ -151,7 +176,11 @@ Here is a quick overview of the available methods of the main classes in the pro
         ├── append_initialize(str string) # Appends a line to initialize (c syntax)
         ├── print_components() # Prints list of components and their location
         ├── write_full_instrument() # Writes instrument to disk with given name + ".instr"
-        └── run_full_instrument() # Runs simulation. Options in keyword arguments. Returns list of McStasData
+        ├── settings(kwargs) Settings as keyword arguments.
+        ├── backengine() # Runs simulation.
+        ├── data # Data attribute, contains list of McStasData objects
+        ├── interface() # Shows widget interface in jupyter notebook
+        └── get_interface_data() # Returns data set from latest simulation performed in interface
         
     component # returned by add_component
     ├── set_AT(list at_list) # Sets component position (list of x,y,z positions in [m])
@@ -172,8 +201,9 @@ Here is a quick overview of the available methods of the main classes in the pro
     
     plotter
     ├── make_plot(list McStasData) # Plots each data set individually
-    └── make_sub_plot(list McStasData) # Plots data as subplot
-    
+    ├── make_sub_plot(list McStasData) # Plots data as subplot
+    └── interface(list McStasData) # Shows plotting interface in jupyter notebook
+
     reader
     └──  McStas_file(str filename) # Returns a reader that can extract information from given instr file
 
