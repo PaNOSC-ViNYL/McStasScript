@@ -950,7 +950,7 @@ class Component:
                                + "given " + str(type(string)))
         self.c_code_after = string
 
-    def write_component(self, fo, overwrite_location=False):
+    def write_component(self, fo):
         """
         Method that writes component to file
 
@@ -1020,29 +1020,18 @@ class Component:
         if not self.WHEN == "":
             fo.write("%s\n" % self.WHEN)
 
-        if overwrite_location:
-            written_AT_data = [0, 0, 0]
-            written_AT_relative = "ABSOLUTE"
-            written_ROTATED_data = [0, 0, 0]
-            written_ROTATED_relative = "ABSOLUTE"
-        else:
-            written_AT_data = self.AT_data
-            written_AT_relative = self.AT_relative
-            written_ROTATED_data = self.ROTATED_data
-            written_ROTATED_relative = self.ROTATED_relative
-
         # Write AT and ROTATED section
-        fo.write("AT (%s,%s,%s)" % (str(written_AT_data[0]),
-                                    str(written_AT_data[1]),
-                                    str(written_AT_data[2])))
+        fo.write("AT (%s,%s,%s)" % (str(self.AT_data[0]),
+                                    str(self.AT_data[1]),
+                                    str(self.AT_data[2])))
 
-        fo.write(" %s\n" % written_AT_relative)
+        fo.write(" %s\n" % self.AT_relative)
 
         if self.ROTATED_specified:
-            fo.write("ROTATED (%s,%s,%s)" % (str(written_ROTATED_data[0]),
-                                             str(written_ROTATED_data[1]),
-                                             str(written_ROTATED_data[2])))
-            fo.write(" %s\n" % written_ROTATED_relative)
+            fo.write("ROTATED (%s,%s,%s)" % (str(self.ROTATED_data[0]),
+                                             str(self.ROTATED_data[1]),
+                                             str(self.ROTATED_data[2])))
+            fo.write(" %s\n" % self.ROTATED_relative)
 
         if not self.GROUP == "":
             fo.write("GROUP %s\n" % self.GROUP)

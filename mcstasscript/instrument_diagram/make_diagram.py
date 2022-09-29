@@ -27,7 +27,7 @@ def instrument_diagram(instrument):
     """
 
     # Grab components from instrument file and make text box objects
-    components = instrument.component_list
+    components = instrument.make_component_subset()
 
     # Prepare legend
     component_reader = instrument.component_reader

@@ -25,6 +25,7 @@ from mcstasscript.helper.formatting import is_legal_filename
 from mcstasscript.helper.formatting import bcolors
 from mcstasscript.helper.unpickler import CustomMcStasUnpickler, CustomMcXtraceUnpickler
 from mcstasscript.helper.exceptions import McStasError
+from mcstasscript.helper.beam_dump_database import BeamDumpDatabase
 from mcstasscript.instrument_diagram.make_diagram import instrument_diagram
 
 
@@ -418,8 +419,15 @@ class McCode_instr(BaseCalculator):
             # Handle components
             self.component_list = []  # List of components (have to be ordered)
 
+            # Run subset settings
             self.run_from_ref = None
             self.run_to_ref = None
+            self.run_to_comment = ""
+            self.run_to_name = None
+            self.run_from_component_parameters = None
+
+            # DumpDatabase
+            self.dump_database = BeamDumpDatabase(self.name, self.input_path)
 
     @property
     def output_path(self) -> str:
@@ -442,7 +450,7 @@ class McCode_instr(BaseCalculator):
         """
         pass
 
-    def run_to(self, component_ref, **kwargs):
+    def run_to(self, component_ref, run_name=None, comment=None, **kwargs):
         """
         Set limit for instrument, only run to given component, save MCPL there
         """
@@ -455,13 +463,19 @@ class McCode_instr(BaseCalculator):
 
         self.run_to_ref = component_ref
 
+        if run_name is not None:
+            self.run_to_name = run_name
+
+        if comment is not None:
+            self.run_to_comment = str(comment)
+
         if component_ref is not None:
             if "filename" not in kwargs:
                 kwargs["filename"] = '"' + self.name + "_" + component_ref + ".mcpl" + '"'
 
             self.run_to_component_parameters = kwargs
 
-    def run_from(self, component_ref, **kwargs):
+    def run_from(self, component_ref, run_name=None, **kwargs):
         """
         Set limit for instrument, only run from given component, loads MCPL there
         """
@@ -475,10 +489,26 @@ class McCode_instr(BaseCalculator):
         self.run_from_ref = component_ref
 
         if component_ref is not None:
+            if run_name is not None:
+                if component_ref not in self.dump_database.data:
+                    raise KeyError("This run_from point doesn't have any runs.")
+
+                if run_name not in self.dump_database.data[component_ref]:
+                    print(self.dump_database.data[component_ref])
+                    raise KeyError("Given run name not in database.")
+
+                dump = self.dump_database.data[component_ref][run_name]
+                kwargs["filename"] = '"' + dump.data["data_path"] + '"'
+
             if "filename" not in kwargs:
-                kwargs["filename"] = '"' + self.name + "_" + component_ref + ".mcpl" + '"'
+                newest_dump = self.dump_database.newest_at_point(component_ref)
+                kwargs["filename"] = '"' + newest_dump.data["data_path"] + '"'
 
             self.run_from_component_parameters = kwargs
+
+    def show_dumps(self):
+        component_names = [x.name for x in self.component_list]
+        self.dump_database.show_in_order(component_names)
 
     def subset_check(self, start_ref, end_ref):
         """
@@ -498,6 +528,10 @@ class McCode_instr(BaseCalculator):
                   "files. When seeing only the specified subset of the instrument, "
                   "this reference can not be resolved.")
             self.check_for_relative_errors(start_ref=start_ref, end_ref=end_ref)
+
+        if end_ref is None:
+            # If there is no end_ref, there are no parts after to check
+            return
 
         # Check the part after is self consistent
         is_self_contained = True
@@ -1730,21 +1764,17 @@ class McCode_instr(BaseCalculator):
         Using the start_ref and end_ref keyword arguments, a subset of the
         instrument can be checked for internal consistency.
         """
-        if start_ref is not None or end_ref is not None:
-            component_names = [x.name for x in self.component_list]
 
-        if start_ref is not None:
-            start_index = component_names.index(start_ref)
+        if start_ref is None and end_ref is None:
+            component_list = self.make_component_subset()
+        elif start_ref == self.run_from_ref and end_ref == self.run_to_ref:
+            component_list = self.make_component_subset()
         else:
-            start_index = 0
-
-        if end_ref is not None:
-            end_index = component_names.index(end_ref)
-        else:
-            end_index = len(self.component_list)
+            start_i, end_i = self.get_component_subset_index_range(start_ref, end_ref)
+            component_list = self.component_list[start_i:end_i]
 
         seen_instrument_names = []
-        for component in self.component_list[start_index:end_index]:
+        for component in component_list:
             seen_instrument_names.append(component.name)
 
             if component.name == start_ref:
@@ -1755,7 +1785,8 @@ class McCode_instr(BaseCalculator):
             if component.AT_reference not in (None, "PREVIOUS"):
                 references.append(component.AT_reference)
 
-            if component.ROTATED_reference not in (None, "PREVIOUS"):
+            if ( component.ROTATED_specified and
+                   component.ROTATED_reference not in (None, "PREVIOUS")):
                 references.append(component.ROTATED_reference)
 
             for ref in references:
@@ -1909,6 +1940,32 @@ class McCode_instr(BaseCalculator):
 
         fo.close()
 
+    def get_component_subset_index_range(self, start_ref=None, end_ref=None):
+        """
+        Provides start and end index for components in run_from to run_to range
+
+        Optionally start_ref and end_ref can be given manually which would
+        overwrite the internal run_from and run_to references.
+        """
+
+        if start_ref is None:
+            start_ref = self.run_from_ref
+
+        if end_ref is None:
+            end_ref = self.run_to_ref
+
+        # Starting with component named run_from_ref, ending with run_to_ref
+        component_names = [x.name for x in self.component_list]
+        start_index = 0
+        end_index = len(self.component_list)
+        if start_ref is not None:
+            start_index = component_names.index(start_ref)
+
+        if end_ref is not None:
+            end_index = component_names.index(end_ref)
+
+        return start_index, end_index
+
     def make_component_subset(self):
         """
         Uses run_from and run_to specifications to extract subset of components
@@ -1921,28 +1978,23 @@ class McCode_instr(BaseCalculator):
             # Simple case, just return full component list
             return self.component_list
 
-        # Need to extract subset
-        # Starting with component named run_from_ref, ending with run_to_ref
-        component_names = [x.name for x in self.component_list]
-        start_index = 0
-        end_index = len(self.component_list)
-        if self.run_from_ref is not None:
-            start_index = component_names.index(self.run_from_ref)
-
-        if self.run_to_ref is not None:
-            end_index = component_names.index(self.run_to_ref)
+        start_index, end_index = self.get_component_subset_index_range()
 
         # Create a copy of the used component instances
-        component_subset = copy.deepcopy(self.component_list[start_index:end_index])
+        if start_index == end_index:
+            component_subset = [copy.deepcopy(self.component_list[start_index])]
+        else:
+            component_subset = copy.deepcopy(self.component_list[start_index:end_index])
 
         if self.run_from_ref is not None:
             # Add MCPL input component
             MCPL_in = self._create_component_instance("MCPL_" + self.run_from_ref, "MCPL_input")
             MCPL_in.set_comment("Automatically inserted to split instrument into parts")
-            MCPL_in.set_parameters(**self.run_from_component_parameters)
+            if self.run_from_component_parameters is not None:
+                MCPL_in.set_parameters(**self.run_from_component_parameters)
             #MCPL_in.write_component(fo)
 
-            # Ensure from component reset to MCPL position
+            # Ensure first component reset to MCPL position
             first_component = component_subset[0]
 
             # Since a copy of the component is used, we can alter some properties safely
@@ -1959,7 +2011,8 @@ class McCode_instr(BaseCalculator):
             # Add MCPL output component
             MCPL_out = self._create_component_instance("MCPL_" + self.run_to_ref, "MCPL_output")
             MCPL_out.set_comment("Automatically inserted to split instrument into parts")
-            MCPL_out.set_parameters(**self.run_to_component_parameters)
+            if self.run_from_component_parameters is not None:
+                MCPL_out.set_parameters(**self.run_to_component_parameters)
             MCPL_out.set_AT(replaced_component.AT_data, RELATIVE=replaced_component.AT_reference)
             if replaced_component.ROTATED_specified:
                 MCPL_out.set_ROTATED(replaced_component.ROTATED_data, RELATIVE=replaced_component.ROTATED_reference)
@@ -2172,6 +2225,14 @@ class McCode_instr(BaseCalculator):
         key = self.output_keys[0]
         output_data = self.output[key]
         output_data.set_dict(data_dict)
+
+        # Check for mcpl files and load those to database
+
+        self.dump_database.load_data(data_path=simulation.data_folder_name,
+                                     parameters=self.parameters.parameters,
+                                     dump_point=self.run_to_ref,
+                                     run_name=self.run_to_name,
+                                     comment=self.run_to_comment)
 
         if "data" not in self.output.get_data():
             print("\n\nNo data returned.")
