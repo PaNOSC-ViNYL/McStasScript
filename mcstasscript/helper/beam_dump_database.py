@@ -47,6 +47,13 @@ class BeamDumpDatabase:
         return dump_point_path
 
     def load_data(self, data_path, parameters, run_name, dump_point, comment):
+        """
+        Searches folder for MCPL data and attributes it to given input properties
+        """
+        if not os.path.isdir(data_path):
+            # If the folder doesn't exist, skip search
+            return
+
         files = os.listdir(data_path)
 
         for file in files:
@@ -97,6 +104,11 @@ class BeamDumpDatabase:
     def show_in_order(self, component_names):
         if len(self.data) == 0:
             print("No data in dump database yet. Use run_to method to create dump.")
+            return
+
+        print("Run point:")
+        print(" ", "run_name".ljust(12), ":", "time".ljust(20), ":", "comment")
+        print("-"*60, "--- -- -")
 
         for name in component_names:
             if name in self.data:
@@ -108,8 +120,8 @@ class BeamDumpDatabase:
                     else:
                         par_string = ""
 
-                    print(" ", dump.data["run_name"].ljust(10), ":",
-                          dump.data["time_loaded"].ljust(16), ":",
+                    print(" ", dump.data["run_name"].ljust(12), ":",
+                          dump.data["time_loaded"].ljust(20), ":",
                           dump.data["comment"], par_string)
 
     def __repr__(self):
@@ -126,12 +138,15 @@ class BeamDump:
     def __init__(self, data_path, parameters, dump_point, run_name=None, time_loaded=None, comment=""):
 
         simple_parameters = {}
+        # Convert complex parameter objects to simple key - value pairs
         for parameter in parameters:
             if hasattr(parameters[parameter], "value"):
+                # The full parameter objects store their value in value attribute
                 simple_parameters[parameter] = parameters[parameter].value
             else:
                 simple_parameters[parameter] = parameters[parameter]
 
+        # The fields in data must correspond to the input of the class
         self.data = {"data_path": data_path,
                      "dump_point": dump_point,
                      "parameters": simple_parameters,
@@ -143,19 +158,12 @@ class BeamDump:
         else:
             self.data["time_loaded"] = time_loaded
 
-        """
-        self.data_path = data_path
-        self.dump_point = dump_point
-        self.parameters = parameters
-        self.time_loaded = datetime.now().strftime("%H:%M:%S")
-        """
-
     @classmethod
     def dump_from_JSON(cls, filepath):
         with open(filepath, "r") as f:
             data = json.loads(f.read())
 
-        return cls(**data)
+        return cls(**data) # Since the data fields correspond to class input
 
     def dump_to_JSON(self, folder_path):
 

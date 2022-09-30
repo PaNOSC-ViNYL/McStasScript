@@ -2226,13 +2226,13 @@ class McCode_instr(BaseCalculator):
         output_data = self.output[key]
         output_data.set_dict(data_dict)
 
-        # Check for mcpl files and load those to database
-
-        self.dump_database.load_data(data_path=simulation.data_folder_name,
-                                     parameters=self.parameters.parameters,
-                                     dump_point=self.run_to_ref,
-                                     run_name=self.run_to_name,
-                                     comment=self.run_to_comment)
+        if self.run_to_ref is not None:
+            # Check for mcpl files and load those to database
+            self.dump_database.load_data(data_path=simulation.data_folder_name,
+                                         parameters=self.parameters.parameters,
+                                         dump_point=self.run_to_ref,
+                                         run_name=self.run_to_name,
+                                         comment=self.run_to_comment)
 
         if "data" not in self.output.get_data():
             print("\n\nNo data returned.")
