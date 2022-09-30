@@ -47,38 +47,6 @@ class TestConfigurator(unittest.TestCase):
         if os.path.isfile(expected_file):
             os.remove(expected_file)
 
-    def test_default_config(self):
-        """
-        This tests confirms the content of the default configuration file
-        """
-
-        test_name = "test_configuration"
-        expected_file = setup_expected_file(test_name)
-
-        # check the file did not exist before testing
-        self.assertFalse(os.path.isfile(expected_file))
-
-        my_configurator = Configurator(test_name)
-
-        default_config = my_configurator._read_yaml()
-
-        run = "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/bin/"
-        mcstas = "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/"
-        mxrun = "/Applications/McXtrace-1.5.app" \
-                + "/Contents/Resources/mcxtrace/1.5/mxrun"
-        mcxtrace = "/Applications/McXtrace-1.5.app" \
-                   + "/Contents/Resources/mcxtrace/1.5/"
-
-        self.assertEqual(default_config["paths"]["mcrun_path"], run)
-        self.assertEqual(default_config["paths"]["mcstas_path"], mcstas)
-        self.assertEqual(default_config["paths"]["mxrun_path"], mxrun)
-        self.assertEqual(default_config["paths"]["mcxtrace_path"], mcxtrace)
-        self.assertEqual(default_config["other"]["characters_per_line"], 85)
-
-        # remove the testing configuration file
-        if os.path.isfile(expected_file):
-            os.remove(expected_file)
-
     def test_yaml_write(self):
         """
         This test checks that writing to the configuration file works

@@ -2351,14 +2351,8 @@ class McStas_instr(McCode_instr):
         super().__init__(name, executable=executable, **kwargs)
 
     def _read_calibration(self):
-        this_dir = os.path.dirname(os.path.abspath(__file__))
-        configuration_file_name = os.path.join(this_dir, "..",
-                                               "configuration.yaml")
-        if not os.path.isfile(configuration_file_name):
-            raise NameError("Could not find configuration file!")
-        with open(configuration_file_name, 'r') as ymlfile:
-            config = yaml.safe_load(ymlfile)
-
+        from .. import Configurator
+        config = Configurator()._read_yaml()
         if type(config) is dict:
             self._run_settings["executable_path"] = config["paths"]["mcrun_path"]
             self._run_settings["package_path"] = config["paths"]["mcstas_path"]
@@ -2574,14 +2568,8 @@ class McXtrace_instr(McCode_instr):
         super().__init__(name, executable=executable, **kwargs)
 
     def _read_calibration(self):
-        this_dir = os.path.dirname(os.path.abspath(__file__))
-        configuration_file_name = os.path.join(this_dir, "..",
-                                               "configuration.yaml")
-        if not os.path.isfile(configuration_file_name):
-            raise NameError("Could not find configuration file!")
-        with open(configuration_file_name, 'r') as ymlfile:
-            config = yaml.safe_load(ymlfile)
-
+        from .. import Configurator
+        config = Configurator()._read_yaml()
         if type(config) is dict:
             self._run_settings["executable_path"] = config["paths"]["mxrun_path"]
             self._run_settings["package_path"] = config["paths"]["mcxtrace_path"]
