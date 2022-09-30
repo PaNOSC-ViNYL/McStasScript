@@ -213,19 +213,47 @@ class Configurator:
         """
         Writes a default configuration file to the package root directory
         """
+        items = ('McStas', '2.7.1'), ('McXtrace', '1.5')
+        def make_mac_defaults():
+            base = [f'/Applications/{n}-{v}.app/Contents/Resources/{n.lower()}/{v}/' for n, v in items]
+            defs = {f'{n}run_path': b+'bin/' for n, b in zip(('mc', 'mx'), base)}
+            defs.update({f'{n}_path': b for n, b in zip(('mcstas', 'mcxtrace'), base)})
+            return defs
+        
+        def make_unix_defaults():
+            defs = {f'{n.lower()}_path': f'/usr/share/{n.lower()}/{v}' for n, v in items}
+            defs.update({f'{n}_path': '/usr/bin/' for n in ('mcrun', 'mxrun')})
+            return defs
 
-        run = "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/bin/"
-        mcstas = "/Applications/McStas-2.5.app/Contents/Resources/mcstas/2.5/"
+        def make_win_defaults():
+            defs = {f'{k}run_path': f'\\{n.lower()}-{v}\\bin\\' for k, (n, v) in zip(('mc', 'mx'), items)}
+            defs.update({f'{n.lower()}_path': f'\\{n.lower()}-{v}\\lib\\' for n, v in items})
+            return defs
 
-        mxrun = "/Applications/McXtrace-1.5.app" \
-                + "/Contents/Resources/mcxtrace/1.5/mxrun"
-        mcxtrace = "/Applications/McXtrace-1.5.app" \
-                   + "/Contents/Resources/mcxtrace/1.5/"
+        import platform
+        default_paths = {}
+        if 'linux' in platform.system().lower():
+            default_paths = make_unix_defaults()
+        elif 'darwin' in platform.system().lower():
+            default_paths = make_mac_defaults()
+        elif 'win' in platform.system().lower():
+            default_paths = make_win_defaults()
 
-        default_paths = {"mcrun_path": run,
-                         "mcstas_path": mcstas,
-                         "mxrun_path": mxrun,
-                         "mcxtrace_path": mcxtrace}
+        # check if McStas or McXtrace are *on* the system path, then default to those:
+        import shutil
+        from pathlib import Path
+        if shutil.which('mcstas') is not None:
+            binary_path = Path(shutil.which('mcstas'))
+            if binary_path.is_symlink():
+                binary_path = binary_path.readlink()
+            default_paths['mcrun_path'] = f"{binary_path.parent}"
+            default_paths['mcstas_path'] = f"{binary_path.parent.parent}"
+        if shutil.which('mcxtrace') is not None:
+            binary_path = Path(shutil.which('mcxtrace'))
+            if binary_path.is_symlink():
+                binary_path = binary_path.readlink()
+            default_paths['mxrun_path'] = f'{binary_path.parent}'
+            default_paths['mcxtrace_path'] = f'{binary_path.parent.parent}'
 
         default_other = {"characters_per_line": 85}
 
