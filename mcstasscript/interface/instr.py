@@ -425,6 +425,7 @@ class McCode_instr(BaseCalculator):
             self.run_to_comment = ""
             self.run_to_name = None
             self.run_from_component_parameters = None
+            self.run_to_component_parameters = None
 
             # DumpDatabase
             self.dump_database = BeamDumpDatabase(self.name, self.input_path)
@@ -470,9 +471,20 @@ class McCode_instr(BaseCalculator):
             self.run_to_comment = str(comment)
 
         if component_ref is not None:
-            if "filename" not in kwargs:
-                kwargs["filename"] = '"' + self.name + "_" + component_ref + ".mcpl" + '"'
+            mcpl_par_name = "run_to_mcpl"
 
+            if mcpl_par_name not in self.parameters.parameters:
+                self.add_parameter("string", mcpl_par_name)
+
+            if "filename" not in kwargs:
+                #kwargs["filename"] = '"' + self.name + "_" + component_ref + ".mcpl" + '"'
+                #kwargs["filename"] = mcpl_par_name
+                auto_name = '"' + self.name + "_" + component_ref + ".mcpl" + '"'
+                self.set_parameters({mcpl_par_name: auto_name})
+            else:
+                self.set_parameters({mcpl_par_name: kwargs["filename"]})
+
+            kwargs["filename"] = mcpl_par_name
             self.run_to_component_parameters = kwargs
 
     def run_from(self, component_ref, run_name=None, **kwargs):
@@ -489,21 +501,36 @@ class McCode_instr(BaseCalculator):
         self.run_from_ref = component_ref
 
         if component_ref is not None:
+            mcpl_par_name = "run_from_mcpl"
+
+            if mcpl_par_name not in self.parameters.parameters:
+                self.add_parameter("string", mcpl_par_name)
+
+            if "filename" not in kwargs:
+                newest_dump = self.dump_database.newest_at_point(component_ref)
+                #kwargs["filename"] = '"' + newest_dump.data["data_path"] + '"'
+                auto_name = '"' + newest_dump.data["data_path"] + '"'
+                self.set_parameters({mcpl_par_name: auto_name})
+            else:
+                self.set_parameters({mcpl_par_name: kwargs["filename"]})
+
             if run_name is not None:
                 if component_ref not in self.dump_database.data:
                     raise KeyError("This run_from point doesn't have any runs.")
 
                 if run_name not in self.dump_database.data[component_ref]:
-                    print(self.dump_database.data[component_ref])
                     raise KeyError("Given run name not in database.")
 
                 dump = self.dump_database.data[component_ref][run_name]
-                kwargs["filename"] = '"' + dump.data["data_path"] + '"'
+                dump_filename = '"' + dump.data["data_path"] + '"'
+                print(run_name, dump_filename, dump.data["run_name"])
+                self.set_parameters({mcpl_par_name: dump_filename})
 
-            if "filename" not in kwargs:
-                newest_dump = self.dump_database.newest_at_point(component_ref)
-                kwargs["filename"] = '"' + newest_dump.data["data_path"] + '"'
+                # kwargs["filename"] = '"' + dump.data["data_path"] + '"'
 
+
+
+            kwargs["filename"] = mcpl_par_name
             self.run_from_component_parameters = kwargs
 
     def show_dumps(self):
@@ -1992,7 +2019,7 @@ class McCode_instr(BaseCalculator):
             MCPL_in.set_comment("Automatically inserted to split instrument into parts")
             if self.run_from_component_parameters is not None:
                 MCPL_in.set_parameters(**self.run_from_component_parameters)
-            #MCPL_in.write_component(fo)
+
 
             # Ensure first component reset to MCPL position
             first_component = component_subset[0]
@@ -2011,12 +2038,11 @@ class McCode_instr(BaseCalculator):
             # Add MCPL output component
             MCPL_out = self._create_component_instance("MCPL_" + self.run_to_ref, "MCPL_output")
             MCPL_out.set_comment("Automatically inserted to split instrument into parts")
-            if self.run_from_component_parameters is not None:
+            if self.run_to_component_parameters is not None:
                 MCPL_out.set_parameters(**self.run_to_component_parameters)
             MCPL_out.set_AT(replaced_component.AT_data, RELATIVE=replaced_component.AT_reference)
             if replaced_component.ROTATED_specified:
                 MCPL_out.set_ROTATED(replaced_component.ROTATED_data, RELATIVE=replaced_component.ROTATED_reference)
-            #MCPL_out.write_component(fo)
 
             component_subset += [MCPL_out]
 
@@ -2198,6 +2224,8 @@ class McCode_instr(BaseCalculator):
         if self._run_settings["force_compile"]:
             self.write_full_instrument()
 
+        print(self.parameters)
+
         parameters = {}
         for parameter in self.parameters:
             if parameter.value is None:
@@ -2227,8 +2255,11 @@ class McCode_instr(BaseCalculator):
         output_data.set_dict(data_dict)
 
         if self.run_to_ref is not None:
+            filename = self.parameters.parameters["run_to_mcpl"].value
+
             # Check for mcpl files and load those to database
-            self.dump_database.load_data(data_path=simulation.data_folder_name,
+            self.dump_database.load_data(expected_filename=filename,
+                                         data_folder_path=simulation.data_folder_name,
                                          parameters=self.parameters.parameters,
                                          dump_point=self.run_to_ref,
                                          run_name=self.run_to_name,

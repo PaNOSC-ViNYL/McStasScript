@@ -46,23 +46,54 @@ class BeamDumpDatabase:
 
         return dump_point_path
 
-    def load_data(self, data_path, parameters, run_name, dump_point, comment):
+    def load_data(self, expected_filename, data_folder_path, parameters, run_name, dump_point, comment):
         """
-        Searches folder for MCPL data and attributes it to given input properties
+        Find given MCPL datafile and load it into database
         """
-        if not os.path.isdir(data_path):
+        if not os.path.isdir(data_folder_path):
             # If the folder doesn't exist, skip search
             return
 
-        files = os.listdir(data_path)
+        expected_filename = expected_filename.strip('"')
+        expected_filename = os.path.split(expected_filename)[-1]
+        expected_filename = expected_filename.strip(".gz")
+        expected_filename = expected_filename.strip(".mcpl")
 
+        possible_endings = [".mcpl", ".mcpl.gz"]
+
+        for ending in possible_endings:
+            file_path = os.path.join(data_folder_path, expected_filename + ending)
+            if not os.path.isfile(file_path):
+                continue
+
+            dump = BeamDump(data_path=file_path, parameters=parameters,
+                            dump_point=dump_point, run_name=run_name,
+                            comment=comment)
+            dump_path = self.create_folder_for_dump_point(dump_point)
+            dump.dump_to_JSON(dump_path)
+
+            if dump_point not in self.data:
+                self.data[dump_point] = {}
+
+            run = dump.data["run_name"]
+            self.data[dump_point][run] = dump
+
+        """
+        files = os.listdir(data_folder_path)
         for file in files:
-            file = os.path.join(data_path, file) # Get full path
+            file = os.path.join(data_folder_path, file) # Get full path
             if os.path.isdir(file):
                 continue
 
             if file.endswith((".mcpl", ".mcpl.gz")):
                 file_path = os.path.abspath(file)
+                filename = file.strip(".gz")
+                filename = filename.strip(".mcpl")
+
+                if expected_filename != filename:
+                    # Not the mcpl file for which we are searching
+                    continue
+
                 dump = BeamDump(data_path=file_path, parameters=parameters,
                                 dump_point=dump_point, run_name=run_name,
                                 comment=comment)
@@ -74,6 +105,7 @@ class BeamDumpDatabase:
 
                 run = dump.data["run_name"]
                 self.data[dump_point][run] = dump
+        """
 
     def newest_at_point(self, point):
         if point not in self.data:
@@ -125,14 +157,15 @@ class BeamDumpDatabase:
                           dump.data["comment"], par_string)
 
     def __repr__(self):
-
         string = ""
         for point in self.data:
             string += point + ":\n"
             for run in self.data[point]:
-                string += "  " + str(self.data[point][run]) + ":\n"
+                string += "  " + self.data[point][run].data["run_name"] + "\n:"
+                string += "    " + str(self.data[point][run]) + ":\n"
 
         return string
+
 
 class BeamDump:
     def __init__(self, data_path, parameters, dump_point, run_name=None, time_loaded=None, comment=""):
@@ -188,6 +221,10 @@ class BeamDump:
 
         with open(filepath, "w") as outfile:
             json.dump(self.data, outfile)
+
+    def print_all(self):
+        for key in self.data:
+            print(key, self.data[key])
 
     def __repr__(self):
         return str(self.data)
