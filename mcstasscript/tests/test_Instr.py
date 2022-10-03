@@ -1702,6 +1702,11 @@ class TestMcStas_instr(unittest.TestCase):
         existing file so no error is thrown.
         """
 
+        # The mocked process needs to set a return-code of zero to avoid the process error checking
+        process_mock = unittest.mock.Mock()
+        process_mock.configure_mock(returncode=0)
+        mock_sub.return_value = process_mock
+
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
@@ -1768,6 +1773,11 @@ class TestMcStas_instr(unittest.TestCase):
         existing file so no error is thrown.
         """
 
+        # The mocked process needs to set a return-code of zero to avoid the process error checking
+        process_mock = unittest.mock.Mock()
+        process_mock.configure_mock(returncode=0)
+        mock_sub.return_value = process_mock
+
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
@@ -1813,6 +1823,11 @@ class TestMcStas_instr(unittest.TestCase):
         the output_path is set to a name that does not correspond to a
         existing file so no error is thrown.
         """
+
+        # The mocked process needs to set a return-code of zero to avoid the process error checking
+        process_mock = unittest.mock.Mock()
+        process_mock.configure_mock(returncode=0)
+        mock_sub.return_value = process_mock
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
@@ -1867,6 +1882,11 @@ class TestMcStas_instr(unittest.TestCase):
         parameters in run_full_instrument.
         """
 
+        # The mocked process needs to set a return-code of zero to avoid the process error checking
+        process_mock = unittest.mock.Mock()
+        process_mock.configure_mock(returncode=0)
+        mock_sub.return_value = process_mock
+
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
@@ -1920,6 +1940,11 @@ class TestMcStas_instr(unittest.TestCase):
         the output_path is set to a name that does not correspond to a
         existing file so no error is thrown.
         """
+
+        # The mocked process needs to set a return-code of zero to avoid the process error checking
+        process_mock = unittest.mock.Mock()
+        process_mock.configure_mock(returncode=0)
+        mock_sub.return_value = process_mock
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
