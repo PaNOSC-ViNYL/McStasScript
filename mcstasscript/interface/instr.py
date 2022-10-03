@@ -426,6 +426,22 @@ class McCode_instr(BaseCalculator):
     def output_path(self, value: str) -> None:
         self.calculator_base_dir = value
 
+    @property
+    def executable_version(self):
+        from subprocess import check_output
+        from pathlib import Path
+        from os import access, X_OK
+        from packaging.version import parse
+        if 'executable_path' not in self._run_settings or 'executable' not in self._run_settings:
+            return '0.0.0'
+        torun = Path(self._run_settings['executable_path']).joinpath(self._run_settings['executable'])
+        if not torun.exists() or not access(torun, X_OK):
+            return '0.0.0'
+        version_info = check_output([torun, '--version']).decode('utf-8')
+        version_string = [x for x in version_info.split('\n') if len(x)][-1]
+        return parse(version_string)
+
+
     def init_parameters(self):
         """
         Create empty ParameterContainer for new instrument
