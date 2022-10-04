@@ -1111,10 +1111,11 @@ class Component:
         string += unit + "\n)\n"
         if not self.WHEN == "":
             string += self.WHEN + "\n"
-        string += "AT (" + str(self.AT_data[0]) + ", " + str(self.AT_data[1]) + ", " + str(self.AT_data[2]) + ") "
+        string += f"AT {tuple(self.AT_data)} "
+        #"AT (" + str(self.AT_data[0]) + ", " + str(self.AT_data[1]) + ", " + str(self.AT_data[2]) + ") "
         string += str(self.AT_relative) + "\n"
         if self.ROTATED_specified:
-            string += "ROTATED " + str(self.ROTATED_data)
+            string += f"ROTATED {tuple(self.ROTATED_data)} "
             string += " " + self.ROTATED_relative + "\n"
         if not self.GROUP == "":
             string += "GROUP " + self.GROUP + "\n"
