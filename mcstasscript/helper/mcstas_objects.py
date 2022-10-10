@@ -1071,14 +1071,17 @@ class Component:
         if self.SPLIT != 0:
             string += "SPLIT " + str(self.SPLIT) + " "
         string += "COMPONENT " + str(self.name)
-        string += " = " + str(self.component_name) + "\n"
+        string += " = " + str(self.component_name) + "(\n"
+        lastval = self.parameter_names[-1]
+        previous = None
+        prevunit = ""
         for key in self.parameter_names:
             val = getattr(self, key)
             parameter_name = bcolors.BOLD + key + bcolors.ENDC
             if val is not None:
                 unit = ""
                 if key in self.parameter_units:
-                    unit = "[" + self.parameter_units[key] + "]"
+                    unit += " // [" + self.parameter_units[key] + "] "
                 if isinstance(val, Parameter):
                     #val_string = val.print_line() # too long
                     val_string = val.name
@@ -1092,8 +1095,12 @@ class Component:
                          + val_string
                          + bcolors.ENDC
                          + bcolors.ENDC)
-                string += "  " + parameter_name
-                string += " = " + value + " " + unit + "\n"
+                if previous is not None:
+                    string += ", " + prevunit + "\n"
+                string += "   " + parameter_name
+                string += " = " + value
+                previous = parameter_name
+                prevunit = unit
             else:
                 if self.parameter_defaults[key] is None:
                     string += "  " + parameter_name
@@ -1101,12 +1108,14 @@ class Component:
                     string += " : Required parameter not yet specified"
                     string += bcolors.ENDC + "\n"
 
+        string += unit + "\n)\n"
         if not self.WHEN == "":
             string += self.WHEN + "\n"
-        string += "AT " + str(self.AT_data) + " "
+        string += f"AT {tuple(self.AT_data)} "
+        #"AT (" + str(self.AT_data[0]) + ", " + str(self.AT_data[1]) + ", " + str(self.AT_data[2]) + ") "
         string += str(self.AT_relative) + "\n"
         if self.ROTATED_specified:
-            string += "ROTATED " + str(self.ROTATED_data)
+            string += f"ROTATED {tuple(self.ROTATED_data)} "
             string += " " + self.ROTATED_relative + "\n"
         if not self.GROUP == "":
             string += "GROUP " + self.GROUP + "\n"
