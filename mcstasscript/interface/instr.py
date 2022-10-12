@@ -2321,7 +2321,7 @@ class McCode_instr(BaseCalculator):
         method.
         """
 
-        self.add_input_to_mcpl()
+        self.__add_input_to_mcpl()
 
         instrument_path = os.path.join(self.input_path, self.name + ".instr")
         if not os.path.exists(instrument_path) or self._run_settings["force_compile"]:
@@ -2350,7 +2350,7 @@ class McCode_instr(BaseCalculator):
         #self._set_data(data)
         
         ## look for MCPL_output components and the defined filenames
-        self.add_mcpl_to_output(simulation)
+        self.__add_mcpl_to_output(simulation)
 
         # simulation results from .dat files loaded as dict
         data = simulation.load_results()
@@ -2381,7 +2381,7 @@ class McCode_instr(BaseCalculator):
         else:
             return self.output[sim_data_key].get_data()["data"]
 
-    def add_input_to_mcpl(self):
+    def __add_input_to_mcpl(self):
         try:
             mcpl_file = self.input["mcpl"].filename
             for comp in self.component_list:
@@ -2391,7 +2391,7 @@ class McCode_instr(BaseCalculator):
         except:
             return
 
-    def add_mcpl_to_output(self, managed_mcrun):
+    def __add_mcpl_to_output(self, managed_mcrun):
         MCPL_extension = MCPLDataFormat.format_register()["ext"]
         num_mcpl_files = 0
         for comp in self.component_list[::-1]: # starting from the last one!
