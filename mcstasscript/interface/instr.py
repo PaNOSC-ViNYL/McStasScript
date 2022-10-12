@@ -12,7 +12,8 @@ from IPython.display import IFrame
 from libpyvinyl.BaseCalculator import BaseCalculator
 from libpyvinyl.Parameters.Collections import CalculatorParameters
 
-from mcstasscript.data.pyvinylData import pyvinylMcStasData
+from mcstasscript.data.pyvinylData import pyvinylMcStasData, pyvinylMCPLData
+from mcstasscript.data.MCPLDataFormat import MCPLDataFormat
 
 from mcstasscript.helper.mcstas_objects import DeclareVariable
 from mcstasscript.helper.mcstas_objects import provide_parameter
@@ -2320,6 +2321,8 @@ class McCode_instr(BaseCalculator):
         method.
         """
 
+        self.add_input_to_mcpl()
+
         instrument_path = os.path.join(self.input_path, self.name + ".instr")
         if not os.path.exists(instrument_path) or self._run_settings["force_compile"]:
             self.write_full_instrument()
@@ -2327,7 +2330,7 @@ class McCode_instr(BaseCalculator):
         parameters = {}
         for parameter in self.parameters:
             if parameter.value is None:
-                raise RuntimeError("Unspecified parameter: '" + parameter.name
+                raise RuntimeError("Parameter value not set for parameter: '" + parameter.name
                                    + "' set with set_parameters.")
 
             parameters[parameter.name] = parameter.value
@@ -2345,11 +2348,16 @@ class McCode_instr(BaseCalculator):
         # Load data and store in __data
         #data = simulation.load_results()
         #self._set_data(data)
+        
+        ## look for MCPL_output components and the defined filenames
+        self.add_mcpl_to_output(simulation)
 
+        # simulation results from .dat files loaded as dict
         data = simulation.load_results()
         data_dict = {"data": data}
-        key = self.output_keys[0]
-        output_data = self.output[key]
+        # adding to the libpyvinyl output datacollection with key = sim_data_key
+        sim_data_key = self.output_keys[0]
+        output_data = self.output[sim_data_key] 
         output_data.set_dict(data_dict)
 
         if self.run_to_ref is not None:
@@ -2367,12 +2375,42 @@ class McCode_instr(BaseCalculator):
             if out is None:
                 print("Expected MCPL file was not loaded!")
 
-        if "data" not in self.output.get_data():
+        if "data" not in self.output[sim_data_key].get_data():
             print("\n\nNo data returned.")
             return None
         else:
-            return self.output.get_data()["data"]
+            return self.output[sim_data_key].get_data()["data"]
 
+    def add_input_to_mcpl(self):
+        try:
+            mcpl_file = self.input["mcpl"].filename
+            for comp in self.component_list:
+                if comp.component_name == "MCPL_input":
+                    comp.filename = '"' + mcpl_file + '"'
+                    break
+        except:
+            return
+
+    def add_mcpl_to_output(self, managed_mcrun):
+        MCPL_extension = MCPLDataFormat.format_register()["ext"]
+        num_mcpl_files = 0
+        for comp in self.component_list[::-1]: # starting from the last one!
+            if comp.component_name == "MCPL_output":
+                num_mcpl_files = num_mcpl_files+1
+
+                absfilepath = os.path.join(managed_mcrun.data_folder_name,
+                                           comp.filename.strip('"').strip("'")
+                                           +MCPL_extension)
+                if os.path.exists(absfilepath+".gz"):
+                    absfilepath+=".gz"
+                if os.path.exists(absfilepath) is False:
+                    raise RuntimeError(f"MCPL file: {absfilepath} nor {absfilepath}.gz not found")
+                mcpl_file =  pyvinylMCPLData.from_file(absfilepath)
+                if num_mcpl_files>1:
+                    mcpl_file.key = mcpl_file+str(num_mcpl_files)
+                self.output.add_data(mcpl_file)
+                self.output_keys.append(mcpl_file.key)
+        
     def run_full_instrument(self, **kwargs):
         """
         Runs McStas instrument described by this class, returns list of
