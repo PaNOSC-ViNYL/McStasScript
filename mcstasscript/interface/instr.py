@@ -451,11 +451,29 @@ class McCode_instr(BaseCalculator):
         """
         pass
 
-    def run_to(self, component_ref, run_name=None, comment=None, **kwargs):
+    def reset_run_points(self):
+        """
+        Reset run_from and run_to points to the full instrument
+        """
+        self.run_from_ref = None
+        self.run_to_ref = None
+
+    def run_to(self, component_ref, run_name="Run", comment=None, **kwargs):
         """
         Set limit for instrument, only run to given component, save MCPL there
-        """
 
+        The method accepts keywords for the MCPL output component allowing to
+        store for example userflags or setting the filename directly.
+
+        component_ref : str / component object
+            Name of component where the instrument simulation should end
+
+        run_name : str
+            Name associated with the generated beam dump
+
+        comment : str
+            Comment asscoiated with the generated beam dump
+        """
         if isinstance(component_ref, Component):
             component_ref = component_ref.name
 
@@ -463,33 +481,60 @@ class McCode_instr(BaseCalculator):
         self.subset_check(start_ref=self.run_from_ref, end_ref=component_ref)
 
         self.run_to_ref = component_ref
-
-        if run_name is not None:
-            self.run_to_name = run_name
+        self.run_to_name = run_name
 
         if comment is not None:
             self.run_to_comment = str(comment)
+        else:
+            self.run_to_comment = ""
 
         if component_ref is not None:
             mcpl_par_name = "run_to_mcpl"
 
             if mcpl_par_name not in self.parameters.parameters:
+                # Need to add parameter to instrument for mcpl filename
                 self.add_parameter("string", mcpl_par_name)
 
             if "filename" not in kwargs:
-                #kwargs["filename"] = '"' + self.name + "_" + component_ref + ".mcpl" + '"'
-                #kwargs["filename"] = mcpl_par_name
+                # Generate a reasonable filename
                 auto_name = '"' + self.name + "_" + component_ref + ".mcpl" + '"'
                 self.set_parameters({mcpl_par_name: auto_name})
             else:
+                # Set the instrument parameter to the given filename
                 self.set_parameters({mcpl_par_name: kwargs["filename"]})
 
+            # Set the mcpl component parameter to the filename instrument parameter
             kwargs["filename"] = mcpl_par_name
+
+            # Check the given keywords arguments are legal for the MCPL output component
+            dummy_MCPL = self._create_component_instance("MCPL_output", "MCPL_output")
+            try:
+                dummy_MCPL.set_parameters(kwargs)
+            except:
+                # Provide information on what stage caused the problem
+                print("Problems detected with input arguments for MCPL output component")
+                # Show the exception for the failure to set parameters on the component
+                dummy_MCPL.set_parameters(kwargs)
+
+            # Store parameters for the MCPL output component
             self.run_to_component_parameters = kwargs
 
-    def run_from(self, component_ref, run_name=None, **kwargs):
+    def run_from(self, component_ref, run_name=None, tag=None, **kwargs):
         """
-        Set limit for instrument, only run from given component, loads MCPL there
+        Set limit for instrument, only run from given component, load MCPL ot start
+
+        The method accepts keywords for the MCPL input component allowing to
+        set for example the smear for direction / energy / position and
+        repeat count.
+
+        component_ref : str / component object
+            Name of component where the instrument simulation should start
+
+        run_name : str
+            Run name of dump to use as starting point of simulation
+
+        tag : integer
+            Tag of the desired dump
         """
 
         if isinstance(component_ref, Component):
@@ -504,11 +549,12 @@ class McCode_instr(BaseCalculator):
             mcpl_par_name = "run_from_mcpl"
 
             if mcpl_par_name not in self.parameters.parameters:
+                # Need to add parameter to instrument for mcpl filename
                 self.add_parameter("string", mcpl_par_name)
 
             if "filename" not in kwargs:
+                # Find newest dump from database
                 newest_dump = self.dump_database.newest_at_point(component_ref)
-                #kwargs["filename"] = '"' + newest_dump.data["data_path"] + '"'
                 auto_name = '"' + newest_dump.data["data_path"] + '"'
                 self.set_parameters({mcpl_par_name: auto_name})
             else:
@@ -516,31 +562,56 @@ class McCode_instr(BaseCalculator):
 
             if run_name is not None:
                 if component_ref not in self.dump_database.data:
-                    raise KeyError("This run_from point doesn't have any runs.")
+                    raise KeyError("The run_from'  point doesn't have any runs.")
 
                 if run_name not in self.dump_database.data[component_ref]:
                     raise KeyError("Given run name not in database.")
 
-                dump = self.dump_database.data[component_ref][run_name]
+                if tag is None:
+                    dump = self.dump_database.newest_at_point_and_run(component_ref, run_name)
+                else:
+                    dump = self.dump_database.data[component_ref][run_name][tag]
+
                 dump_filename = '"' + dump.data["data_path"] + '"'
-                print(run_name, dump_filename, dump.data["run_name"])
                 self.set_parameters({mcpl_par_name: dump_filename})
 
                 # kwargs["filename"] = '"' + dump.data["data_path"] + '"'
 
-
-
             kwargs["filename"] = mcpl_par_name
+
+            # Ensure the kwargs are allowed
+            dummy_MCPL = self._create_component_instance("MCPL_input", "MCPL_input")
+            try:
+                dummy_MCPL.set_parameters(kwargs)
+            except:
+                print("Problems detected with input arguments for MCPL input component")
+                dummy_MCPL.set_parameters(kwargs)
+
             self.run_from_component_parameters = kwargs
 
     def show_dumps(self):
         component_names = [x.name for x in self.component_list]
         self.dump_database.show_in_order(component_names)
 
+    def show_dump(self, point, run_name, tag):
+        self.dump_database.get_dump(point, run_name, tag).print_all()
+
     def subset_check(self, start_ref, end_ref):
         """
         Checks that when the instrument is broken into subsets, it is still valid
+
+        start_ref : str
+            Name of starting component
+
+        end_ref : str
+            Name of end component
         """
+
+        start_i, end_i = self.get_component_subset_index_range(start_ref, end_ref)
+        if start_i > end_i:
+            raise McStasError("Running from '" + start_ref + "' to '" + end_ref
+                              + "' not possible as '" + end_ref + "' is before '"
+                              + start_ref + "' in the component sequence.")
 
         # Check current subset of instrument is self contained
         is_self_contained = True
@@ -563,7 +634,7 @@ class McCode_instr(BaseCalculator):
         # Check the part after is self consistent
         is_self_contained = True
         try:
-            self.check_for_relative_errors(start_ref=end_ref)
+            self.check_for_relative_errors(start_ref=end_ref, allow_absolute=False)
         except McStasError:
             is_self_contained = False
 
@@ -573,7 +644,7 @@ class McCode_instr(BaseCalculator):
                   "files. When seeing only the specified subset of the instrument, "
                   "this reference can not be resolved. \n"
                   "In this case the remaining instrument would fail.")
-            self.check_for_relative_errors(start_ref=end_ref)
+            self.check_for_relative_errors(start_ref=end_ref, allow_absolute=False)
 
     def add_parameter(self, *args, **kwargs):
         """
@@ -971,7 +1042,7 @@ class McCode_instr(BaseCalculator):
 
     """
     # Handle trace string differently when components also exists
-    #  A) Coul d have trace string as a component attribute and set
+    #  A) Could have trace string as a component attribute and set
     #     it before / after
     #  B) Could have trace string as a McStas_instr attribute and
     #     still attach placement to components
@@ -1784,7 +1855,7 @@ class McCode_instr(BaseCalculator):
         for component in self.component_list:
             component.check_parameters(pars_and_vars)
 
-    def check_for_relative_errors(self, start_ref=None, end_ref=None):
+    def check_for_relative_errors(self, start_ref=None, end_ref=None, allow_absolute=True):
         """
         Method for checking if RELATIVE locations does not contain unknown references
 
@@ -1812,9 +1883,23 @@ class McCode_instr(BaseCalculator):
             if component.AT_reference not in (None, "PREVIOUS"):
                 references.append(component.AT_reference)
 
+            if not allow_absolute:
+                if component.AT_relative == "ABSOLUTE":
+                    raise McStasError("Component '" + component.name
+                                      + "' was set relative to ABSOLUTE"
+                                      + " which is not allowed after an"
+                                      + " instrument split.")
+
             if ( component.ROTATED_specified and
                    component.ROTATED_reference not in (None, "PREVIOUS")):
                 references.append(component.ROTATED_reference)
+
+            if not allow_absolute:
+                if component.ROTATED_relative == "ABSOLUTE" and component.ROTATED_specified:
+                    raise McStasError("Component '" + component.name
+                                      + "' was set relative to ABSOLUTE"
+                                      + " which is not allowed after an"
+                                      + " instrument split.")
 
             for ref in references:
                 if ref not in seen_instrument_names:
@@ -1823,6 +1908,7 @@ class McCode_instr(BaseCalculator):
                                       " named '" + str(ref) + "'.\n"
                                       "This check can be skipped with"
                                       " settings(checks=False)")
+
 
     def read_instrument_file(self):
         """
@@ -1890,7 +1976,7 @@ class McCode_instr(BaseCalculator):
         fo.write("* python based McStas instrument generator written by \n")
         fo.write("* Mads Bertelsen in 2019 while employed at the \n")
         fo.write("* European Spallation Source Data Management and \n")
-        fo.write("* Software Center\n")
+        fo.write("* Software Centre\n")
         fo.write("* \n")
         fo.write("* Instrument %s\n" % self.name)
         fo.write("* \n")
@@ -2019,7 +2105,6 @@ class McCode_instr(BaseCalculator):
             MCPL_in.set_comment("Automatically inserted to split instrument into parts")
             if self.run_from_component_parameters is not None:
                 MCPL_in.set_parameters(**self.run_from_component_parameters)
-
 
             # Ensure first component reset to MCPL position
             first_component = component_subset[0]
@@ -2224,8 +2309,6 @@ class McCode_instr(BaseCalculator):
         if self._run_settings["force_compile"]:
             self.write_full_instrument()
 
-        print(self.parameters)
-
         parameters = {}
         for parameter in self.parameters:
             if parameter.value is None:
@@ -2258,12 +2341,16 @@ class McCode_instr(BaseCalculator):
             filename = self.parameters.parameters["run_to_mcpl"].value
 
             # Check for mcpl files and load those to database
-            self.dump_database.load_data(expected_filename=filename,
-                                         data_folder_path=simulation.data_folder_name,
-                                         parameters=self.parameters.parameters,
-                                         dump_point=self.run_to_ref,
-                                         run_name=self.run_to_name,
-                                         comment=self.run_to_comment)
+            db = self.dump_database
+            out = db.load_data(expected_filename=filename,
+                               data_folder_path=simulation.data_folder_name,
+                               parameters=self.parameters.parameters,
+                               dump_point=self.run_to_ref,
+                               run_name=self.run_to_name,
+                               comment=self.run_to_comment)
+
+            if out is None:
+                print("Expected MCPL file was not loaded!")
 
         if "data" not in self.output.get_data():
             print("\n\nNo data returned.")
