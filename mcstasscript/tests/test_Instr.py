@@ -12,8 +12,17 @@ from mcstasscript.interface.instr import McXtrace_instr
 from mcstasscript.helper.formatting import bcolors
 from mcstasscript.tests.helpers_for_tests import WorkInTestDir
 from mcstasscript.helper.exceptions import McStasError
+from mcstasscript.helper.mcstas_objects import Component
+from mcstasscript.helper.beam_dump_database import BeamDump
 
 run_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '.')
+
+class DummyComponent(Component):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def set_parameters(self, *args, **kwargs):
+        pass
 
 def setup_instr_no_path():
     """
@@ -138,6 +147,17 @@ def setup_populated_instr():
     return instr
 
 
+def setup_populated_instr_with_dummy_MCPL_comps():
+    """
+    Sets up a neutron instrument with some features used and three components
+    """
+    instr = setup_populated_instr()
+
+    instr.component_class_lib["MCPL_input"] = DummyComponent
+    instr.component_class_lib["MCPL_output"] = DummyComponent
+
+    return instr
+
 def setup_populated_instr_with_dummy_path():
     """
     Sets up a neutron instrument with some features used and three components
@@ -232,6 +252,15 @@ def setup_populated_with_some_options_instr():
     instr.add_component("third_component", "test_for_reading")
 
     return instr
+
+
+def insert_mock_dump(instr, component_name, run_name="Run", tag=0):
+    dump = BeamDump("", {}, component_name, run_name, tag=tag)
+    dump.file_present = lambda *_: True  # Overwrite file check
+
+    instr.dump_database.data[component_name] = {}
+    instr.dump_database.data[component_name][run_name] = {}
+    instr.dump_database.data[component_name][run_name][tag] = dump
 
 
 class TestMcStas_instr(unittest.TestCase):
@@ -390,6 +419,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(parameter.name, "theta")
         self.assertEqual(parameter.comment, "test par")
+        self.assertTrue(parameter in instr.parameters.parameters.values())
 
     def test_user_var_block_add_parameter(self):
         """
@@ -1595,7 +1625,7 @@ class TestMcStas_instr(unittest.TestCase):
          my_call("* python based McStas instrument generator written by \n"),
          my_call("* Mads Bertelsen in 2019 while employed at the \n"),
          my_call("* European Spallation Source Data Management and \n"),
-         my_call("* Software Center\n"),
+         my_call("* Software Centre\n"),
          my_call("* \n"),
          my_call("* Instrument test_instrument\n"),
          my_call("* \n"),
@@ -1990,6 +2020,187 @@ class TestMcStas_instr(unittest.TestCase):
                                          universal_newlines=True,
                                          cwd=".")
 
+    def test_show_dumps_works(self):
+        """
+        Ensures show_dumps runs
+        """
+
+        instr = setup_populated_instr_with_dummy_MCPL_comps()
+        insert_mock_dump(instr, "second_component")
+
+        instr.show_dumps()
+
+    def test_show_dump_works(self):
+        """
+        Ensures show_dump runs and that db can get the stored dump
+        """
+
+        instr = setup_populated_instr_with_dummy_MCPL_comps()
+        insert_mock_dump(instr, "second_component", run_name="custom_run", tag=31)
+
+        instr.show_dump("second_component", "custom_run", 31)
+
+        dump = instr.dump_database.get_dump("second_component", "custom_run", 31)
+        self.assertEqual(dump.data["dump_point"], "second_component")
+        self.assertEqual(dump.data["run_name"], "custom_run")
+        self.assertEqual(dump.data["tag"], 31)
+
+    def test_set_run_to_component(self):
+        """
+        Testing run_to method updates instr state correctly
+        """
+
+        instr = setup_populated_instr_with_dummy_MCPL_comps()
+
+        second_component = instr.get_component("second_component")
+
+        # Ensure remaining instrument can work
+        third_component = instr.get_component("third_component")
+        third_component.set_RELATIVE("second_component")
+
+        instr.run_to(second_component)
+
+        self.assertEqual(instr.run_from_ref, None)
+        self.assertEqual(instr.run_to_ref, "second_component")
+        self.assertEqual(instr.run_to_name, "Run")
+
+        # Check filename added to parameters
+        self.assertTrue("run_to_mcpl" in instr.parameters.parameters)
+        self.assertEqual(instr.parameters.parameters["run_to_mcpl"].type, "string")
+
+        instr.run_to("third_component", run_name="Test_name")
+        self.assertEqual(instr.run_to_ref, "third_component")
+        self.assertEqual(instr.run_to_name, "Test_name")
+
+    def test_set_run_to_component_keywords(self):
+        """
+        Testing run_to method updates instr state with passed keywords
+        """
+
+        instr = setup_populated_instr_with_dummy_MCPL_comps()
+
+        second_component = instr.get_component("second_component")
+
+        # Ensure remaining instrument can work
+        third_component = instr.get_component("third_component")
+        third_component.set_RELATIVE("second_component")
+
+        instr.run_to(second_component, test_keyword=58)
+
+        self.assertIn("test_keyword", instr.run_to_component_parameters)
+        self.assertEqual(instr.run_to_component_parameters["test_keyword"], 58)
+
+    def test_set_run_to_nonexistant_component_fails(self):
+        """
+        Ensures run_to fails if the component doesn't exist
+        """
+
+        instr = setup_populated_instr_with_dummy_MCPL_comps()
+
+        with self.assertRaises(ValueError):
+            instr.run_to("component_that_does_not_exists")
+
+    def test_set_run_to_component_with_ABSOLUTE_in_remaining_fails(self):
+        """
+        Ensures run_to fails if the remaining instrument refers to absolute
+        """
+        instr = setup_populated_instr_with_dummy_MCPL_comps()
+
+        with self.assertRaises(McStasError):
+            # Fails because the rest of the instrument has reference to ABSOLUTE
+            instr.run_to("second_component")
+
+    def test_set_run_to_component_with_early_ref_in_remaining_fails(self):
+        """
+        Ensures run_to fails if the remaining instrument refers to absolute
+        """
+        instr = setup_populated_instr_with_dummy_MCPL_comps()
+
+        comp = instr.get_component("third_component")
+        comp.set_RELATIVE("first_component")
+
+        with self.assertRaises(McStasError):
+            # Fails because the rest of the instrument has reference to component before split
+            instr.run_to("second_component")
+
+    def test_set_run_from_component(self):
+        """
+        Testing run_from method updates instr state correctly
+        """
+        instr = setup_populated_instr_with_dummy_MCPL_comps()
+
+        insert_mock_dump(instr, "second_component")
+
+        second_component = instr.get_component("second_component")
+
+        # Ensure remaining instrument can work
+        third_component = instr.get_component("third_component")
+        third_component.set_RELATIVE("second_component")
+
+        instr.run_from(second_component)
+
+        self.assertEqual(instr.run_to_ref, None)
+        self.assertEqual(instr.run_from_ref, "second_component")
+
+        # Check filename added to parameters
+        self.assertTrue("run_from_mcpl" in instr.parameters.parameters)
+        self.assertEqual(instr.parameters.parameters["run_from_mcpl"].type, "string")
+
+    def test_set_run_from_component_fails_if_no_dump(self):
+        """
+        Ensure run_from fails if there are no dumps at that location
+        """
+        instr = setup_populated_instr_with_dummy_MCPL_comps()
+
+        with self.assertRaises(KeyError):
+            instr.run_from("second_component")
+
+        # Also fails if database is populated at a different component
+        insert_mock_dump(instr, "second_component")
+
+        with self.assertRaises(KeyError):
+            instr.run_from("first_component")
+
+    def test_set_run_from_component_keywords(self):
+        """
+        Testing run_to method updates instr state with passed keywords
+        """
+
+        instr = setup_populated_instr_with_dummy_MCPL_comps()
+
+        insert_mock_dump(instr, "second_component")
+
+        second_component = instr.get_component("second_component")
+
+        # Ensure remaining instrument can work
+        third_component = instr.get_component("third_component")
+        third_component.set_RELATIVE("second_component")
+
+        instr.run_from(second_component, test_keyword=37)
+
+        self.assertIn("test_keyword", instr.run_from_component_parameters)
+        self.assertEqual(instr.run_from_component_parameters["test_keyword"], 37)
+
+    def test_set_run_from_and_run_to(self):
+        """
+        Ensure it is possible to use run_from and run_to, and that reset work
+        """
+
+        instr = setup_populated_instr_with_dummy_MCPL_comps()
+        insert_mock_dump(instr, "second_component")
+        third_component = instr.get_component("third_component")
+        third_component.set_RELATIVE("second_component")
+
+        instr.run_from("second_component")
+        instr.run_to("third_component")
+
+        self.assertEqual(instr.run_from_ref, "second_component")
+        self.assertEqual(instr.run_to_ref, "third_component")
+
+        instr.reset_run_points()
+
+        self.assertEqual(instr.run_from_ref, None)
+        self.assertEqual(instr.run_to_ref, None)
 
 if __name__ == '__main__':
     unittest.main()
