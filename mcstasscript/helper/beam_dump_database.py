@@ -157,7 +157,7 @@ class BeamDumpDatabase:
                            + "at the dump_point '" + point + "'.")
 
         if tag is None:
-            return self.newest_at_point_and_run(point, run_name)
+            return self.newest_at_point(point, run=run_name)
 
         tag = int(tag) # Ensure tag is an integer for database lookup
 
@@ -172,23 +172,9 @@ class BeamDumpDatabase:
 
         return dump
 
-    def newest_at_point(self, point):
+    def newest_at_point(self, point, run=None):
         """
-        Gets newest dump at a given point
-
-        point : str
-            String with component name matching the dump point
-        """
-
-        if point not in self.data:
-            raise KeyError("The dump point '" + point + "' wasn't in the database.")
-
-        runs = self.data[point]
-        return self.sort_by_time(runs, return_latest=True)
-
-    def newest_at_point_and_run(self, point, run):
-        """
-        Gets the newest dump at a given point and run name
+        Gets newest dump at a given point and optionally a run_name
 
         point : str
             String with component name matching the dump point
@@ -196,14 +182,22 @@ class BeamDumpDatabase:
         run : str
             String matching the run_name desired
         """
+
         if point not in self.data:
             raise KeyError("The dump point '" + point + "' wasn't in the database.")
 
-        if run not in self.data[point]:
-            raise KeyError("The run_name '" + run + "' wasn't in the database "
-                           + "at the dump_point '" + point + "'.")
+        if run is None:
+            # Collect all runs at the point for sort_by_time
+            runs = self.data[point]
+        else:
+            # If a run name is specified, check it exists
+            if run not in self.data[point]:
+                raise KeyError("The run_name '" + run + "' wasn't in the database "
+                               + "at the dump_point '" + point + "'.")
 
-        runs = {run: self.data[point][run]}
+            # Collect all the runs in a dict for sort_by_time
+            runs = {run: self.data[point][run]}
+
         return self.sort_by_time(runs, return_latest=True)
 
     def sort_by_time(self, runs, return_latest=False):
@@ -243,9 +237,11 @@ class BeamDumpDatabase:
                     tag = dump.data["tag"]
                     data_path = dump.data["data_path"]
 
-                    print(f"Latest file had run_name {run_name} and tag {tag}, but the file was"
+                    print(f"Latest file had run_name '{run_name}' and tag '{tag}', but the file was "
                           f"not found in the expected location, and thus skipped.")
                     print("Expected path: ", data_path)
+
+            raise RuntimeError("No beam dumps available.")
 
         return return_list
 

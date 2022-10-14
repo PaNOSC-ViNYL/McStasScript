@@ -458,6 +458,24 @@ class McCode_instr(BaseCalculator):
         self.run_from_ref = None
         self.run_to_ref = None
 
+    def show_run_subset(self):
+        """
+        Shows current subset of instrument selected with run_from and run_to methods
+        """
+        if self.run_from_ref is None and self.run_to_ref is None:
+            print("No run_from or run_to point set.")
+            return
+
+        if self.run_from_ref is None:
+            print("Running from start of the instrument", end="")
+        else:
+            print(f"Running from component named '{self.run_from_ref}'", end="")
+
+        if self.run_to_ref is None:
+            print(" to the end of the instrument.")
+        else:
+            print(f" to component named '{self.run_to_ref}'.")
+
     def run_to(self, component_ref, run_name="Run", comment=None, **kwargs):
         """
         Set limit for instrument, only run to given component, save MCPL there
@@ -534,7 +552,7 @@ class McCode_instr(BaseCalculator):
             Run name of dump to use as starting point of simulation
 
         tag : integer
-            Tag of the desired dump
+            Tag of the desired dump (only allowed if run_name is given)
         """
 
         if isinstance(component_ref, Component):
@@ -554,28 +572,17 @@ class McCode_instr(BaseCalculator):
 
             if "filename" not in kwargs:
                 # Find newest dump from database
-                newest_dump = self.dump_database.newest_at_point(component_ref)
+                newest_dump = self.dump_database.newest_at_point(component_ref, run=run_name)
                 auto_name = '"' + newest_dump.data["data_path"] + '"'
                 self.set_parameters({mcpl_par_name: auto_name})
             else:
                 self.set_parameters({mcpl_par_name: kwargs["filename"]})
 
-            if run_name is not None:
-                if component_ref not in self.dump_database.data:
-                    raise KeyError("The run_from'  point doesn't have any runs.")
-
-                if run_name not in self.dump_database.data[component_ref]:
-                    raise KeyError("Given run name not in database.")
-
-                if tag is None:
-                    dump = self.dump_database.newest_at_point_and_run(component_ref, run_name)
-                else:
-                    dump = self.dump_database.data[component_ref][run_name][tag]
+            if run_name is not None and tag is not None:
+                dump = self.dump_database.get_dump(component_ref, run_name, tag)
 
                 dump_filename = '"' + dump.data["data_path"] + '"'
                 self.set_parameters({mcpl_par_name: dump_filename})
-
-                # kwargs["filename"] = '"' + dump.data["data_path"] + '"'
 
             kwargs["filename"] = mcpl_par_name
 
