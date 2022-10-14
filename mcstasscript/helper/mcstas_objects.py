@@ -1071,17 +1071,20 @@ class Component:
         if self.SPLIT != 0:
             string += "SPLIT " + str(self.SPLIT) + " "
         string += "COMPONENT " + str(self.name)
-        string += " = " + str(self.component_name) + "(\n"
-        lastval = self.parameter_names[-1]
-        previous = None
-        prevunit = ""
+        string += " = " + str(self.component_name) + "("
+
+        last_par_name = ""
+        for key in self.parameter_names:
+            if getattr(self, key) is not None:
+                last_par_name = key
+
         for key in self.parameter_names:
             val = getattr(self, key)
             parameter_name = bcolors.BOLD + key + bcolors.ENDC
             if val is not None:
                 unit = ""
                 if key in self.parameter_units:
-                    unit += " // [" + self.parameter_units[key] + "] "
+                    unit += " // [" + self.parameter_units[key] + "]"
                 if isinstance(val, Parameter):
                     #val_string = val.print_line() # too long
                     val_string = val.name
@@ -1095,27 +1098,31 @@ class Component:
                          + val_string
                          + bcolors.ENDC
                          + bcolors.ENDC)
-                if previous is not None:
-                    string += ", " + prevunit + "\n"
-                string += "   " + parameter_name
+
+                string += "\n"
+                string += "  " + parameter_name
                 string += " = " + value
-                previous = parameter_name
-                prevunit = unit
+                if key != last_par_name:
+                    string += ","
+                string += unit
+
             else:
                 if self.parameter_defaults[key] is None:
+                    string += "\n"
                     string += "  " + parameter_name
                     string += bcolors.FAIL
                     string += " : Required parameter not yet specified"
-                    string += bcolors.ENDC + "\n"
+                    string += bcolors.ENDC
 
-        string += unit + "\n)\n"
+        string += "\n)"
         if not self.WHEN == "":
-            string += self.WHEN + "\n"
+            string += " " + self.WHEN
+        string += "\n"
         string += f"AT {tuple(self.AT_data)} "
         #"AT (" + str(self.AT_data[0]) + ", " + str(self.AT_data[1]) + ", " + str(self.AT_data[2]) + ") "
         string += str(self.AT_relative) + "\n"
         if self.ROTATED_specified:
-            string += f"ROTATED {tuple(self.ROTATED_data)} "
+            string += f"ROTATED {tuple(self.ROTATED_data)}"
             string += " " + self.ROTATED_relative + "\n"
         if not self.GROUP == "":
             string += "GROUP " + self.GROUP + "\n"

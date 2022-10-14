@@ -1317,12 +1317,12 @@ class TestMcStas_instr(unittest.TestCase):
         output = mock_stdout.getvalue().split("\n")
 
         self.assertEqual(output[0],
-                         "COMPONENT second_component = test_for_reading")
+                         "COMPONENT second_component = test_for_reading(")
 
         par_name = bcolors.BOLD + "dist" + bcolors.ENDC
         value = (bcolors.BOLD + bcolors.OKGREEN
                  + "5" + bcolors.ENDC + bcolors.ENDC)
-        self.assertEqual(output[1], "  " + par_name + " = " + value + " [m]")
+        self.assertEqual(output[1], "  " + par_name + " = " + value + " // [m]")
 
         par_name = bcolors.BOLD + "gauss" + bcolors.ENDC
         warning = (bcolors.FAIL
@@ -1336,7 +1336,8 @@ class TestMcStas_instr(unittest.TestCase):
                    + bcolors.ENDC)
         self.assertEqual(output[3], "  " + par_name + warning)
 
-        self.assertEqual(output[4], "AT [0, 0, 0] ABSOLUTE")
+        self.assertEqual(output[4], ")")
+        self.assertEqual(output[5], "AT (0, 0, 0) ABSOLUTE")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_print_component_short(self, mock_stdout):

@@ -628,17 +628,17 @@ class TestComponent(unittest.TestCase):
         output = output.split("\n")
 
         self.assertEqual(output[0], "// test comment")
-        self.assertEqual(output[1], "SPLIT 7 COMPONENT test_component = Arm")
+        self.assertEqual(output[1], "SPLIT 7 COMPONENT test_component = Arm(")
 
         par_name = bcolors.BOLD + "new_par1" + bcolors.ENDC
         value = (bcolors.BOLD + bcolors.OKGREEN
                  + "1.5" + bcolors.ENDC + bcolors.ENDC)
-        self.assertEqual(output[2], "  " + par_name + " = " + value + " [m]")
+        self.assertEqual(output[2], "  " + par_name + " = " + value + ", // [m]")
 
         par_name = bcolors.BOLD + "new_par2" + bcolors.ENDC
         value = (bcolors.BOLD + bcolors.OKGREEN
                  + "3" + bcolors.ENDC + bcolors.ENDC)
-        self.assertEqual(output[3], "  " + par_name + " = " + value + " [AA]")
+        self.assertEqual(output[3], "  " + par_name + " = " + value + ", // [AA]")
 
         par_name = bcolors.BOLD + "new_par3" + bcolors.ENDC
         warning = (bcolors.FAIL
@@ -649,18 +649,19 @@ class TestComponent(unittest.TestCase):
         par_name = bcolors.BOLD + "this_par" + bcolors.ENDC
         value = (bcolors.BOLD + bcolors.OKGREEN
                  + "test_val" + bcolors.ENDC + bcolors.ENDC)
-        self.assertEqual(output[5], "  " + par_name + " = " + value + " []")
+        self.assertEqual(output[5], "  " + par_name + " = " + value + ", // []")
 
         par_name = bcolors.BOLD + "that_par" + bcolors.ENDC
         value = (bcolors.BOLD + bcolors.OKGREEN
                  + "\"txt_string\"" + bcolors.ENDC + bcolors.ENDC)
-        self.assertEqual(output[6], "  " + par_name + " = " + value + " [1]")
+        # No comma after last parameter
+        self.assertEqual(output[6], "  " + par_name + " = " + value + " // [1]")
 
-        self.assertEqual(output[7], "WHEN (1==2)")
+        self.assertEqual(output[7], ") WHEN (1==2)")
 
-        self.assertEqual(output[8], "AT [0.124, 183.9, 157] RELATIVE home")
+        self.assertEqual(output[8], "AT (0.124, 183.9, 157) RELATIVE home")
         self.assertEqual(output[9],
-                         "ROTATED [482, 1240.2, 0.185] RELATIVE etc")
+                         "ROTATED (482, 1240.2, 0.185) RELATIVE etc")
         self.assertEqual(output[10], "GROUP developers")
         self.assertEqual(output[11], "EXTEND %{")
         self.assertEqual(output[12], "nscat = 8;")
