@@ -37,6 +37,7 @@ Documentation
    tutorial/McStasScript_tutorial_2_SPLIT.ipynb
    tutorial/McStasScript_tutorial_3_EXTEND_and_WHEN.ipynb
    tutorial/McStasScript_tutorial_4_JUMP.ipynb
+   tutorial/McStasScript_tutorial_5_MCPL_bridges.ipynb
    
 .. toctree::
    :caption: McStas Union Tutorial

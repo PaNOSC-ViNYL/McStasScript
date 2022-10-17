@@ -600,7 +600,10 @@ class McCode_instr(BaseCalculator):
         component_names = [x.name for x in self.component_list]
         self.dump_database.show_in_order(component_names)
 
-    def show_dump(self, point, run_name, tag):
+    def show_dump(self, point, run_name=None, tag=None):
+        if isinstance(point, Component):
+            point = point.name
+
         self.dump_database.get_dump(point, run_name, tag).print_all()
 
     def subset_check(self, start_ref, end_ref):
@@ -619,6 +622,10 @@ class McCode_instr(BaseCalculator):
             raise McStasError("Running from '" + start_ref + "' to '" + end_ref
                               + "' not possible as '" + end_ref + "' is before '"
                               + start_ref + "' in the component sequence.")
+        if start_i == end_i:
+            raise McStasError("Running from and to the same component is not supported "
+                              + "here both run_from and run_to are set to "
+                              + "'" + start_ref + "'.")
 
         # Check current subset of instrument is self contained
         is_self_contained = True
