@@ -93,9 +93,6 @@ def _plot_fig_ax(data, fig, ax, **kwargs):
 
         ax.errorbar(x, y, yerr=y_err)
 
-        if data.plot_options.log:
-            ax.set_yscale("log", nonpositive='clip')
-
         ax.set_xlim(data.metadata.limits[0] * x_axis_mult,
                     data.metadata.limits[1] * x_axis_mult)
 
@@ -111,6 +108,23 @@ def _plot_fig_ax(data, fig, ax, **kwargs):
 
         if data.plot_options.custom_xlim_right:
             ax.set_xlim(right=data.plot_options.right_lim)
+
+        if data.plot_options.log:
+            ax.set_yscale("log", nonpositive='clip')
+
+            n_non_zero = np.count_nonzero(data.Intensity)
+            if n_non_zero == 0:
+                # Plot is empty, return
+                return
+
+            non_zero = np.nonzero(data.Intensity)
+            min_value_log = np.log10(min(data.Intensity[non_zero]))
+            max_value_log = np.log10(max(data.Intensity[non_zero]))
+
+            orders_of_mag = data.plot_options.orders_of_mag
+            if max_value_log - min_value_log > orders_of_mag:
+                ax.set_ylim(top=10.0 ** (max_value_log * 1.1))
+                ax.set_ylim(bottom=10.0 ** (max_value_log - orders_of_mag))
 
     elif len(data.metadata.dimension) == 2:
 

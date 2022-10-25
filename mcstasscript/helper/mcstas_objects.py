@@ -653,7 +653,7 @@ class Component:
             RELATIVE : str
                 Sets reference component for position
         """
-        if isinstance(at_list, (int, float)):
+        if isinstance(at_list, (int, float, str)):
             at_list = [0, 0, at_list]
 
         if not isinstance(at_list, list):

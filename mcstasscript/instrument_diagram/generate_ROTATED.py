@@ -12,15 +12,14 @@ def generate_ROTATED_arrows(components, component_box_dict, box_names, color=Non
         if not component.ROTATED_specified:
             continue
 
+        origin = component_box_dict[component.name]
         if component.ROTATED_reference is None:
-            origin = component_box_dict[component.name]
             target = component_box_dict["ABSOLUTE"]
         elif component.ROTATED_reference == "PREVIOUS":
             origin_index = box_names.index(component.name)
             target_index = origin_index - 1
             target = component_box_dict[box_names[target_index]]
         else:
-            origin = component_box_dict[component.name]
             target = component_box_dict[component.ROTATED_reference]
 
         connections.add(origin, target)
