@@ -18,3 +18,5 @@ from .interface.plotter import make_sub_plot
 from .interface.reader import McStas_file
 
 from .tools.cryostat_builder import Cryostat
+
+from .instrument_diagnostics.diagnostics import Diagnostics

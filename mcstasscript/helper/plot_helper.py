@@ -82,7 +82,6 @@ def _plot_fig_ax(data, fig, ax, **kwargs):
     When plotting 2D objects, returns the pcolormesh object
     """
 
-    print("Plotting data with name " + data.metadata.component_name)
     if type(data.metadata.dimension) == int:
 
         x_axis_mult = data.plot_options.x_limit_multiplier
@@ -123,7 +122,7 @@ def _plot_fig_ax(data, fig, ax, **kwargs):
 
             orders_of_mag = data.plot_options.orders_of_mag
             if max_value_log - min_value_log > orders_of_mag:
-                ax.set_ylim(top=10.0 ** (max_value_log * 1.1))
+                ax.set_ylim(top=1.1*10.0 ** max_value_log)
                 ax.set_ylim(bottom=10.0 ** (max_value_log - orders_of_mag))
 
     elif len(data.metadata.dimension) == 2:

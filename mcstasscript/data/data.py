@@ -1,5 +1,6 @@
 import matplotlib.pyplot
 import numpy as np
+import copy
 
 
 class McStasMetaData:
@@ -663,6 +664,129 @@ class McStasDataEvent(McStasData):
         # Intensity for compatibility with plotting routine
         data_lines = metadata.dimension[1]
         self.Intensity = self.Events[0:data_lines, :]
+
+        self.variables = self.metadata.info["variables"].strip()
+        self.variables = self.variables.split()
+
+        self.labels = {"t": "t [s]",
+                       "x": "x [m]",
+                       "y": "y [m]",
+                       "z": "z [m]",
+                       "vx": "vx [m/s]",
+                       "vy": "vy [m/s]",
+                       "vz": "vz [m/s]",
+                       "l": "wavelength [AA]",
+                       "e": "energy [meV]",
+                       "speed": "speed [m/s]",
+                       "dx": "divergence x [deg]",
+                       "dy": "divergence y [deg]"}
+
+    def find_variable_index(self, axis):
+        return self.variables.index(axis)
+
+    def scale_weights(self, factor):
+        self.Events[:, self.find_variable_index("p")] *= factor
+
+    def get_label(self, axis):
+        axis = axis.lower()
+
+        if axis in self.labels:
+            return self.labels[axis]
+        else:
+            return ""
+
+    def get_data_column(self, axis):
+
+        m_n_const = 1.674927e-27
+        h_const = 6.626068e-34
+
+        if axis.lower() == "speed":
+            # Convert velocity to speed (must be before l and e)
+            vx = self.Events[:, self.find_variable_index("vx")]
+            vy = self.Events[:, self.find_variable_index("vy")]
+            vz = self.Events[:, self.find_variable_index("vz")]
+            return np.sqrt(vx ** 2 + vy ** 2 + vz ** 2)
+
+        elif axis.lower() == "l":
+            # Convert speed to lambda
+            speed = self.get_data_column("speed")
+            lambda_meter = h_const / (m_n_const*speed)
+            return lambda_meter*1E10
+
+        elif axis.lower() == "e":
+            # Convert speed to energy
+            speed = self.get_data_column("speed")
+            energy_joule = 0.5 * m_n_const * speed ** 2
+            return energy_joule/1.60217663E-19*1E3
+
+        elif axis.lower() == "dx":
+            # Convert velocity to divergence x
+            vx = self.Events[:, self.find_variable_index("vx")]
+            vz = self.Events[:, self.find_variable_index("vz")]
+            return np.arctan(vx/vz) * 180 / np.pi
+
+        elif axis.lower() == "dy":
+            # Convert velocity to divergence y
+            vy = self.Events[:, self.find_variable_index("vy")]
+            vz = self.Events[:, self.find_variable_index("vz")]
+            return np.arctan(vy/vz) * 180 / np.pi
+
+        else:
+            index = self.find_variable_index(axis)
+            return self.Events[:, index]
+
+    def make_1d(self, axis1, n_bins=50):
+        data = self.get_data_column(axis1)
+        label = self.get_label(axis1)
+
+        weights = self.get_data_column("p")
+        intensity, edges = np.histogram(data, bins=n_bins, weights=weights)
+        error_squared, edges = np.histogram(data, bins=n_bins, weights=weights**2)
+        error = np.sqrt(error_squared)
+        ncount, edges = np.histogram(data, bins=n_bins)
+
+        centers = edges[0:-1] + 0.5*(edges[1] - edges[0])
+
+        metadata = copy.deepcopy(self.metadata)
+        metadata.dimension = len(centers)
+        metadata.info["type"] = "array_1d"
+        metadata.limits = [centers[0], centers[-1]]
+
+        binned = McStasDataBinned(metadata, intensity=intensity,
+                                  error=error, ncount=ncount, xaxis=centers)
+        binned.set_title("Binned data generated from events")
+        binned.set_xlabel(label)
+        binned.set_ylabel("Intensity per bin [n/s]")
+
+        return binned
+
+    def make_2d(self, axis1, axis2, n_bins=100):
+        data1 = self.get_data_column(axis1)
+        label1 = self.get_label(axis1)
+        data2 = self.get_data_column(axis2)
+        label2 = self.get_label(axis2)
+
+        weights = self.get_data_column("p")
+        intensity, edges2, edges1 = np.histogram2d(data2, data1, bins=n_bins, weights=weights)
+        error_squared, edges2, edges1 = np.histogram2d(data2, data1, bins=n_bins, weights=weights**2)
+        error = np.sqrt(error_squared)
+        ncount, edges2, edges1 = np.histogram2d(data2, data1, bins=n_bins)
+
+        centers1 = edges1[0:-1] + 0.5*(edges1[1] - edges1[0])
+        centers2 = edges2[0:-1] + 0.5*(edges2[1] - edges2[0])
+
+        metadata = copy.deepcopy(self.metadata)
+        metadata.dimension = [len(centers1), len(centers2)]
+        metadata.info["type"] = "array_2d"
+        metadata.limits = [centers1[0], centers1[-1], centers2[0], centers2[-1]]
+
+        binned = McStasDataBinned(metadata, intensity=intensity,
+                                  error=error, ncount=ncount)
+        binned.set_title("Binned data generated from events")
+        binned.set_xlabel(label1)
+        binned.set_ylabel(label2)
+
+        return binned
 
     def __str__(self):
         """
