@@ -1,17 +1,43 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from mcstasscript.instrument_diagnostics.event_plotter import EventPlotter
-
 class PlotOverview:
+    """
+    Class for plotting list of views at different points in instrument
+    """
     def __init__(self, event_plotter_list, view_list):
+        """
+        Stores list of event plotters and views, able to create figure
+
+        parameters:
+
+        event_plotter_list : list of EventPlotter objects
+            EventPlotter objects for each investigated point in instrument
+
+        view_list : list of View objects
+            View specifications which will all be used for each point
+        """
+
         self.event_plotter_list = event_plotter_list
         self.n_points = len(event_plotter_list)
         self.views = view_list
         self.n_plots = len(view_list)
 
     def plot_all(self, figsize=None, same_scale=True):
+        """
+        Plots all views for all guide points
 
+        The same_scale features is enabled per default, but even then
+        individual Views can opt out of being drawn on the same scale.
+
+        Parameters:
+
+        figsize : tuple of length 2
+            size of figure, default scales according to number of plots
+
+        same_scale : bool
+            Allow the use of the same scale feature (default)
+        """
         if same_scale:
             self.set_same_scale()
 
@@ -19,13 +45,8 @@ class PlotOverview:
             # Scale size after number of plots
             figsize = (1 + self.n_plots*3, self.n_points*3)
 
-        fig, axs = plt.subplots(self.n_points, self.n_plots, figsize=figsize)
-
-        # Fix cases where n_points or n_plots is 1 and axs is not a list of lists
-        if self.n_plots == 1:
-            axs = [axs]
-        if self.n_points == 1:
-            axs = [axs]
+        fig, axs = plt.subplots(self.n_points, self.n_plots,
+                                figsize=figsize, squeeze=False)
 
         for plotter, ax_row in zip(self.event_plotter_list, axs):
             major_label_set = False
@@ -43,6 +64,9 @@ class PlotOverview:
         fig.tight_layout()
 
     def set_same_scale(self):
+        """
+        Uses minimum and maximum of each dataset to find global min/max
+        """
         for view in self.views:
 
             if not view.same_scale:
