@@ -27,6 +27,7 @@ from mcstasscript.helper.unpickler import CustomMcStasUnpickler, CustomMcXtraceU
 from mcstasscript.helper.exceptions import McStasError
 from mcstasscript.helper.beam_dump_database import BeamDumpDatabase
 from mcstasscript.instrument_diagram.make_diagram import instrument_diagram
+from mcstasscript.instrument_diagnostics.intensity_diagnostics import IntensityDiagnostics
 
 
 class McCode_instr(BaseCalculator):
@@ -2519,21 +2520,31 @@ class McCode_instr(BaseCalculator):
 
         return IFrame(src=html_path, width=width, height=height)
 
-    def show_diagram(self):
+    def show_diagram(self, analysis=False):
         """
         Shows diagram of component connections in insrument
 
         Shows a diagram with all components as text fields and arrows between
         them showing the AT RELATIVE and ROTATED RELATIVE connections. Spatial
         connections are shown in blue, and rotational in red. ROTATED
-        connections are only shown when they are specified.
+        connections are only shown when they are specified. To see the intensity
+        and number of rays over the course of the instrument, use analysis=True.
+
+        parameters:
+        analysis : bool
+            If True, a plot of intensity and ncount over the instrument is included
         """
         if self.has_errors():
             print("The instrument has some error, this diagram is still "
                   "shown as it may help find the bug.")
 
-        instrument_diagram(self)
+        instrument_diagram(self, analysis=analysis)
         self.check_for_errors()
+
+    def show_analysis(self):
+        beam_diag = IntensityDiagnostics(self)
+        beam_diag.run()
+        beam_diag.plot()
 
     def saveH5(self, filename: str, openpmd: bool = True):
         """
