@@ -2520,7 +2520,7 @@ class McCode_instr(BaseCalculator):
 
         return IFrame(src=html_path, width=width, height=height)
 
-    def show_diagram(self, analysis=False):
+    def show_diagram(self, analysis=False, variable=None, limits=None):
         """
         Shows diagram of component connections in insrument
 
@@ -2538,12 +2538,12 @@ class McCode_instr(BaseCalculator):
             print("The instrument has some error, this diagram is still "
                   "shown as it may help find the bug.")
 
-        instrument_diagram(self, analysis=analysis)
+        instrument_diagram(self, analysis=analysis, variable=variable, limits=limits)
         self.check_for_errors()
 
-    def show_analysis(self):
+    def show_analysis(self, variable=None):
         beam_diag = IntensityDiagnostics(self)
-        beam_diag.run()
+        beam_diag.run_general(variable=variable)
         beam_diag.plot()
 
     def saveH5(self, filename: str, openpmd: bool = True):

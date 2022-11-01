@@ -25,7 +25,7 @@ def generate_GROUP_arrows(components, component_box_dict, box_names, color=None)
         connected_list = group_members[1:]
 
         for connected in connected_list:
-            connections.add(connected, base)
+            connections.add(connected, base, info=group_name)
 
     connections.distribute_lane_numbers(box_names=box_names)
 
@@ -34,6 +34,7 @@ def generate_GROUP_arrows(components, component_box_dict, box_names, color=None)
         origin = connection.origin
         target = connection.target
         lane = connection.lane_number + 2  # Make room for group name
+        group_name = connection.info
 
         arrow = Arrow(origin, target, lane=lane, kind="GROUP", description=group_name)
         arrow.set_connection(True)

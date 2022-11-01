@@ -8,7 +8,8 @@ from mcstasscript.instrument_diagram.component_description import component_desc
 
 class DiagramCanvas:
     def __init__(self, left_side_arrows, component_boxes, right_side_arrows,
-                 component_categories, colors, intensity_diagnostics=None):
+                 component_categories, colors, intensity_diagnostics=None,
+                 variable=None, limits=None):
         """
         Creates diagram of instrument file with given boxes and arrows
 
@@ -34,6 +35,8 @@ class DiagramCanvas:
         self.component_categories = component_categories
         self.colors = colors
 
+        self.variable = variable
+        self.limits = limits
         if intensity_diagnostics is None:
             self.intensity_analysis_mode = False
         else:
@@ -379,8 +382,13 @@ class DiagramCanvas:
             # Get y position for all boxes, but skip ABSOLUTE box
             y_positions = [box.position_y for box in self.component_boxes[1:]]
             y_spacing = y_positions[0] - y_positions[1]
-            upper_y_lim = y_positions[0] + 0.5 * y_spacing
-            lower_y_lim = y_positions[-1] - 0.5 * y_spacing
+
+            if self.variable is None:
+                upper_y_lim = y_positions[0] + 0.5 * y_spacing
+                lower_y_lim = y_positions[-1] - 0.5 * y_spacing
+            else:
+                upper_y_lim = y_positions[0]
+                lower_y_lim = y_positions[-1]
 
             # Insert is done in figure coordinate system, need mother ax dimensions
             ax_pos = ax.get_position()
@@ -401,8 +409,9 @@ class DiagramCanvas:
             ax.set_zorder(4)
 
             # Plot graph, convey tick positions and ylimits to match main diagram
-            self.intensity_diagnostics.run()
-            self.intensity_diagnostics.plot(ax=inset_ax, y_tick_positions=y_positions,
+            self.intensity_diagnostics.run_general(variable=self.variable, limits=self.limits)
+            self.intensity_diagnostics.plot(ax=inset_ax, fig=fig,
+                                            y_tick_positions=y_positions,
                                             ylimits=[lower_y_lim, upper_y_lim],
                                             show_comp_names=False)
 

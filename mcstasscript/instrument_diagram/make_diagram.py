@@ -11,7 +11,7 @@ from mcstasscript.instrument_diagram.canvas import DiagramCanvas
 from mcstasscript.instrument_diagnostics.intensity_diagnostics import IntensityDiagnostics
 
 
-def instrument_diagram(instrument, analysis=False):
+def instrument_diagram(instrument, analysis=False, variable=None, limits=None):
     """
     Plots diagram of components in instrument with RELATIVE connections
 
@@ -68,7 +68,8 @@ def instrument_diagram(instrument, analysis=False):
     canvas = DiagramCanvas(AT_arrows + ROTATED_arrows, component_boxes,
                            JUMP_arrows + target_index_arrows + GROUP_arrows + Union_arrows,
                            component_categories=component_categories, colors=color_choices,
-                           intensity_diagnostics=intensity_diagnostics)
+                           intensity_diagnostics=intensity_diagnostics, variable=variable,
+                           limits=limits)
 
     # Plot diagram
     canvas.plot()

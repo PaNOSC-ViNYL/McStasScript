@@ -60,10 +60,17 @@ class Lane:
 
 
 class Connection:
-    def __init__(self, origin, target):
+    def __init__(self, origin, target, info=None):
+        """
+        Describes a connection between origin and target with lane number
+
+        Can contain info as well which can be used for example to mark
+        if the connection is part of a certain group.
+        """
         self.origin = origin
         self.target = target
         self.lane_number = None
+        self.info = info
 
     def set_lane_number(self, value):
         self.lane_number = value
@@ -71,10 +78,17 @@ class Connection:
 
 class ConnectionList:
     def __init__(self):
+        """
+        List of connections with utility functions
+
+        Can distribute the connections over a number of lanes to ensure all
+        connections can be seen without crossing that provide ambitious
+        interpretations.
+        """
         self.connections = []
 
-    def add(self, origin, target):
-        self.connections.append(Connection(origin, target))
+    def add(self, origin, target, info=None):
+        self.connections.append(Connection(origin, target, info=info))
 
     def get_connections(self):
         return self.connections

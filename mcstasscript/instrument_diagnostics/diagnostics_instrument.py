@@ -14,6 +14,7 @@ class DiagnosticsInstrument:
         self.instr.settings(**self.instr_settings)
 
     def settings(self, **kwargs):
+        self.instr.settings(**kwargs)
         self.instr_settings.update(kwargs)
 
     def remove_previous_use(self):
