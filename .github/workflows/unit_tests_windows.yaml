@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: PaNOSC-ViNYL/libpyvinyl
-          ref: 1.1.2
+          ref: master
           path: libpyvinyl
     
       - name: Set up Python ${{ matrix.python-version }}
