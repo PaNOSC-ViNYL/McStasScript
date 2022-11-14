@@ -7,7 +7,7 @@ class EventPlotter:
     """
     Plots event data onto given views
     """
-    def __init__(self, name, data):
+    def __init__(self, name, data, flag_info=None):
         """
         EventPlotter stores name and data, can produce plots given views
 
@@ -18,9 +18,13 @@ class EventPlotter:
 
         data : McStasEventData
             Data object with event data
+
+        flag_info : list of str
+            List of flag names in order U1 U2 U3
         """
         self.name = name
         self.data = data
+        self.flag_info = flag_info
 
     def scale_weights(self, factor):
         """
@@ -31,7 +35,7 @@ class EventPlotter:
         factor : float
             Scale factor to be applied
         """
-        index = self.data.find_variable_index("p")
+        index = self.data.find_variable_index("p", flag_info=self.flag_info)
         self.data.Events[:, index] *= factor
 
     def add_view_limits(self, view):
@@ -42,11 +46,11 @@ class EventPlotter:
         view : View
             View for which limits should be set
         """
-        data = self.data.get_data_column(view.axis1)
+        data = self.data.get_data_column(view.axis1, flag_info=self.flag_info)
         view.set_axis1_limits(np.min(data), np.max(data))
 
         if view.axis2 is not None:
-            data = self.data.get_data_column(view.axis1)
+            data = self.data.get_data_column(view.axis1, flag_info=self.flag_info)
             view.set_axis1_limits(np.min(data), np.max(data))
 
     def get_view_limits_axis1(self, view):
@@ -57,7 +61,7 @@ class EventPlotter:
         view : View
             View for which limits should be retrieved
         """
-        data = self.data.get_data_column(view.axis1)
+        data = self.data.get_data_column(view.axis1, flag_info=self.flag_info)
         return np.min(data), np.max(data)
 
     def get_view_limits_axis2(self, view):
@@ -70,7 +74,7 @@ class EventPlotter:
         """
         if view.axis2 is None:
             return np.NaN, np.NaN
-        data = self.data.get_data_column(view.axis2)
+        data = self.data.get_data_column(view.axis2, flag_info=self.flag_info)
         return np.min(data), np.max(data)
 
     def plot(self, view, fig, ax):
@@ -91,14 +95,14 @@ class EventPlotter:
         """
 
         if view.axis2 is None:
-            data = self.data.make_1d(axis1=view.axis1, n_bins=view.bins)
+            data = self.data.make_1d(axis1=view.axis1, n_bins=view.bins, flag_info=self.flag_info)
             data.set_title("")
             if view.axis1_limits is not None:
                 data.set_plot_options(left_lim=view.axis1_limits[0], right_lim=view.axis1_limits[1])
             data.set_plot_options(**view.plot_options)
 
         else:
-            data = self.data.make_2d(axis1=view.axis1, axis2=view.axis2, n_bins=view.bins)
+            data = self.data.make_2d(axis1=view.axis1, axis2=view.axis2, n_bins=view.bins, flag_info=self.flag_info)
             data.set_plot_options(show_colorbar=False)
             data.set_title("")
             if view.axis1_limits is not None and view.axis2_limits is not None:

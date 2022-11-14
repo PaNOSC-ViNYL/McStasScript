@@ -43,6 +43,17 @@ class View:
 
         self.plot_options = kwargs
 
+    def __repr__(self):
+        string = f"View ({self.axis1}"
+        if self.axis2 is not None:
+            string += f", {self.axis2}"
+
+        string += ")"
+        string = string.ljust(25)
+        string += f" bins: {str(self.bins)}"
+
+        return string
+
     def set_axis1_limits(self, start, end):
         """
         Sets the axis1 limits
