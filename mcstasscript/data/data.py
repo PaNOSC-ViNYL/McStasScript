@@ -681,21 +681,74 @@ class McStasDataEvent(McStasData):
                        "dx": "divergence x [deg]",
                        "dy": "divergence y [deg]"}
 
-    def find_variable_index(self, axis):
+    def find_variable_index(self, axis, flag_info=None):
+        """
+        Returns variable index for given axis name
+
+        Parameters:
+
+        axis : str
+            Name of desired axis
+
+        flag_info: list
+            List of flag names used for user variables in event data
+        """
+        if flag_info is not None:
+            # If flag info given, use it to find user var string
+            for index, flag in enumerate(flag_info):
+                if axis == flag:
+                    axis = f"U{index + 1}"
+
         return self.variables.index(axis)
 
     def scale_weights(self, factor):
+        """
+        Scales all event weights with given factor
+
+        Parameters:
+
+        factor : float
+            Factor with which all weights are scaled
+        """
         self.Events[:, self.find_variable_index("p")] *= factor
 
-    def get_label(self, axis):
+    def get_label(self, axis, flag_info=None):
+        """
+        Returns data label corresponding to given axis name
+
+        Parameters:
+
+        axis : str
+            Name of parameter
+
+        flag_info : list
+            list of names for user variables in event data set
+        """
         axis = axis.lower()
+
+        if flag_info is not None:
+            # If flag info given, use it to find user var string
+            for index, flag in enumerate(flag_info):
+                if axis == flag:
+                    return f"User{index+1}: {flag}"
 
         if axis in self.labels:
             return self.labels[axis]
         else:
             return ""
 
-    def get_data_column(self, axis):
+    def get_data_column(self, axis, flag_info=None):
+        """
+        Returns data column corresponding to given axis name
+
+        Parameters:
+
+        axis : str
+            Name of parameter
+
+        flag_info : list
+            list of names for user variables in event data set
+        """
 
         m_n_const = 1.674927e-27
         h_const = 6.626068e-34
@@ -732,14 +785,28 @@ class McStasDataEvent(McStasData):
             return np.arctan(vy/vz) * 180 / np.pi
 
         else:
-            index = self.find_variable_index(axis)
+            index = self.find_variable_index(axis, flag_info=flag_info)
             return self.Events[:, index]
 
-    def make_1d(self, axis1, n_bins=50):
-        data = self.get_data_column(axis1)
-        label = self.get_label(axis1)
+    def make_1d(self, axis1, n_bins=50, flag_info=None):
+        """
+        Bin event data along to given axis to create binned dataset
 
-        weights = self.get_data_column("p")
+        Parameters:
+
+        axis1 : str
+            Name of parameter for binned axis
+
+        n_bins : integer
+            Number of bins for histogramming
+
+        flag_info : list
+            list of names for user variables in event data set
+        """
+        data = self.get_data_column(axis1, flag_info)
+        label = self.get_label(axis1, flag_info)
+
+        weights = self.get_data_column("p", flag_info)
         intensity, edges = np.histogram(data, bins=n_bins, weights=weights)
         error_squared, edges = np.histogram(data, bins=n_bins, weights=weights**2)
         error = np.sqrt(error_squared)
@@ -760,13 +827,31 @@ class McStasDataEvent(McStasData):
 
         return binned
 
-    def make_2d(self, axis1, axis2, n_bins=100):
-        data1 = self.get_data_column(axis1)
-        label1 = self.get_label(axis1)
-        data2 = self.get_data_column(axis2)
-        label2 = self.get_label(axis2)
+    def make_2d(self, axis1, axis2, n_bins=100, flag_info=None):
+        """
+        Bin event data along to given axes to create binned dataset
 
-        weights = self.get_data_column("p")
+        Parameters:
+
+        axis1 : str
+            Name of parameter for first axis
+
+        axis2 : str
+            Name of parameter for second axis
+
+        n_bins : integer or list
+            Number of bins for histogramming, can be list with two elements
+
+        flag_info : list
+            list of names for user variables in event data set
+        """
+
+        data1 = self.get_data_column(axis1, flag_info)
+        label1 = self.get_label(axis1, flag_info)
+        data2 = self.get_data_column(axis2, flag_info)
+        label2 = self.get_label(axis2, flag_info)
+
+        weights = self.get_data_column("p", flag_info)
         intensity, edges2, edges1 = np.histogram2d(data2, data1, bins=n_bins, weights=weights)
         error_squared, edges2, edges1 = np.histogram2d(data2, data1, bins=n_bins, weights=weights**2)
         error = np.sqrt(error_squared)
