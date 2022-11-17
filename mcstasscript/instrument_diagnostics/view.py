@@ -1,5 +1,5 @@
 class View:
-    def __init__(self, axis1, axis2=None, bins=100, same_scale=True, **kwargs):
+    def __init__(self, axis1, axis2=None, bins=100, same_scale=False, **kwargs):
         """
         Plot view on one or two axis to be generated from event data
 

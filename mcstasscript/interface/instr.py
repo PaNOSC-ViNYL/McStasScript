@@ -26,6 +26,8 @@ from mcstasscript.helper.formatting import bcolors
 from mcstasscript.helper.unpickler import CustomMcStasUnpickler, CustomMcXtraceUnpickler
 from mcstasscript.helper.exceptions import McStasError
 from mcstasscript.helper.beam_dump_database import BeamDumpDatabase
+from mcstasscript.helper.check_mccode_version import check_mcstas_major_version
+from mcstasscript.helper.check_mccode_version import check_mcxtrace_major_version
 from mcstasscript.instrument_diagram.make_diagram import instrument_diagram
 from mcstasscript.instrument_diagnostics.intensity_diagnostics import IntensityDiagnostics
 
@@ -406,6 +408,8 @@ class McCode_instr(BaseCalculator):
         self.component_class_lib = {}
         self.widget_interface = None
 
+        # Holds major version of underlying package
+        self.mccode_version = None
 
         # Avoid initializing if loading from dump
         if not hasattr(self, "declare_list"):
@@ -2538,6 +2542,9 @@ class McCode_instr(BaseCalculator):
             print("The instrument has some error, this diagram is still "
                   "shown as it may help find the bug.")
 
+        if variable is not None:
+            analysis = True
+
         instrument_diagram(self, analysis=analysis, variable=variable, limits=limits)
         self.check_for_errors()
 
@@ -2731,6 +2738,11 @@ class McStas_instr(McCode_instr):
         executable = "mcrun"
 
         super().__init__(name, executable=executable, **kwargs)
+
+        try:
+            self.mccode_version = check_mcstas_major_version(self._run_settings["executable_path"])
+        except:
+            self.mccode_version = "Unknown"
 
     def _read_calibration(self):
         this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -2954,6 +2966,11 @@ class McXtrace_instr(McCode_instr):
         executable = "mxrun"
 
         super().__init__(name, executable=executable, **kwargs)
+
+        try:
+            self.mccode_version = check_mcxtrace_major_version(self._run_settings["executable_path"])
+        except:
+            self.mccode_version = "Unknown"
 
     def _read_calibration(self):
         this_dir = os.path.dirname(os.path.abspath(__file__))

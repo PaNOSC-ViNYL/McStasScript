@@ -26,15 +26,24 @@ class DiagnosticsPoint:
         self.component = comp_name
         self.before = before # False for after
 
-        if not isinstance(rays, int):
+        if isinstance(rays, str):
             if not rays == "all":
                 raise ValueError("The ray keyword for a point should be all or an integer.")
+        else:
+            rays = int(rays)
 
         self.rays = rays
+
+        # Attributes set by add_monitors
         self.filename = None
+        # Attributes set by read_data
+        self.recorded_rays = None
 
     def set_filename(self, filename):
         self.filename = filename
+
+    def set_recorded_rays(self, rays):
+        self.recorded_rays = rays
 
     def __eq__(self, other):
         return self.component == other.component and self.before == other.before
@@ -48,6 +57,9 @@ class DiagnosticsPoint:
 
         string += self.component.ljust(25)
         string += " - rays: "
+        if self.recorded_rays is not None:
+            string += str(self.recorded_rays)
+            string += " / "
         string += str(self.rays)
 
         return string
@@ -86,6 +98,11 @@ class BeamDiagnostics(DiagnosticsInstrument):
 
         for view in self.views:
             string += "  " + view.__repr__() + "\n"
+
+        if len(self.flags) != 0:
+            string += "Recording following user variables:\n"
+        for flag in self.flags:
+            string += "  " + str(flag) + "\n"
 
         if self.data is None:
             string += "Does not yet contain simulated data"
@@ -208,6 +225,12 @@ class BeamDiagnostics(DiagnosticsInstrument):
                 if point.component == after and not point.before:
                     del self.points[index]
 
+    def clear_points(self):
+        """
+        Remove all points
+        """
+        self.points = []
+
     def show_points(self):
         """
         Shows current diagnostics points
@@ -215,7 +238,7 @@ class BeamDiagnostics(DiagnosticsInstrument):
         for point in self.points:
             print(point)
 
-    def add_view(self, axis1, axis2=None, bins=100, same_scale=True, **kwargs):
+    def add_view(self, axis1, axis2=None, bins=100, same_scale=False, **kwargs):
         """
         Add a view with one or two axes that will be shown at all diagnostics points
 
@@ -303,15 +326,25 @@ class BeamDiagnostics(DiagnosticsInstrument):
         flags_str = ""
         for index, flag in enumerate(self.flags):
             flags_str += " user" + str(index+1)
-            user_vars[index] = '"' + flag + '"'
+            if self.instr.mccode_version == 2:
+                # Monitor_nD in McStas 2.X needs to be a raw variable
+                user_vars[index] = flag
+            else:
+                # Monitor_nD in McStas 3.X (and onwards) needs to be a string
+                user_vars[index] = '"' + flag + '"'
+
+        if isinstance(point.rays, (float, int)):
+            ray_str = str(int(point.rays + 1)) # Monitor_nD seems to record one ray less than requested
+        else:
+            ray_str = point.rays # Case of rays set to all
 
         if point.before:
             name = "Diag_before_" + point.component
-            options = f'"square boarders n x y z vx vy vz t{flags_str}, list {point.rays}"'
+            options = f'"square boarders n x y z vx vy vz t{flags_str}, list {ray_str}"'
             mon = self.instr.add_component(name, "Monitor_nD", before=point.component)
         else:
             name = "Diag_after_" + point.component
-            options = f'"previous n x y z vx vy vz t{flags_str}, list {point.rays}"'
+            options = f'"previous n x y z vx vy vz t{flags_str}, list {ray_str}"'
             mon = self.instr.add_component(name, "Monitor_nD", after=point.component)
 
         mon.set_parameters(restore_neutron=1,
@@ -319,6 +352,7 @@ class BeamDiagnostics(DiagnosticsInstrument):
                            options=options,
                            user1=user_vars[0], user2=user_vars[1], user3=user_vars[2],
                            filename='"' + name + ".diag" + '"')
+
 
         mon.set_AT(comp_instance.AT_data, RELATIVE=comp_instance.AT_reference)
         if comp_instance.ROTATED_specified:
@@ -353,6 +387,7 @@ class BeamDiagnostics(DiagnosticsInstrument):
 
         for point in self.ordered_point_list:
             event_data = name_search(point.filename, self.data)
+            point.set_recorded_rays(event_data.metadata.total_N)
             plotter = event_plotter.EventPlotter(point.filename, event_data,
                                                  flag_info=self.flags)
 

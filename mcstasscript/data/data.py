@@ -68,6 +68,10 @@ class McStasMetaData:
         self.ylabel = None
         self.title = None
 
+        self.total_I = None
+        self.total_E = None
+        self.total_N = None
+
     def add_info(self, key, value):
         """Adding information to info dict"""
         self.info[key] = value
@@ -78,6 +82,8 @@ class McStasMetaData:
         # Extract dimension
         if "type" in self.info:
             type_data = self.info["type"]
+            if "array_0d" in type_data:
+                self.dimension = 0
             if "array_1d" in type_data:
                 type_data = type_data.split("(")[1]
                 type_data = type_data.split(")")[0]
@@ -134,6 +140,13 @@ class McStasMetaData:
         if "title" in self.info:
             self.title = self.info["title"].rstrip()
 
+        if "values" in self.info:
+            value_list = self.info["values"]
+            value_list = value_list.strip().split(" ")
+            self.total_I = float(value_list[0])
+            self.total_E = float(value_list[1])
+            self.total_N = float(value_list[2])
+
     def set_title(self, string):
         """Sets title for plotting"""
         self.title = string
@@ -155,7 +168,14 @@ class McStasMetaData:
             string += "filename: " + str(self.filename) + "\n"
 
         if self.dimension is not None:
-            if isinstance(self.dimension, int):
+            if type(self.dimension) == int and self.dimension == 0:
+                string += "0D data"
+                if self.xlabel is not None:
+                    string += " " + self.xlabel + "\n"
+                if self.ylabel is not None:
+                    string += " " + self.ylabel + "\n"
+
+            elif type(self.dimension) == int and self.dimension != 0:
                 string += "1D data of length " + str(self.dimension) + "\n"
                 if self.limits is not None:
                     string += "  [" + str(self.limits[0]) + ": "
@@ -485,21 +505,21 @@ class McStasData:
 
         string = "McStasData: "
         string += self.name + " "
-        if type(self.metadata.dimension) == int:
+        if type(self.metadata.dimension) == int and self.metadata.dimension == 0:
+            string += "type: 0D "
+        elif type(self.metadata.dimension) == int and self.metadata.dimension != 0:
             string += "type: 1D "
         elif len(self.metadata.dimension) == 2:
             string += "type: 2D "
         else:
             string += "type: other "
 
-        if "values" in self.metadata.info:
-            values = self.metadata.info["values"]
-            values = values.strip()
-            values = values.split(" ")
-            if len(values) == 3:
-                string += " I:" + str(values[0])
-                string += " E:" + str(values[1])
-                string += " N:" + str(values[2])
+        if self.metadata.total_I is not None:
+            string += " I:" + str(self.metadata.total_I)
+        if self.metadata.total_E is not None:
+            string += " E:" + str(self.metadata.total_E)
+        if self.metadata.total_N is not None:
+            string += " N:" + str(self.metadata.total_N)
 
         return string
 
@@ -590,7 +610,9 @@ class McStasDataBinned(McStasData):
         self.Error = error
         self.Ncount = ncount
 
-        if type(self.metadata.dimension) == int:
+        if type(self.metadata.dimension) == int and self.metadata.dimension == 0:
+            self.data_type = "Binned 0D"
+        elif type(self.metadata.dimension) == int and self.metadata.dimension != 0:
             self.data_type = "Binned 1D"
             if "xaxis" in kwargs:
                 self.xaxis = kwargs["xaxis"]
@@ -667,6 +689,16 @@ class McStasDataEvent(McStasData):
 
         self.variables = self.metadata.info["variables"].strip()
         self.variables = self.variables.split()
+
+        # Calculate I, E and N
+        p_array = self.get_data_column("p")
+        total_I = p_array.sum()
+        total_E = np.sqrt((p_array ** 2).sum())
+        total_N = len(p_array)
+
+        self.metadata.total_I = total_I
+        self.metadata.total_E = total_E
+        self.metadata.total_N = total_N
 
         self.labels = {"t": "t [s]",
                        "x": "x [m]",
@@ -819,8 +851,17 @@ class McStasDataEvent(McStasData):
         metadata.info["type"] = "array_1d"
         metadata.limits = [centers[0], centers[-1]]
 
+        total_I = np.sum(intensity)
+        total_E = np.sqrt(error_squared.sum())
+        total_N = np.sum(ncount)
+        metadata.info["values"] = "{:2.6E} {:2.6E} {:2.6E}".format(total_I, total_E, total_N)
+        metadata.total_I = total_I
+        metadata.total_E = total_E
+        metadata.total_N = total_N
+
         binned = McStasDataBinned(metadata, intensity=intensity,
                                   error=error, ncount=ncount, xaxis=centers)
+
         binned.set_title("Binned data generated from events")
         binned.set_xlabel(label)
         binned.set_ylabel("Intensity per bin [n/s]")
@@ -851,6 +892,9 @@ class McStasDataEvent(McStasData):
         data2 = self.get_data_column(axis2, flag_info)
         label2 = self.get_label(axis2, flag_info)
 
+        if isinstance(n_bins, list):
+            n_bins.reverse()
+
         weights = self.get_data_column("p", flag_info)
         intensity, edges2, edges1 = np.histogram2d(data2, data1, bins=n_bins, weights=weights)
         error_squared, edges2, edges1 = np.histogram2d(data2, data1, bins=n_bins, weights=weights**2)
@@ -864,6 +908,14 @@ class McStasDataEvent(McStasData):
         metadata.dimension = [len(centers1), len(centers2)]
         metadata.info["type"] = "array_2d"
         metadata.limits = [centers1[0], centers1[-1], centers2[0], centers2[-1]]
+
+        total_I = intensity.sum()
+        total_E = np.sqrt(error_squared.sum())
+        total_N = ncount.sum()
+        metadata.info["values"] = "{:2.6E} {:2.6E} {:2.6E}".format(total_I, total_E, total_N)
+        metadata.total_I = total_I
+        metadata.total_E = total_E
+        metadata.total_N = total_N
 
         binned = McStasDataBinned(metadata, intensity=intensity,
                                   error=error, ncount=ncount)

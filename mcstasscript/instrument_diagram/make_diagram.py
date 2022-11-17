@@ -60,7 +60,7 @@ def instrument_diagram(instrument, analysis=False, variable=None, limits=None):
                                          component_categories, color=color_choices["Union"])
 
     intensity_diagnostics=None
-    if analysis:
+    if analysis or variable is not None:
         intensity_diagnostics = IntensityDiagnostics(instrument)
         intensity_diagnostics.settings(suppress_output=True)
 

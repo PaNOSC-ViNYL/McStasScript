@@ -2,22 +2,69 @@ import copy
 
 class DiagnosticsInstrument:
     def __init__(self, instr):
+        """
+        Diagnostics instrument object with related capabilities
+
+        The diagnostics instrument takes a copy of an instrument object
+        and can modify this version in ways relevant for diagnostics of
+        the instrument. It can remove use of PREVIOUS and correct the
+        use of target_index to make it safe to add additional components
+        without altering the instrument. It carries it's own settings
+        and parameters that wont impact the original instrument. The
+        diagnostics instrument can be reset to the original state, and
+        will have settings and parameters applied again.
+
+        Parameters:
+
+        instr : McCode_instr object
+            Instrument which needs a diagnostics copy
+        """
         self.original_instr = instr
         self.instr = None
         self.instr_settings = {}
+        self.instr_parameters = {}
         self.reset_instr()
 
         self.component_list = self.instr.make_component_subset()
 
     def reset_instr(self):
+        """
+        Resets instrument to original state, with new pars and settings
+        """
         self.instr = copy.deepcopy(self.original_instr)
         self.instr.settings(**self.instr_settings)
+        self.instr.set_parameters(**self.instr_parameters)
 
     def settings(self, **kwargs):
+        """
+        Apply settings as in an instrument object
+        """
         self.instr.settings(**kwargs)
         self.instr_settings.update(kwargs)
 
+    def show_settings(self):
+        """
+        Show settings of diagnostics instrument
+        """
+        self.instr.show_settings()
+
+    def set_parameters(self, **kwargs):
+        """
+        Set parameters as in instrument object
+        """
+        self.instr.set_parameters(**kwargs)
+        self.instr_parameters.update(kwargs)
+
+    def show_parameters(self):
+        """
+        Show parameters as on instrument object
+        """
+        self.instr.show_parameters()
+
     def remove_previous_use(self):
+        """
+        Replaces use of PREVIOUS with direct references
+        """
         self.component_list = self.instr.make_component_subset()
         previous_component = None
         for comp in self.component_list:
@@ -32,7 +79,7 @@ class DiagnosticsInstrument:
 
     def correct_target_index(self):
         """
-        Need to correct target_index based on original instrument
+        Corrects target_index based on original instrument
         """
         original_component_list = self.original_instr.make_component_subset()
         original_comp_names = [x.name for x in original_component_list]
