@@ -27,7 +27,10 @@ from mcstasscript.helper.formatting import bcolors
 from mcstasscript.helper.unpickler import CustomMcStasUnpickler, CustomMcXtraceUnpickler
 from mcstasscript.helper.exceptions import McStasError
 from mcstasscript.helper.beam_dump_database import BeamDumpDatabase
+from mcstasscript.helper.check_mccode_version import check_mcstas_major_version
+from mcstasscript.helper.check_mccode_version import check_mcxtrace_major_version
 from mcstasscript.instrument_diagram.make_diagram import instrument_diagram
+from mcstasscript.instrument_diagnostics.intensity_diagnostics import IntensityDiagnostics
 
 
 class McCode_instr(BaseCalculator):
@@ -406,6 +409,8 @@ class McCode_instr(BaseCalculator):
         self.component_class_lib = {}
         self.widget_interface = None
 
+        # Holds major version of underlying package
+        self.mccode_version = None
 
         # Avoid initializing if loading from dump
         if not hasattr(self, "declare_list"):
@@ -2557,21 +2562,34 @@ class McCode_instr(BaseCalculator):
 
         return IFrame(src=html_path, width=width, height=height)
 
-    def show_diagram(self):
+    def show_diagram(self, analysis=False, variable=None, limits=None):
         """
         Shows diagram of component connections in insrument
 
         Shows a diagram with all components as text fields and arrows between
         them showing the AT RELATIVE and ROTATED RELATIVE connections. Spatial
         connections are shown in blue, and rotational in red. ROTATED
-        connections are only shown when they are specified.
+        connections are only shown when they are specified. To see the intensity
+        and number of rays over the course of the instrument, use analysis=True.
+
+        parameters:
+        analysis : bool
+            If True, a plot of intensity and ncount over the instrument is included
         """
         if self.has_errors():
             print("The instrument has some error, this diagram is still "
                   "shown as it may help find the bug.")
 
-        instrument_diagram(self)
+        if variable is not None:
+            analysis = True
+
+        instrument_diagram(self, analysis=analysis, variable=variable, limits=limits)
         self.check_for_errors()
+
+    def show_analysis(self, variable=None):
+        beam_diag = IntensityDiagnostics(self)
+        beam_diag.run_general(variable=variable)
+        beam_diag.plot()
 
     def saveH5(self, filename: str, openpmd: bool = True):
         """
@@ -2758,6 +2776,11 @@ class McStas_instr(McCode_instr):
         executable = "mcrun"
 
         super().__init__(name, executable=executable, **kwargs)
+
+        try:
+            self.mccode_version = check_mcstas_major_version(self._run_settings["executable_path"])
+        except:
+            self.mccode_version = "Unknown"
 
     def _read_calibration(self):
         this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -2981,6 +3004,11 @@ class McXtrace_instr(McCode_instr):
         executable = "mxrun"
 
         super().__init__(name, executable=executable, **kwargs)
+
+        try:
+            self.mccode_version = check_mcxtrace_major_version(self._run_settings["executable_path"])
+        except:
+            self.mccode_version = "Unknown"
 
     def _read_calibration(self):
         this_dir = os.path.dirname(os.path.abspath(__file__))

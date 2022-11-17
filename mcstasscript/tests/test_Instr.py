@@ -1742,6 +1742,7 @@ class TestMcStas_instr(unittest.TestCase):
                 raise RuntimeError("Folder_name was supposed to not "
                                    + "exist before "
                                    + "test_run_backengine_basic")
+
             instr = setup_populated_x_ray_instr_with_dummy_path()
             instr.run_full_instrument(output_path=new_folder_name,
                                       increment_folder_name=False,
@@ -1761,11 +1762,11 @@ class TestMcStas_instr(unittest.TestCase):
 
         expected_run_path = os.path.join(THIS_DIR, ".")
 
-        mock_sub.assert_called_once_with(expected_call,
-                                         shell=True,
-                                         cwd=expected_run_path,
-                                         stderr=-2, stdout=-1,
-                                         universal_newlines=True)
+        mock_sub.assert_called_with(expected_call,
+                                    shell=True,
+                                    cwd=expected_run_path,
+                                    stderr=-2, stdout=-1,
+                                    universal_newlines=True)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_run_backengine_existing_folder(self, mock_stdout):
@@ -1828,11 +1829,11 @@ class TestMcStas_instr(unittest.TestCase):
                          + "  test_instrument.instr"
                          + " theta=1 has_default=37")
 
-        mock_sub.assert_called_once_with(expected_call,
-                                         shell=True,
-                                         stderr=-2, stdout=-1,
-                                         universal_newlines=True,
-                                         cwd=run_path)
+        mock_sub.assert_called_with(expected_call,
+                                    shell=True,
+                                    stderr=-2, stdout=-1,
+                                    universal_newlines=True,
+                                    cwd=run_path)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch("subprocess.run")
@@ -1883,11 +1884,11 @@ class TestMcStas_instr(unittest.TestCase):
                          + " -fo test_instrument.instr "
                          + "theta=\"toy\" has_default=37 A=2 BC=car")
 
-        mock_sub.assert_called_once_with(expected_call,
-                                         shell=True,
-                                         stderr=-2, stdout=-1,
-                                         universal_newlines=True,
-                                         cwd=run_path)
+        mock_sub.assert_called_with(expected_call,
+                                    shell=True,
+                                    stderr=-2, stdout=-1,
+                                    universal_newlines=True,
+                                    cwd=run_path)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch("subprocess.run")
@@ -1935,11 +1936,11 @@ class TestMcStas_instr(unittest.TestCase):
                          + " -fo test_instrument.instr "
                          + "theta=\"toy\" has_default=10 A=2 BC=car")
 
-        mock_sub.assert_called_once_with(expected_call,
-                                         shell=True,
-                                         stderr=-2, stdout=-1,
-                                         universal_newlines=True,
-                                         cwd=run_path)
+        mock_sub.assert_called_with(expected_call,
+                                    shell=True,
+                                    stderr=-2, stdout=-1,
+                                    universal_newlines=True,
+                                    cwd=run_path)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch("subprocess.run")
@@ -1979,11 +1980,11 @@ class TestMcStas_instr(unittest.TestCase):
                          + "  test_instrument.instr"
                          + " theta=1 has_default=37")
 
-        mock_sub.assert_called_once_with(expected_call,
-                                         shell=True,
-                                         stderr=-2, stdout=-1,
-                                         universal_newlines=True,
-                                         cwd=run_path)
+        mock_sub.assert_called_with(expected_call,
+                                    shell=True,
+                                    stderr=-2, stdout=-1,
+                                    universal_newlines=True,
+                                    cwd=run_path)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch("subprocess.run")
@@ -2015,11 +2016,11 @@ class TestMcStas_instr(unittest.TestCase):
                          + " " + expected_instr_path
                          + "  theta=1.2 has_default=37")
 
-        mock_sub.assert_called_once_with(expected_call,
-                                         shell=True,
-                                         stderr=-1, stdout=-1,
-                                         universal_newlines=True,
-                                         cwd=".")
+        mock_sub.assert_called_with(expected_call,
+                                    shell=True,
+                                    stderr=-1, stdout=-1,
+                                    universal_newlines=True,
+                                    cwd=".")
 
     def test_show_dumps_works(self):
         """

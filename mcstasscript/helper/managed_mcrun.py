@@ -411,18 +411,25 @@ def load_metadata(data_folder_name):
         # Close mccode.sim
         f.close()
 
+        """
         # Create a list for McStasData instances to return
         results = []
 
+        
         # Load datasets described in metadata list individually
         for metadata in metadata_list:
+
             # Load data with numpy
             data = np.loadtxt(data_folder_name
                               + "/"
                               + metadata.filename.rstrip())
 
             # Split data into intensity, error and ncount
-            if type(metadata.dimension) == int:
+            if type(metadata.dimension) == int and metadata.dimension == 0:
+                Intensity = data.T
+
+            if type(metadata.dimension) == int and metadata.dimension != 0:
+
                 xaxis = data.T[0, :]
                 Intensity = data.T[1, :]
                 Error = data.T[2, :]
@@ -434,6 +441,7 @@ def load_metadata(data_folder_name):
                 Intensity = data.T[:, 0:data_lines - 1]
                 Error = data.T[:, data_lines:2*data_lines - 1]
                 Ncount = data.T[:, 2*data_lines:3*data_lines - 1]
+        """
 
     return metadata_list
 
@@ -458,7 +466,21 @@ def load_monitor(metadata, data_folder_name):
     data = np.loadtxt(filename)
 
     # Split data into intensity, error and ncount
-    if type(metadata.dimension) == int:
+    if type(metadata.dimension) == int and metadata.dimension == 0:
+        Intensity = data.T
+        if metadata.total_E is None:
+            Error = np.zeros(1)
+        else:
+            Error = np.array(metadata.total_E)
+
+        if metadata.total_N is None:
+            Ncount = np.zeros(1)
+        else:
+            Ncount = np.array(metadata.total_N)
+
+        return McStasDataBinned(metadata, Intensity, Error, Ncount)
+
+    elif type(metadata.dimension) == int and metadata.dimension != 0:
         xaxis = data.T[0, :]
         Intensity = data.T[1, :]
         Error = data.T[2, :]

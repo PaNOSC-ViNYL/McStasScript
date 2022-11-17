@@ -147,12 +147,26 @@ class TraceReader(SectionReader):
             if component_name == "COPY":
                 # Copy instance
                 self.component_copy_target = line.split(")", 1)[0].strip()
-                if "(" in line:
+
+                if line.strip().startswith("("):
                     line = line.split("(", 1)[1].strip()
+
                 if self.component_copy_target == "PREVIOUS":
                     # Get the previous component name
                     last_component = self.Instr.get_last_component()
                     self.component_copy_target = last_component.name
+
+                if "(" in instance_name:
+                    # Using the copy notation, replace this with meaningful replacement
+                    base_name = self.component_copy_target + "_copy"
+                    name = base_name
+                    comp_names = [x.name for x in self.Instr.component_list]
+                    index = 0
+                    while name in comp_names:
+                        name = base_name + "_" + str(index)
+                        index += 1
+
+                    instance_name = name
 
                 self.current_component = self.Instr.copy_component(instance_name,
                                                                    self.component_copy_target)

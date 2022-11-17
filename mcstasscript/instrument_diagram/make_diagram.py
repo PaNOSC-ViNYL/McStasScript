@@ -4,12 +4,14 @@ from mcstasscript.instrument_diagram.box import ComponentBox
 from mcstasscript.instrument_diagram.generate_AT import generate_AT_arrows
 from mcstasscript.instrument_diagram.generate_ROTATED import generate_ROTATED_arrows
 from mcstasscript.instrument_diagram.generate_JUMP import generate_JUMP_arrows
+from mcstasscript.instrument_diagram.generate_target_index import generate_target_index_arrows
 from mcstasscript.instrument_diagram.generate_GROUP import generate_GROUP_arrows
 from mcstasscript.instrument_diagram.generate_Union import generate_Union_arrows
 from mcstasscript.instrument_diagram.canvas import DiagramCanvas
+from mcstasscript.instrument_diagnostics.intensity_diagnostics import IntensityDiagnostics
 
 
-def instrument_diagram(instrument):
+def instrument_diagram(instrument, analysis=False, variable=None, limits=None):
     """
     Plots diagram of components in instrument with RELATIVE connections
 
@@ -51,13 +53,23 @@ def instrument_diagram(instrument):
 
     # Arrow for the right side of the diagram
     JUMP_arrows = generate_JUMP_arrows(components, component_box_dict, box_names, color=color_choices["JUMP"])
+    target_index_arrows = generate_target_index_arrows(components, component_box_dict,
+                                                       box_names, color=color_choices["JUMP"])
     GROUP_arrows = generate_GROUP_arrows(components, component_box_dict, box_names, color=color_choices["GROUP"])
     Union_arrows = generate_Union_arrows(components, component_box_dict, box_names,
                                          component_categories, color=color_choices["Union"])
 
+    intensity_diagnostics=None
+    if analysis or variable is not None:
+        intensity_diagnostics = IntensityDiagnostics(instrument)
+        intensity_diagnostics.settings(suppress_output=True)
+
     # Create canvas
-    canvas = DiagramCanvas(AT_arrows + ROTATED_arrows, component_boxes, JUMP_arrows + GROUP_arrows + Union_arrows,
-                           component_categories=component_categories, colors=color_choices)
+    canvas = DiagramCanvas(AT_arrows + ROTATED_arrows, component_boxes,
+                           JUMP_arrows + target_index_arrows + GROUP_arrows + Union_arrows,
+                           component_categories=component_categories, colors=color_choices,
+                           intensity_diagnostics=intensity_diagnostics, variable=variable,
+                           limits=limits)
 
     # Plot diagram
     canvas.plot()

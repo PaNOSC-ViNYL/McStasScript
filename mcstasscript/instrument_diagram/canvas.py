@@ -7,7 +7,9 @@ from mcstasscript.instrument_diagram.box import ComponentBox
 from mcstasscript.instrument_diagram.component_description import component_description
 
 class DiagramCanvas:
-    def __init__(self, left_side_arrows, component_boxes, right_side_arrows, component_categories, colors):
+    def __init__(self, left_side_arrows, component_boxes, right_side_arrows,
+                 component_categories, colors, intensity_diagnostics=None,
+                 variable=None, limits=None):
         """
         Creates diagram of instrument file with given boxes and arrows
 
@@ -21,6 +23,10 @@ class DiagramCanvas:
         using this diagram in matplotlib widget mode, it is possible get more
         information on each component by hovering the mouse of the beginning
         the component box.
+
+        If intensity_diagnostics is given with an IntensityDiagnostics object,
+        a graph of the intensity and n rays throughout the instrument is
+        generated instead of the right side arrows.
         """
         self.left_side_arrows = left_side_arrows
         self.component_boxes = component_boxes
@@ -28,6 +34,14 @@ class DiagramCanvas:
         self.all_arrows = left_side_arrows + right_side_arrows
         self.component_categories = component_categories
         self.colors = colors
+
+        self.variable = variable
+        self.limits = limits
+        if intensity_diagnostics is None:
+            self.intensity_analysis_mode = False
+        else:
+            self.intensity_analysis_mode = True
+            self.intensity_diagnostics = intensity_diagnostics
 
         # Identify cases where multiple written input goes to or from same box
         arrow_connections = {x: [] for x in self.component_boxes}
@@ -88,7 +102,10 @@ class DiagramCanvas:
         self.FIG_LEFT_MARGIN = self.FIG_WIDTH_PER_LANE * 0.5
         self.FIG_RIGHT_MARGIN = self.FIG_WIDTH_PER_LANE * 0.5
         self.FIG_LEGEND_HEADLINE = 0.2
-        self.FIG_RIGHT_SIDE_MINIMUM_SPACE = 3
+        if self.intensity_analysis_mode:
+            self.FIG_RIGHT_SIDE_MINIMUM_SPACE = 5
+        else:
+            self.FIG_RIGHT_SIDE_MINIMUM_SPACE = 3
 
         self.graph_height = self.FIG_HEIGHT_PER_BOX * len(component_boxes)
 
@@ -218,13 +235,19 @@ class DiagramCanvas:
 
         # Always show AT and RELATIVE, but the others only when present
         show_GROUP = False
-        show_JUMP = False
         show_Union = False
+        show_JUMP_target_index = False
+        any_JUMP = False
+        any_target_index = False
         for arrow in self.all_arrows:
             if arrow.kind == "GROUP":
                 show_GROUP = True
             if arrow.kind == "JUMP":
-                show_JUMP = True
+                show_JUMP_target_index = True
+                any_JUMP = True
+            if arrow.kind == "target_index":
+                show_JUMP_target_index = True
+                any_target_index = True
             if arrow.kind == "Union":
                 show_Union = True
 
@@ -258,13 +281,20 @@ class DiagramCanvas:
             ax.text(START_WIDTH + TEXT_WIDTH_INDENT, AT_HEIGHT + current_displacement + TEXT_DISPLACEMENT,
                     "Union", va="center", weight="semibold")
 
-        if show_JUMP:
+        if show_JUMP_target_index:
+            if any_JUMP and any_target_index:
+                legend_text = "JUMP / target_index"
+            elif any_JUMP:
+                legend_text = "JUMP"
+            elif any_target_index:
+                legend_text = "target_index"
+
             current_displacement -= DISPLACEMENT
             ax.arrow(x=START_WIDTH, y=AT_HEIGHT+current_displacement, dx=LINE_LENGTH, dy=0,
                      color=self.colors["JUMP"], length_includes_head=True, width=arrow_width,
                      head_width=5.0 * arrow_width, head_length=2.5 * arrow_width)
             ax.text(START_WIDTH + TEXT_WIDTH_INDENT, AT_HEIGHT+current_displacement+TEXT_DISPLACEMENT,
-                    "JUMP", va="center", weight="semibold")
+                    legend_text, va="center", weight="semibold")
 
         if show_GROUP:
             current_displacement -= DISPLACEMENT
@@ -336,9 +366,55 @@ class DiagramCanvas:
             # Plot arrows on left side
             arrow.plot_left_side(ax)
 
-        for arrow in self.right_side_arrows:
-            # Plot arrows on right side
-            arrow.plot_right_side(ax, self.text_end_graph)
+        if not self.intensity_analysis_mode:
+            for arrow in self.right_side_arrows:
+                # Plot arrows on right side
+                arrow.plot_right_side(ax, self.text_end_graph)
+        else:
+            # Make insert with intensity and ray count graph
+
+            # Find x coordinate of insert
+            box_ends = [b.get_text_end() for b in self.component_boxes]
+            latest_box_end = max(box_ends)
+            remaining_space = 1.0 - latest_box_end
+            axes_start_x = latest_box_end + 0.05 * remaining_space  # 0.1 works well if no names shown
+
+            # Get y position for all boxes, but skip ABSOLUTE box
+            y_positions = [box.position_y for box in self.component_boxes[1:]]
+            y_spacing = y_positions[0] - y_positions[1]
+
+            if self.variable is None:
+                upper_y_lim = y_positions[0] + 0.5 * y_spacing
+                lower_y_lim = y_positions[-1] - 0.5 * y_spacing
+            else:
+                upper_y_lim = y_positions[0]
+                lower_y_lim = y_positions[-1]
+
+            # Insert is done in figure coordinate system, need mother ax dimensions
+            ax_pos = ax.get_position()
+
+            # Find figure coordinates of the corners of the desired inset
+            inset_y_bottom = ax_pos.y0 + lower_y_lim*(ax_pos.y1 - ax_pos.y0)
+            inset_y_top = ax_pos.y0 + upper_y_lim*(ax_pos.y1 - ax_pos.y0)
+
+            inset_x_start = ax_pos.x0 + axes_start_x*(ax_pos.x1 - ax_pos.x0)
+            inset_x_end = ax_pos.x1
+
+            # Create inset
+            inset_ax = fig.add_axes((inset_x_start, inset_y_bottom,
+                                     inset_x_end-inset_x_start,
+                                     inset_y_top-inset_y_bottom))
+
+            # Ensure the new axis is plotted under the old one for annotations to show up
+            ax.set_zorder(4)
+
+            # Plot graph, convey tick positions and ylimits to match main diagram
+            self.intensity_diagnostics.run_general(variable=self.variable, limits=self.limits)
+            self.intensity_diagnostics.plot(ax=inset_ax, fig=fig,
+                                            y_tick_positions=y_positions,
+                                            ylimits=[lower_y_lim, upper_y_lim],
+                                            show_comp_names=False)
+
 
         # Create anotation box that will be shown when hovering the mouse over a box
         annot = ax.annotate("", xy=(0, 0), xytext=(20, 10), textcoords="offset points",
