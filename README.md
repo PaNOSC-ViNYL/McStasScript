@@ -143,17 +143,20 @@ Plotting is usually done in a subplot of all monitors recorded.
     plot = ms.make_sub_plot(data)
     
 ## Widgets in Jupyter Notebooks
-When using McStasScript in a jupyter notebook, it is possible to plot the data with a widget system instead.
+When using McStasScript in a jupyter notebook, it is possible to plot the data with a widget system instead. To do so, import the jupyter notebook widget interface and use show.
 
-    ms.interface(data)
+    import mcstasscript.jb_interface as ms_widget
+    ms_widget.show(data)
     
-There is also a widget solution for performing the simulation which works as an alternative to *run_full_instrument*, this method is also called *interface* and is available directly on the instrument. This interface includes setting parameters, simulation options and plotting of the resulting data.
+There is also a widget solution for performing the simulation which works as an alternative to *backengine*, this method is also included in the jb_interface show command, just provide an instrument object instead of data. This interface includes setting parameters, simulation options and plotting of the resulting data.
 
-    my_instrument.interface()
+    ms_widget.show(instr)
     
-The data from the latest run performed in the simulation widget can be retrieved with *get_interface_data*.
+If one wants to have access to the data generated in the widget, the widget needs to be created as an object with SimInterface. The resulting object will have a *show_interface* method to display the interface, and a *get_data* method to retrieve the latest generated dataset.
 
-    data = my_instrument.get_interface_data()
+    sim_widget = ms_widget.SimInterface(instr)
+    sim_widget.show_interface()
+    data = sim_widget.get_data()
 
 ## Use in existing project
 If one wish to work on existing projects using McStasScript, there is a reader included that will read a McStas Instrument file and write the corresponding McStasScript python instrument to disk. Here is an example where the PSI_DMC.instr example is converted:
@@ -164,23 +167,35 @@ If one wish to work on existing projects using McStasScript, there is a reader i
 It is highly advised to run a check between the output of the generated file and the original to ensure the process was sucessful.
 
 ## Method overview
-Here is a quick overview of the available methods of the main classes in the project. Most have more options from keyword arguments that are explained in the manual, but also in python help. To get more information on for example the show_components method of the McStas_instr class, one can use the python help command help(instr.McStas_instr.show_components).
+Here is a quick overview of the available methods of the main classes in the project. Most have more options from keyword arguments that are explained in the manual, but also in python help. To get more information on for example the show_components method of the McStas_instr class, one can use the python help command help(instr.McStas_instr.show_components). Many methods take a reference to a component, that can either be a string with the component name or a component object, here written as Cref in type hint.
 
     instr
     └── McStas_instr(str instr_name) # Returns McStas instrument object on initialize
-        ├── show_components(str category_name) # Show available components in given category
-        ├── component_help(str component_name) # Prints component parameters for given component name   
+        ├── show_parameters() # Prints list of parameters        
+        ├── show_settings() # Prints current instrument settings
+        ├── show_variables() # Prints list of declare variables and user vars
+        ├── show_components() # Prints list of components and their location
+        ├── show_instrument() # Shows instrument drawing with current parameters
+        ├── show_instr_file() # Prints the current instrument file
+        ├── show_diagram() # Show figure describing the instrument object
+        ├── set_parameters() # Sets instrument parameters as keyword arguments
+        ├── available_components(str category_name) # Show available components in given category        
+        ├── component_help(Cref component_name) # Prints component parameters for given component name   
         ├── add_component(str name, str component_name) # Adds component to instrument and returns object
+        ├── copy_component(str name, Cref original_name) # Copies a component to instrument and returns object        
+        ├── remove_component(Cref name) # Removes component
+        ├── move_component(str name, Cref before / after, ) # Moves component to either before or after another
+        ├── get_component(str name) # Gets component object
+        ├── get_last_component() # Gets last component object        
         ├── add_parameter(str name) # Adds instrument parameter with name
         ├── add_declare_var(str type, str name) # Adds declared variable with type and name
+        ├── add_user_var(str type, str name) # Adds user var with type and name        
+        ├── append_declare(str string) # Appends a line to declare section (c syntax)        
         ├── append_initialize(str string) # Appends a line to initialize (c syntax)
-        ├── print_components() # Prints list of components and their location
+        ├── append_finally(str string) # Appends a line to finally (c syntax)        
         ├── write_full_instrument() # Writes instrument to disk with given name + ".instr"
         ├── settings(kwargs) Settings as keyword arguments.
-        ├── backengine() # Runs simulation.
-        ├── data # Data attribute, contains list of McStasData objects
-        ├── interface() # Shows widget interface in jupyter notebook
-        └── get_interface_data() # Returns data set from latest simulation performed in interface
+        └── backengine() # Runs simulation.
         
     component # returned by add_component
     ├── set_AT(list at_list) # Sets component position (list of x,y,z positions in [m])
