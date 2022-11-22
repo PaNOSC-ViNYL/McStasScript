@@ -52,12 +52,31 @@ def instrument_diagram(instrument, analysis=False, variable=None, limits=None):
     ROTATED_arrows = generate_ROTATED_arrows(components, component_box_dict, box_names, color=color_choices["ROTATED"])
 
     # Arrow for the right side of the diagram
-    JUMP_arrows = generate_JUMP_arrows(components, component_box_dict, box_names, color=color_choices["JUMP"])
-    target_index_arrows = generate_target_index_arrows(components, component_box_dict,
-                                                       box_names, color=color_choices["JUMP"])
-    GROUP_arrows = generate_GROUP_arrows(components, component_box_dict, box_names, color=color_choices["GROUP"])
-    Union_arrows = generate_Union_arrows(components, component_box_dict, box_names,
-                                         component_categories, color=color_choices["Union"])
+    try:
+        JUMP_arrows = generate_JUMP_arrows(components, component_box_dict, box_names, color=color_choices["JUMP"])
+    except:
+        JUMP_arrows = []
+        print("Generation of JUMP arrows failed, please send bug report.")
+
+    try:
+        target_index_arrows = generate_target_index_arrows(components, component_box_dict,
+                                                           box_names, color=color_choices["JUMP"])
+    except:
+        target_index_arrows = []
+        print("Generation of target_index arrows failed, please send bug report.")
+
+    try:
+        GROUP_arrows = generate_GROUP_arrows(components, component_box_dict, box_names, color=color_choices["GROUP"])
+    except:
+        GROUP_arrows = []
+        print("Generation of GROUP arrows failed, please send bug report.")
+
+    try:
+        Union_arrows = generate_Union_arrows(components, component_box_dict, box_names,
+                                             component_categories, color=color_choices["Union"])
+    except:
+        Union_arrows = []
+        print("Generation of Union arrows failed, please send bug report.")
 
     intensity_diagnostics=None
     if analysis or variable is not None:

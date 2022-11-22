@@ -1,5 +1,6 @@
 class View:
-    def __init__(self, axis1, axis2=None, bins=100, same_scale=False, **kwargs):
+    def __init__(self, axis1, axis2=None, bins=100, same_scale=False,
+                 axis1_values=None, axis2_values=None, **kwargs):
         """
         Plot view on one or two axis to be generated from event data
 
@@ -28,6 +29,12 @@ class View:
         bins : int or [int, int]
             Number of bins for generation of histogram
 
+        axis1_values : float or list of floats
+            Values that will be plotted as lines on plot
+
+        axis2_values : float or list of floats
+            Values that will be plotted as lines on plot
+
         same_scale : bool
             Controls whether all displays of this view is on same ranges
         """
@@ -36,8 +43,15 @@ class View:
         self.axis1 = axis1
         self.axis1_limits = None
 
+        if isinstance(axis1_values, (float, int)):
+            axis1_values = [axis1_values]
+        self.axis1_values = axis1_values
+
         self.axis2 = axis2
         self.axis2_limits = None
+        if isinstance(axis2_values, (float, int)):
+            axis2_values = [axis2_values]
+        self.axis2_values = axis2_values
 
         self.bins = bins
 

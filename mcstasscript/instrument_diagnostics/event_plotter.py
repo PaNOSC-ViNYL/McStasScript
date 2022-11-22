@@ -112,3 +112,20 @@ class EventPlotter:
 
         _plot_fig_ax(data, fig, ax)
 
+        x_lims = ax.get_xlim()
+        y_lims = ax.get_ylim()
+
+        if view.axis1_values is not None:
+            for value in view.axis1_values:
+                ax.plot([value, value], y_lims, "k")
+
+            ax.set_xlim(x_lims)
+            ax.set_ylim(y_lims)
+
+        if view.axis2_values is not None:
+            for value in view.axis2_values:
+                ax.plot(x_lims, [value, value], "k")
+
+            ax.set_xlim(x_lims)
+            ax.set_ylim(y_lims)
+

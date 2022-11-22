@@ -20,8 +20,14 @@ def generate_target_index_arrows(components, component_box_dict, box_names, colo
             # target_index is disabled
             continue
 
+        try:
+            int(component.target_index)
+        except:
+            # Skip cases where target_index is not an integer
+            continue
+
         this_component_index = component_names.index(component.name)
-        target_component_index = this_component_index + component.target_index
+        target_component_index = this_component_index + int(component.target_index)
         target_component_reference = component_names[target_component_index]
 
         if target_component_reference not in component_box_dict:

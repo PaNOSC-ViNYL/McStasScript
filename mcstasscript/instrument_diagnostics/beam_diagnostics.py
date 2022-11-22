@@ -334,7 +334,10 @@ class BeamDiagnostics(DiagnosticsInstrument):
                 user_vars[index] = '"' + flag + '"'
 
         if isinstance(point.rays, (float, int)):
-            ray_str = str(int(point.rays + 1)) # Monitor_nD seems to record one ray less than requested
+            ray_value = point.rays
+            if self.instr.mccode_version == 3:
+                ray_value += 1 # In McStas 3.0 Monitor_nD grabs one event too few
+            ray_str = str(int(ray_value)) # Monitor_nD seems to record one ray less than requested
         else:
             ray_str = point.rays # Case of rays set to all
 
@@ -386,7 +389,12 @@ class BeamDiagnostics(DiagnosticsInstrument):
         self.event_plotters = []
 
         for point in self.ordered_point_list:
-            event_data = name_search(point.filename, self.data)
+            try:
+                event_data = name_search(point.filename, self.data)
+            except NameError:
+                # Data was not generated, no neutrons reached it or simulation failed
+                continue
+
             point.set_recorded_rays(event_data.metadata.total_N)
             plotter = event_plotter.EventPlotter(point.filename, event_data,
                                                  flag_info=self.flags)
@@ -400,9 +408,9 @@ class BeamDiagnostics(DiagnosticsInstrument):
 
         if len(self.event_plotters) == 0:
             if len(self.views) == 0:
-                print("No data to plot yet! Add views and run.")
+                print("No data to plot! Add views and run.")
             else:
-                print("No data to plot yet! Use the run method to generate data.")
+                print("No data to plot! Use the run method to generate data.")
 
         overview = PlotOverview(self.event_plotters, self.views)
         overview.plot_all()
