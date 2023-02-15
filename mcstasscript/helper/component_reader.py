@@ -2,6 +2,31 @@ import os
 import math
 
 
+def c_integer_literal_base(s: str) -> int:
+    """
+    Determine the base of a C style integer literal.
+
+    base    literal
+    ------- --------------------
+    binary      0b### for # in (0,1)
+    octal       0#### for # in (0,7)
+    decimal     N#### for N in (1,9) and # in (0,9)
+    hexadecimal 0x### for # in (0,9)&(A,F)
+
+    The ambiguity between octal and decimal for '0' is not important
+    since both result in the same integer value.
+    """
+    if len(s) == 0:
+        return 0
+    if '0' != s[0]:
+        return 10
+    if 'x' in s:
+        return 16
+    if 'b' in s:
+        return 2
+    return 8
+
+
 class ComponentInfo:
     """
     Internal class used to store information on parameters of components
@@ -385,7 +410,7 @@ class ComponentReader:
                                     # value could be parameter name
                                     par_value = par_value
                             elif temp_par_type == "int":
-                                par_value = int(par_value)
+                                par_value = int(par_value, c_integer_literal_base(par_value))
 
                             result.parameter_names.append(par_name)
                             result.parameter_defaults[par_name] = par_value
