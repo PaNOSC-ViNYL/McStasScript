@@ -309,6 +309,50 @@ def load_results(data_folder_name):
     """
     Function for loading data from a mcstas simulation
 
+    Selects between text and nexus based loading depending on folder content
+    If text based, returns data on all monitors in a McStas data folder,
+    and returns these as a list of McStasData objects.
+    If nexus, returns a nexus object.
+
+    Parameters
+    ----------
+
+    data_folder_name : str
+        path to folder from which data should be loaded
+
+    """
+
+    if not os.path.isdir(data_folder_name):
+        raise NameError("Given data directory does not exist.")
+
+    # Find all data files in generated folder
+    files_in_folder = os.listdir(data_folder_name)
+
+    # Raise an error if mccode.sim is not available
+    if "mccode.sim" in files_in_folder:
+        return load_results_txt(data_folder_name)
+    elif "mccode.h5" in files_in_folder:
+        try:
+            return load_results_nexus(data_folder_name)
+        except ImportError:
+            ImportError("Could not import h5py")
+        except:
+            ValueError("Could not load dataset with h5py")
+
+    else:
+        raise NameError("No mccode.sim or mccode.h in data folder.")
+
+def load_results_nexus(data_folder_name):
+    """
+    Currently not a good way to save the data in McStasData format
+    """
+    return data_folder_name
+
+
+def load_results_txt(data_folder_name):
+    """
+    Function for loading text data from a mcstas simulation
+
     Loads data on all monitors in a McStas data folder, and returns these
     as a list of McStasData objects.
 
@@ -344,16 +388,6 @@ def load_metadata(data_folder_name):
     first argument : str
         path to folder from which metadata should be loaded
     """
-
-    if not os.path.isdir(data_folder_name):
-        raise NameError("Given data directory does not exist.")
-
-    # Find all data files in generated folder
-    files_in_folder = os.listdir(data_folder_name)
-
-    # Raise an error if mccode.sim is not available
-    if "mccode.sim" not in files_in_folder:
-        raise NameError("No mccode.sim in data folder.")
         
     instrument_parameters = {}
 
