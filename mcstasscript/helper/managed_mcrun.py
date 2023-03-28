@@ -266,6 +266,11 @@ class ManagedMcrun:
                                  universal_newlines=True,
                                  cwd=self.run_path)
 
+        if process.returncode != 0:
+            error_message = f"Executing\n\t{full_command}\nfailed with error code {process.returncode}."
+            error_message += f"\nCommand output:\n{process.stdout}"
+            raise RuntimeError(error_message)
+
         if "suppress_output" in kwargs:
             if kwargs["suppress_output"] is False:
                 print_sim_output(process.stdout)

@@ -167,6 +167,11 @@ class TestManagedMcrun(unittest.TestCase):
         Check a basic system call is correct
         """
 
+        # The mocked process needs to set a return-code of zero to avoid the process error checking
+        process_mock = unittest.mock.Mock()
+        process_mock.configure_mock(returncode=0)
+        mock_sub.return_value = process_mock
+
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
@@ -198,6 +203,11 @@ class TestManagedMcrun(unittest.TestCase):
         """
         Check a basic system call is correct, with different path format
         """
+
+        # The mocked process needs to set a return-code of zero to avoid the process error checking
+        process_mock = unittest.mock.Mock()
+        process_mock.configure_mock(returncode=0)
+        mock_sub.return_value = process_mock
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas", "")
@@ -232,6 +242,11 @@ class TestManagedMcrun(unittest.TestCase):
         Here multiple options are used and ncount is a float that should
         be rounded by the class.
         """
+
+        # The mocked process needs to set a return-code of zero to avoid the process error checking
+        process_mock = unittest.mock.Mock()
+        process_mock.configure_mock(returncode=0)
+        mock_sub.return_value = process_mock
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
@@ -270,6 +285,11 @@ class TestManagedMcrun(unittest.TestCase):
         be rounded by the class.
         """
 
+        # The mocked process needs to set a return-code of zero to avoid the process error checking
+        process_mock = unittest.mock.Mock()
+        process_mock.configure_mock(returncode=0)
+        mock_sub.return_value = process_mock
+
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
 
@@ -304,6 +324,11 @@ class TestManagedMcrun(unittest.TestCase):
         """
         Check a run with parameters is correct
         """
+
+        # The mocked process needs to set a return-code of zero to avoid the process error checking
+        process_mock = unittest.mock.Mock()
+        process_mock.configure_mock(returncode=0)
+        mock_sub.return_value = process_mock
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
@@ -342,6 +367,11 @@ class TestManagedMcrun(unittest.TestCase):
         """
         Check run with force_compile set to False works
         """
+
+        # The mocked process needs to set a return-code of zero to avoid the process error checking
+        process_mock = unittest.mock.Mock()
+        process_mock.configure_mock(returncode=0)
+        mock_sub.return_value = process_mock
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")

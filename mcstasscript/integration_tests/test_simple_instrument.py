@@ -8,6 +8,9 @@ from mcstasscript.interface import instr
 def setup_simple_instrument():
     Instr = instr.McStas_instr("integration_test_simple")
 
+    from packaging.version import Version
+    bin_attr = 'nx' if Instr.executable_version < Version('3.0.0') else 'nbins'
+
     source = Instr.add_component("source", "Source_div")
 
     source.xwidth = 0.03
@@ -22,7 +25,9 @@ def setup_simple_instrument():
 
     PSD.set_AT([0, 0, 1], RELATIVE="source")
     PSD.xwidth = 0.1
-    PSD.nx = 100
+    if not hasattr(PSD, bin_attr):
+        raise RuntimeError(f"Expected {PSD} to have attribute {bin_attr}")
+    setattr(PSD, bin_attr, 100)
     PSD.yheight = 0.03
     PSD.filename = "\"PSD.dat\""
     PSD.restore_neutron = 1
@@ -36,6 +41,12 @@ def setup_simple_instrument_input_path():
 
     Instr = instr.McStas_instr("integration_test_simple_input",
                                input_path=input_path)
+
+    from packaging.version import Version
+    if Instr.executable_version > Version('3.0.0'):
+        import warnings
+        warnings.warn("The version of McStas is not 2.x; this test would have failed if it had not been skipped")
+        return Instr
 
     source = Instr.add_component("source", "Source_div")
 
@@ -62,6 +73,9 @@ def setup_simple_instrument_input_path():
 def setup_simple_slit_instrument():
     Instr = instr.McStas_instr("integration_test_simple")
 
+    from packaging.version import Version
+    bin_attr = 'nx' if Instr.executable_version < Version('3.0.0') else 'nbins'
+
     source = Instr.add_component("source", "Source_div")
     source.xwidth = 0.1
     source.yheight = 0.01
@@ -81,7 +95,9 @@ def setup_simple_slit_instrument():
     PSD = Instr.add_component("PSD_1D", "PSDlin_monitor")
     PSD.set_AT([0, 0, 1], RELATIVE="source")
     PSD.xwidth = 0.1
-    PSD.nx = 100
+    if not hasattr(PSD, bin_attr):
+        raise RuntimeError(f"Expected {PSD} to have attribute {bin_attr}")
+    setattr(PSD, bin_attr, 100)
     PSD.yheight = 0.03
     PSD.filename = "\"PSD.dat\""
     PSD.restore_neutron = 1
@@ -136,6 +152,11 @@ class TestSimpleInstrument(unittest.TestCase):
         os.chdir(THIS_DIR)
 
         Instr = setup_simple_instrument_input_path()
+
+        from packaging.version import Version
+        if Instr.executable_version > Version('3.0.0'):
+            import warnings
+            warnings.warn("The version of McStas is not 2.x; this test would have failed if it had not been skipped")
 
         foldername = "integration_test_simple_input"
         data = Instr.run_full_instrument(foldername=foldername,

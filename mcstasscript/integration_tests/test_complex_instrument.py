@@ -101,10 +101,15 @@ def setup_complex_instrument():
 
     Instr.add_component("done", "Arm", RELATIVE="after_guide")
 
+    from packaging.version import Version
+    bin_attr = 'nx' if Instr.executable_version < Version('3.0.0') else 'nbins'
+
     PSD1 = Instr.add_component("PSD_1D_1", "PSDlin_monitor")
     PSD1.set_AT([0, 0, 0.2], RELATIVE="after_guide")
     PSD1.xwidth = 0.1
-    PSD1.nx = 100
+    if not hasattr(PSD1, bin_attr):
+        raise RuntimeError(f"Expected {PSD1} to have attribute {bin_attr}")
+    setattr(PSD1, bin_attr, 100)
     PSD1.yheight = 0.03
     PSD1.filename = "\"PSD1.dat\""
     PSD1.restore_neutron = 1
@@ -113,7 +118,7 @@ def setup_complex_instrument():
     PSD2 = Instr.add_component("PSD_1D_2", "PSDlin_monitor")
     PSD2.set_AT([0, 0, 0.2], RELATIVE="after_guide")
     PSD2.xwidth = 0.1
-    PSD2.nx = 100
+    setattr(PSD2, bin_attr, 100)
     PSD2.yheight = 0.03
     PSD2.filename = "\"PSD2.dat\""
     PSD2.restore_neutron = 1
@@ -122,7 +127,7 @@ def setup_complex_instrument():
     PSD = Instr.add_component("PSD_1D", "PSDlin_monitor")
     PSD.set_AT([0, 0, 0.2], RELATIVE="after_guide")
     PSD.xwidth = 0.1
-    PSD.nx = 100
+    setattr(PSD, bin_attr, 100)
     PSD.yheight = 0.03
     PSD.filename = "\"PSD_all.dat\""
     PSD.restore_neutron = 1

@@ -444,6 +444,22 @@ class McCode_instr(BaseCalculator):
     def output_path(self, value: str) -> None:
         self.calculator_base_dir = value
 
+    @property
+    def executable_version(self):
+        from subprocess import check_output
+        from pathlib import Path
+        from os import access, X_OK
+        from packaging.version import parse
+        if 'executable_path' not in self._run_settings or 'executable' not in self._run_settings:
+            return '0.0.0'
+        torun = Path(self._run_settings['executable_path']).joinpath(self._run_settings['executable'])
+        if not torun.exists() or not access(torun, X_OK):
+            return '0.0.0'
+        version_info = check_output([torun, '--version']).decode('utf-8')
+        version_string = [x for x in version_info.split('\n') if len(x)][-1]
+        return parse(version_string)
+
+
     def init_parameters(self):
         """
         Create empty ParameterContainer for new instrument
@@ -2783,14 +2799,8 @@ class McStas_instr(McCode_instr):
             self.mccode_version = "Unknown"
 
     def _read_calibration(self):
-        this_dir = os.path.dirname(os.path.abspath(__file__))
-        configuration_file_name = os.path.join(this_dir, "..",
-                                               "configuration.yaml")
-        if not os.path.isfile(configuration_file_name):
-            raise NameError("Could not find configuration file!")
-        with open(configuration_file_name, 'r') as ymlfile:
-            config = yaml.safe_load(ymlfile)
-
+        from .. import Configurator
+        config = Configurator()._read_yaml()
         if type(config) is dict:
             self._run_settings["executable_path"] = config["paths"]["mcrun_path"]
             self._run_settings["package_path"] = config["paths"]["mcstas_path"]
@@ -3011,14 +3021,8 @@ class McXtrace_instr(McCode_instr):
             self.mccode_version = "Unknown"
 
     def _read_calibration(self):
-        this_dir = os.path.dirname(os.path.abspath(__file__))
-        configuration_file_name = os.path.join(this_dir, "..",
-                                               "configuration.yaml")
-        if not os.path.isfile(configuration_file_name):
-            raise NameError("Could not find configuration file!")
-        with open(configuration_file_name, 'r') as ymlfile:
-            config = yaml.safe_load(ymlfile)
-
+        from .. import Configurator
+        config = Configurator()._read_yaml()
         if type(config) is dict:
             self._run_settings["executable_path"] = config["paths"]["mxrun_path"]
             self._run_settings["package_path"] = config["paths"]["mcxtrace_path"]
