@@ -29,8 +29,10 @@ from mcstasscript.helper.exceptions import McStasError
 from mcstasscript.helper.beam_dump_database import BeamDumpDatabase
 from mcstasscript.helper.check_mccode_version import check_mcstas_major_version
 from mcstasscript.helper.check_mccode_version import check_mcxtrace_major_version
+from mcstasscript.helper.name_inspector import find_python_variable_name
 from mcstasscript.instrument_diagram.make_diagram import instrument_diagram
 from mcstasscript.instrument_diagnostics.intensity_diagnostics import IntensityDiagnostics
+
 
 
 class McCode_instr(BaseCalculator):
@@ -1180,8 +1182,8 @@ class McCode_instr(BaseCalculator):
         return self.component_class_lib[component_name](name, component_name,
                                                         **kwargs)
 
-    def add_component(self, name, component_name, before=None, after=None,
-                      AT=None, AT_RELATIVE=None, ROTATED=None,
+    def add_component(self, name, component_name=None, *, before=None,
+                      after=None, AT=None, AT_RELATIVE=None, ROTATED=None,
                       ROTATED_RELATIVE=None, RELATIVE=None, WHEN=None,
                       EXTEND=None, GROUP=None, JUMP=None, SPLIT=None,
                       comment=None, c_code_before=None, c_code_after=None):
@@ -1242,6 +1244,26 @@ class McCode_instr(BaseCalculator):
                 Comment that will be displayed before the component
         """
 
+        if component_name is None:
+            # Try to interpret name as the name of a McStas component
+            #  and the python variable name as the given name to this
+            #  instance of the McStas component.
+            if name in self.component_reader.component_path:
+                # Name is an available McStas component!
+                component_name = name
+
+                # Find name through call
+                text = ("When adding a component without giving both "
+                        "name and type it is necessary to assign the "
+                        "component object a python variable name that "
+                        "can be used for the McStas component.")
+                name = find_python_variable_name(error_text=text, n_levels=2)
+            else:
+                raise NameError("As no name is given, the input is interpreted"
+                                " as a component name, yet no component of"
+                                " type " + str(name) + " is found in McStas"
+                                " installation or work directory.")
+
         if name in [x.name for x in self.component_list]:
             raise NameError(("Component name \"" + str(name)
                              + "\" used twice, " + self.package_name
@@ -1265,8 +1287,8 @@ class McCode_instr(BaseCalculator):
         self._insert_component(new_component, before=before, after=after)
         return new_component
 
-    def copy_component(self, name, original_component, before=None, after=None,
-                       AT=None, AT_RELATIVE=None, ROTATED=None,
+    def copy_component(self, name, original_component=None, *, before=None,
+                       after=None, AT=None, AT_RELATIVE=None, ROTATED=None,
                        ROTATED_RELATIVE=None, RELATIVE=None, WHEN=None,
                        EXTEND=None, GROUP=None, JUMP=None, SPLIT=None,
                        comment=None, c_code_before=None, c_code_after=None):
@@ -1326,6 +1348,32 @@ class McCode_instr(BaseCalculator):
             comment : str
                 Comment that will be displayed before the component
         """
+
+        if original_component is None:
+            # Try to interpret name as the name of a McStas component
+            #  to be copied and the python variable name as the given
+            #  name to the new instance of the McStas component.
+            if isinstance(name, Component):
+                name = original_component.name
+
+            component_names = [x.name for x in self.component_list]
+            if name in component_names:
+                # name is an existing component name
+                original_component = name
+
+                # Find new name through call
+                text = ("When making a component copy without providing both "
+                        "name of the new instance and name of the original "
+                        "component it is necessary to assign the new "
+                        "component object to a python variable name that can "
+                        "be used for the new McStas component object.")
+                name = find_python_variable_name(error_text=text, n_levels=2)
+            else:
+                raise NameError("As no name is given, the input is interpreted"
+                                " as a component name, yet no component named"
+                                + str(name) + " is found in the McStas "
+                                "instrument.")
+
         if isinstance(original_component, Component):
             original_component = original_component.name
 
