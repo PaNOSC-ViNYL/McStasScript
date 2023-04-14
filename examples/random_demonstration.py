@@ -11,6 +11,9 @@ instr = ms.McStas_instr("random_demo",
 
 # Set up a material called Cu with approrpiate properties
 # (uses McStas Union components, here the processes)
+
+Init = instr.add_component("init", "Union_init")
+
 Cu_inc = instr.add_component("Cu_incoherent", "Incoherent_process")
 Cu_inc.sigma = 4*0.55
 Cu_inc.packing_factor = 1
@@ -117,6 +120,8 @@ big_PSD.nx = 500
 big_PSD.ny = 500
 big_PSD.filename = '"big_PSD.dat"'
 big_PSD.restore_neutron = 1
+
+Stop = instr.add_component("stop", "Union_stop")
 
 instr.show_components()
 
