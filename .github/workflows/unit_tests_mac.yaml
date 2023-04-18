@@ -12,7 +12,7 @@ jobs:
     runs-on: macos-latest
       
     steps:
-      - name: Temporary developer libpyvinyl checkout
+      - name: Temporary developer McStasScript checkout
         uses: actions/checkout@v2
         with:
           ref: ${{ env.BRANCH }}
