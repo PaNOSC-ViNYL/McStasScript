@@ -3,3 +3,4 @@ matplotlib
 PyYAML
 ipywidgets
 libpyvinyl
+ipympl

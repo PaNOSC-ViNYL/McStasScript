@@ -2576,7 +2576,8 @@ class McCode_instr(BaseCalculator):
         analysis : bool
             If True, a plot of intensity and ncount over the instrument is included
         """
-        if self.has_errors():
+
+        if self.has_errors() and self._run_settings["checks"]:
             print("The instrument has some error, this diagram is still "
                   "shown as it may help find the bug.")
 
@@ -2584,7 +2585,9 @@ class McCode_instr(BaseCalculator):
             analysis = True
 
         instrument_diagram(self, analysis=analysis, variable=variable, limits=limits)
-        self.check_for_errors()
+
+        if self._run_settings["checks"]:
+            self.check_for_errors()
 
     def show_analysis(self, variable=None):
         beam_diag = IntensityDiagnostics(self)
