@@ -446,6 +446,19 @@ class TestMcStas_instr(unittest.TestCase):
         with self.assertRaises(NameError):
             instr.add_parameter("double", "theta", comment="test par")
 
+    def test_infer_name_add_parameter(self):
+        """
+        Test that name can be ommited when defining a parameter and that
+        the python variable name is used in its place.
+        """
+        instr = setup_instr_root_path()
+
+        theta = instr.add_parameter(type="double", comment="test par")
+
+        self.assertEqual(theta.name, "theta")
+        self.assertEqual(theta.comment, "test par")
+        self.assertTrue(theta in instr.parameters.parameters.values())
+
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_show_parameters(self, mock_stdout):
         """
@@ -550,6 +563,18 @@ class TestMcStas_instr(unittest.TestCase):
         instr.add_user_var("double", "two_theta")
         with self.assertRaises(NameError):
             instr.add_declare_var("double", "two_theta")
+
+    def test_infer_add_declare_variable(self):
+        """
+        Check that name can be inferred from python variable when
+        adding a declared variable.
+        """
+        instr = setup_instr_root_path()
+
+        two_theta = instr.add_declare_var("double", comment="test par")
+
+        self.assertEqual(instr.declare_list[0].name, "two_theta")
+        self.assertEqual(instr.declare_list[0].comment, " // test par")
 
     def test_simple_add_user_variable(self):
         """
@@ -1019,6 +1044,24 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(instr.component_list[0].GROUP, "developers")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_add_component_infer_name(self, mock_stdout):
+        """
+        Testing add_component works when name is left out and inferred
+        from the name of the python variable in the call.
+        """
+
+        instr = setup_instr_with_path()
+
+        test_component = instr.add_component("test_for_reading")
+
+        self.assertEqual(len(instr.component_list), 1)
+        self.assertEqual(instr.component_list[0].name, "test_component")
+
+        # Test the resulting object functions as intended
+        test_component.set_GROUP("developers")
+        self.assertEqual(instr.component_list[0].GROUP, "developers")
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_add_component_simple_keyword(self, mock_stdout):
         """
         Testing add_component with keyword argument for the component
@@ -1149,6 +1192,22 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(comp.AT_data[0], 0)
         self.assertEqual(comp.AT_data[1], 0)
         self.assertEqual(comp.AT_data[2], 2)
+
+    def test_infer_copy_component_simple(self):
+        """
+        Checks that a component can be copied using the name
+        while giving the new instance name as the python variable
+        """
+
+        instr = setup_populated_with_some_options_instr()
+
+        copy_of_second_comp = instr.copy_component("second_component")
+
+        self.assertEqual(copy_of_second_comp.name, "copy_of_second_comp")
+        self.assertEqual(copy_of_second_comp.yheight, 1.23)
+        self.assertEqual(copy_of_second_comp.AT_data[0], 0)
+        self.assertEqual(copy_of_second_comp.AT_data[1], 0)
+        self.assertEqual(copy_of_second_comp.AT_data[2], 2)
 
     def test_copy_component_simple_fail(self):
         """

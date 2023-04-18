@@ -1,6 +1,7 @@
 from mcstasscript.helper.formatting import bcolors
 from mcstasscript.helper.formatting import is_legal_parameter
 from mcstasscript.helper.exceptions import McStasError
+from mcstasscript.helper.name_inspector import find_python_variable_name
 
 from libpyvinyl.Parameters.Parameter import Parameter
 
@@ -44,9 +45,14 @@ def provide_parameter(*args, **kwargs):
     """
     if len(args) == 0:
         # Check all required keyword arguments present
-        if "name" not in kwargs["name"]:
-            raise RuntimeError("Need to provide name, either as first argument"
-                               + " or keyword argument")
+        if "name" not in kwargs:
+            try:
+                name = find_python_variable_name(error_text="", n_levels=3)
+                kwargs["name"] = name
+            except:
+                raise RuntimeError("Need to provide name, either as first argument"
+                                   + ", keyword argument or python variable.")
+
         provided_name = kwargs["name"]
 
         provided_type = ""
@@ -202,7 +208,7 @@ class DeclareVariable:
     write_line(fo)
         Writes a line to text file fo declaring the parameter in c
     """
-    def __init__(self, type, name, **kwargs):
+    def __init__(self, type, name=None, **kwargs):
         """
         Initializing mcstas declare variable or user variable object
 
@@ -211,6 +217,9 @@ class DeclareVariable:
 
         Creates a variable with name A3 and default value
         A = DeclareVariable("double", "A3", value=30)
+
+        Creates a variable with type integer and name A
+        A = DeclareVariable("int")
 
         Creates a variable with type integer and name sample_number
         A = DeclareVariable("int", "sample_number")
@@ -243,6 +252,11 @@ class DeclareVariable:
         if not isinstance(self.type, str):
             raise RuntimeError("Given type of DeclareVariable should be a "
                                + "string.")
+
+        if name is None:
+            error_text = ("When using automatic assignment of name, the call"
+                          " need to assign it to a variable name")
+            name = find_python_variable_name(error_text=error_text, n_levels=3)
 
         self.name = str(name)
 
