@@ -1,7 +1,9 @@
 name: McStasScript unit tests on ubuntu
+
 on:
   push:
   workflow_dispatch:
+
 jobs:
   build:
     strategy:

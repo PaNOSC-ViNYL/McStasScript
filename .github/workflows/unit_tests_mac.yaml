@@ -1,7 +1,9 @@
 name: McStasScript unit tests on OS X
+
 on:
   push:
   workflow_dispatch:
+
 jobs:
   build:
     strategy:
