@@ -376,6 +376,86 @@ class TestManagedMcrun(unittest.TestCase):
                                          universal_newlines=True,
                                          cwd=mcrun_obj.run_path)
 
+    @unittest.mock.patch("subprocess.run")
+    def test_ManagedMcrun_run_simulation_NeXus(self, mock_sub):
+        """
+        Check run with NeXus works
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        with WorkInTestDir() as handler:
+            mcrun_obj = ManagedMcrun("test.instr",
+                                     output_path="test_folder",
+                                     executable_path=executable_path,
+                                     executable="mcrun",
+                                     mpi=7,
+                                     ncount=57.4,
+                                     force_compile=False,
+                                     NeXus=True,
+                                     custom_flags="-fo",
+                                     parameters={"A": 2,
+                                                 "BC": "car",
+                                                 "th": "\"toy\""})
+
+        mcrun_obj.run_simulation()
+
+        expected_folder_path = os.path.join(THIS_DIR, "test_folder")
+
+        executable = os.path.join(executable_path, "mcrun")
+        executable = '"' + executable + '"'
+        # a double space because of a missing option
+        expected_call = (executable + " --format=NeXus -n 57 --mpi=7 "
+                         + "-d " + expected_folder_path + " -fo test.instr "
+                         + "A=2 BC=car th=\"toy\"")
+
+        mock_sub.assert_called_once_with(expected_call,
+                                         shell=True,
+                                         stderr=-2, stdout=-1,
+                                         universal_newlines=True,
+                                         cwd=mcrun_obj.run_path)
+
+    @unittest.mock.patch("subprocess.run")
+    def test_ManagedMcrun_run_simulation_openacc(self, mock_sub):
+        """
+        Check run with openacc works
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        with WorkInTestDir() as handler:
+            mcrun_obj = ManagedMcrun("test.instr",
+                                     output_path="test_folder",
+                                     executable_path=executable_path,
+                                     executable="mcrun",
+                                     mpi=7,
+                                     ncount=48.4,
+                                     openacc=True,
+                                     force_compile=False,
+                                     custom_flags="-fo",
+                                     parameters={"A": 2,
+                                                 "BC": "car",
+                                                 "th": "\"toy\""})
+
+        mcrun_obj.run_simulation()
+
+        expected_folder_path = os.path.join(THIS_DIR, "test_folder")
+
+        executable = os.path.join(executable_path, "mcrun")
+        executable = '"' + executable + '"'
+        # a double space because of a missing option
+        expected_call = (executable + " --openacc -n 48 --mpi=7 "
+                         + "-d " + expected_folder_path + " -fo test.instr "
+                         + "A=2 BC=car th=\"toy\"")
+
+        mock_sub.assert_called_once_with(expected_call,
+                                         shell=True,
+                                         stderr=-2, stdout=-1,
+                                         universal_newlines=True,
+                                         cwd=mcrun_obj.run_path)
+
     def test_ManagedMcrun_load_data_PSD4PI(self):
         """
         Use test_data_set to test load_data for PSD_4PI

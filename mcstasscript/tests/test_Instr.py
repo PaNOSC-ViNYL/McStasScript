@@ -1896,6 +1896,57 @@ class TestMcStas_instr(unittest.TestCase):
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch("subprocess.run")
+    def test_run_backengine_complex_settings(self, mock_sub, mock_stdout):
+        """
+        Test settings are passed to backengine with complex settings
+
+        Check run performs the correct system call with settings. Here
+        the output_path is set to a name that does not correspond to a
+        existing file so no error is thrown.
+        """
+
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        with WorkInTestDir() as handler:
+            new_folder_name = "folder_name_which_is_unused"
+            if os.path.exists(new_folder_name):
+                raise RuntimeError("Folder_name was supposed to not "
+                                   + "exist before "
+                                   + "test_run_backengine_basic")
+
+            instr = setup_populated_instr_with_dummy_path()
+
+            instr.set_parameters({"theta": 1})
+            instr.settings(output_path=new_folder_name,
+                           increment_folder_name=True,
+                           executable_path=executable_path,
+                           mpi=5, ncount=19373, openacc=True,
+                           NeXus=True, force_compile=False,
+                           seed=300, gravity=True, checks=False)
+            instr.backengine()
+
+        expected_path = os.path.join(executable_path, "mcrun")
+        expected_path = '"' + expected_path + '"'
+
+        expected_folder_path = os.path.join(THIS_DIR, new_folder_name)
+
+        # a double space because of a missing option
+        expected_call = (expected_path + " -g --format=NeXus "
+                         + "--openacc "
+                         + "-n 19373 --mpi=5 --seed=300 "
+                         + "-d " + expected_folder_path
+                         + "  test_instrument.instr"
+                         + " theta=1 has_default=37")
+
+        mock_sub.assert_called_with(expected_call,
+                                    shell=True,
+                                    stderr=-2, stdout=-1,
+                                    universal_newlines=True,
+                                    cwd=run_path)
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    @unittest.mock.patch("subprocess.run")
     def test_run_full_instrument_complex(self, mock_sub, mock_stdout):
         """
         Test neutron run_full_instrument in more complex case

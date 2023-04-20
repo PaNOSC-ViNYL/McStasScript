@@ -240,7 +240,7 @@ class McCode_instr(BaseCalculator):
                  increment_folder_name=None, custom_flags=None,
                  executable_path=None, executable=None,
                  suppress_output=None, gravity=None, input_path=None,
-                 package_path=None, checks=None):
+                 package_path=None, checks=None, NeXus=None, openacc=None):
         """
         Initialization of McStas Instrument
 
@@ -398,6 +398,12 @@ class McCode_instr(BaseCalculator):
 
         if increment_folder_name is not None:
             provided_run_settings["increment_folder_name"] = increment_folder_name
+
+        if NeXus is not None:
+            provided_run_settings["NeXus"] = NeXus
+
+        if openacc is not None:
+            provided_run_settings["openacc"] = openacc
 
         # Set run_settings, perform input sanitation
         self.settings(**provided_run_settings)
@@ -2205,7 +2211,8 @@ class McCode_instr(BaseCalculator):
                  force_compile=None, output_path=None,
                  increment_folder_name=None, custom_flags=None,
                  executable=None, executable_path=None,
-                 suppress_output=None, gravity=None, checks=None):
+                 suppress_output=None, gravity=None, checks=None,
+                 openacc=None, NeXus=None):
         """
         Sets settings for McStas run performed with backengine
 
@@ -2235,9 +2242,13 @@ class McCode_instr(BaseCalculator):
             executable_path : str
                 Path to mcrun command, "" if already in path
             suppress_output : bool
-                Set to True to surpress output
+                Set to True to suppress output
             gravity : bool
                 If True, gravity will be simulated
+            openacc : bool
+                If True, adds --openacc to mcrun call
+            NeXus : bool
+                If True, adds --format=NeXus to mcrun call
         """
 
         settings = {}
@@ -2292,6 +2303,12 @@ class McCode_instr(BaseCalculator):
 
         if output_path is not None:
             self.output_path = output_path
+
+        if openacc is not None:
+            settings["openacc"] = bool(openacc)
+
+        if NeXus is not None:
+            settings["NeXus"] = bool(NeXus)
 
         self._run_settings.update(settings)
 
@@ -2355,6 +2372,16 @@ class McCode_instr(BaseCalculator):
         if "force_compile" in self._run_settings:
             value = self._run_settings["force_compile"]
             description += "  force_compile:".ljust(variable_space)
+            description += str(value) + "\n"
+
+        if "NeXus" in self._run_settings:
+            value = self._run_settings["NeXus"]
+            description += "  NeXus:".ljust(variable_space)
+            description += str(value) + "\n"
+
+        if "openacc" in self._run_settings:
+            value = self._run_settings["openacc"]
+            description += "  openacc:".ljust(variable_space)
             description += str(value) + "\n"
 
         return description.strip()

@@ -83,6 +83,10 @@ class ManagedMcrun:
                 If True, forces compile. If False no new instrument is written
             run_folder : str
                 Path to folder in which to run McStas
+            openacc : bool, default False
+                If True, adds the --openacc flag to mcrun call
+            NeXus : bool, default False
+                If True, adds the --format=NeXus to mcrun call
 
         """
 
@@ -92,6 +96,8 @@ class ManagedMcrun:
         self.ncount = int(1E6)
         self.mpi = None
         self.gravity = False
+        self.openacc = False
+        self.NeXus = False
         self.parameters = {}
         self.custom_flags = ""
         self.executable_path = ""
@@ -137,6 +143,12 @@ class ManagedMcrun:
 
         if "gravity" in kwargs:
             self.gravity = kwargs["gravity"]
+
+        if "openacc" in kwargs:
+            self.openacc = kwargs["openacc"]
+
+        if "NeXus" in kwargs:
+            self.NeXus = kwargs["NeXus"]
 
         if "seed" in kwargs:
             self.seed = kwargs["seed"]
@@ -203,6 +215,12 @@ class ManagedMcrun:
 
         if self.gravity:
             option_string += "-g "
+
+        if self.NeXus:
+            option_string += "--format=NeXus "
+
+        if self.openacc:
+            option_string += "--openacc "
 
         if self.mpi is not None:
             mpi_string = "--mpi=" + str(self.mpi) + " "  # Set mpi
