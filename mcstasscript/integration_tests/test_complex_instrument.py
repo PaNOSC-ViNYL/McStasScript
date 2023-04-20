@@ -8,11 +8,13 @@ import threading
 from mcstasscript.interface import instr, functions
 from mcstasscript.jb_interface.simulation_interface import SimInterface
 
+
 class FakeChange:
     def __init__(self, new=None, old=None, name=None):
         self.new = new
         self.old = old
         self.name = name
+
 
 def setup_complex_instrument():
     """
@@ -104,7 +106,10 @@ def setup_complex_instrument():
     PSD1 = Instr.add_component("PSD_1D_1", "PSDlin_monitor")
     PSD1.set_AT([0, 0, 0.2], RELATIVE="after_guide")
     PSD1.xwidth = 0.1
-    PSD1.nx = 100
+    if Instr.mccode_version > 2:
+        PSD1.nbins = 100
+    else:
+        PSD1.nx = 100
     PSD1.yheight = 0.03
     PSD1.filename = "\"PSD1.dat\""
     PSD1.restore_neutron = 1
@@ -113,7 +118,10 @@ def setup_complex_instrument():
     PSD2 = Instr.add_component("PSD_1D_2", "PSDlin_monitor")
     PSD2.set_AT([0, 0, 0.2], RELATIVE="after_guide")
     PSD2.xwidth = 0.1
-    PSD2.nx = 100
+    if Instr.mccode_version > 2:
+        PSD2.nbins = 100
+    else:
+        PSD2.nx = 100
     PSD2.yheight = 0.03
     PSD2.filename = "\"PSD2.dat\""
     PSD2.restore_neutron = 1
@@ -122,7 +130,10 @@ def setup_complex_instrument():
     PSD = Instr.add_component("PSD_1D", "PSDlin_monitor")
     PSD.set_AT([0, 0, 0.2], RELATIVE="after_guide")
     PSD.xwidth = 0.1
-    PSD.nx = 100
+    if Instr.mccode_version > 2:
+        PSD.nbins = 100
+    else:
+        PSD.nx = 100
     PSD.yheight = 0.03
     PSD.filename = "\"PSD_all.dat\""
     PSD.restore_neutron = 1

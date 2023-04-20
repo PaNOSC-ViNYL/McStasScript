@@ -81,7 +81,8 @@ class ComponentReader:
                        "misc",
                        "contrib",
                        "obsolete",
-                       "union"]
+                       "union",
+                       "astrox"]
 
         self.component_path = {}
         self.component_category = {}
