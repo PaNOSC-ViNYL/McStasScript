@@ -205,7 +205,7 @@ Here is a quick overview of the available methods of the main classes in the pro
     ├── set_comment(str string) # Set comment explaining something about the component
     └── print_long() # Prints currently contained information on component
     
-    functions
+    mcstasscript functions
     ├── name_search(str name, list McStasData) # Returns data set with given name from McStasData list
     ├── name_plot_options(str name, list McStasData, kwargs) # Sends kwargs to dataset with given name
     ├── load_data(str foldername) # Loads data from folder with McStas data as McStasData list
@@ -214,12 +214,12 @@ Here is a quick overview of the available methods of the main classes in the pro
         ├── set_mcstas_path(str path) # sets mcstas path
         └── set_line_length(int length) # sets maximum line length
     
-    plotter
+    mcstasscript plotter
     ├── make_plot(list McStasData) # Plots each data set individually
     ├── make_sub_plot(list McStasData) # Plots data as subplot
     └── interface(list McStasData) # Shows plotting interface in jupyter notebook
 
-    reader
+    mcstasscript reader
     └──  McStas_file(str filename) # Returns a reader that can extract information from given instr file
 
     InstrumentReader # returned by McStas_file
