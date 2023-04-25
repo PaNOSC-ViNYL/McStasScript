@@ -2,6 +2,7 @@ from mcstasscript.helper.formatting import bcolors
 from mcstasscript.helper.formatting import is_legal_parameter
 from mcstasscript.helper.exceptions import McStasError
 from mcstasscript.helper.name_inspector import find_python_variable_name
+from mcstasscript.helper.search_statement import SearchStatement, SearchStatementList
 
 from libpyvinyl.Parameters.Parameter import Parameter
 
@@ -562,6 +563,7 @@ class Component:
         self.comment = ""
         self.c_code_before = ""
         self.c_code_after = ""
+        self.search_statement_list = SearchStatementList()
 
         # references to component names
         self.AT_reference = None
@@ -964,6 +966,38 @@ class Component:
                                + "given " + str(type(string)))
         self.c_code_after = string
 
+    def add_search(self, statement, SHELL=False):
+        """
+        Adds a search statement to the component
+
+        The search line can be used to tell McStas to search for files in
+        additional locations. Double quotes are added.
+
+        Parameters
+        ----------
+            statement : str
+                The search statement
+
+            SHELL : bool (default False)
+                if True, shell keyword is added
+        """
+
+        self.search_statement_list.add_statement(SearchStatement(statement, SHELL=SHELL))
+
+    def clear_search(self):
+        """
+        Clears the component of all search statements
+        """
+
+        self.search_statement_list.clear()
+
+    def show_search(self):
+        """
+        Shows all search statements of component
+        """
+
+        print(self.search_statement_list)
+
     def write_component(self, fo):
         """
         Method that writes component to file
@@ -984,6 +1018,9 @@ class Component:
         # Write comment if present
         if len(self.comment) > 1:
             fo.write("// %s\n" % (str(self.comment)))
+
+        # Write search statements
+        self.search_statement_list.write(fo)
 
         if self.SPLIT != 0:
             fo.write("SPLIT " + str(self.SPLIT) + " ")
@@ -1080,6 +1117,7 @@ class Component:
 
         if len(self.c_code_before) > 1:
             string += self.c_code_before + "\n"
+        string += self.search_statement_list.make_string()
         if len(self.comment) > 1:
             string += "// " + self.comment + "\n"
         if self.SPLIT != 0:

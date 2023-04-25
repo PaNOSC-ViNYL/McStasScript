@@ -454,6 +454,43 @@ class TestComponent(unittest.TestCase):
 
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
+    def test_Component_write_to_file_simple_search(self, mock_f):
+        """
+        Testing that a Component can be written to file with the
+        expected output. Here with simple input and search.
+        """
+
+        comp = Component("test_component", "Arm")
+        comp.add_search("A search_statement")
+        comp.add_search("Another search_statement", SHELL=True)
+        comp.add_search('"One with double quotes"')
+
+        comp._unfreeze()
+        # Need to set up attribute parameters
+        # Also need to categorize them as when created
+        comp.parameter_names = []
+        comp.parameter_defaults = {}
+        comp.parameter_types = {}
+        comp._freeze()
+
+        with mock_f('test.txt', 'w') as m_fo:
+            comp.write_component(m_fo)
+
+        my_call = unittest.mock.call
+        expected_writes = [my_call('SEARCH "A search_statement"\n'),
+                           my_call('SEARCH SHELL "Another search_statement"\n'),
+                           my_call('SEARCH "One with double quotes"\n'),
+                           my_call("COMPONENT test_component = Arm("),
+                           my_call(")\n"),
+                           my_call("AT (0,0,0)"),
+                           my_call(" ABSOLUTE\n")]
+
+        mock_f.assert_called_with('test.txt', 'w')
+        handle = mock_f()
+        handle.write.assert_has_calls(expected_writes, any_order=False)
+
+    @unittest.mock.patch('__main__.__builtins__.open',
+                         new_callable=unittest.mock.mock_open)
     def test_Component_write_to_file_include(self, mock_f):
         """
         Testing that a Component can be written to file with the

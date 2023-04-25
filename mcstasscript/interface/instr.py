@@ -30,9 +30,9 @@ from mcstasscript.helper.beam_dump_database import BeamDumpDatabase
 from mcstasscript.helper.check_mccode_version import check_mcstas_major_version
 from mcstasscript.helper.check_mccode_version import check_mcxtrace_major_version
 from mcstasscript.helper.name_inspector import find_python_variable_name
+from mcstasscript.helper.search_statement import SearchStatement, SearchStatementList
 from mcstasscript.instrument_diagram.make_diagram import instrument_diagram
 from mcstasscript.instrument_diagnostics.intensity_diagnostics import IntensityDiagnostics
-
 
 
 class McCode_instr(BaseCalculator):
@@ -424,12 +424,15 @@ class McCode_instr(BaseCalculator):
         if not hasattr(self, "declare_list"):
             self.declare_list = []
             self.user_var_list = []
+            self.dependency_statement = ""
+            self.search_statement_list = SearchStatementList()
             self.initialize_section = ("// Start of initialize for generated "
                                        + name + "\n")
             self.trace_section = ("// Start of trace section for generated "
                                   + name + "\n")
             self.finally_section = ("// Start of finally for generated "
                                     + name + "\n")
+
             # Handle components
             self.component_list = []  # List of components (have to be ordered)
 
@@ -2078,6 +2081,9 @@ class McCode_instr(BaseCalculator):
         for variable, end_char in zip(parameter_list, end_chars):
             write_parameter(fo, variable, end_char)
         fo.write(")\n")
+        if self.dependency_statement != "":
+            fo.write("DEPENDENCY " + str(self.dependency_statement) + "\n")
+        self.search_statement_list.write(fo)
         fo.write("\n")
 
         # Write declare
@@ -2206,6 +2212,56 @@ class McCode_instr(BaseCalculator):
             component_subset += [MCPL_out]
 
         return component_subset
+
+    def set_dependency(self, string):
+        """
+        Sets the DEPENDENCY line of instruments, expanding its system search
+
+        The dependency line can be used to tell McStas to search for files in
+        additional locations. Double quotes are added.
+
+        Parameters
+        ----------
+            string : str
+                The dependency string
+        """
+
+        if string[0] != '"' and string[-1] != '"':
+            string = '"' + string + '"'
+
+        self.dependency_statement = string
+
+    def add_search(self, statement, SHELL=False):
+        """
+        Adds a search statement to the instrument
+
+        The dependency line can be used to tell McStas to search for files in
+        additional locations. Double quotes are added.
+
+        Parameters
+        ----------
+            statement : str
+                The search statement
+
+            SHELL : bool (default False)
+                if True, shell keyword is added
+        """
+
+        self.search_statement_list.add_statement(SearchStatement(statement, SHELL=SHELL))
+
+    def clear_search(self):
+        """
+        Clears the instrument of all search statements
+        """
+
+        self.search_statement_list.clear()
+
+    def show_search(self):
+        """
+        Shows all search statements on instrument level
+        """
+
+        print(self.search_statement_list)
 
     def settings(self, ncount=None, mpi="not_set", seed=None,
                  force_compile=None, output_path=None,

@@ -1748,6 +1748,200 @@ class TestMcStas_instr(unittest.TestCase):
         handle = mock_f()
         handle.write.assert_has_calls(wrts, any_order=False)
 
+    @unittest.mock.patch('__main__.__builtins__.open',
+                         new_callable=unittest.mock.mock_open)
+    def test_write_full_instrument_dependency(self, mock_f):
+        """
+        The write_full_instrument method write the information
+        contained in the instrument instance to a file with McStas
+        syntax. Here tested with the dependency section enabled.
+
+        The test includes a time stamp in the written and expected
+        data that has an accuracy of 1 second.  It is unlikely to fail
+        due to this, but it can happen.
+        """
+
+        instr = setup_populated_instr()
+        instr.set_dependency("-DMCPLPATH=GETPATH(data)")
+        instr.write_full_instrument()
+
+        t_format = "%H:%M:%S on %B %d, %Y"
+
+        my_call = unittest.mock.call
+        wrts = [
+            my_call("/" + 80 * "*" + "\n"),
+            my_call("* \n"),
+            my_call("* McStas, neutron ray-tracing package\n"),
+            my_call("*         Copyright (C) 1997-2008, All rights reserved\n"),
+            my_call("*         Risoe National Laboratory, Roskilde, Denmark\n"),
+            my_call("*         Institut Laue Langevin, Grenoble, France\n"),
+            my_call("* \n"),
+            my_call("* This file was written by McStasScript, which is a \n"),
+            my_call("* python based McStas instrument generator written by \n"),
+            my_call("* Mads Bertelsen in 2019 while employed at the \n"),
+            my_call("* European Spallation Source Data Management and \n"),
+            my_call("* Software Centre\n"),
+            my_call("* \n"),
+            my_call("* Instrument test_instrument\n"),
+            my_call("* \n"),
+            my_call("* %Identification\n"),
+            my_call("* Written by: Python McStas Instrument Generator\n"),
+            my_call("* Date: %s\n" % datetime.datetime.now().strftime(t_format)),
+            my_call("* Origin: ESS DMSC\n"),
+            my_call("* %INSTRUMENT_SITE: Generated_instruments\n"),
+            my_call("* \n"),
+            my_call("* \n"),
+            my_call("* %Parameters\n"),
+            my_call("* \n"),
+            my_call("* %End \n"),
+            my_call("*" * 80 + "/\n"),
+            my_call("\n"),
+            my_call("DEFINE INSTRUMENT test_instrument ("),
+            my_call("\n"),
+            my_call("double theta"),
+            my_call(", "),
+            my_call(""),
+            my_call("\n"),
+            my_call("double has_default"),
+            my_call(" = 37"),
+            my_call(" "),
+            my_call(""),
+            my_call("\n"),
+            my_call(")\n"),
+            my_call('DEPENDENCY "-DMCPLPATH=GETPATH(data)"\n'),
+            my_call("\n"),
+            my_call("DECLARE \n%{\n"),
+            my_call("double two_theta;"),
+            my_call("\n"),
+            my_call("%}\n\n"),
+            my_call("INITIALIZE \n%{\n"),
+            my_call("// Start of initialize for generated test_instrument\n"
+                    + "two_theta = 2.0*theta;\n"),
+            my_call("%}\n\n"),
+            my_call("TRACE \n"),
+            my_call("COMPONENT first_component = test_for_reading("),
+            my_call(")\n"),
+            my_call("AT (0,0,0)"),
+            my_call(" ABSOLUTE\n"),
+            my_call("\n"),
+            my_call("COMPONENT second_component = test_for_reading("),
+            my_call(")\n"),
+            my_call("AT (0,0,0)"),
+            my_call(" ABSOLUTE\n"),
+            my_call("\n"),
+            my_call("COMPONENT third_component = test_for_reading("),
+            my_call(")\n"),
+            my_call("AT (0,0,0)"),
+            my_call(" ABSOLUTE\n"),
+            my_call("\n"),
+            my_call("FINALLY \n%{\n"),
+            my_call("// Start of finally for generated test_instrument\n"),
+            my_call("%}\n"),
+            my_call("\nEND\n")]
+
+        expected_path = os.path.join(".", "test_instrument.instr")
+        mock_f.assert_called_with(expected_path, "w")
+        handle = mock_f()
+        handle.write.assert_has_calls(wrts, any_order=False)
+
+    @unittest.mock.patch('__main__.__builtins__.open',
+                         new_callable=unittest.mock.mock_open)
+    def test_write_full_instrument_search(self, mock_f):
+        """
+        The write_full_instrument method write the information
+        contained in the instrument instance to a file with McStas
+        syntax. Here tested with the search section enabled.
+
+        The test includes a time stamp in the written and expected
+        data that has an accuracy of 1 second.  It is unlikely to fail
+        due to this, but it can happen.
+        """
+
+        instr = setup_populated_instr()
+        instr.add_search("first_search")
+        instr.add_search("second search", SHELL=True)
+        instr.write_full_instrument()
+
+        t_format = "%H:%M:%S on %B %d, %Y"
+
+        my_call = unittest.mock.call
+        wrts = [
+            my_call("/" + 80 * "*" + "\n"),
+            my_call("* \n"),
+            my_call("* McStas, neutron ray-tracing package\n"),
+            my_call("*         Copyright (C) 1997-2008, All rights reserved\n"),
+            my_call("*         Risoe National Laboratory, Roskilde, Denmark\n"),
+            my_call("*         Institut Laue Langevin, Grenoble, France\n"),
+            my_call("* \n"),
+            my_call("* This file was written by McStasScript, which is a \n"),
+            my_call("* python based McStas instrument generator written by \n"),
+            my_call("* Mads Bertelsen in 2019 while employed at the \n"),
+            my_call("* European Spallation Source Data Management and \n"),
+            my_call("* Software Centre\n"),
+            my_call("* \n"),
+            my_call("* Instrument test_instrument\n"),
+            my_call("* \n"),
+            my_call("* %Identification\n"),
+            my_call("* Written by: Python McStas Instrument Generator\n"),
+            my_call("* Date: %s\n" % datetime.datetime.now().strftime(t_format)),
+            my_call("* Origin: ESS DMSC\n"),
+            my_call("* %INSTRUMENT_SITE: Generated_instruments\n"),
+            my_call("* \n"),
+            my_call("* \n"),
+            my_call("* %Parameters\n"),
+            my_call("* \n"),
+            my_call("* %End \n"),
+            my_call("*" * 80 + "/\n"),
+            my_call("\n"),
+            my_call("DEFINE INSTRUMENT test_instrument ("),
+            my_call("\n"),
+            my_call("double theta"),
+            my_call(", "),
+            my_call(""),
+            my_call("\n"),
+            my_call("double has_default"),
+            my_call(" = 37"),
+            my_call(" "),
+            my_call(""),
+            my_call("\n"),
+            my_call(")\n"),
+            my_call('SEARCH "first_search"\n'),
+            my_call('SEARCH SHELL "second search"\n'),
+            my_call("\n"),
+            my_call("DECLARE \n%{\n"),
+            my_call("double two_theta;"),
+            my_call("\n"),
+            my_call("%}\n\n"),
+            my_call("INITIALIZE \n%{\n"),
+            my_call("// Start of initialize for generated test_instrument\n"
+                    + "two_theta = 2.0*theta;\n"),
+            my_call("%}\n\n"),
+            my_call("TRACE \n"),
+            my_call("COMPONENT first_component = test_for_reading("),
+            my_call(")\n"),
+            my_call("AT (0,0,0)"),
+            my_call(" ABSOLUTE\n"),
+            my_call("\n"),
+            my_call("COMPONENT second_component = test_for_reading("),
+            my_call(")\n"),
+            my_call("AT (0,0,0)"),
+            my_call(" ABSOLUTE\n"),
+            my_call("\n"),
+            my_call("COMPONENT third_component = test_for_reading("),
+            my_call(")\n"),
+            my_call("AT (0,0,0)"),
+            my_call(" ABSOLUTE\n"),
+            my_call("\n"),
+            my_call("FINALLY \n%{\n"),
+            my_call("// Start of finally for generated test_instrument\n"),
+            my_call("%}\n"),
+            my_call("\nEND\n")]
+
+        expected_path = os.path.join(".", "test_instrument.instr")
+        mock_f.assert_called_with(expected_path, "w")
+        handle = mock_f()
+        handle.write.assert_has_calls(wrts, any_order=False)
+
     # mock sys.stdout to avoid printing to terminal
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_run_full_instrument_required_par_error(self, mock_stdout):
