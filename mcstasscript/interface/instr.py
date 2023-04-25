@@ -2226,6 +2226,11 @@ class McCode_instr(BaseCalculator):
                 The dependency string
         """
 
+        # Disable by giving an empty string
+        if len(string) == 0:
+            self.dependency_statement = ""
+            return
+
         if string[0] != '"' and string[-1] != '"':
             string = '"' + string + '"'
 
