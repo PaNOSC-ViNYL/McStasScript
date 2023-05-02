@@ -392,7 +392,7 @@ class ComponentReader:
                     if section in ("DEFINITION PARAMETERS", "SETTING PARAMETERS"):
                         parameter_section += clean_define_sections[index + 1].strip("(").strip(")") + ", "
 
-                # Convert parameter section to single line, then split in parts seperated by comma
+                # Convert parameter section to single line, then split in parts separated by comma
                 parameter_section = parameter_section.replace('\n', ' ')
                 parameter_parts = parameter_section.split(",")
                 # Combine parts that should be together, for example by brackets
