@@ -1,5 +1,22 @@
 import os
 import math
+import re
+
+
+def remove_c_comments(code):
+    """
+    Removes comments from a multiline piece of c code
+    """
+    # Remove single-line comments
+    code = re.sub(r'//.*', '', code)
+
+    # Remove multi-line comments
+    code = re.sub(r'/\*.*?\*/', '', code, flags=re.DOTALL)
+
+    # Remove empty lines
+    code = '\n'.join([line for line in code.split('\n') if line.strip()])
+
+    return code
 
 
 def c_integer_literal_base(s: str) -> int:
@@ -281,7 +298,6 @@ class ComponentReader:
         Reads a component file and expands component_info_dict
 
         The information is stored as ComponentClass instances.
-
         """
 
         result = ComponentInfo()
@@ -345,97 +361,94 @@ class ComponentReader:
             if (line.strip().startswith("DEFINITION PARAMETERS")
                     or line.strip().startswith("SETTING PARAMETERS")):
 
-                line = line.split("//")[0]  # Remove comments
-                parts = line.split("(")
-                parameter_parts = parts[1].split(",")
-                parameter_parts = self.correct_for_brackets(parameter_parts)
-                parameter_parts = list(filter(("\n").__ne__, parameter_parts))
-
-                break_now = False
+                define_section = line
                 while True:
-                    # Read all definition parameters
+                    line = file_o.readline()
 
-                    for part in parameter_parts:
-
-                        temp_par_type = "double"
-
-                        part = part.strip()
-
-                        # remove trailing )
-                        if ")" in part:
-                            part = part.replace(")", "")
-                            break_now = True
-
-                        possible_declare = part.split(" ")
-                        possible_type = possible_declare[0].strip()
-                        if "int" == possible_type:
-                            temp_par_type = "int"
-                            # remove int from part
-                            part = "".join(possible_declare[1:])
-                        if "string" == possible_type:
-                            temp_par_type = "string"
-                            # remove string from part
-                            part = "".join(possible_declare[1:])
-                        if "double" == possible_type:
-                            temp_par_type = "double"
-                            # remove double from part
-                            part = "".join(possible_declare[1:])
-                        if "vector" == possible_type:
-                            temp_par_type = "double"
-                            # remove double from part
-                            part = "".join(possible_declare[1:])
-
-                        part = part.replace(" ", "")
-                        if part == "":
-                            continue
-
-                        if part.startswith("//"):
-                            break_now = True
-                            continue
-
-                        if part.startswith("/*"):
-                            break_now = True
-                            continue
-
-                        if "=" not in part:
-                            # no default value, required parameter
-                            result.parameter_names.append(part)
-                            result.parameter_defaults[part] = None
-                            result.parameter_types[part] = temp_par_type
-                        else:
-                            # default value available
-                            name_value = part.split("=")
-                            par_name = name_value[0].strip()
-                            par_value = name_value[1].strip()
-
-                            if temp_par_type == "double":
-                                try:
-                                    par_value = float(par_value)
-                                except ValueError:
-                                    # value could be parameter name
-                                    par_value = par_value
-                            elif temp_par_type == "int":
-                                par_value = int(par_value, c_integer_literal_base(par_value))
-
-                            result.parameter_names.append(par_name)
-                            result.parameter_defaults[par_name] = par_value
-                            result.parameter_types[par_name] = temp_par_type
-
-                    if break_now:
+                    end_keywords = ("SHARE", "INITIALIZE", "INITIALISE", "DECLARE", "TRACE")
+                    if line.strip().upper().startswith(end_keywords):
                         break
 
-                    new_line = file_o.readline().split("//")[0]
-                    new_line = new_line.split(",")
-                    new_line = self.correct_for_brackets(new_line)
-                    parameter_parts = new_line
+                    define_section += line
 
-            if line.startswith("DECLARE"):
-                break
+                clean_define_section = remove_c_comments(define_section)
 
-            if line.startswith("TRACE"):
-                break
+                # Define the delimiters as a list of strings
+                delimiters = ["DEFINITION PARAMETERS", "SETTING PARAMETERS", "OUTPUT PARAMETERS"]
 
-            if line_number == 4000:
+                # Create a regex pattern using alternation and join the delimiters with the '|' symbol
+                delimiter_pattern = r'\s*(' + '|'.join(map(re.escape, delimiters)) + r')\s*'
+
+                # Split the text using pattern
+                clean_define_sections = re.split(delimiter_pattern, clean_define_section)
+
+                # Extract parameters from definition and settings part
+                parameter_section = ""
+                for index, section in enumerate(clean_define_sections):
+                    if section in ("DEFINITION PARAMETERS", "SETTING PARAMETERS"):
+                        parameter_section += clean_define_sections[index + 1].strip("(").strip(")")
+
+                # Convert parameter section to single line, then split in parts seperated by comma
+                parameter_section = parameter_section.replace('\n', '')
+                parameter_parts = parameter_section.split(",")
+                # Combine parts that should be together, for example by brackets
+                parameter_parts = self.correct_for_brackets(parameter_parts)
+
+                # Each part now corresponds to a parameter to be read
+                for part in parameter_parts:
+
+                    temp_par_type = "double"
+
+                    part = part.strip()
+
+                    possible_declare = part.split(" ")
+                    possible_type = possible_declare[0].strip()
+                    if "int" == possible_type:
+                        temp_par_type = "int"
+                        # remove int from part
+                        part = "".join(possible_declare[1:])
+                    if "string" == possible_type:
+                        temp_par_type = "string"
+                        # remove string from part
+                        part = "".join(possible_declare[1:])
+                    if "double" == possible_type:
+                        temp_par_type = "double"
+                        # remove double from part
+                        part = "".join(possible_declare[1:])
+                    if "vector" == possible_type:
+                        temp_par_type = "double"
+                        # remove double from part
+                        part = "".join(possible_declare[1:])
+
+                    part = part.replace(" ", "")
+                    if part == "":
+                        continue
+
+                    if "=" not in part:
+                        # no default value, required parameter
+                        result.parameter_names.append(part)
+                        result.parameter_defaults[part] = None
+                        result.parameter_types[part] = temp_par_type
+                    else:
+                        # default value available
+                        name_value = part.split("=")
+                        par_name = name_value[0].strip()
+                        par_value = name_value[1].strip()
+
+                        if temp_par_type == "double":
+                            try:
+                                par_value = float(par_value)
+                            except ValueError:
+                                # value could be parameter name
+                                par_value = par_value
+                        elif temp_par_type == "int":
+                            par_value = int(par_value, c_integer_literal_base(par_value))
+
+                        result.parameter_names.append(par_name)
+                        result.parameter_defaults[par_name] = par_value
+                        result.parameter_types[par_name] = temp_par_type
+
+                # End while loop running through file when parameters are read
                 break
 
         file_o.close()
