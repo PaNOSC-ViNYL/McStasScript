@@ -309,6 +309,10 @@ class ComponentReader:
             line_number += 1
             line = file_o.readline()
 
+            if not line:
+                # Exit at end of file
+                break
+
             # find parameter comments
             if line.startswith("* %P"):
 
@@ -366,7 +370,7 @@ class ComponentReader:
                     line = file_o.readline()
 
                     end_keywords = ("SHARE", "INITIALIZE", "INITIALISE", "DECLARE", "TRACE")
-                    if line.strip().upper().startswith(end_keywords):
+                    if line.strip().upper().startswith(end_keywords) or not line:
                         break
 
                     define_section += line
@@ -386,10 +390,10 @@ class ComponentReader:
                 parameter_section = ""
                 for index, section in enumerate(clean_define_sections):
                     if section in ("DEFINITION PARAMETERS", "SETTING PARAMETERS"):
-                        parameter_section += clean_define_sections[index + 1].strip("(").strip(")")
+                        parameter_section += clean_define_sections[index + 1].strip("(").strip(")") + ", "
 
                 # Convert parameter section to single line, then split in parts seperated by comma
-                parameter_section = parameter_section.replace('\n', '')
+                parameter_section = parameter_section.replace('\n', ' ')
                 parameter_parts = parameter_section.split(",")
                 # Combine parts that should be together, for example by brackets
                 parameter_parts = self.correct_for_brackets(parameter_parts)
