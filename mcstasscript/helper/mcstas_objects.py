@@ -155,17 +155,20 @@ def write_parameter(fo, parameter, stop_character):
                                + "of type not recognized by McStasScript.")
 
     if not parameter.type == "":
-        fo.write("%s %s" % (parameter.type, parameter.name))
+        fo.write(f"{parameter.type} {parameter.name}")
     else:
         fo.write(parameter.name)
 
+    if parameter.unit != 'dimensionless':
+        fo.write(f'("{parameter.unit}")')
+
     if parameter.value is not None:
         if isinstance(parameter.value, int):
-            fo.write(" = %d" % parameter.value)
-        elif isinstance(parameter.value, float):
-            fo.write(" = %G" % parameter.value)
+            fo.write(f" = {parameter.value:d}")
         else:
-            fo.write(" = %s" % str(parameter.value))
+            # let Python figure out how to best represent a floating point value; %G truncates
+            # and f"{x}" is equivalent to "%s" % str(x)
+            fo.write(f" = {parameter.value}")
     fo.write(stop_character)
 
     if parameter.comment is None or parameter.comment == "":
@@ -298,34 +301,23 @@ class DeclareVariable:
         """
 
         if self.value == "" and self.vector == 0:
-            fo.write("%s %s;%s" % (self.type, self.name, self.comment))
+            fo.write(f"{self.type} {self.name}; {self.comment}")
         if self.value != "" and self.vector == 0:
             if self.type == "int":
-                fo.write("%s %s = %d;%s" % (self.type, self.name,
-                                            self.value, self.comment))
+                fo.write(f"{self.type} {self.name} = {self.value:d}; {self.comment}")
             else:
-                try:
-                    fo.write("%s %s = %G;%s" % (self.type, self.name,
-                                                self.value, self.comment))
-                except TypeError:
-                    # Value could not be converted to float, write as string
-                    fo.write("%s %s = %s;%s" % (self.type, self.name,
-                                                self.value, self.comment))
+                # let Python handle float->str conversion
+                fo.write(f"{self.type} {self.name} = {self.value}; {self.comment}")
         if self.value == "" and self.vector != 0:
-            fo.write("%s %s[%d];%s" % (self.type, self.name,
-                                       self.vector, self.comment))
+            fo.write(f"{self.type} {self.name}[{self.vector:d}]; {self.comment}")
         if self.value != "" and self.vector != 0:
             if isinstance(self.value, str):
-                # value is a string
-                string = self.value
-                fo.write("%s %s[%d] = %s;" % (self.type, self.name,
-                                              self.vector, string))
+                fo.write(f"{self.type} {self.name}[{self.vector:d}] = {self.value}; {self.comment}")
             else:
                 # list of values
-                fo.write("%s %s[%d] = {" % (self.type, self.name, self.vector))
-                for i in range(0, len(self.value) - 1):
-                    fo.write("%G," % self.value[i])
-                fo.write("%G};%s" % (self.value[-1], self.comment))
+                fo.write(f"{self.type} {self.name}[{self.vector:d}] = {{"
+                         + ",".join([f"{value}" for value in self.value])
+                         + f"}}; {self.comment}")
 
     def __repr__(self):
         string = "Declare variable: '"
@@ -1017,7 +1009,7 @@ class Component:
 
         # Write comment if present
         if len(self.comment) > 1:
-            fo.write("// %s\n" % (str(self.comment)))
+            fo.write(f"// {self.comment}\n")
 
         # Write search statements
         self.search_statement_list.write(fo)
@@ -1054,11 +1046,7 @@ class Component:
             fo.write("\n")  # If there are parameters, start a new line
 
         for key, val in component_parameters.items():
-            if isinstance(val, float):  # CHeck if value is a number
-                # Small or large numbers written in scientific format
-                fo.write(" %s = %G" % (str(key), val))
-            else:
-                fo.write(" %s = %s" % (str(key), str(val)))
+            fo.write(f" {key} = {val}")
             parameters_written = parameters_written + 1
             if parameters_written < number_of_parameters:
                 fo.write(",")  # Comma between parameters
@@ -1069,37 +1057,29 @@ class Component:
 
         # Optional WHEN section
         if not self.WHEN == "":
-            fo.write("%s\n" % self.WHEN)
+            fo.write(f"{self.WHEN}\n")
 
         # Write AT and ROTATED section
-        fo.write("AT (%s,%s,%s)" % (str(self.AT_data[0]),
-                                    str(self.AT_data[1]),
-                                    str(self.AT_data[2])))
+        fo.write(f"AT {tuple(self.AT_data[:3])}") # is AT_data ever more than 3 elements?
 
-        fo.write(" %s\n" % self.AT_relative)
+        fo.write(f" {self.AT_relative}\n")
 
         if self.ROTATED_specified:
-            fo.write("ROTATED (%s,%s,%s)" % (str(self.ROTATED_data[0]),
-                                             str(self.ROTATED_data[1]),
-                                             str(self.ROTATED_data[2])))
-            fo.write(" %s\n" % self.ROTATED_relative)
+            fo.write(f"ROTATED {tuple(self.ROTATED_data[:3])}") # is ROTATED_data ever more than 3 elements?
+            fo.write(f" {self.ROTATED_relative}\n")
 
         if not self.GROUP == "":
-            fo.write("GROUP %s\n" % self.GROUP)
+            fo.write(f"GROUP {self.GROUP}\n")
 
         # Optional EXTEND section
         if not self.EXTEND == "":
-            fo.write("EXTEND %{\n")
-            fo.write("%s" % self.EXTEND)
-            fo.write("%}\n")
+            fo.write(f"EXTEND %{{\n{self.EXTEND}\n%}}\n")  # doubled {{ and }} to print one of each
 
         if not self.JUMP == "":
-            fo.write("JUMP %s\n" % self.JUMP)
+            fo.write(f"JUMP {self.JUMP}\n")
 
         if len(self.c_code_after) > 0:
-            fo.write("\n")
-            explanation = "From component named " + self.name
-            fo.write("%s // %s\n" % (str(self.c_code_after), explanation))
+            fo.write(f"\n{self.c_code_after} // From component named {self.name}\n")
 
         # Leave a new line between components for readability
         fo.write("\n")
