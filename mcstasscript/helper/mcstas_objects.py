@@ -301,23 +301,23 @@ class DeclareVariable:
         """
 
         if self.value == "" and self.vector == 0:
-            fo.write(f"{self.type} {self.name}; {self.comment}")
+            fo.write(f"{self.type} {self.name};{self.comment}")
         if self.value != "" and self.vector == 0:
             if self.type == "int":
-                fo.write(f"{self.type} {self.name} = {self.value:d}; {self.comment}")
+                fo.write(f"{self.type} {self.name} = {self.value:d};{self.comment}")
             else:
                 # let Python handle float->str conversion
-                fo.write(f"{self.type} {self.name} = {self.value}; {self.comment}")
+                fo.write(f"{self.type} {self.name} = {self.value};{self.comment}")
         if self.value == "" and self.vector != 0:
-            fo.write(f"{self.type} {self.name}[{self.vector:d}]; {self.comment}")
+            fo.write(f"{self.type} {self.name}[{self.vector:d}];{self.comment}")
         if self.value != "" and self.vector != 0:
             if isinstance(self.value, str):
-                fo.write(f"{self.type} {self.name}[{self.vector:d}] = {self.value}; {self.comment}")
+                fo.write(f"{self.type} {self.name}[{self.vector:d}] = {self.value};{self.comment}")
             else:
                 # list of values
                 fo.write(f"{self.type} {self.name}[{self.vector:d}] = {{"
                          + ",".join([f"{value}" for value in self.value])
-                         + f"}}; {self.comment}")
+                         + f"}};{self.comment}")
 
     def __repr__(self):
         string = "Declare variable: '"
@@ -1073,7 +1073,7 @@ class Component:
 
         # Optional EXTEND section
         if not self.EXTEND == "":
-            fo.write(f"EXTEND %{{\n{self.EXTEND}\n%}}\n")  # doubled {{ and }} to print one of each
+            fo.write(f"EXTEND %{{\n{self.EXTEND}%}}\n")  # EXTEND should have \n, {{ and }} to print one of each
 
         if not self.JUMP == "":
             fo.write(f"JUMP {self.JUMP}\n")
