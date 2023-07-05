@@ -152,7 +152,7 @@ class ComponentReader:
 
             print("These definitions will be used instead of the installed "
                   + "versions.")
-    def add_custom_component_dir(self, input_path="."):
+    def add_custom_component_dir(self, input_path=".", category="custom"):
         """
         Method to add further directories containing custom components
         """
@@ -187,7 +187,7 @@ class ComponentReader:
                     overwritten_components.append(file)
 
                 self.component_path[component_name] = abs_path
-                self.component_category[component_name] = "work directory"
+                self.component_category[component_name] = category
 
         # Report components found in the work directory and install to the user
         if len(overwritten_components) > 0:

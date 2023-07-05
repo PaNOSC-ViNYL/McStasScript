@@ -89,11 +89,13 @@ class ManagedMcrun:
                 If True, adds the --openacc flag to mcrun call
             NeXus : bool, default False
                 If True, adds the --format=NeXus to mcrun call
-
+           component_dirs: list
+                Sets non standard paths to search for component definitions
+         
         """
 
         self.name_of_instrumentfile = instr_name
-
+        self.component_dirs=[]
         self.data_folder_name = ""
         self.ncount = int(1E6)
         self.mpi = None
@@ -110,6 +112,9 @@ class ManagedMcrun:
         self.seed = None
         self.suppress_output = False
 
+        if "component_dirs" in kwargs:
+            self.component_dirs = kwargs["component_dirs"]
+            
         # executable_path always in kwargs
         if "executable_path" in kwargs:
             self.executable_path = kwargs["executable_path"]
@@ -279,10 +284,15 @@ class ManagedMcrun:
                                                self.executable)
         mcrun_full_path = '"' + mcrun_full_path + '"' # Path in quotes to allow spaces
 
+        add_component_dirs=""
+        for d in self.component_dirs:
+            add_component_dirs="-I "+d
+            
         # Run the mcrun command on the system
         full_command = (mcrun_full_path + " "
                         + option_string + " "
                         + self.custom_flags + " "
+                        + add_component_dirs + " "
                         + self.name_of_instrumentfile
                         + parameter_string)
 
