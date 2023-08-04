@@ -9,6 +9,7 @@ from matplotlib.colors import BoundaryNorm
 
 from mcstasscript.data.data import McStasData
 
+
 def _fmt(x, pos):
     """
     Used for nice formatting of powers of 10 when plotting logarithmic
@@ -18,7 +19,7 @@ def _fmt(x, pos):
     if abs(float(a) - 1) < 0.01:
         return r'$10^{{{}}}$'.format(b)
     else:
-        return r'${} \times 10^{{{}}}$'.format(a, b)
+        return r'${}\cdot 10^{{{}}}$'.format(a, b)
 
 
 def _find_min_max_I(data):
@@ -76,7 +77,7 @@ def _plot_fig_ax(data, fig, ax, **kwargs):
     """
     Plots the content of a single McStasData object
 
-    Plotting is controlled through options assosciated with the
+    Plotting is controlled through options associated with the
     McStasData objects.
 
     When plotting 2D objects, returns the pcolormesh object
@@ -188,8 +189,11 @@ def _plot_fig_ax(data, fig, ax, **kwargs):
             if "colorbar_axes" in kwargs:
                 cax = kwargs["colorbar_axes"]
 
-            fig.colorbar(im, ax=ax, cax=cax,
-                         format=matplotlib.ticker.FuncFormatter(_fmt))
+            colorbar = fig.colorbar(im, ax=ax, cax=cax,
+                                    format=matplotlib.ticker.FuncFormatter(_fmt))
+
+            if data.metadata.zlabel is not None:
+                colorbar.set_label(data.metadata.zlabel)
 
             if "colorbar_axes" in kwargs:
                 cax.set_aspect(20)

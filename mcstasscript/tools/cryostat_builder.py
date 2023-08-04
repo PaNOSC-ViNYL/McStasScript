@@ -478,37 +478,37 @@ class Cryostat:
         space_2D_zx = self.instr.add_component(self.name + "_logger_space_zx", "Union_logger_2D_space")
         space_2D_zx.set_AT([0, 0, 0], RELATIVE=self.origin)
         space_2D_zx.filename = '"' + self.name + '_space_zx.dat"'
-        space_2D_zx.D_direction_1 = '"z"';
+        space_2D_zx.D_direction_1 = '"z"'
         space_2D_zx.n1 = n_z
-        space_2D_zx.D1_min = -mon_z;
+        space_2D_zx.D1_min = -mon_z
         space_2D_zx.D1_max = mon_z
-        space_2D_zx.D_direction_2 = '"x"';
+        space_2D_zx.D_direction_2 = '"x"'
         space_2D_zx.n2 = n_x
-        space_2D_zx.D2_min = -mon_x;
+        space_2D_zx.D2_min = -mon_x
         space_2D_zx.D2_max = mon_x
 
         space_2D_zy = self.instr.add_component(self.name + "_logger_space_zy", "Union_logger_2D_space")
         space_2D_zy.set_AT([0, 0, 0], RELATIVE=self.origin)
         space_2D_zy.filename = '"' + self.name + '_space_zy.dat"'
-        space_2D_zy.D_direction_1 = '"z"';
+        space_2D_zy.D_direction_1 = '"z"'
         space_2D_zy.n1 = n_z
-        space_2D_zy.D1_min = -mon_z;
+        space_2D_zy.D1_min = -mon_z
         space_2D_zy.D1_max = mon_z
-        space_2D_zy.D_direction_2 = '"y"';
+        space_2D_zy.D_direction_2 = '"y"'
         space_2D_zy.n2 = n_y
-        space_2D_zy.D2_min = mon_y_low;
+        space_2D_zy.D2_min = mon_y_low
         space_2D_zy.D2_max = mon_y_high
 
         space_2D_xy = self.instr.add_component(self.name + "_logger_space_xy", "Union_logger_2D_space")
         space_2D_xy.set_AT([0, 0, 0], RELATIVE=self.origin)
         space_2D_xy.filename = '"' + self.name + '_space_xy.dat"'
-        space_2D_xy.D_direction_1 = '"x"';
+        space_2D_xy.D_direction_1 = '"x"'
         space_2D_xy.n1 = n_x
-        space_2D_xy.D1_min = -mon_x;
+        space_2D_xy.D1_min = -mon_x
         space_2D_xy.D1_max = mon_x
-        space_2D_xy.D_direction_2 = '"y"';
+        space_2D_xy.D_direction_2 = '"y"'
         space_2D_xy.n2 = n_y
-        space_2D_xy.D2_min = mon_y_low;
+        space_2D_xy.D2_min = mon_y_low
         space_2D_xy.D2_max = mon_y_high
 
         # Adding monitor that shows windows better
@@ -518,17 +518,17 @@ class Cryostat:
         space_3D_zy = self.instr.add_component(self.name + "_logger_space_zy_close", "Union_logger_3D_space")
         space_3D_zy.set_AT([0, 0, 0], RELATIVE=self.origin)
         space_3D_zy.filename = '"' + self.name + '_space_zy_close.dat"'
-        space_3D_zy.D_direction_1 = '"z"';
+        space_3D_zy.D_direction_1 = '"z"'
         space_3D_zy.n1 = n_z
-        space_3D_zy.D1_min = -1.02 * largest_outer_radius;
+        space_3D_zy.D1_min = -1.02 * largest_outer_radius
         space_3D_zy.D1_max = -0.9 * lowest_inner_radius
-        space_3D_zy.D_direction_2 = '"y"';
+        space_3D_zy.D_direction_2 = '"y"'
         space_3D_zy.n2 = n_y
-        space_3D_zy.D2_min = mon_y_low;
+        space_3D_zy.D2_min = mon_y_low
         space_3D_zy.D2_max = mon_y_high
-        space_3D_zy.D_direction_3 = '"x"';
+        space_3D_zy.D_direction_3 = '"x"'
         space_3D_zy.n3 = 1
-        space_3D_zy.D3_min = -0.005;
+        space_3D_zy.D3_min = -0.005
         space_3D_zy.D3_max = 0.005
 
     def add_time_histogram(self, t_min=0, t_max=0.1):
@@ -615,30 +615,30 @@ class Cryostat:
         ani_logger.time_min = t_min
         ani_logger.time_max = t_max
 
-        ani_logger.D_direction_1 = '"' + d1 + '"';
+        ani_logger.D_direction_1 = '"' + d1 + '"'
         ani_logger.n1 = int(n1)
         if d1 == "x":
-            ani_logger.D1_min = -mon_x;
+            ani_logger.D1_min = -mon_x
             ani_logger.D1_max = mon_x
         elif d1 == "y":
-            ani_logger.D1_min = mon_y_low;
+            ani_logger.D1_min = mon_y_low
             ani_logger.D1_max = mon_y_high
         elif d1 == "z":
-            ani_logger.D1_min = -mon_z;
+            ani_logger.D1_min = -mon_z
             ani_logger.D1_max = mon_z
         else:
             raise RuntimeError("Dimension: '" + d1 + "' not recoignized, must be x, y or z.")
 
-        ani_logger.D_direction_2 = '"' + d2 + '"';
+        ani_logger.D_direction_2 = '"' + d2 + '"'
         ani_logger.n2 = int(n2)
         if d2 == "x":
-            ani_logger.D2_min = -mon_x;
+            ani_logger.D2_min = -mon_x
             ani_logger.D2_max = mon_x
         elif d2 == "y":
-            ani_logger.D2_min = mon_y_low;
+            ani_logger.D2_min = mon_y_low
             ani_logger.D2_max = mon_y_high
         elif d2 == "z":
-            ani_logger.D2_min = -mon_z;
+            ani_logger.D2_min = -mon_z
             ani_logger.D2_max = mon_z
         else:
             raise RuntimeError("Dimension: '" + d2 + "' not recoignized, must be x, y or z.")

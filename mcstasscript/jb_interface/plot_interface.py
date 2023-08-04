@@ -5,6 +5,7 @@ import threading
 from collections import OrderedDict
 
 import ipywidgets as widgets
+from ipywidgets import GridBox
 from IPython.display import display, clear_output
 
 import matplotlib.pyplot as plt
@@ -92,7 +93,8 @@ class PlotInterface:
         Sets up original plot with fig, ax and ax for colorbar
         """
         # fig, ax = plt.subplots(constrained_layout=True, figsize=(6, 4))
-        self.fig, (self.ax, self.colorbar_ax) = plt.subplots(ncols=2, gridspec_kw={'width_ratios': [6, 1]})
+        self.fig, (self.ax, self.colorbar_ax) = plt.subplots(ncols=2,
+                                                             gridspec_kw={'width_ratios': [6, 1]})
 
         self.fig.canvas.toolbar_position = 'bottom'
 
@@ -206,7 +208,7 @@ class PlotInterface:
         if self.data is not None:
             self.set_data(self.data)
 
-        return widgets.HBox([output, plot_controls])
+        return widgets.HBox([output, plot_controls], layout=widgets.Layout(width="100%"))
 
 
 class ColormapDropdown:

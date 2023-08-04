@@ -66,6 +66,7 @@ class McStasMetaData:
 
         self.xlabel = None
         self.ylabel = None
+        self.zlabel = None
         self.title = None
 
         self.total_I = None
@@ -137,6 +138,8 @@ class McStasMetaData:
             self.xlabel = self.info["xlabel"].rstrip()
         if "ylabel" in self.info:
             self.ylabel = self.info["ylabel"].rstrip()
+        if "zlabel" in self.info:
+            self.zlabel = self.info["zlabel"].rstrip()
         if "title" in self.info:
             self.title = self.info["title"].rstrip()
 
@@ -159,6 +162,10 @@ class McStasMetaData:
         """Sets ylabel for plotting"""
         self.ylabel = string
 
+    def set_zlabel(self, string):
+        """Sets zlabel for plotting"""
+        self.zlabel = string
+
     def __repr__(self):
         string = "metadata object\n"
         if self.component_name is not None:
@@ -174,6 +181,8 @@ class McStasMetaData:
                     string += " " + self.xlabel + "\n"
                 if self.ylabel is not None:
                     string += " " + self.ylabel + "\n"
+                if self.zlabel is not None:
+                    string += " " + self.zlabel + "\n"
 
             elif type(self.dimension) == int and self.dimension != 0:
                 string += "1D data of length " + str(self.dimension) + "\n"
@@ -184,6 +193,8 @@ class McStasMetaData:
                     string += " " + self.xlabel + "\n"
                 if self.ylabel is not None:
                     string += " " + self.ylabel + "\n"
+                if self.zlabel is not None:
+                    string += " " + self.zlabel + "\n"
 
             elif len(self.dimension) == 2:
                 string += "2D data of dimension (" + str(self.dimension[0])
@@ -199,6 +210,9 @@ class McStasMetaData:
                         string += "  [" + str(self.limits[2]) + ": "
                         string += str(self.limits[3]) + "]"
                     string += " " + self.ylabel + "\n"
+
+                if self.zlabel is not None:
+                    string += " " + self.zlabel + "\n"
 
         if self.parameters is not None and len(self.parameters)>0:
             string += "Instrument parameters: \n"
@@ -486,6 +500,9 @@ class McStasData:
     def set_ylabel(self, string):
         self.metadata.set_ylabel(string)
 
+    def set_zlabel(self, string):
+        self.metadata.set_zlabel(string)
+
     def set_title(self, string):
         self.metadata.set_title(string)
 
@@ -561,6 +578,9 @@ class McStasDataBinned(McStasData):
         sets xlabel of data for plotting
 
     set_ylabel : string
+        sets ylabel of data for plotting
+
+    set_zlabel : string
         sets ylabel of data for plotting
 
     set_title : string
@@ -653,6 +673,9 @@ class McStasDataEvent(McStasData):
 
     set_ylabel : string
         sets ylabel of data for plotting
+
+    set_zlabel : string
+        sets zlabel of data for plotting
 
     set_title : string
         sets title of data for plotting
