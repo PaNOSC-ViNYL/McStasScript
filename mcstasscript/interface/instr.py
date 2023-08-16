@@ -2650,9 +2650,8 @@ class McCode_instr(BaseCalculator):
                                 + "="
                                 + str(val))  # parameter value
 
-        package_path = self._run_settings["executable_path"]
-	
-        bin_path = os.path.join(package_path, "")
+        package_path = self._run_settings["package_path"]
+        bin_path = os.path.join(package_path, "bin", "")
 
         if format == "webgl":
             executable = "mcdisplay-webgl"
