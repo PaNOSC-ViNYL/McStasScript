@@ -3,6 +3,7 @@ import numpy as np
 import subprocess
 import mmap
 import warnings
+import h5py
 
 from mcstasscript.helper.formatting import bcolors
 from mcstasscript.data.data import McStasMetaData
@@ -106,6 +107,8 @@ class ManagedMcrun:
         self.compile = True
         self.run_path = "."
         self.seed = None
+        self.suppress_output = False
+
         # executable_path always in kwargs
         if "executable_path" in kwargs:
             self.executable_path = kwargs["executable_path"]
@@ -175,6 +178,10 @@ class ManagedMcrun:
         if "run_path" in kwargs:
             self.run_path = kwargs["run_path"]
 
+        if "suppress_output" in kwargs:
+            self.suppress_output = bool(kwargs["suppress_output"])
+
+
         # get relevant paths and check their validity
         current_directory = os.getcwd()
 
@@ -203,7 +210,7 @@ class ManagedMcrun:
             raise RuntimeError("ManagedMcrun found executable_path to "
                                + "be invalid: " + str(self.executable_path))
 
-    def run_simulation(self, **kwargs):
+    def run_simulation(self):
         """
         Runs McStas simulation described by initializing the object
         """
@@ -284,10 +291,7 @@ class ManagedMcrun:
                                  universal_newlines=True,
                                  cwd=self.run_path)
 
-        if "suppress_output" in kwargs:
-            if kwargs["suppress_output"] is False:
-                print_sim_output(process.stdout)
-        else:
+        if self.suppress_output is False:
             print_sim_output(process.stdout)
 
         if not os.path.isdir(self.data_folder_name):
@@ -348,7 +352,6 @@ def load_results(data_folder_name):
 
     return results
 
-
 def load_metadata(data_folder_name):
     """
     Function that loads metadata from a mcstas simulation
@@ -370,9 +373,15 @@ def load_metadata(data_folder_name):
     files_in_folder = os.listdir(data_folder_name)
 
     # Raise an error if mccode.sim is not available
-    if "mccode.sim" not in files_in_folder:
-        raise NameError("No mccode.sim in data folder.")
-        
+    if "mccode.sim" in files_in_folder:
+        return load_metadata_text(data_folder_name)
+    elif "mccode.h5" in files_in_folder:
+        return load_metadata_nexus(data_folder_name)
+    else:
+        raise NameError("No mccode.sim or mccode.h5 in data folder.")
+
+
+def load_metadata_text(data_folder_name):
     instrument_parameters = {}
 
     # Open mccode to read metadata for all datasets written to disk
@@ -397,7 +406,7 @@ def load_metadata(data_folder_name):
                     metadata_list.append(current_object)
                 # Stop reading data
                 in_data = False
-                
+
             if in_sim:
                 if "Param" in lines:
                     parm_lst = lines.split(':')[1].split('=')
@@ -407,12 +416,12 @@ def load_metadata(data_folder_name):
                         value = parm_lst[1].strip()
 
                     instrument_parameters[parm_lst[0].strip()] = value
-                    
+
             if in_data:
                 # This line contains info to be added to metadata
                 colon_index = lines.index(":")
                 key = lines[2:colon_index]
-                value = lines[colon_index+2:].strip()
+                value = lines[colon_index + 2:].strip()
                 current_object.add_info(key, value)
 
             if lines == "begin data\n":
@@ -433,7 +442,7 @@ def load_metadata(data_folder_name):
         # Create a list for McStasData instances to return
         results = []
 
-        
+
         # Load datasets described in metadata list individually
         for metadata in metadata_list:
 
@@ -464,9 +473,196 @@ def load_metadata(data_folder_name):
     return metadata_list
 
 
+def load_metadata_nexus(data_folder_name, filename="mccode.h5"):
+    instrument_parameters = {}
+
+    # Open mccode to read metadata for all datasets written to disk
+    with h5py.File(os.path.join(data_folder_name, filename), "r") as f:
+
+        if "entry1" not in list(f.keys()):
+            raise ValueError("h5 file not formatted as expected.")
+
+        if "data" not in list(f["entry1"].keys()):
+            raise ValueError("h5 file not formatted as expected.")
+
+        if "simulation" not in list(f["entry1"].keys()):
+            raise ValueError("h5 file not formatted as expected.")
+
+        if "Param" not in list(f["entry1"]["simulation"].keys()):
+            raise ValueError("h5 file not formatted as expected.")
+
+        # Common information
+
+        # Instrument parameters
+        instrument_parameters = {}
+        loaded_par_dict = f["entry1"]["simulation"]["Param"].attrs
+        for par_name in loaded_par_dict:
+            if par_name == "NX_class":
+                continue
+
+            try:
+                value = float(loaded_par_dict[par_name])
+            except:
+                value = str(loaded_par_dict[par_name])
+
+            instrument_parameters[par_name] = value
+
+        metadata_list = []
+
+        # For each entry in data, make a metadata object
+        for key in f["entry1"]["data"].keys():
+
+            # Make the metadata object and add instrument parameters
+            metadata = McStasMetaData()
+            metadata.add_info("Parameters", instrument_parameters)
+
+            # Add NeXus field name
+            metadata.add_info("NeXus_field", key)
+
+            # Add all the read info from attribute section
+            info = dict(f["entry1"]["data"][key].attrs)
+            info = decode_dict(info)
+            for name, value in info.items():
+                if isinstance(value, bytes):
+                    value = value.decode('utf-8')
+
+                metadata.add_info(name, value)
+
+            metadata_list.append(metadata)
+
+            # Now all info is added, extract info loads it into nice attributes
+            metadata.extract_info()
+
+        return metadata_list
+
+
+def decode_dict(dictionary):
+    for key, value in dictionary.items():
+        if isinstance(value, bytes):
+            dictionary[key] = value.decode('utf-8')
+
+    return dictionary
+
+
 def load_monitor(metadata, data_folder_name):
     """
+    Switches to appropriate loader function
+    """
+
+    if "NeXus_field" in metadata.info:
+        return load_monitor_nexus(metadata, data_folder_name)
+    else:
+        return load_monitor_text(metadata, data_folder_name)
+
+
+def load_monitor_nexus(metadata, data_folder_name, filename="mccode.h5"):
+    """
     Function that loads data given metadata and name of data folder
+    This version is for a nexus file
+
+    Loads data for single monitor and returns a McStasData object
+
+    Parameters
+    ----------
+
+    metadata : McStasMetaData object
+        McStasMetaData object corresponding to the monitor to be loaded
+
+    data_folder_name : str
+        path to folder from which metadata should be loaded
+
+    filename : str
+        Name of NeXus file
+    """
+
+    # Open mccode to read metadata for all datasets written to disk
+    with h5py.File(os.path.join(data_folder_name, filename), "r") as f:
+
+        if "entry1" not in list(f.keys()):
+            raise ValueError("h5 file not formatted as expected.")
+
+        if "data" not in list(f["entry1"].keys()):
+            raise ValueError("h5 file not formatted as expected.")
+
+        if "simulation" not in list(f["entry1"].keys()):
+            raise ValueError("h5 file not formatted as expected.")
+
+        if "Param" not in list(f["entry1"]["simulation"].keys()):
+            raise ValueError("h5 file not formatted as expected.")
+
+        NeXus_field = metadata.info["NeXus_field"]
+
+        # Split data into intensity, error and ncount
+        if type(metadata.dimension) == int and metadata.dimension == 0:
+            Intensity = np.array(f["entry1"]["data"][NeXus_field]["data"])
+
+            if metadata.total_E is None:
+                Error = np.zeros(1)
+            else:
+                Error = np.array(metadata.total_E)
+
+            if metadata.total_N is None:
+                Ncount = np.zeros(1)
+            else:
+                Ncount = np.array(metadata.total_N)
+
+            return McStasDataBinned(metadata, Intensity, Error, Ncount)
+
+        elif type(metadata.dimension) == int and metadata.dimension != 0:
+
+            original_xlabel = metadata.info["xlabel"]
+
+            x_field = original_xlabel.replace(" ", "_")
+            x_field = x_field.replace("[", "_")
+            x_field = x_field.replace("]", "_")
+
+            if x_field not in f["entry1"]["data"][NeXus_field].keys():
+                print("Expected this field for x axis: ", str(x_field))
+                print("Existing fields: ", f["entry1"]["data"][NeXus_field].keys())
+                raise ValueError("Didn't find xaxis in NeXus file.")
+
+            xaxis = np.array(f["entry1"]["data"][NeXus_field][x_field])
+            Intensity = np.array(f["entry1"]["data"][NeXus_field]["data"])
+            Error = np.array(f["entry1"]["data"][NeXus_field]["errors"])
+            Ncount = np.array(f["entry1"]["data"][NeXus_field]["ncount"])
+
+            # The data is saved as a McStasDataBinned object
+            return McStasDataBinned(metadata, Intensity, Error, Ncount, xaxis=xaxis)
+
+        elif len(metadata.dimension) == 2:
+            # Need to check if it is binned data or event data
+            if "events" in f["entry1"]["data"][NeXus_field].keys():
+                Events = np.array(f["entry1"]["data"][NeXus_field]["events"])
+                return McStasDataEvent(metadata, Events)
+            else:
+
+                available_fields = f["entry1"]["data"][NeXus_field].keys()
+
+                if "errors" not in available_fields:
+                    raise ValueError("No 'errors' in NeXus data entry called ", NeXus_field)
+
+                if "ncount" not in available_fields:
+                    raise ValueError("No 'ncount' in NeXus data entry called ", NeXus_field)
+
+                # If no events, binned instead
+                xaxis = []  # Assume evenly binned in 2d
+                Intensity = np.array(f["entry1"]["data"][NeXus_field]["data"]).T
+                Error = np.array(f["entry1"]["data"][NeXus_field]["errors"]).T
+                Ncount = np.array(f["entry1"]["data"][NeXus_field]["ncount"]).T
+
+                # The data is saved as a McStasDataBinned object
+                return McStasDataBinned(metadata, Intensity, Error, Ncount, xaxis=xaxis)
+        else:
+            raise NameError(
+                "Dimension not read correctly in data set "
+                + "connected to monitor named "
+                + metadata.component_name)
+
+
+def load_monitor_text(metadata, data_folder_name):
+    """
+    Function that loads data given metadata and name of data folder
+    This version is for a text file
 
     Loads data for single monitor and returns a McStasData object
 

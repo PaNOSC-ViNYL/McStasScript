@@ -28,6 +28,7 @@ def make_plot(data_list, **kwargs):
         _plot_fig_ax(data, fig, ax0, **kwargs)
 
     if "filename" in kwargs:
+        fig.tight_layout()
         fig.savefig(kwargs["filename"])
     else:
         plt.show()
@@ -61,6 +62,7 @@ def make_sub_plot(data_list, **kwargs):
     fig.tight_layout()
 
     if "filename" in kwargs:
+        fig.tight_layout()
         fig.savefig(kwargs["filename"])
         plt.close(fig)
     else:

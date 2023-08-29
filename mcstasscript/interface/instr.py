@@ -362,7 +362,9 @@ class McCode_instr(BaseCalculator):
             self._run_settings["package_path"] = package_path
 
         # Settings for run that can be adjusted by user
-        provided_run_settings = {"executable": executable, "checks": True}
+        provided_run_settings = {"executable": executable,
+                                 "checks": True,
+                                 "NeXus": False}
 
         if executable_path is not None:
             provided_run_settings["executable_path"] = str(executable_path)
@@ -2484,7 +2486,7 @@ class McCode_instr(BaseCalculator):
         simulation = ManagedMcrun(self.name + ".instr", **options)
 
         # Run the simulation and return data
-        simulation.run_simulation(**self._run_settings)
+        simulation.run_simulation()
 
         # Load data and store in __data
         #data = simulation.load_results()
