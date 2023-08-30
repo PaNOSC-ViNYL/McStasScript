@@ -8,6 +8,26 @@ from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import BoundaryNorm
 
 from mcstasscript.data.data import McStasData
+from mcstasscript.data.data import McStasDataEvent
+
+
+def remove_eventdata(data_list, verbose=True):
+    """
+    Removes event data from a list, useful as these can't be plotted
+    """
+    reduced_data_list = []
+    skipped_names = []
+    for element in data_list:
+        if not isinstance(element, McStasDataEvent):
+            reduced_data_list.append(element)
+        else:
+            skipped_names.append(element.metadata.component_name)
+
+    if verbose:
+        for name in skipped_names:
+            print(f"Skipped plotting {name} as it contains event data.")
+
+    return reduced_data_list
 
 
 def _fmt(x, pos):
@@ -244,6 +264,9 @@ def _handle_kwargs(data_list, **kwargs):
     if isinstance(data_list, McStasData):
         # Only a single element, put it in a list for easier syntax later
         data_list = [data_list]
+
+    # Remove event data that can't be plotted in meaningful way
+    data_list = remove_eventdata(data_list)
 
     known_plotting_kwargs = ["log", "orders_of_mag",
                              "top_lim", "bottom_lim",
