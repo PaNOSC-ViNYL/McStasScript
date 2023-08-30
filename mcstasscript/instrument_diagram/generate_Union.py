@@ -49,7 +49,12 @@ def generate_Union_arrows(components, component_box_dict, box_names, component_c
                 geometry_names.append(component.name)
 
                 if component.number_of_activations is not None:
-                    number_of_activations = component.number_of_activations
+                    try:
+                        # If a number is given, it can be used directly
+                        number_of_activations = int(component.number_of_activations)
+                    except:
+                        # If a variable or parameter is used, it can't be known ahead of time, assume 1
+                        number_of_activations = 1
                 else:
                     number_of_activations = component.parameter_defaults["number_of_activations"]
 
