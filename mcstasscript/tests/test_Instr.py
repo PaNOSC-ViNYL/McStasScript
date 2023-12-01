@@ -75,7 +75,8 @@ def setup_instr_with_path():
     with WorkInTestDir() as handler:
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
-        instrument = McStas_instr("test_instrument", package_path=dummy_path)
+        instrument = McStas_instr("test_instrument",
+                                  package_path=dummy_path, executable_path=dummy_path)
 
     return instrument
 

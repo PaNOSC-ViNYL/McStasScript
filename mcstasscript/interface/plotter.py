@@ -21,10 +21,17 @@ def make_plot(data_list, **kwargs):
     subplot.
     """
 
-    figsize, data_list = _handle_kwargs(data_list, **kwargs)
+    data_list = _handle_kwargs(data_list, **kwargs)
+
+    if "figsize" in kwargs:
+        figsize = kwargs["figsize"]
+        if isinstance(figsize, list):
+            figsize = (figsize[0], figsize[1])
+    else:
+        figsize = (13, 7)
 
     for data in data_list:
-        fig, ax0 = plt.subplots(figsize=figsize)
+        fig, ax0 = plt.subplots(figsize=figsize, tight_layout=True)
         _plot_fig_ax(data, fig, ax0, **kwargs)
 
     if "filename" in kwargs:
@@ -45,14 +52,39 @@ def make_sub_plot(data_list, **kwargs):
     subplot.
     """
 
-    figsize, data_list = _handle_kwargs(data_list, **kwargs)
+    data_list = _handle_kwargs(data_list, **kwargs)
 
     number_of_plots = len(data_list)
-    # Find reasonable grid size for the number of plots
-    dim2 = math.ceil(math.sqrt(number_of_plots))
-    dim1 = math.ceil(number_of_plots / dim2)
 
-    fig, axs = plt.subplots(dim1, dim2, figsize=figsize)
+    # Find reasonable grid size for the number of plots
+    special_cases = {
+        1: (1, 1),
+        4: (2, 2),
+    }
+
+    if number_of_plots in special_cases:
+        dim1 = special_cases[number_of_plots][0]
+        dim2 = special_cases[number_of_plots][0]
+    else:
+        if number_of_plots < 3:
+            dim2 = number_of_plots
+            dim1 = 1
+        else:
+            dim2 = 3
+            dim1 = math.ceil(number_of_plots / dim2)
+
+    if "figsize" in kwargs:
+        figsize = kwargs["figsize"]
+        if isinstance(figsize, list):
+            figsize = (figsize[0], figsize[1])
+    else:
+        # Adjust figure size after number of plots
+        figsize = (1 + dim2*4, 0.5 + 3.0*dim1)
+        if dim1 == 1 and dim2 == 1:
+            # Single plots can be a bit larger
+            figsize = (7, 5)
+
+    fig, axs = plt.subplots(dim1, dim2, figsize=figsize, tight_layout=True)
     axs = np.array(axs)
     ax = axs.reshape(-1)
 
@@ -88,7 +120,14 @@ def make_animation(data_list, **kwargs):
 
     """
 
-    figsize, data_list = _handle_kwargs(data_list, **kwargs)
+    data_list = _handle_kwargs(data_list, **kwargs)
+
+    if "figsize" in kwargs:
+        figsize = kwargs["figsize"]
+        if isinstance(figsize, list):
+            figsize = (figsize[0], figsize[1])
+    else:
+        figsize = (13, 7)
 
     if "fps" in kwargs:
         period_in_ms = 1000 / kwargs["fps"]
@@ -137,7 +176,7 @@ def make_animation(data_list, **kwargs):
     kwargs["fixed_minimum_value"] = minimum_value
     kwargs["fixed_maximum_value"] = maximum_value
 
-    fig, ax0 = plt.subplots(figsize=figsize)
+    fig, ax0 = plt.subplots(figsize=figsize, tight_layout=True)
     im = _plot_fig_ax(data_list[0], fig, ax0, **kwargs)
 
     def animate_2D(index):
