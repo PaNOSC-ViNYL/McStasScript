@@ -31,7 +31,7 @@ def make_plot(data_list, **kwargs):
         figsize = (13, 7)
 
     for data in data_list:
-        fig, ax0 = plt.subplots(figsize=figsize)
+        fig, ax0 = plt.subplots(figsize=figsize, tight_layout=True)
         _plot_fig_ax(data, fig, ax0, **kwargs)
 
     if "filename" in kwargs:
@@ -176,7 +176,7 @@ def make_animation(data_list, **kwargs):
     kwargs["fixed_minimum_value"] = minimum_value
     kwargs["fixed_maximum_value"] = maximum_value
 
-    fig, ax0 = plt.subplots(figsize=figsize)
+    fig, ax0 = plt.subplots(figsize=figsize, tight_layout=True)
     im = _plot_fig_ax(data_list[0], fig, ax0, **kwargs)
 
     def animate_2D(index):
