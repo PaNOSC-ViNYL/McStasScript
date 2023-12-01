@@ -556,7 +556,7 @@ class TestPlotterHelpers(unittest.TestCase):
         # Actual test
         dummy_data = get_dummy_McStasDataBinned_2d()
         make_plot(dummy_data)
-        mock_subplots.assert_called_with(figsize=(13, 7))
+        mock_subplots.assert_called_with(figsize=(13, 7), tight_layout=True)
 
     @unittest.mock.patch("matplotlib.pyplot.subplots")
     def test_handle_kwargs_figsize_tuple(self, mock_subplots):
@@ -573,7 +573,7 @@ class TestPlotterHelpers(unittest.TestCase):
         # Actual test
         dummy_data = get_dummy_McStasDataBinned_2d()
         make_plot(dummy_data, figsize=(5, 9))
-        mock_subplots.assert_called_with(figsize=(5, 9))
+        mock_subplots.assert_called_with(figsize=(5, 9), tight_layout=True)
 
     @unittest.mock.patch("matplotlib.pyplot.subplots")
     def test_handle_kwargs_figsize_list(self, mock_subplots):
@@ -590,7 +590,7 @@ class TestPlotterHelpers(unittest.TestCase):
         # Actual test
         dummy_data = get_dummy_McStasDataBinned_2d()
         make_plot(dummy_data, figsize=[5, 9])
-        mock_subplots.assert_called_with(figsize=(5, 9))
+        mock_subplots.assert_called_with(figsize=(5, 9), tight_layout=True)
 
     def test_handle_kwargs_single_element_to_list(self):
         """
