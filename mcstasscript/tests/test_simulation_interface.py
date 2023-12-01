@@ -4,6 +4,9 @@ import unittest
 import unittest.mock
 import ipywidgets as widgets
 
+import matplotlib
+matplotlib.use('Agg')  # Set the backend to Agg
+
 from mcstasscript.jb_interface.simulation_interface import SimInterface
 from mcstasscript.jb_interface.simulation_interface import ParameterWidget
 from mcstasscript.jb_interface.widget_helpers import parameter_has_default

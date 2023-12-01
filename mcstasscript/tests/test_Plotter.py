@@ -1,4 +1,8 @@
 import unittest
+import unittest.mock
+
+import matplotlib
+matplotlib.use('Agg')
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,6 +12,7 @@ from mcstasscript.data.data import McStasMetaData
 from mcstasscript.interface.plotter import _find_min_max_I
 from mcstasscript.interface.plotter import _handle_kwargs
 from mcstasscript.interface.plotter import _plot_fig_ax
+from mcstasscript.interface.plotter import make_plot, make_sub_plot, make_animation
 
 
 def get_dummy_MetaDataBinned_1d():
@@ -537,34 +542,55 @@ class TestPlotterHelpers(unittest.TestCase):
         self.assertEqual(dummy_data1.plot_options.custom_ylim_bottom, True)
         self.assertEqual(dummy_data2.plot_options.custom_ylim_bottom, True)
 
-    def test_handle_kwargs_figsize_default(self):
+    @unittest.mock.patch("matplotlib.pyplot.subplots")
+    def test_handle_kwargs_figsize_default(self, mock_subplots):
         """
         Tests handle_kwargs delivers default figsize
         """
 
-        dummy_data = get_dummy_McStasDataBinned_2d()
-        retrived_figsize, data_list = _handle_kwargs(dummy_data)
-        self.assertEqual(retrived_figsize, (13, 7))
+        # Ensures subplots returns a tuple with two objects
+        mock_fig = unittest.mock.MagicMock()
+        mock_ax = unittest.mock.MagicMock()
+        mock_subplots.return_value = (mock_fig, mock_ax)
 
-    def test_handle_kwargs_figsize_tuple(self):
+        # Actual test
+        dummy_data = get_dummy_McStasDataBinned_2d()
+        make_plot(dummy_data)
+        mock_subplots.assert_called_with(figsize=(13, 7))
+
+    @unittest.mock.patch("matplotlib.pyplot.subplots")
+    def test_handle_kwargs_figsize_tuple(self, mock_subplots):
         """
         Tests handle_kwargs with figsize keyword argument, here
         using tuple as input
         """
 
-        dummy_data = get_dummy_McStasDataBinned_2d()
-        found_figsize, data_list = _handle_kwargs(dummy_data, figsize=(5, 9))
-        self.assertEqual(found_figsize, (5, 9))
+        # Ensures subplots returns a tuple with two objects
+        mock_fig = unittest.mock.MagicMock()
+        mock_ax = unittest.mock.MagicMock()
+        mock_subplots.return_value = (mock_fig, mock_ax)
 
-    def test_handle_kwargs_figsize_list(self):
+        # Actual test
+        dummy_data = get_dummy_McStasDataBinned_2d()
+        make_plot(dummy_data, figsize=(5, 9))
+        mock_subplots.assert_called_with(figsize=(5, 9))
+
+    @unittest.mock.patch("matplotlib.pyplot.subplots")
+    def test_handle_kwargs_figsize_list(self, mock_subplots):
         """
         Tests handle_kwargs with figsize keyword argument, here
         using tuple as input
         """
 
+        # Ensures subplots returns a tuple with two objects
+        mock_fig = unittest.mock.MagicMock()
+        mock_ax = unittest.mock.MagicMock()
+        mock_subplots.return_value = (mock_fig, mock_ax)
+
+        # Actual test
         dummy_data = get_dummy_McStasDataBinned_2d()
-        found_figsize, data_list = _handle_kwargs(dummy_data, figsize=[5, 9])
-        self.assertEqual(found_figsize, (5, 9))
+        make_plot(dummy_data, figsize=[5, 9])
+        mock_subplots.assert_called_with(figsize=(5, 9))
 
     def test_handle_kwargs_single_element_to_list(self):
         """
@@ -574,7 +600,7 @@ class TestPlotterHelpers(unittest.TestCase):
 
         dummy_data = get_dummy_McStasDataBinned_2d()
         self.assertFalse(isinstance(dummy_data, list))
-        figsize, data_list = _handle_kwargs(dummy_data)
+        data_list = _handle_kwargs(dummy_data)
         self.assertTrue(isinstance(data_list, list))
 
     def test_plot_function_1D_normal(self):

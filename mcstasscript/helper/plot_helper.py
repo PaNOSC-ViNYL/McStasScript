@@ -246,10 +246,10 @@ def _handle_kwargs(data_list, **kwargs):
     """
     Handle kwargs when list of McStasData objects given.
 
-    Returns figsize and data_list
+    Returns data_list
 
-    figsize has a default value, but can be changed with keyword argument
     data_list is turned into a list if it isn't already
+    event data is removed as it can't be plotted directly
 
     Any kwargs can be given as a list, in that case apply them to given
     to the corresponding index.
@@ -301,11 +301,4 @@ def _handle_kwargs(data_list, **kwargs):
             # Remove option from kwargs
             del kwargs[option]
 
-    if "figsize" in kwargs:
-        figsize = kwargs["figsize"]
-        if isinstance(figsize, list):
-            figsize = (figsize[0], figsize[1])
-    else:
-        figsize = (13, 7)
-
-    return figsize, data_list
+    return data_list
