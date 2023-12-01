@@ -93,10 +93,14 @@ class PlotInterface:
         Sets up original plot with fig, ax and ax for colorbar
         """
         # fig, ax = plt.subplots(constrained_layout=True, figsize=(6, 4))
+
         self.fig, (self.ax, self.colorbar_ax) = plt.subplots(ncols=2,
-                                                             gridspec_kw={'width_ratios': [6, 1]})
+                                                             gridspec_kw={'width_ratios': [6, 1]},
+                                                             tight_layout=True)
 
         self.fig.canvas.toolbar_position = 'bottom'
+
+        plt.show()
 
         self.update_plot()
 
@@ -162,19 +166,21 @@ class PlotInterface:
             else:
                 self.colorbar_ax.set_axis_off()
 
-            #self.ax.set_axis_on()
-
-            plt.tight_layout()
             self.fig.canvas.draw()
 
     def show_interface(self):
         """
         Show the plot interface
         """
+        # turn off automatic plotting
+        plt.ioff()
+
         # Set up plot area
         output = widgets.Output()
+
         with output:
             self.new_plot()
+
         output.layout = widgets.Layout(width="75%")
 
         # could retrieve default plot options from data if given
@@ -201,14 +207,13 @@ class PlotInterface:
         plot_control_list.append(colormap_control.make_widget())
 
         plot_controls = widgets.VBox(plot_control_list,
-                                     #layout=widgets.Layout(width="25%", border="solid"))
                                      layout=widgets.Layout(width="25%"))
 
         # In case data is already supplied, set it
         if self.data is not None:
             self.set_data(self.data)
 
-        return widgets.HBox([output, plot_controls], layout=widgets.Layout(width="100%"))
+        return widgets.HBox([output, plot_controls])
 
 
 class ColormapDropdown:
