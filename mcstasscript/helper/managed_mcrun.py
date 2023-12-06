@@ -4,6 +4,7 @@ import subprocess
 import mmap
 import warnings
 import h5py
+import re
 
 from mcstasscript.helper.formatting import bcolors
 from mcstasscript.data.data import McStasMetaData
@@ -592,17 +593,58 @@ def load_monitor_nexus(metadata, data_folder_name, filename="mccode.h5"):
 
         NeXus_field = metadata.info["NeXus_field"]
 
+        available_fields = f["entry1"]["data"][NeXus_field].keys()
+        if not metadata.dimension == 0 and "events" not in available_fields:
+            if "data" not in available_fields:
+                raise ValueError("NeXus reading: data not found! \n"
+                                 + "Monitor metadata:\n" + str(metadata))
+
+            if "errors" not in available_fields:
+                raise ValueError("NeXus reading: errors not found! \n"
+                                 + "Monitor metadata:\n" + str(metadata))
+
+            if "ncount" not in available_fields:
+                raise ValueError("NeXus reading: ncount not found! \n"
+                                 + "Monitor metadata:\n" + str(metadata))
+
+        # Need to check if it is binned data or event data
+        if "events" in available_fields:
+            Events = np.array(f["entry1"]["data"][NeXus_field]["events"])
+            return McStasDataEvent(metadata, Events)
+
         # Split data into intensity, error and ncount
         if type(metadata.dimension) == int and metadata.dimension == 0:
-            Intensity = np.array(f["entry1"]["data"][NeXus_field]["data"])
+
+            if "data" in f["entry1"]["data"][NeXus_field].keys():
+                raise ValueError("Found array data in 0D dataset?")
+
+            values = None
+            if "values" in f["entry1"]["data"][NeXus_field].keys():
+                values = np.array(f["entry1"]["data"][NeXus_field]["values"])
+
+            if metadata.total_I is None:
+                if values is not None:
+                    Intensity = np.array(values[0])
+                else:
+                    raise ValueError("No info on this monitor can be found "
+                                     + "in reading of NeXus file "
+                                     + str(metadata))
+            else:
+                Intensity = np.array(metadata.total_I)
 
             if metadata.total_E is None:
-                Error = np.zeros(1)
+                if values is not None:
+                    Error = np.array(values[2])
+                else:
+                    Error = np.zeros(1)
             else:
                 Error = np.array(metadata.total_E)
 
             if metadata.total_N is None:
-                Ncount = np.zeros(1)
+                if values is not None:
+                    Ncount = np.array(values[3])
+                else:
+                    Ncount = np.zeros(1)
             else:
                 Ncount = np.array(metadata.total_N)
 
@@ -612,14 +654,17 @@ def load_monitor_nexus(metadata, data_folder_name, filename="mccode.h5"):
 
             original_xlabel = metadata.info["xlabel"]
 
-            x_field = original_xlabel.replace(" ", "_")
-            x_field = x_field.replace("[", "_")
-            x_field = x_field.replace("]", "_")
+            # All special characters are substituted with _ in McStas NeXus file
+            x_field = re.sub(r'[^a-zA-Z]', "_", original_xlabel)
 
             if x_field not in f["entry1"]["data"][NeXus_field].keys():
-                print("Expected this field for x axis: ", str(x_field))
-                print("Existing fields: ", f["entry1"]["data"][NeXus_field].keys())
-                raise ValueError("Didn't find xaxis in NeXus file.")
+                error_text = ("Didn't find xaxis in NeXus file. \n"
+                              + "Expected this field for x axis: "
+                              + str(x_field) + "\n"
+                              + "Existing fields: "
+                              + str(f["entry1"]["data"][NeXus_field].keys()))
+
+                raise ValueError(error_text)
 
             xaxis = np.array(f["entry1"]["data"][NeXus_field][x_field])
             Intensity = np.array(f["entry1"]["data"][NeXus_field]["data"])
@@ -630,28 +675,13 @@ def load_monitor_nexus(metadata, data_folder_name, filename="mccode.h5"):
             return McStasDataBinned(metadata, Intensity, Error, Ncount, xaxis=xaxis)
 
         elif len(metadata.dimension) == 2:
-            # Need to check if it is binned data or event data
-            if "events" in f["entry1"]["data"][NeXus_field].keys():
-                Events = np.array(f["entry1"]["data"][NeXus_field]["events"])
-                return McStasDataEvent(metadata, Events)
-            else:
+            xaxis = []  # Assume evenly binned in 2d
+            Intensity = np.array(f["entry1"]["data"][NeXus_field]["data"]).T
+            Error = np.array(f["entry1"]["data"][NeXus_field]["errors"]).T
+            Ncount = np.array(f["entry1"]["data"][NeXus_field]["ncount"]).T
 
-                available_fields = f["entry1"]["data"][NeXus_field].keys()
-
-                if "errors" not in available_fields:
-                    raise ValueError("No 'errors' in NeXus data entry called ", NeXus_field)
-
-                if "ncount" not in available_fields:
-                    raise ValueError("No 'ncount' in NeXus data entry called ", NeXus_field)
-
-                # If no events, binned instead
-                xaxis = []  # Assume evenly binned in 2d
-                Intensity = np.array(f["entry1"]["data"][NeXus_field]["data"]).T
-                Error = np.array(f["entry1"]["data"][NeXus_field]["errors"]).T
-                Ncount = np.array(f["entry1"]["data"][NeXus_field]["ncount"]).T
-
-                # The data is saved as a McStasDataBinned object
-                return McStasDataBinned(metadata, Intensity, Error, Ncount, xaxis=xaxis)
+            # The data is saved as a McStasDataBinned object
+            return McStasDataBinned(metadata, Intensity, Error, Ncount, xaxis=xaxis)
         else:
             raise NameError(
                 "Dimension not read correctly in data set "

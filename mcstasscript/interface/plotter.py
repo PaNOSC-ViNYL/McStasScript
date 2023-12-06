@@ -55,6 +55,9 @@ def make_sub_plot(data_list, **kwargs):
     data_list = _handle_kwargs(data_list, **kwargs)
 
     number_of_plots = len(data_list)
+    if number_of_plots == 0:
+        print("No data to plot")
+        return
 
     # Find reasonable grid size for the number of plots
     special_cases = {
