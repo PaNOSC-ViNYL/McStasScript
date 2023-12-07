@@ -706,22 +706,25 @@ class McStasDataEvent(McStasData):
         self.Events = events
         self.data_type = "Events"
 
-        # Intensity for compatibility with plotting routine
-        data_lines = metadata.dimension[1]
-        self.Intensity = self.Events[0:data_lines, :]
-
         self.variables = self.metadata.info["variables"].strip()
         self.variables = self.variables.split()
 
         # Calculate I, E and N
-        p_array = self.get_data_column("p")
-        total_I = p_array.sum()
-        total_E = np.sqrt((p_array ** 2).sum())
-        total_N = len(p_array)
+        if "p" in self.variables:
+            p_array = self.get_data_column("p")
+            total_I = p_array.sum()
+            total_E = np.sqrt((p_array ** 2).sum())
+            total_N = len(p_array)
 
-        self.metadata.total_I = total_I
-        self.metadata.total_E = total_E
-        self.metadata.total_N = total_N
+            self.metadata.total_I = total_I
+            self.metadata.total_E = total_E
+            self.metadata.total_N = total_N
+
+        else:
+
+            self.metadata.total_I = None
+            self.metadata.total_E = None
+            self.metadata.total_N = None
 
         self.labels = {"t": "t [s]",
                        "x": "x [m]",

@@ -632,7 +632,6 @@ class TestManagedMcrun(unittest.TestCase):
         expected_parameters = {"wavelength": 1.0}
         self.assertEqual(mon.metadata.info["Parameters"], expected_parameters)
         self.assertEqual(mon.metadata.parameters, expected_parameters)
-        self.assertEqual(mon.Intensity[12, 1], -0.006163896406)
         self.assertEqual(mon.Events[12, 1], -0.006163896406)
         self.assertEqual(mon.Events[43, 4], 22.06193582)
 
