@@ -6,6 +6,7 @@ import yaml
 import subprocess
 import copy
 import warnings
+import re
 
 from IPython.display import IFrame
 
@@ -730,6 +731,15 @@ class McCode_instr(BaseCalculator):
         if par.name in names:
             raise NameError(f"A parameter or variable with name '{par.name}'"
                             f" already exists!")
+
+        # Sanitize and quote strings
+        if par.type == 'string':
+            if not par.value[0]=='"':
+                par.value = '"' + par.value
+            if not par.value[-1]=='"':
+                par.value = par.value + '"'
+            par.value = re.sub(";","\;",par.value);
+            par.value = re.sub("\n","\\n;",par.value);
 
         self.parameters.add(par)
 
