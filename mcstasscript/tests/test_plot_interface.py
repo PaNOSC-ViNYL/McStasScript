@@ -3,6 +3,9 @@ import unittest.mock
 import io
 import numpy as np
 
+import matplotlib
+matplotlib.use('Agg')  # Set the backend to Agg
+
 from mcstasscript.jb_interface.plot_interface import PlotInterface
 from mcstasscript.jb_interface.plot_interface import LogCheckbox
 from mcstasscript.jb_interface.plot_interface import ColormapDropdown

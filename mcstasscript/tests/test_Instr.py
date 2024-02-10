@@ -75,7 +75,8 @@ def setup_instr_with_path():
     with WorkInTestDir() as handler:
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
-        instrument = McStas_instr("test_instrument", package_path=dummy_path)
+        instrument = McStas_instr("test_instrument",
+                                  package_path=dummy_path, executable_path=dummy_path)
 
     return instrument
 
@@ -1656,7 +1657,8 @@ class TestMcStas_instr(unittest.TestCase):
 
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
-    def test_write_full_instrument_simple(self, mock_f):
+    @unittest.mock.patch('datetime.datetime')
+    def test_write_full_instrument_simple(self, mock_datetime, mock_f):
         """
         The write_full_instrument method write the information
         contained in the instrument instance to a file with McStas
@@ -1666,6 +1668,10 @@ class TestMcStas_instr(unittest.TestCase):
         data that has an accuracy of 1 second.  It is unlikely to fail
         due to this, but it can happen.
         """
+
+        # Fix datetime for call
+        fixed_datetime = datetime.datetime(2023, 12, 14, 12, 44, 21)
+        mock_datetime.now.return_value = fixed_datetime
 
         instr = setup_populated_instr()
         instr.write_full_instrument()
@@ -1691,7 +1697,7 @@ class TestMcStas_instr(unittest.TestCase):
          my_call("* \n"),
          my_call("* %Identification\n"),
          my_call("* Written by: Python McStas Instrument Generator\n"),
-         my_call("* Date: %s\n" % datetime.datetime.now().strftime(t_format)),
+         my_call("* Date: %s\n" % fixed_datetime.strftime(t_format)),
          my_call("* Origin: ESS DMSC\n"),
          my_call("* %INSTRUMENT_SITE: Generated_instruments\n"),
          my_call("* \n"),

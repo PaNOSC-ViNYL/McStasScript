@@ -2649,13 +2649,19 @@ class McCode_instr(BaseCalculator):
                                 + "="
                                 + str(val))  # parameter value
 
-        package_path = self._run_settings["package_path"]
-        bin_path = os.path.join(package_path, "bin", "")
-
         if format == "webgl":
             executable = "mcdisplay-webgl"
         elif format == "window":
             executable = "mcdisplay"
+
+        # Platform dependent, check both package_path and bin
+        executable_path = self._run_settings["executable_path"]
+        bin_path = os.path.join(executable_path, executable)
+
+        if not os.path.isfile(bin_path):
+            # Take bin in package path into account
+            package_path = self._run_settings["package_path"]
+            bin_path = os.path.join(package_path, "bin", executable)
 
         dir_name_original = self.name + "_mcdisplay"
         dir_name = dir_name_original
@@ -2681,7 +2687,7 @@ class McCode_instr(BaseCalculator):
         if is_notebook and executable == "mcdisplay-webgl" and not new_tab:
             options += "--nobrowse "
 
-        full_command = ('"' + bin_path + executable + '" '
+        full_command = ('"' + bin_path + '" '
                         + dir_control
                         + options
                         + instr_path
