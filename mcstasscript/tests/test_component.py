@@ -445,7 +445,7 @@ class TestComponent(unittest.TestCase):
         my_call = unittest.mock.call
         expected_writes = [my_call("COMPONENT test_component = Arm("),
                            my_call(")\n"),
-                           my_call("AT (0,0,0)"),
+                           my_call("AT (0, 0, 0)"),
                            my_call(" ABSOLUTE\n")]
 
         mock_f.assert_called_with('test.txt', 'w')
@@ -482,7 +482,7 @@ class TestComponent(unittest.TestCase):
                            my_call('SEARCH "One with double quotes"\n'),
                            my_call("COMPONENT test_component = Arm("),
                            my_call(")\n"),
-                           my_call("AT (0,0,0)"),
+                           my_call("AT (0, 0, 0)"),
                            my_call(" ABSOLUTE\n")]
 
         mock_f.assert_called_with('test.txt', 'w')
@@ -518,15 +518,16 @@ class TestComponent(unittest.TestCase):
                            my_call("\n"),
                            my_call("COMPONENT test_component = Arm("),
                            my_call(")\n"),
-                           my_call("AT (0,0,0)"),
+                           my_call("AT (0, 0, 0)"),
                            my_call(" ABSOLUTE\n"),
-                           my_call("\n"),
-                           my_call("%include \"after.instr\" // From"
+                           my_call("\n%include \"after.instr\" // From"
                                    + " component named test_component\n"),
                            my_call("\n")]
 
         mock_f.assert_called_with('test.txt', 'w')
         handle = mock_f()
+        for c, w in zip(handle.write.call_args_list, expected_writes):
+            assert(c == w)
         handle.write.assert_has_calls(expected_writes, any_order=False)
 
     @unittest.mock.patch('__main__.__builtins__.open',
@@ -549,7 +550,8 @@ class TestComponent(unittest.TestCase):
             comp.write_component(m_fo)
 
         my_call = unittest.mock.call
-        expected_writes = [my_call("SPLIT 7 "),
+        expected_writes = [my_call("// test comment\n"),
+                           my_call("SPLIT 7 "),
                            my_call("COMPONENT test_component = Arm("),
                            my_call("\n"),
                            my_call(" new_par1 = 1.5"),
@@ -565,19 +567,19 @@ class TestComponent(unittest.TestCase):
                            my_call(" that_par = \"txt_string\""),
                            my_call(")\n"),
                            my_call("WHEN (1==2)\n"),
-                           my_call("AT (0.124,183.9,157)"),
+                           my_call("AT (0.124, 183.9, 157)"),
                            my_call(" RELATIVE home\n"),
-                           my_call("ROTATED (482,1240.2,0.185)"),
+                           my_call("ROTATED (482, 1240.2, 0.185)"),
                            my_call(" RELATIVE etc\n"),
                            my_call("GROUP developers\n"),
-                           my_call("EXTEND %{\n"),
-                           my_call("nscat = 8;\n"),
-                           my_call("%}\n"),
+                           my_call("EXTEND %{\nnscat = 8;\n%}\n"),
                            my_call("JUMP myself 37\n"),
                            my_call("\n")]
 
         mock_f.assert_called_with('test.txt', 'w')
         handle = mock_f()
+        for c, w in zip(handle.write.call_args_list, expected_writes):
+            assert(c == w)
         handle.write.assert_has_calls(expected_writes, any_order=False)
 
     @unittest.mock.patch('__main__.__builtins__.open',
@@ -602,7 +604,8 @@ class TestComponent(unittest.TestCase):
             comp.write_component(m_fo)
 
         my_call = unittest.mock.call
-        expected_writes = [my_call("SPLIT VAR "),
+        expected_writes = [my_call("// test comment\n"),
+                           my_call("SPLIT VAR "),
                            my_call("COMPONENT test_component = Arm("),
                            my_call("\n"),
                            my_call(" new_par1 = 1.5"),
@@ -618,19 +621,19 @@ class TestComponent(unittest.TestCase):
                            my_call(" that_par = \"txt_string\""),
                            my_call(")\n"),
                            my_call("WHEN (1==2)\n"),
-                           my_call("AT (0.124,183.9,157)"),
+                           my_call("AT (0.124, 183.9, 157)"),
                            my_call(" RELATIVE home\n"),
-                           my_call("ROTATED (482,1240.2,0.185)"),
+                           my_call("ROTATED (482, 1240.2, 0.185)"),
                            my_call(" RELATIVE etc\n"),
                            my_call("GROUP developers\n"),
-                           my_call("EXTEND %{\n"),
-                           my_call("nscat = 8;\n"),
-                           my_call("%}\n"),
+                           my_call("EXTEND %{\nnscat = 8;\n%}\n"),
                            my_call("JUMP myself 37\n"),
                            my_call("\n")]
 
         mock_f.assert_called_with('test.txt', 'w')
         handle = mock_f()
+        for c, w in zip(handle.write.call_args_list, expected_writes):
+            assert(c == w)
         handle.write.assert_has_calls(expected_writes, any_order=False)
 
     @unittest.mock.patch('__main__.__builtins__.open',
