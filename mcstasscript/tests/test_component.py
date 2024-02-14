@@ -4,6 +4,7 @@ import unittest.mock
 
 from mcstasscript.helper.mcstas_objects import Component
 from mcstasscript.helper.formatting import bcolors
+from mcstasscript.helper.exceptions import McStasError
 
 
 def setup_Component_all_keywords():
@@ -453,6 +454,43 @@ class TestComponent(unittest.TestCase):
 
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
+    def test_Component_write_to_file_simple_search(self, mock_f):
+        """
+        Testing that a Component can be written to file with the
+        expected output. Here with simple input and search.
+        """
+
+        comp = Component("test_component", "Arm")
+        comp.add_search("A search_statement")
+        comp.add_search("Another search_statement", SHELL=True)
+        comp.add_search('"One with double quotes"')
+
+        comp._unfreeze()
+        # Need to set up attribute parameters
+        # Also need to categorize them as when created
+        comp.parameter_names = []
+        comp.parameter_defaults = {}
+        comp.parameter_types = {}
+        comp._freeze()
+
+        with mock_f('test.txt', 'w') as m_fo:
+            comp.write_component(m_fo)
+
+        my_call = unittest.mock.call
+        expected_writes = [my_call('SEARCH "A search_statement"\n'),
+                           my_call('SEARCH SHELL "Another search_statement"\n'),
+                           my_call('SEARCH "One with double quotes"\n'),
+                           my_call("COMPONENT test_component = Arm("),
+                           my_call(")\n"),
+                           my_call("AT (0,0,0)"),
+                           my_call(" ABSOLUTE\n")]
+
+        mock_f.assert_called_with('test.txt', 'w')
+        handle = mock_f()
+        handle.write.assert_has_calls(expected_writes, any_order=False)
+
+    @unittest.mock.patch('__main__.__builtins__.open',
+                         new_callable=unittest.mock.mock_open)
     def test_Component_write_to_file_include(self, mock_f):
         """
         Testing that a Component can be written to file with the
@@ -627,17 +665,17 @@ class TestComponent(unittest.TestCase):
         output = output.split("\n")
 
         self.assertEqual(output[0], "// test comment")
-        self.assertEqual(output[1], "SPLIT 7 COMPONENT test_component = Arm")
+        self.assertEqual(output[1], "SPLIT 7 COMPONENT test_component = Arm(")
 
         par_name = bcolors.BOLD + "new_par1" + bcolors.ENDC
         value = (bcolors.BOLD + bcolors.OKGREEN
                  + "1.5" + bcolors.ENDC + bcolors.ENDC)
-        self.assertEqual(output[2], "  " + par_name + " = " + value + " [m]")
+        self.assertEqual(output[2], "  " + par_name + " = " + value + ", // [m]")
 
         par_name = bcolors.BOLD + "new_par2" + bcolors.ENDC
         value = (bcolors.BOLD + bcolors.OKGREEN
                  + "3" + bcolors.ENDC + bcolors.ENDC)
-        self.assertEqual(output[3], "  " + par_name + " = " + value + " [AA]")
+        self.assertEqual(output[3], "  " + par_name + " = " + value + ", // [AA]")
 
         par_name = bcolors.BOLD + "new_par3" + bcolors.ENDC
         warning = (bcolors.FAIL
@@ -648,18 +686,19 @@ class TestComponent(unittest.TestCase):
         par_name = bcolors.BOLD + "this_par" + bcolors.ENDC
         value = (bcolors.BOLD + bcolors.OKGREEN
                  + "test_val" + bcolors.ENDC + bcolors.ENDC)
-        self.assertEqual(output[5], "  " + par_name + " = " + value + " []")
+        self.assertEqual(output[5], "  " + par_name + " = " + value + ", // []")
 
         par_name = bcolors.BOLD + "that_par" + bcolors.ENDC
         value = (bcolors.BOLD + bcolors.OKGREEN
                  + "\"txt_string\"" + bcolors.ENDC + bcolors.ENDC)
-        self.assertEqual(output[6], "  " + par_name + " = " + value + " [1]")
+        # No comma after last parameter
+        self.assertEqual(output[6], "  " + par_name + " = " + value + " // [1]")
 
-        self.assertEqual(output[7], "WHEN (1==2)")
+        self.assertEqual(output[7], ") WHEN (1==2)")
 
-        self.assertEqual(output[8], "AT [0.124, 183.9, 157] RELATIVE home")
+        self.assertEqual(output[8], "AT (0.124, 183.9, 157) RELATIVE home")
         self.assertEqual(output[9],
-                         "ROTATED [482, 1240.2, 0.185] RELATIVE etc")
+                         "ROTATED (482, 1240.2, 0.185) RELATIVE etc")
         self.assertEqual(output[10], "GROUP developers")
         self.assertEqual(output[11], "EXTEND %{")
         self.assertEqual(output[12], "nscat = 8;")
@@ -834,6 +873,21 @@ class TestComponent(unittest.TestCase):
         comment = ""
         self.assertEqual(output[5],
                          par_name + " = " + value + " [1]" + comment)
+
+    def test_component_error_check(self):
+
+        comp = setup_Component_with_parameters()
+
+        # Currently no ilegal parameters
+        comp.check_parameters([])
+
+        # Introduce illegal parameter
+        comp.new_par1 = "wrong"
+        with self.assertRaises(McStasError):
+            comp.check_parameters([])
+
+        # Check no error is raised when on whitelist
+        comp.check_parameters(["wrong"])
 
 
 if __name__ == '__main__':

@@ -118,7 +118,7 @@ class TestComponentReader(unittest.TestCase):
         self.assertEqual(path, expected_path)
 
         category = component_reader.component_category["test_for_reading"]
-        self.assertEqual(category, "Work directory")
+        self.assertEqual(category, "work directory")
 
         expected_path = os.path.join(dummy_path, "misc",
                                      "test_for_structure.comp")
@@ -174,7 +174,7 @@ class TestComponentReader(unittest.TestCase):
         self.assertEqual(path, expected_path)
 
         category = component_reader.component_category["test_for_structure"]
-        self.assertEqual(category, "Work directory")
+        self.assertEqual(category, "work directory")
 
         self.assertIn("test_for_structure2", component_reader.component_path)
 
@@ -202,7 +202,7 @@ class TestComponentReader(unittest.TestCase):
         categories as well because of the dummy installation.
         """
         category = component_reader.component_category["test_for_reading"]
-        self.assertEqual(category, "Work directory")
+        self.assertEqual(category, "work directory")
         category = component_reader.component_category["test_for_structure"]
         self.assertEqual(category, "misc")
         category = component_reader.component_category["test_for_structure2"]
@@ -224,7 +224,7 @@ class TestComponentReader(unittest.TestCase):
 
         self.assertEqual(len(output), 7)
         self.assertIn(" sources", output)
-        self.assertIn(" Work directory", output)
+        self.assertIn(" work directory", output)
         self.assertIn(" misc", output)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
@@ -243,10 +243,11 @@ class TestComponentReader(unittest.TestCase):
         output = mock_stdout.getvalue()
         output = output.split("\n")
 
+        self.assertEqual(len(output), 7)
         # Ignoring message about overwritten components, starting from 3
-        self.assertEqual(output[3], " sources")
-        self.assertEqual(output[4], " Work directory")
-        self.assertEqual(output[5], " misc")
+        self.assertEqual(output[3], " misc")
+        self.assertEqual(output[4], " sources")
+        self.assertEqual(output[5], " work directory")
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_ComponentReader_show_components_short(self, mock_stdout):
@@ -355,7 +356,7 @@ class TestComponentReader(unittest.TestCase):
         CompInfo = component_reader.read_name("test_for_reading")
 
         self.assertEqual(CompInfo.name, "test_for_reading")
-        self.assertEqual(CompInfo.category, "Work directory")
+        self.assertEqual(CompInfo.category, "work directory")
         self.assertIn("dist", CompInfo.parameter_names)
         self.assertIn("dist", CompInfo.parameter_defaults)
         self.assertIn("dist", CompInfo.parameter_types)
