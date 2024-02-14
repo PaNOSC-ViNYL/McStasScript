@@ -1,0 +1,62 @@
+/********************************************************************************
+* 
+* McStas, neutron ray-tracing package
+*         Copyright (C) 1997-2008, All rights reserved
+*         Risoe National Laboratory, Roskilde, Denmark
+*         Institut Laue Langevin, Grenoble, France
+* 
+* This file was written by McStasScript, which is a 
+* python based McStas instrument generator written by 
+* Mads Bertelsen in 2019 while employed at the 
+* European Spallation Source Data Management and 
+* Software Center
+* 
+* Instrument test_instrument
+* 
+* %Identification
+* Written by: Python McXtrace Instrument Generator
+* Date: 10:17:47 on December 14, 2021
+* Origin: ESS DMSC
+* %INSTRUMENT_SITE: Generated_instruments
+* 
+* 
+* %Parameters
+* 
+* %End 
+********************************************************************************/
+
+DEFINE INSTRUMENT test_instrument (
+double theta = 1, 
+double has_default = 37 
+)
+
+DECLARE 
+%{
+double two_theta;
+%}
+
+INITIALIZE 
+%{
+// Start of initialize for generated test_instrument
+two_theta = 2.0*theta;
+%}
+
+TRACE 
+COMPONENT first_component = test_for_reading(
+ gauss = 1.2, test_string = a_string)
+AT (0,0,0) ABSOLUTE
+
+COMPONENT second_component = test_for_reading(
+ gauss = 1.4, test_string = b_string)
+AT (0,0,0) ABSOLUTE
+
+COMPONENT third_component = test_for_reading(
+ gauss = 1.6, test_string = c_string)
+AT (0,0,0) ABSOLUTE
+
+FINALLY 
+%{
+// Start of finally for generated test_instrument
+%}
+
+END

@@ -1,0 +1,92 @@
+/********************************************************************************
+* 
+* McStas, neutron ray-tracing package
+*         Copyright (C) 1997-2008, All rights reserved
+*         Risoe National Laboratory, Roskilde, Denmark
+*         Institut Laue Langevin, Grenoble, France
+* 
+* This file was written by McStasScript, which is a 
+* python based McStas instrument generator written by 
+* Mads Bertelsen in 2019 while employed at the 
+* European Spallation Source Data Management and 
+* Software Center
+* 
+* Instrument jupyter_demo
+* 
+* %Identification
+* Written by: Python McStas Instrument Generator
+* Date: 08:19:46 on May 15, 2019
+* Origin: ESS DMSC
+* %INSTRUMENT_SITE: Generated_instruments
+* 
+* 
+* %Parameters
+* 
+* %End 
+********************************************************************************/
+
+DEFINE INSTRUMENT jupyter_demo (
+double wavelength = 3 // Wavelength emmited from source
+)
+
+DECLARE 
+%{
+%}
+
+INITIALIZE 
+%{
+// Start of initialize for generated jupyter_demo
+%}
+
+TRACE 
+COMPONENT Source = Source_simple(
+ yheight = 0.08, xwidth = 0.06,
+ dist = 2, focus_xw = 0.05,
+ focus_yh = 0.05, lambda0 = wavelength,
+ dlambda = 0.1)
+AT (0,0,0) ABSOLUTE
+ROTATED (0,0,0) ABSOLUTE
+
+COMPONENT Guide = Guide_gravity(
+ w1 = 0.05, h1 = 0.05,
+ w2 = 0.05, h2 = 0.05,
+ l = 8, m = 3.5,
+ G = -9.2)
+AT (0,0,2) RELATIVE Source
+ROTATED (0,0,0) RELATIVE Source
+
+COMPONENT sample = PowderN(
+ reflections = "Cu.laz", radius = 0.015,
+ yheight = 0.05)
+AT (0,0,9) RELATIVE Guide
+ROTATED (0,0,0) RELATIVE Guide
+
+COMPONENT PSD_4PI = PSD_monitor_4PI(
+ nx = 300, ny = 300,
+ filename = "PSD_4PI.dat", radius = 1,
+ restore_neutron = 1)
+AT (0,0,0) RELATIVE sample
+ROTATED (0,0,0) RELATIVE sample
+
+COMPONENT PSD = PSD_monitor(
+ nx = 200, ny = 200,
+ filename = "PSD.dat", xwidth = 0.1,
+ yheight = 0.1, restore_neutron = 1)
+AT (0,0,1) RELATIVE sample
+ROTATED (0,0,0) RELATIVE sample
+
+// Wavelength monitor for narrow range
+COMPONENT L_mon = L_monitor(
+ nL = 150, filename = "L_mon.dat",
+ xwidth = 0.1, yheight = 0.1,
+ Lmin = wavelength - 0.3, Lmax = wavelength + 0.3,
+ restore_neutron = 1)
+AT (0,0,0) RELATIVE PSD
+ROTATED (0,0,0) RELATIVE PSD
+
+FINALLY 
+%{
+// Start of finally for generated jupyter_demo
+%}
+
+END
