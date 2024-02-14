@@ -95,7 +95,7 @@ class PlotInterface:
         # fig, ax = plt.subplots(constrained_layout=True, figsize=(6, 4))
 
         self.fig, (self.ax, self.colorbar_ax) = plt.subplots(ncols=2,
-                                                             gridspec_kw={'width_ratios': [6, 1]},
+                                                             gridspec_kw={'width_ratios': [4, 1]},
                                                              tight_layout=True)
 
         self.fig.canvas.toolbar_position = 'bottom'

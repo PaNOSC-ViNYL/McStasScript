@@ -34,6 +34,10 @@ def make_plot(data_list, **kwargs):
         fig, ax0 = plt.subplots(figsize=figsize, tight_layout=True)
         _plot_fig_ax(data, fig, ax0, **kwargs)
 
+    if "return_fig_ax" in kwargs:
+        if kwargs["return_fig_ax"]:
+            return fig, ax0
+
     if "filename" in kwargs:
         fig.tight_layout()
         fig.savefig(kwargs["filename"])
@@ -95,6 +99,10 @@ def make_sub_plot(data_list, **kwargs):
         _plot_fig_ax(data, fig, ax0, **kwargs)
 
     fig.tight_layout()
+
+    if "return_fig_ax" in kwargs:
+        if kwargs["return_fig_ax"]:
+            return fig, axs
 
     if "filename" in kwargs:
         fig.tight_layout()
