@@ -1,11 +1,13 @@
 from __future__ import print_function
 
 import os
+import shutil
 import datetime
 import yaml
 import subprocess
 import copy
 import warnings
+import re
 
 from IPython.display import IFrame
 
@@ -2938,7 +2940,11 @@ class McStas_instr(McCode_instr):
         with open(configuration_file_name, 'r') as ymlfile:
             config = yaml.safe_load(ymlfile)
 
-        if type(config) is dict:
+        if os.environ["MCSTAS"] is not None: # We are in a McStas environment, use that
+            self._run_settings["executable_path"] = os.path.dirname(shutil.which("mcrun"))
+            self._run_settings["package_path"] = os.environ["MCSTAS"]
+            self.line_limit = 85
+        elif type(config) is dict:
             self._run_settings["executable_path"] = config["paths"]["mcrun_path"]
             self._run_settings["package_path"] = config["paths"]["mcstas_path"]
             self.line_limit = config["other"]["characters_per_line"]
@@ -3166,7 +3172,11 @@ class McXtrace_instr(McCode_instr):
         with open(configuration_file_name, 'r') as ymlfile:
             config = yaml.safe_load(ymlfile)
 
-        if type(config) is dict:
+        if os.environ["MCXTRACE"] is not None: # We are in a McXtrace environment, use that
+            self._run_settings["executable_path"] = os.path.dirname(shutil.which("mxrun"))
+            self._run_settings["package_path"] = os.environ["MCXTRACE"]
+            self.line_limit = 85
+        elif type(config) is dict:
             self._run_settings["executable_path"] = config["paths"]["mxrun_path"]
             self._run_settings["package_path"] = config["paths"]["mcxtrace_path"]
             self.line_limit = config["other"]["characters_per_line"]
