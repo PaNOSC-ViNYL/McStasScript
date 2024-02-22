@@ -48,17 +48,19 @@ class OptimizationLogger:
         """
         return self.history
 
+def starter_fom(data):
+    return -data[0].metadata.total_I
 
-def optimizer(instrument, param_names, lb, ub, fom, maxiter=25 ):
+
+def optimizer(instrument, param_names, lb, ub, fom=starter_fom, maxiter=25, swarmsize=15, ncount=1E5 ):
     # Let the user do this part
-
     #for i in range(len(param_names)):
     #    param = instrument.add_parameter(f"{param_names[i]}", value=(ub[i] - lb[i]) / 2)
     #    # CHECK ABOVE LINE
 
     #instrument.show_instrument(format="window")
 
-    #instrument.set_parameters(mosaicity=20)
+    #instrument.set_parameters(mosaich=20)
     #instrument.show_parameters()
     #data = instrument.backengine()
     #ms.make_sub_plot(data)  # with initial guess of params
@@ -71,32 +73,31 @@ def optimizer(instrument, param_names, lb, ub, fom, maxiter=25 ):
 
     # Set some instrument settings
     instrument.write_full_instrument()
-    instrument.settings(ncount=1E5, force_compile=False, suppress_output=True)
+    instrument.settings(ncount=ncount, force_compile=False, suppress_output=True)
 
     # Make a dict with the keyward arguments needed by the optimized function
     kwargs_input = dict(par_names=param_names, instrument=instrument, fom=fom)
 
     # The PSO optimization is performed and the optimal parameters (xopt) and the objective function value (fopt) are printed
-    xopt, fopt = pso(logged_sim, lb, ub, swarmsize=15, maxiter=maxiter, kwargs=kwargs_input)
-    print(xopt, fopt)
+    xopt, fopt = pso(logged_sim, lb, ub, swarmsize=swarmsize, maxiter=maxiter, kwargs=kwargs_input)
+    print("xopt:",xopt, "fopt:",fopt)
     for i in range(len(xopt)):
         instrument.set_parameters({param_names[i]: xopt[i]})
     data = instrument.backengine()
     ms.make_sub_plot(data)
     histories = logger.get_history()
+    print(f"10 first lines of history:")
     for history_line in histories[0:10]:
         print(history_line)
-    plot_2d(param_names, histories)
-    plot_3d_scatter(param_names, histories)
-    plot_3d_surface(param_names, histories)
+
+    print("The user now has the option to depict the correlation between two parameters by using any of the, plot_2d(param_names, histories),  plot_3d_scatter(param_names, histories), plot_3d_surface(param_names, histories)")
+    return xopt,fopt,histories
 
     # How to give the user xopt
 
 # make empty subplots disappear
 
 
-def starter_fom(data):
-    return -data[0].metadata.total_I
 
 
 def simulate(x, par_names=None, instrument=None, fom=starter_fom):
@@ -114,7 +115,7 @@ def simulate(x, par_names=None, instrument=None, fom=starter_fom):
     data = instrument.backengine()
 
     # Verbose mode
-    print(x, "\t", data[0])
+    #print(x, "\t", data[0])
 
     # Negative because it is a minimizer
     """
