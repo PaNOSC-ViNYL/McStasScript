@@ -1,14 +1,17 @@
+"""
+example use:
+xopt, fopt, histories = ms.optimizer(instrument=instrument, param_names=["z_width","mosaich", "y_height"], lb = [0.01, 10, 0.01], ub = [0.1, 120, 0.1], fom=adv_fom_1, maxiter=15, swarmsize=9, ncount=1E5)
+ms.plot_2d(["z_width", "mosaich", "y_height"], histories)
+"""
+
 import copy
 import numpy as np
 import mcstasscript as ms
 from pyswarm import pso
-from scipy.signal import chirp, find_peaks, peak_widths
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import griddata
-from itertools import combinations
 
 """
 We define a class OptimizationLogger that 
@@ -47,23 +50,22 @@ class OptimizationLogger:
         A list of tuples, where each tuple contains (parameters, result).
         """
         return self.history
-
+"""
+We define a function starter_fom as a predefined figure of merit taking into account only Intensity
+The user is to make a function describing their preferred figure of merit 
+"""
 def starter_fom(data):
     return -data[0].metadata.total_I
 
 
 def optimizer(instrument, param_names, lb, ub, fom=starter_fom, maxiter=25, swarmsize=15, ncount=1E5 ):
-    # Let the user do this part
-    #for i in range(len(param_names)):
-    #    param = instrument.add_parameter(f"{param_names[i]}", value=(ub[i] - lb[i]) / 2)
-    #    # CHECK ABOVE LINE
+    # # We the user do the following part by, per example:
+    # mono         = instrument.add_component("mono", "Monochromator_flat")
+    # mono.zwidth  = "z_width"
 
-    #instrument.show_instrument(format="window")
-
-    #instrument.set_parameters(mosaich=20)
-    #instrument.show_parameters()
-    #data = instrument.backengine()
-    #ms.make_sub_plot(data)  # with initial guess of params
+    # alternatively un comment the next two lines
+    # for i in range(len(param_names)):
+    #   param = instrument.add_parameter(f"{param_names[i]}", value=(ub[i] - lb[i]) / 2)
 
     # Create an instance of the logger and wrap the objective function
     logger = OptimizationLogger()
@@ -119,8 +121,10 @@ def simulate(x, par_names=None, instrument=None, fom=starter_fom):
 
     # Negative because it is a minimizer
     """
-    The negative of the total intensity is returned because PSO minimizes the objective function
+    The negative of the total intensity (if the starter_fom is used) is returned because PSO minimizes the objective function
     """
+
+    # PERHAPS JUST MAKE IT RETURN THE -fom(data) JUST TO MAKE IT EASIER FOR THE USER
     return fom(data)
 
 
@@ -227,4 +231,76 @@ def plot_3d_surface(param_names, history):
             plt.show()
 
 
+"""
+prints a table with the first 10 (if not specified differently) rows of combinations-of-parameters 
+that the simulation went through, alongside the objection function value 
+example use:
+ms.print_history_table(histories,["z_width", "mosaich", "y_height"], decimal_places=6,num_rows=9 )
+where histories is returned by the optimizer
+"""
+def print_history_table(data, headers=None, decimal_places=6,num_rows=10):
+    # Extract values from arrays and round them
+    data_values = [(tuple(round(item, decimal_places) for item in arr) + (round(value, decimal_places),)) for arr, value in data[:num_rows]]
 
+    # Determine headers based on the number of columns
+    if headers is None:
+        headers = [f'Column{i+1}' for i in range(len(data_values[0]) - 1)] + ['Value']
+    headers = headers + ['fom value']
+    # Calculate column widths
+    column_widths = [max(len(str(item)) for item in column) for column in zip(headers, *data_values)]
+
+    # Add width for the last column (Value)
+    column_widths[-1] = max(column_widths[-1], len('Value'))
+
+    # Print headers
+    print('┌' + '─'.join('─' * (width + 2) for width in column_widths) + '┐')
+    print('│' + '│'.join(f' {header:<{width}} ' for header, width in zip(headers, column_widths)) + '│')
+    print('├' + '┼'.join('─' * (width + 2) for width in column_widths) + '┤')
+
+    # Print data
+    for row in data_values:
+        print('│' + '│'.join(f' {str(item):<{width}} ' for item, width in zip(row, column_widths)) + '│')
+
+    # Print bottom border
+    print('└' + '─'.join('─' * (width + 2) for width in column_widths) + '┘')
+
+
+
+"""
+prints a table with the optimal combinations of parameters , alongside the objection function value 
+example use:
+ms.print_optimal_table(xopt, fopt,["z_width", "mosaich", "y_height"], decimal_places=6,num_rows=9 )
+where xopt, fopt are returned by the optimizer
+"""
+def print_optimal_table(xopt, fopt, headers=None, decimal_places=6):
+    # Prepare data for printing
+    data_values = [(tuple(round(item, decimal_places) for item in xopt) + (round(fopt, decimal_places),))]
+
+    # Determine headers based on the number of columns
+    if headers is None:
+        headers = [f'Column{i+1}' for i in range(len(data_values[0]) - 1)] + ['Value']
+    headers = headers + ['fom value']
+
+    # Calculate column widths
+    column_widths = [max(len(str(item)) for item in column) for column in zip(headers, *data_values)]
+
+    # Add width for the last column (Value)
+    column_widths[-1] = max(column_widths[-1], len('Value'))
+
+    # Print over header
+    print('Optimal:')
+    print()
+
+    # Print headers
+    print('┌' + '─'.join('─' * (width + 2) for width in column_widths) + '┐')
+    print('│' + '│'.join(f' {header:<{width}} ' for header, width in zip(headers, column_widths)) + '│')
+    print('├' + '┼'.join('─' * (width + 2) for width in column_widths) + '┤')
+
+    # Print data
+    for row in data_values:
+        print('│' + '│'.join(f' {str(item):<{width}} ' for item, width in zip(row, column_widths)) + '│')
+
+    # Print bottom border
+    print('└' + '─'.join('─' * (width + 2) for width in column_widths) + '┘')
+
+print_optimal_table(xopt, fopt, ["z_width", "mosaic", "y_height"])
