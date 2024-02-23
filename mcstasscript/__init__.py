@@ -20,3 +20,8 @@ from .interface.reader import McStas_file
 from .tools.cryostat_builder import Cryostat
 
 from .instrument_diagnostics.beam_diagnostics import BeamDiagnostics as Diagnostics
+
+from .helper.optimizer_helper import optimizer
+from .helper.optimizer_helper import plot_2d
+from .helper.optimizer_helper import plot_3d_scatter
+from .helper.optimizer_helper import plot_3d_surface
