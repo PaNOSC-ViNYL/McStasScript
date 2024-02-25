@@ -25,3 +25,5 @@ from .helper.optimizer_helper import optimizer
 from .helper.optimizer_helper import plot_2d
 from .helper.optimizer_helper import plot_3d_scatter
 from .helper.optimizer_helper import plot_3d_surface
+from .helper.optimizer_helper import print_optimal_table
+from .helper.optimizer_helper import print_history_table
