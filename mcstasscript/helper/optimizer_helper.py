@@ -303,4 +303,3 @@ def print_optimal_table(xopt, fopt, headers=None, decimal_places=6):
     # Print bottom border
     print('└' + '─'.join('─' * (width + 2) for width in column_widths) + '┘')
 
-print_optimal_table(xopt, fopt, ["z_width", "mosaic", "y_height"])
