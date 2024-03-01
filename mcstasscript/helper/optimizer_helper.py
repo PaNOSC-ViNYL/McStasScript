@@ -57,6 +57,14 @@ The user is to make a function describing their preferred figure of merit
 def starter_fom(data):
     return -data[0].metadata.total_I
 
+"""
+We make a class that will contain all the results that optimizer will return
+"""
+class Result:
+    def __init__(self, xopt, fopt, histories):
+        self.xopt = xopt
+        self.fopt = fopt
+        self.histories = histories
 
 def optimizer(instrument, param_names, lb, ub, fom=starter_fom, maxiter=25, swarmsize=15, ncount=1E5 ):
     # # We the user do the following part by, per example:
@@ -92,8 +100,8 @@ def optimizer(instrument, param_names, lb, ub, fom=starter_fom, maxiter=25, swar
     for history_line in histories[0:10]:
         print(history_line)
 
-    print("The user now has the option to depict the correlation between two parameters by using any of the, plot_2d(param_names, histories),  plot_3d_scatter(param_names, histories), plot_3d_surface(param_names, histories)")
-    return xopt,fopt,histories
+    print("The user now has the option to depict the correlation the parameters by using any of the, plot_2d(param_names, histories),  plot_3d_scatter(param_names, histories), plot_3d_surface(param_names, histories)")
+    return Result(xopt,fopt,histories)
 
     # How to give the user xopt
 
