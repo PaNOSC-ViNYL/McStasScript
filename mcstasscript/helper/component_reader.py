@@ -152,6 +152,55 @@ class ComponentReader:
 
             print("These definitions will be used instead of the installed "
                   + "versions.")
+    def add_custom_component_dir(self, input_path=".", category="custom"):
+        """
+        Method to add further directories containing custom components
+        """
+        # Will overwrite McStas components with definitions in input_folder
+        current_directory = os.getcwd()
+
+        # Set up absolute input_path
+        if os.path.isabs(input_path):
+            input_directory = input_path
+        else:
+            if input_path == ".":
+                # Default case, avoid having /./ in absolute path
+                input_directory = current_directory
+            else:
+                input_directory = os.path.join(current_directory, input_path)
+
+        if not os.path.isdir(input_directory):
+            print("input_path: ", input_directory)
+            raise ValueError("Can't find given input_path," + " directory must exist.")
+        """
+        If components are present both in the McStas install and the
+        work directory, the version in the work directory is used. The user
+        is informed of this behavior when the instrument object is created.
+        """
+        overwritten_components = []
+        for file in os.listdir(input_directory):
+            if file.endswith(".comp"):
+                abs_path = os.path.join(input_directory, file)
+                component_name = os.path.split(abs_path)[1].split(".")[-2]
+
+                if component_name in self.component_path:
+                    overwritten_components.append(file)
+
+                self.component_path[component_name] = abs_path
+                self.component_category[component_name] = category
+
+        # Report components found in the work directory and install to the user
+        if len(overwritten_components) > 0:
+            print(
+                "The following components are found in the work_directory"
+                + " / input_path:"
+            )
+            for name in overwritten_components:
+                print("    ", name)
+
+            print(
+                "These definitions will be used instead of the installed " + "versions."
+            )
 
     def show_categories(self):
         """
