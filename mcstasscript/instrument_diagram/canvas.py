@@ -456,3 +456,5 @@ class DiagramCanvas:
 
         # Show the figure
         plt.show()
+
+        return fig

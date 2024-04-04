@@ -91,4 +91,5 @@ def instrument_diagram(instrument, analysis=False, variable=None, limits=None):
                            limits=limits)
 
     # Plot diagram
-    canvas.plot()
+    return canvas.plot()
+    
