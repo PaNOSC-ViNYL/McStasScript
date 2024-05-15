@@ -2641,10 +2641,15 @@ class McCode_instr(BaseCalculator):
                                 + "="
                                 + str(val))  # parameter value
 
+        if self.package_name == "McXtrace":
+            executable = "mxdisplay"
+        else:
+            executable = "mxdisplay"
+
         if format == "webgl":
-            executable = "mcdisplay-webgl"
+            executable = executable+"-webgl"
         elif format == "window":
-            executable = "mcdisplay"
+            executable = executable+"-pyqtgraph"
 
         # Platform dependent, check both package_path and bin
         executable_path = self._run_settings["executable_path"]
