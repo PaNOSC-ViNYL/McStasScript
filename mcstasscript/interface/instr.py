@@ -2644,7 +2644,7 @@ class McCode_instr(BaseCalculator):
         if self.package_name == "McXtrace":
             executable = "mxdisplay"
         else:
-            executable = "mxdisplay"
+            executable = "mcdisplay"
 
         if format == "webgl":
             executable = executable+"-webgl"
