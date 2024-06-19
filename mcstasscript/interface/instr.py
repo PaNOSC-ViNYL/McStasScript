@@ -6,6 +6,8 @@ import yaml
 import subprocess
 import copy
 import warnings
+import io
+import hashlib
 
 from IPython.display import IFrame
 
@@ -2045,7 +2047,15 @@ class McCode_instr(BaseCalculator):
                 full_line = line_number + line
                 print(full_line.replace("\n", ""))
 
-    def write_full_instrument(self):
+
+    def __hash__(self):
+        """ Define a hashing specifically for this calculator
+        The hash method in the BaseCalculator would pack also the internals of this class and it changes when calling the backengine
+        """
+        contents = self.write_full_instrument(False)
+        return int.from_bytes(hashlib.sha256(contents.encode()).digest(), "big")
+        
+    def write_full_instrument(self, do_write=True) -> str:
         """
         Method for writing full instrument file to disk
 
@@ -2059,8 +2069,12 @@ class McCode_instr(BaseCalculator):
             self.check_for_errors()
 
         # Create file identifier
-        fo = open(os.path.join(self.input_path, self.name + ".instr"), "w")
-
+        run_path = self._run_settings["run_path"]
+        fo = None
+        if do_write:
+            fo = open(os.path.join(run_path, self.name + ".instr"), "w")
+        else:
+            fo = io.StringIO()
         # Write quick doc start
         fo.write("/" + 80*"*" + "\n")
         fo.write("* \n")
@@ -2080,7 +2094,8 @@ class McCode_instr(BaseCalculator):
         fo.write("* %Identification\n")  # Could allow the user to insert this
         fo.write("* Written by: %s\n" % self.author)
         t_format = "%H:%M:%S on %B %d, %Y"
-        fo.write("* Date: %s\n" % datetime.datetime.now().strftime(t_format))
+        if do_write:
+            fo.write("* Date: %s\n" % datetime.datetime.now().strftime(t_format))
         fo.write("* Origin: %s\n" % self.origin)
         fo.write("* %INSTRUMENT_SITE: Generated_instruments\n")
         fo.write("* \n")
@@ -2093,14 +2108,18 @@ class McCode_instr(BaseCalculator):
         fo.write("\n")
         fo.write("DEFINE INSTRUMENT %s (" % self.name)
         fo.write("\n")
-        # Insert parameters
-        parameter_list = list(self.parameters)
-        end_chars = [", "]*len(parameter_list)
-        if len(end_chars) >= 1:
-            end_chars[-1] = " "
-        for variable, end_char in zip(parameter_list, end_chars):
-            write_parameter(fo, variable, end_char)
-        fo.write(")\n")
+
+        # remove parameters when calculating hash because don't want
+        # variations in the parameter values to trigger a new hash
+        if do_write:
+            # Insert parameters
+            parameter_list = list(self.parameters)
+            end_chars = [", "]*len(parameter_list)
+            if len(end_chars) >= 1:
+                end_chars[-1] = " "
+            for variable, end_char in zip(parameter_list, end_chars):
+                write_parameter(fo, variable, end_char)
+            fo.write(")\n")
         if self.dependency_statement != "":
             fo.write("DEPENDENCY " + str(self.dependency_statement) + "\n")
         self.search_statement_list.write(fo)
@@ -2151,7 +2170,11 @@ class McCode_instr(BaseCalculator):
         # End instrument file
         fo.write("\nEND\n")
 
+        instrument_file_as_string = ""
+        if do_write is False:
+            instrument_file_as_string = fo.getvalue()
         fo.close()
+        return instrument_file_as_string
 
     def get_component_subset_index_range(self, start_ref=None, end_ref=None):
         """
@@ -2395,11 +2418,15 @@ class McCode_instr(BaseCalculator):
         if NeXus is not None:
             settings["NeXus"] = bool(NeXus)
 
-        if len(component_dirs) > 0:
-            settings["component_dirs"] = component_dirs
-        else:
-            settings["component_dirs"] = []
-        
+        if component_dirs is not None:
+            if len(component_dirs) > 0:
+                settings["component_dirs"].append( component_dirs)
+            else:
+                component_dirs = []
+
+        if run_path is not None:
+            settings["run_path"] = os.path.abspath(run_path)
+            
         self._run_settings.update(settings)
 
     def settings_string(self):
@@ -2494,7 +2521,11 @@ class McCode_instr(BaseCalculator):
         self.__add_input_to_mcpl()
 
         instrument_path = os.path.join(self.input_path, self.name + ".instr")
+
+        run_path = self._run_settings["run_path"]
+        instrument_path = os.path.join(run_path, self.name + ".instr")
         if not os.path.exists(instrument_path) or self._run_settings["force_compile"]:
+            print("Instrument file not found: ", instrument_path, os.path.exists(instrument_path), self._run_settings["force_compile"])
             self.write_full_instrument()
 
         parameters = {}
@@ -2510,7 +2541,7 @@ class McCode_instr(BaseCalculator):
         options["output_path"] = self.output_path
 
         # Set up the simulation
-        simulation = ManagedMcrun(self.name + ".instr", **options)
+        simulation = ManagedMcrun(instrument_path, **options) #self.name + ".instr", **options)
 
         # Run the simulation and return data
         simulation.run_simulation()
