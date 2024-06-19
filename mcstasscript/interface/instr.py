@@ -2755,15 +2755,17 @@ class McCode_instr(BaseCalculator):
         if variable is not None:
             analysis = True
 
-        instrument_diagram(self, analysis=analysis, variable=variable, limits=limits)
+        fig = instrument_diagram(self, analysis=analysis, variable=variable, limits=limits)
 
         if self._run_settings["checks"]:
             self.check_for_errors()
 
+        return fig
+
     def show_analysis(self, variable=None):
         beam_diag = IntensityDiagnostics(self)
         beam_diag.run_general(variable=variable)
-        beam_diag.plot()
+        return beam_diag.plot()
 
     def saveH5(self, filename: str, openpmd: bool = True):
         """
