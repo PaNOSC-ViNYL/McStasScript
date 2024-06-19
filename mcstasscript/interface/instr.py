@@ -344,6 +344,8 @@ class McCode_instr(BaseCalculator):
 
         self._run_settings = {}  # Settings for running simulation
 
+        self._run_settings["component_dirs"] = []
+
         # Sets max_line_length and adds paths to run_settings
         self._read_calibration()
 
@@ -2291,7 +2293,7 @@ class McCode_instr(BaseCalculator):
                  increment_folder_name=None, custom_flags=None,
                  executable=None, executable_path=None,
                  suppress_output=None, gravity=None, checks=None,
-                 openacc=None, NeXus=None, component_dirs=[]):
+                 openacc=None, NeXus=None, component_dirs=None, run_path=None):
         """
         Sets settings for McStas run performed with backengine
 
@@ -2328,6 +2330,10 @@ class McCode_instr(BaseCalculator):
                 If True, adds --openacc to mcrun call
             NeXus : bool
                 If True, adds --format=NeXus to mcrun call
+            component_dirs : list
+                Additional directories where to find components (use absolute paths)
+            run_path : str
+                Change the directory where the code is compiled and run
         """
 
         settings = {}
