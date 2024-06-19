@@ -83,7 +83,7 @@ class ManagedMcrun:
                 If True, automatically appends output_path to make it unique
             force_compile : bool, default True
                 If True, forces compile. If False no new instrument is written
-            run_folder : str
+            run_path : str
                 Path to folder in which to run McStas
             openacc : bool, default False
                 If True, adds the --openacc flag to mcrun call
