@@ -13,13 +13,13 @@ jobs:
       
     steps:
       - name: Temporary developer McStasScript checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
-          ref: ${{ env.BRANCH }}
+          ref: ${{ github.ref }}
           path: mcstasscript
     
       - name: Temporary developer libpyvinyl checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: PaNOSC-ViNYL/libpyvinyl
           ref: master
