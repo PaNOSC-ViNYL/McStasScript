@@ -19,3 +19,35 @@ def has_component(instrument, component_name=None, component_type=None):
 
     # Did not find any such component
     return False
+
+
+def has_parameter(instrument, parameter_name, parameter_type=None):
+    if parameter_name is None and parameter_type is None:
+        raise ValueError("Specify parameter_name, parameter_type or both.")
+
+    parameter_dict = instrument.parameters.parameters
+
+    if parameter_name not in parameter_dict:
+        return False
+
+    if parameter_type is not None:
+        found_type = parameter_dict[parameter_name].type
+
+        if parameter_type == "double" and found_type == "":
+            # Default McStas type is double
+            return True
+
+        if found_type != parameter_type:
+            return False
+
+    return True
+
+def all_parameters_set(instrument):
+
+    parameter_dict = instrument.parameters.parameters
+
+    for par_object in parameter_dict.values():
+        if par_object.value is None:
+            return False
+
+    return True
