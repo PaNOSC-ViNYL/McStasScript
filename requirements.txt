@@ -6,3 +6,4 @@ libpyvinyl
 ipympl
 h5py
 pyswarm
+seaborn
