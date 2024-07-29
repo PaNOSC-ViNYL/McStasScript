@@ -1,6 +1,13 @@
-
-
 def has_component(instrument, component_name=None, component_type=None):
+    """
+    Checks if given instrument has a component with given name and type
+
+    instrument : McStasScript instrument object
+
+    component_name : (str) name of component
+
+    component_type : (str) type of component, for example Arm
+    """
     if component_name is None and component_type is None:
         raise ValueError("Specify component_name, component_type or both.")
 
@@ -22,6 +29,15 @@ def has_component(instrument, component_name=None, component_type=None):
 
 
 def has_parameter(instrument, parameter_name, parameter_type=None):
+    """
+    Checks if instrument have parameter with given name and type
+
+    instrument : McStasScript instrument object
+
+    parameter_name : (str) Name of parameter
+
+    parameter_type : (str) Type of parameter, "" treated as double
+    """
     if parameter_name is None and parameter_type is None:
         raise ValueError("Specify parameter_name, parameter_type or both.")
 
@@ -42,8 +58,13 @@ def has_parameter(instrument, parameter_name, parameter_type=None):
 
     return True
 
-def all_parameters_set(instrument):
 
+def all_parameters_set(instrument):
+    """
+    Checks if all parameters of given instrument have default values
+
+    instrument : McStasScript instrument object
+    """
     parameter_dict = instrument.parameters.parameters
 
     for par_object in parameter_dict.values():

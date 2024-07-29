@@ -806,7 +806,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(output[0],
                          "The following components are found in the "
-                         + "work_directory / input_path:")
+                         + "work directory / input_path:")
         self.assertEqual(output[1], "     test_for_reading.comp")
         self.assertEqual(output[2], "These definitions will be used "
                          + "instead of the installed versions.")
@@ -838,7 +838,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(output[0],
                          "The following components are found in the "
-                         + "work_directory / input_path:")
+                         + "work directory / input_path:")
         self.assertEqual(output[1], "     test_for_reading.comp")
         self.assertEqual(output[2], "These definitions will be used "
                          + "instead of the installed versions.")
@@ -863,7 +863,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(output[0],
                          "The following components are found in the "
-                         + "work_directory / input_path:")
+                         + "work directory / input_path:")
         self.assertEqual(output[1], "     test_for_structure.comp")
         self.assertEqual(output[2], "These definitions will be used "
                          + "instead of the installed versions.")
@@ -890,7 +890,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(output[0],
                          "The following components are found in the "
-                         + "work_directory / input_path:")
+                         + "work directory / input_path:")
         self.assertEqual(output[1], "     test_for_structure.comp")
         self.assertEqual(output[2], "These definitions will be used "
                          + "instead of the installed versions.")

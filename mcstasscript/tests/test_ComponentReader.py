@@ -61,7 +61,7 @@ class TestComponentReader(unittest.TestCase):
 
         setup_component_reader()
 
-        message = ("The following components are found in the work_directory "
+        message = ("The following components are found in the work directory "
                    + "/ input_path:\n     test_for_reading.comp\n"
                    + "These definitions will be used instead of the "
                    + "installed versions.\n")
@@ -77,7 +77,7 @@ class TestComponentReader(unittest.TestCase):
 
         setup_component_reader_input_path()
 
-        message = ("The following components are found in the work_directory "
+        message = ("The following components are found in the work directory "
                    + "/ input_path:\n     test_for_structure.comp\n"
                    + "These definitions will be used instead of the "
                    + "installed versions.\n")

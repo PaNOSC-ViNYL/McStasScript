@@ -2240,7 +2240,7 @@ class McCode_instr(BaseCalculator):
 
         self.dependency_statement = string
 
-    def add_search(self, statement, SHELL=False):
+    def add_search(self, statement, SHELL=False, help_name=""):
         """
         Adds a search statement to the instrument
 
@@ -2254,9 +2254,13 @@ class McCode_instr(BaseCalculator):
 
             SHELL : bool (default False)
                 if True, shell keyword is added
+
+            help_name : str
+                Name used in help messages regarding the component search
         """
 
         self.search_statement_list.add_statement(SearchStatement(statement, SHELL=SHELL))
+        self.component_reader.load_components_from_folder(statement, name=help_name)
 
     def clear_search(self):
         """
@@ -2264,6 +2268,13 @@ class McCode_instr(BaseCalculator):
         """
 
         self.search_statement_list.clear()
+
+        # Reset component_reader
+        self.component_class_lib = {}
+        package_path = self._run_settings["package_path"]
+        run_path = self._run_settings["run_path"]
+        self.component_reader = ComponentReader(package_path,
+                                                input_path=run_path)
 
     def show_search(self):
         """
