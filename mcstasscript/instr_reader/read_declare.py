@@ -57,7 +57,7 @@ class DeclareReader(SectionReader):
 
         # Check for functions
         if ("(" in line and ";" not in line and " " in line.strip()
-                and not self.in_declare_function):
+                and not self.in_declare_function and "#pragma" not in line):
 
             # If in function, it will define a block
             n_curly_brackets = line.count("{")
@@ -129,8 +129,8 @@ class DeclareReader(SectionReader):
             # if in function, stop now
             self.in_declare_function = False
 
-        # Grab defines
-        if line.strip().startswith("#define"):
+        # Grab defines and pragmas
+        if line.strip().startswith("#define") or line.strip().startswith("#pragma"):
             # Include define statements as declare append
             line = line.rstrip()
             line = line.replace('\\n', "\\\\n")
