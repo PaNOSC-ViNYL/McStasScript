@@ -1,6 +1,7 @@
 import matplotlib.pyplot
 import numpy as np
 import copy
+import re
 
 
 class McStasMetaData:
@@ -967,3 +968,62 @@ class McStasDataEvent(McStasData):
 
     def __repr__(self):
         return "\n" + self.__str__()
+
+def parse_coordinates(line, keyword):
+    # Extract the coordinates from the line
+    match = re.search(r'\(([^)]+)\)', line)
+    if match:
+        coords = match.group(1).split(',')
+        coords = [float(coord.strip()) for coord in coords]
+        return {f'{keyword}_x': coords[0], f'{keyword}_y': coords[1], f'{keyword}_z': coords[2]}
+    return {}
+
+class ComponentData:
+    def __init__(self, file_path):
+        self.file_path = file_path
+        self.data = None
+
+    def read(self):
+
+        components = {}
+
+        current_component = None
+
+        with open(self.file_path, 'r') as file:
+            for line in file:
+                line = line.strip()
+                if line.startswith('COMPONENT'):
+                    match = re.match(r'COMPONENT (\S+) = (\S+)', line)
+                    if match:
+                        component_name = match.group(1)
+                        component_type = match.group(2)
+                        current_component = {'component': component_type}
+                        components[component_name] = current_component
+                        current_component["parameters"] = {}
+                elif '=' in line:
+                    if current_component is not None:
+                        key, value = line.split('=',1)
+                        try:
+                            value = float(value)
+                        except:
+                            pass
+                        current_component["parameters"][key] = value
+                elif line.startswith('AT'):
+                    if current_component is not None:
+                        current_component.update(parse_coordinates(line, 'AT'))
+                        if line.endswith('ABSOLUTE'):
+                            current_component['AT_relative'] = "ABSOLUTE"
+                        else:
+                            current_component['AT_relative'] = line.split('RELATIVE')[1].strip()
+                elif line.startswith('ROTATED'):
+                    if current_component is not None:
+                        current_component.update(parse_coordinates(line, 'ROTATED'))
+                        if line.endswith('ABSOLUTE'):
+                            current_component['ROTATED_relative'] = "ABSOLUTE"
+                        else:
+                            current_component['ROTATED_relative'] = line.split('RELATIVE')[1].strip()
+
+        self.data = components
+
+        return components
+

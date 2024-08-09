@@ -242,7 +242,8 @@ class McCode_instr(BaseCalculator):
                  increment_folder_name=None, custom_flags=None,
                  executable_path=None, executable=None,
                  suppress_output=None, gravity=None, input_path=None,
-                 package_path=None, checks=None, NeXus=None, openacc=None):
+                 package_path=None, checks=None, NeXus=None,
+                 save_comp_pars=None, openacc=None):
         """
         Initialization of McStas Instrument
 
@@ -296,6 +297,9 @@ class McCode_instr(BaseCalculator):
 
             gravity : bool
                 If True, gravity will be simulated
+
+            save_comp_pars : bool
+                If True, McStas run writes all comp pars to disk
         """
 
         super().__init__(name, input=[],
@@ -406,6 +410,11 @@ class McCode_instr(BaseCalculator):
         if NeXus is not None:
             provided_run_settings["NeXus"] = NeXus
 
+        if save_comp_pars is not None:
+            provided_run_settings["save_comp_pars"] = save_comp_pars
+        else:
+            provided_run_settings["save_comp_pars"] = False
+
         if openacc is not None:
             provided_run_settings["openacc"] = openacc
 
@@ -467,7 +476,7 @@ class McCode_instr(BaseCalculator):
 
     def _read_calibration(self):
         """
-        Place holder method that should be overwritten by classes
+        Placeholder method that should be overwritten by classes
         that inherit from McCode_instr.
         """
         pass
@@ -2118,6 +2127,22 @@ class McCode_instr(BaseCalculator):
         fo.write("%include "generated_includes/"
                   + self.name + "_initialize.c")
         """
+
+        save_parameter_code = ""
+        for component in self.make_component_subset():
+            if component.save_parameters or self._run_settings["save_comp_pars"]:
+                save_parameter_code += component.make_write_string()
+
+        if save_parameter_code != "":
+            fo.write('MPI_MASTER(\n')
+            fo.write('FILE *file = fopen("component_parameters.txt", "w");\n')
+            fo.write('if (file) {\n')
+            fo.write(save_parameter_code)
+            fo.write('} else {\n')
+            fo.write('  perror("fopen");\n')
+            fo.write('}\n')
+            fo.write(')\n')
+
         fo.write("%}\n\n")
 
         # Write trace
@@ -2288,7 +2313,7 @@ class McCode_instr(BaseCalculator):
                  increment_folder_name=None, custom_flags=None,
                  executable=None, executable_path=None,
                  suppress_output=None, gravity=None, checks=None,
-                 openacc=None, NeXus=None):
+                 openacc=None, NeXus=None, save_comp_pars=False):
         """
         Sets settings for McStas run performed with backengine
 
@@ -2325,6 +2350,8 @@ class McCode_instr(BaseCalculator):
                 If True, adds --openacc to mcrun call
             NeXus : bool
                 If True, adds --format=NeXus to mcrun call
+            save_comp_pars : bool
+                If True, McStas run writes all comp pars to disk
         """
 
         settings = {}
@@ -2385,6 +2412,9 @@ class McCode_instr(BaseCalculator):
 
         if NeXus is not None:
             settings["NeXus"] = bool(NeXus)
+
+        if save_comp_pars is not None:
+            settings["save_comp_pars"] = bool(save_comp_pars)
 
         self._run_settings.update(settings)
 
@@ -2458,6 +2488,11 @@ class McCode_instr(BaseCalculator):
         if "openacc" in self._run_settings:
             value = self._run_settings["openacc"]
             description += "  openacc:".ljust(variable_space)
+            description += str(value) + "\n"
+
+        if "save_comp_pars" in self._run_settings:
+            value = self._run_settings["save_comp_pars"]
+            description += "  save_comp_pars:".ljust(variable_space)
             description += str(value) + "\n"
 
         return description.strip()
