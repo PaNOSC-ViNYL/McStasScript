@@ -2123,7 +2123,8 @@ class TestMcStas_instr(unittest.TestCase):
                            executable_path=executable_path,
                            mpi=5, ncount=19373, openacc=True,
                            NeXus=True, force_compile=False,
-                           seed=300, gravity=True, checks=False)
+                           seed=300, gravity=True, checks=False,
+                           save_comp_pars=True)
             instr.backengine()
 
         expected_path = os.path.join(executable_path, "mcrun")
