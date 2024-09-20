@@ -55,7 +55,7 @@ class PlotOverview:
 
                 if not major_label_set:
                     ylabel = ax.get_ylabel()
-                    row_name = plotter.name.replace("_", "\ ")
+                    row_name = plotter.name.replace("_", "\\ ")
                     new_label = r"$\bf{" + row_name + "}$" + "\n" + ylabel
                     ax.set_ylabel(new_label)
 
