@@ -40,7 +40,7 @@ def component_description(component):
         else:
             if component.parameter_defaults[key] is None:
                 string += "  $\\bf{" + parameter_name.replace("_", "\\_") + "}$"
-                string += " : $\\bf{Required\ parameter\ not\ yet\ specified}$\n"
+                string += " : $\\bf{Required\\ parameter\\ not\\ yet\\ specified}$\n"
 
     if not component.WHEN == "":
         string += component.WHEN + "\n"
