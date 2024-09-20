@@ -1006,7 +1006,7 @@ class Component:
 
         print(self.search_statement_list)
 
-    def write_component(self, fo):
+    def write_component(self, fo, instrument_search=None):
         """
         Method that writes component to file
 
@@ -1031,6 +1031,10 @@ class Component:
 
         # Write search statements
         self.search_statement_list.write(fo)
+
+        # Add search statement for instrument if supplied
+        if instrument_search is not None:
+            instrument_search.write(fo)
 
         if self.SPLIT != 0:
             fo.write("SPLIT " + str(self.SPLIT) + " ")

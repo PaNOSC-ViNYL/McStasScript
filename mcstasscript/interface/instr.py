@@ -2096,7 +2096,6 @@ class McCode_instr(BaseCalculator):
         fo.write(")\n")
         if self.dependency_statement != "":
             fo.write("DEPENDENCY " + str(self.dependency_statement) + "\n")
-        self.search_statement_list.write(fo)
         fo.write("\n")
 
         # Write declare
@@ -2148,8 +2147,11 @@ class McCode_instr(BaseCalculator):
         # Write trace
         fo.write("TRACE \n")
 
+        # Write all components, the first should get the instrument search list
+        search_object = copy.deepcopy(self.search_statement_list)
         for component in self.make_component_subset():
-            component.write_component(fo)
+            component.write_component(fo, instrument_search=search_object)
+            search_object = None  # Remove for remaining components
 
         # Write finally
         fo.write("FINALLY \n%{\n")
