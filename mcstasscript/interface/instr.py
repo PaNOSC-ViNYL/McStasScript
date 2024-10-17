@@ -80,6 +80,9 @@ class McCode_instr(BaseCalculator):
     executable_path : str
         absolute path of mcrun command, or empty if it is in path
 
+    description : str
+        string containing description of instrument
+
     parameters : ParameterContainer
         contains all input parameters to be written to file
 
@@ -237,7 +240,7 @@ class McCode_instr(BaseCalculator):
     """
 
     def __init__(self, name, parameters=None, author=None,
-                 origin=None, ncount=None, mpi="not_set", seed=None,
+                 origin=None, description=None, ncount=None, mpi="not_set", seed=None,
                  force_compile=None, output_path=None,
                  increment_folder_name=None, custom_flags=None,
                  executable_path=None, executable=None,
@@ -261,6 +264,9 @@ class McCode_instr(BaseCalculator):
 
             origin : str
                 Affiliation of author, written in instrument file
+
+            description : str
+                Description of the instrument. 
 
             input_path : str
                 Work directory, will load components from this folder
@@ -329,6 +335,11 @@ class McCode_instr(BaseCalculator):
             self.author += " Instrument Generator"
         else:
             self.author = str(author)
+
+        if description is None:
+            self.description = "An instrument lacking a description"
+        else:
+            self.description = str(description)
 
         if origin is None:
             self.origin = "ESS DMSC"
@@ -2076,6 +2087,8 @@ class McCode_instr(BaseCalculator):
         fo.write("* Date: %s\n" % datetime.datetime.now().strftime(t_format))
         fo.write("* Origin: %s\n" % self.origin)
         fo.write("* %INSTRUMENT_SITE: Generated_instruments\n")
+        fo.write("* \n")
+        fo.write("* %%DESCRIPTION\n%s" % self.description)
         fo.write("* \n")
         fo.write("* \n")
         fo.write("* %Parameters\n")
