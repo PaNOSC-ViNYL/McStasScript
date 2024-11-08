@@ -387,7 +387,7 @@ class ComponentReader:
                 while True:
                     line = file_o.readline()
 
-                    end_keywords = ("SHARE", "INITIALIZE", "INITIALISE", "DECLARE", "TRACE")
+                    end_keywords = ("SHARE", "INITIALIZE", "INITIALISE", "DECLARE", "TRACE", "DEPENDENCY")
                     if line.strip().upper().startswith(end_keywords) or not line:
                         break
 
