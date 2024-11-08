@@ -26,9 +26,12 @@ def name_search(name, data_list):
     """
     if type(data_list) is not list:
         raise RuntimeError(
-            "name_search function needs list of McStasData as input")
+            "name_search function needs list of McStasData as input.")
 
-    if not type(data_list[0]) == McStasData:
+    if len(data_list) == 0:
+        raise RuntimeError("Given data list empty.")
+
+    if not isinstance(data_list[0], McStasData):
         raise RuntimeError(
             "name_search function needs objects of type McStasData as input.")
 
@@ -81,7 +84,6 @@ def name_plot_options(name, data_list, **kwargs):
     else:
         for data_object in object_to_modify:
             data_object.set_plot_options(**kwargs)
-
 
 def load_data(foldername):
     """
@@ -350,3 +352,18 @@ class Configurator:
 
         # write new configuration file
         self._write_yaml(config)
+
+    def __repr__(self):
+        string = "Configurator:\n"
+        config = self._read_yaml()
+        if "paths" in config:
+            string += " paths:\n"
+            for key, value in config["paths"].items():
+                string += "  " + str(key) + ": " + str(value) + "\n"
+
+        if "other" in config:
+            string += " other:\n"
+            for key, value in config["other"].items():
+                string += "  " + str(key) + ": " + str(value) + "\n"
+
+        return string

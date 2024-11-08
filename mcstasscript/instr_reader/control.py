@@ -3,6 +3,7 @@ import os
 from mcstasscript.interface.instr import McStas_instr
 from mcstasscript.instr_reader.read_definition import DefinitionReader
 from mcstasscript.instr_reader.read_declare import DeclareReader
+from mcstasscript.instr_reader.read_uservars import UservarsReader
 from mcstasscript.instr_reader.read_initialize import InitializeReader
 from mcstasscript.instr_reader.read_trace import TraceReader
 from mcstasscript.instr_reader.read_finally import FinallyReader
@@ -121,6 +122,7 @@ class InstrumentReader:
                 self._get_next_line, self._return_line]
         self.Definition_reader = DefinitionReader(*args)
         self.Declare_reader = DeclareReader(*args)
+        self.Uservars_reader = UservarsReader(*args)
         self.Initialize_reader = InitializeReader(*args)
         self.Trace_reader = TraceReader(*args)
         self.Finally_reader = FinallyReader(*args)
@@ -128,13 +130,14 @@ class InstrumentReader:
         # A mode for each type that activates the correct reader function
         definition_mode = False
         declare_mode = False
+        uservars_mode = False
         initialize_mode = False
         trace_mode = False
         finally_mode = False
         comment_mode = False
         any_mode = False
 
-        # check if insturment name has be read from file yet
+        # check if instrument name has be read from file yet
         instr_name_read = False
 
         self._open_file()
@@ -151,6 +154,10 @@ class InstrumentReader:
 
             if line.strip().startswith("DECLARE") and not any_mode:
                 declare_mode = True
+                any_mode = True
+
+            if line.strip().startswith("USERVARS") and not any_mode:
+                uservars_mode = True
                 any_mode = True
 
             if (line.strip().startswith("INITIALIZE") or
@@ -183,10 +190,16 @@ class InstrumentReader:
                 any_mode = definition_mode
 
             if declare_mode and not comment_mode:
-                # Read line from definition
+                # Read line from declare
                 declare_mode = self.Declare_reader.read_declare_line(line)
                 # When read_declare finds the end, it will return False
                 any_mode = declare_mode
+
+            if uservars_mode and not comment_mode:
+                # Read line from uservars
+                uservars_mode = self.Uservars_reader.read_uservars_line(line)
+                # When read_uservars finds the end, it will return False
+                any_mode = uservars_mode
 
             if initialize_mode and not comment_mode:
                 # Read line from initialize
@@ -217,6 +230,7 @@ class InstrumentReader:
 
         self.Definition_reader.set_instr_name(self.instr_name)
         self.Declare_reader.set_instr_name(self.instr_name)
+        self.Uservars_reader.set_instr_name(self.instr_name)
         self.Initialize_reader.set_instr_name(self.instr_name)
         self.Trace_reader.set_instr_name(self.instr_name)
         self.Finally_reader.set_instr_name(self.instr_name)

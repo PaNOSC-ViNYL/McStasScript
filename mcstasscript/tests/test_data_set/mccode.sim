@@ -88,3 +88,25 @@ begin data
   xlimits: 0.7 1.3
   variables: L I I_err N
 end data
+
+begin data
+  Date: Fri Aug 27 12:51:34 2021 (1630061494)
+  type: array_2d(8, 12000)
+  Source: event_test (event_test.instr)
+  component: monitor
+  position: 0 0 2
+  title:  Intensity Position Position Position Velocity Velocity Velocity Time_Of_Flight Monitor (Square)
+  Ncount: 12000
+  filename: event_dat_list.p.x.y.z.vx.vy.vz.t
+  statistics: X0=0; dX=0; Y0=0; dY=0;
+  signal: Min=2.49999e-06; Max=2.49999e-06; Mean=0;
+  values: 0 0 0
+  xvar: List
+  yvar: p
+  xlabel: List of neutron events
+  ylabel: p x y z vx vy vz t
+  zvar: I
+  zlabel: Signal per bin
+  xylimits: 1 12000 1 8
+  variables: p x y z vx vy vz t
+end data
