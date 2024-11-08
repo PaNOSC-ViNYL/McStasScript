@@ -1,0 +1,11 @@
+include McStasScript_documentation.pdf
+include McStasScript_developer_documentation.pdf
+include mcstasscript/configuration.yaml
+include mcstasscript/tests/test_for_reading.comp
+include mcstasscript/tests/test_instrument.instr
+include mcstasscript/tests/Union_demonstration_test.instr
+include mcstasscript/integration_tests/test_input_folder
+include mcstasscript/integration_tests/test_input_folder/PSDlin_monitor.comp
+graft mcstasscript/tests/dummy_mcstas
+graft mcstasscript/tests/dummy_instrument_folder
+graft mcstasscript/tests/test_data_set

@@ -1,0 +1,53 @@
+name: McStasScript unit tests on windows
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
+    runs-on: windows-latest
+      
+    steps:
+      - name: Temporary developer McStasScript checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+          path: mcstasscript
+    
+      - name: Temporary developer libpyvinyl checkout
+        uses: actions/checkout@v3
+        with:
+          repository: PaNOSC-ViNYL/libpyvinyl
+          ref: remove_pint_pin
+          path: libpyvinyl
+    
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+              
+      - name: Install dependencies (libpyvinyl)
+        run: |
+          cd libpyvinyl
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+          pip install pytest
+          
+      - name: Install dependencies (mcstasscript)
+        run: |
+          cd mcstasscript
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+          pip install pytest
+        
+      - name: Show file structure
+        run: tree .
+
+      - name: Run unit tests
+        run: python -m pytest mcstasscript/mcstasscript/tests/
