@@ -22,7 +22,10 @@ def setup_simple_instrument():
 
     PSD.set_AT([0, 0, 1], RELATIVE="source")
     PSD.xwidth = 0.1
-    PSD.nx = 100
+    if Instr.mccode_version > 2:
+        PSD.nbins = 100
+    else:
+        PSD.nx = 100
     PSD.yheight = 0.03
     PSD.filename = "\"PSD.dat\""
     PSD.restore_neutron = 1
@@ -47,11 +50,17 @@ def setup_simple_instrument_input_path():
     source.dE = 1.0
     source.flux = 1E10
 
-    PSD = Instr.add_component("PSD_1D", "PSDlin_monitor")
+    if Instr.mccode_version > 2:
+        PSD = Instr.add_component("PSD_1D", "PSDlin_monitor_3")
+    else:
+        PSD = Instr.add_component("PSD_1D", "PSDlin_monitor")
 
     PSD.set_AT([0, 0, 1], RELATIVE="source")
     PSD.xwidth = 0.1
-    PSD.nx = 100
+    if Instr.mccode_version > 2:
+        PSD.nbins = 100
+    else:
+        PSD.nx = 100
     PSD.yheight = 0.03
     PSD.filename = "\"PSD.dat\""
     PSD.restore_neutron = 1
@@ -81,7 +90,10 @@ def setup_simple_slit_instrument():
     PSD = Instr.add_component("PSD_1D", "PSDlin_monitor")
     PSD.set_AT([0, 0, 1], RELATIVE="source")
     PSD.xwidth = 0.1
-    PSD.nx = 100
+    if Instr.mccode_version > 2:
+        PSD.nbins = 100
+    else:
+        PSD.nx = 100
     PSD.yheight = 0.03
     PSD.filename = "\"PSD.dat\""
     PSD.restore_neutron = 1

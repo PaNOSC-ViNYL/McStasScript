@@ -9,11 +9,11 @@ from mcstasscript.interface.functions import name_plot_options
 from mcstasscript.interface.functions import load_data
 from mcstasscript.interface.functions import load_metadata
 from mcstasscript.interface.functions import load_monitor
-from mcstasscript.data.data import McStasData
+from mcstasscript.data.data import McStasDataBinned
 from mcstasscript.data.data import McStasMetaData
 
 
-def set_dummy_MetaData_1d(name):
+def set_dummy_MetaDataBinned_1d(name):
     """
     Sets up a dummy MetaData object for a 1d dataset
 
@@ -32,7 +32,7 @@ def set_dummy_MetaData_1d(name):
     return meta_data
 
 
-def set_dummy_McStasData_1d(name):
+def set_dummy_McStasDataBinned_1d(name):
     """
     Sets up a dummy McStasData object for a 1d dataset
 
@@ -42,17 +42,17 @@ def set_dummy_McStasData_1d(name):
     name : str
         base for filename, .dat will be appended
     """
-    meta_data = set_dummy_MetaData_1d(name)
+    meta_data = set_dummy_MetaDataBinned_1d(name)
 
     intensity = np.arange(20)
     error = 0.5 * np.arange(20)
     ncount = 2 * np.arange(20)
     axis = np.arange(20)*5.0
 
-    return McStasData(meta_data, intensity, error, ncount, xaxis=axis)
+    return McStasDataBinned(meta_data, intensity, error, ncount, xaxis=axis)
 
 
-def set_dummy_MetaData_2d(name):
+def set_dummy_MetaDataBinned_2d(name):
     """
     Sets up a dummy MetaData object for a 2d dataset
 
@@ -70,7 +70,7 @@ def set_dummy_MetaData_2d(name):
     return meta_data
 
 
-def set_dummy_McStasData_2d(name):
+def set_dummy_McStasDataBinned_2d(name):
     """
     Sets up a dummy McStasData object for a 2d dataset
 
@@ -81,13 +81,13 @@ def set_dummy_McStasData_2d(name):
         base for filename, .dat will be appended
     """
 
-    meta_data = set_dummy_MetaData_2d(name)
+    meta_data = set_dummy_MetaDataBinned_2d(name)
 
     intensity = np.arange(20).reshape(4, 5)
     error = 0.5 * np.arange(20).reshape(4, 5)
     ncount = 2 * np.arange(20).reshape(4, 5)
 
-    return McStasData(meta_data, intensity, error, ncount)
+    return McStasDataBinned(meta_data, intensity, error, ncount)
 
 
 def setup_McStasData_array():
@@ -97,20 +97,20 @@ def setup_McStasData_array():
 
     data_list = []
 
-    data_list.append(set_dummy_McStasData_1d("A_1d_thing"))
-    data_list.append(set_dummy_McStasData_2d("A_2d_thing"))
-    data_list.append(set_dummy_McStasData_1d("Another_1d_thing"))
-    data_list.append(set_dummy_McStasData_2d("Another_2d_thing"))
-    data_list.append(set_dummy_McStasData_2d("A_third_2d_thing"))
+    data_list.append(set_dummy_McStasDataBinned_1d("A_1d_thing"))
+    data_list.append(set_dummy_McStasDataBinned_2d("A_2d_thing"))
+    data_list.append(set_dummy_McStasDataBinned_1d("Another_1d_thing"))
+    data_list.append(set_dummy_McStasDataBinned_2d("Another_2d_thing"))
+    data_list.append(set_dummy_McStasDataBinned_2d("A_third_2d_thing"))
 
-    hero_object = set_dummy_McStasData_2d("Hero")
+    hero_object = set_dummy_McStasDataBinned_2d("Hero")
     hero_object.metadata.dimension = 123
     hero_object.plot_options.colormap = "very hot"
 
     data_list.append(hero_object)
 
-    data_list.append(set_dummy_McStasData_2d("After_hero_2d"))
-    data_list.append(set_dummy_McStasData_2d("Last_object_2d"))
+    data_list.append(set_dummy_McStasDataBinned_2d("After_hero_2d"))
+    data_list.append(set_dummy_McStasDataBinned_2d("Last_object_2d"))
 
     return data_list
 
@@ -124,20 +124,20 @@ def setup_McStasData_array_repeat():
 
     data_list = []
 
-    data_list.append(set_dummy_McStasData_1d("A_1d_thing"))
-    data_list.append(set_dummy_McStasData_2d("A_2d_thing"))
-    data_list.append(set_dummy_McStasData_1d("Another_1d_thing"))
-    data_list.append(set_dummy_McStasData_2d("Another_2d_thing"))
-    data_list.append(set_dummy_McStasData_2d("Hero"))
+    data_list.append(set_dummy_McStasDataBinned_1d("A_1d_thing"))
+    data_list.append(set_dummy_McStasDataBinned_2d("A_2d_thing"))
+    data_list.append(set_dummy_McStasDataBinned_1d("Another_1d_thing"))
+    data_list.append(set_dummy_McStasDataBinned_2d("Another_2d_thing"))
+    data_list.append(set_dummy_McStasDataBinned_2d("Hero"))
 
-    hero_object = set_dummy_McStasData_2d("Big_Hero")
+    hero_object = set_dummy_McStasDataBinned_2d("Big_Hero")
     hero_object.metadata.dimension = 123
     hero_object.plot_options.colormap = "very hot"
 
     data_list.append(hero_object)
 
-    data_list.append(set_dummy_McStasData_2d("After_hero_2d"))
-    data_list.append(set_dummy_McStasData_2d("Last_object_2d"))
+    data_list.append(set_dummy_McStasDataBinned_2d("After_hero_2d"))
+    data_list.append(set_dummy_McStasDataBinned_2d("Last_object_2d"))
 
     return data_list
 
@@ -197,7 +197,7 @@ class Test_name_search(unittest.TestCase):
         data_list = setup_McStasData_array_repeat()
 
         # Adds another dataset with a name already in the data_list
-        hero_object = set_dummy_McStasData_2d("Big_Hero")
+        hero_object = set_dummy_McStasDataBinned_2d("Big_Hero")
         hero_object.metadata.dimension = 321
         hero_object.plot_options.colormap = "very hot"
 
@@ -229,7 +229,7 @@ class Test_name_search(unittest.TestCase):
         Check error is given even when data list is just single object
         """
 
-        data_list = set_dummy_McStasData_2d("Last_object_2d")
+        data_list = set_dummy_McStasDataBinned_2d("Last_object_2d")
 
         with self.assertRaises(RuntimeError):
             name_search("Hero", data_list)
@@ -272,7 +272,7 @@ class Test_name_plot_options(unittest.TestCase):
 
         data_list = setup_McStasData_array()
 
-        hero_object = set_dummy_McStasData_2d("Hero")
+        hero_object = set_dummy_McStasDataBinned_2d("Hero")
         hero_object.metadata.dimension = 321
         hero_object.plot_options.colormap = "absurdly hot"
 
@@ -307,7 +307,7 @@ class Test_load_data(unittest.TestCase):
 
         os.chdir(current_work_dir)  # Reset work directory
 
-        self.assertEqual(len(results), 3)
+        self.assertEqual(len(results), 4)
 
         PSD_4PI = results[0]
 
@@ -342,7 +342,7 @@ class Test_load_metadata(unittest.TestCase):
 
         os.chdir(current_work_dir)  # Reset work directory
 
-        self.assertEqual(len(metadata), 3)
+        self.assertEqual(len(metadata), 4)
 
         PSD_4PI = metadata[0]
         self.assertEqual(PSD_4PI.dimension, [300, 300])

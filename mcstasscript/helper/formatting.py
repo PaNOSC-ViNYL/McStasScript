@@ -1,3 +1,5 @@
+import re
+
 class bcolors:
     """
     Helper class that contains formatting classes and functions
@@ -17,20 +19,20 @@ def is_legal_parameter(name):
     Function that returns true if the given name can be used as a
     parameter in the c programming language.
     """
+    # List of C reserved keywords
+    reserved_keywords = [
+        "auto", "break", "case", "char", "const", "continue", "default", "do",
+        "double", "else", "enum", "extern", "float", "for", "goto", "if",
+        "inline", "int", "long", "register", "restrict", "return", "short",
+        "signed", "sizeof", "static", "struct", "switch", "typedef", "union",
+        "unsigned", "void", "volatile", "while", "_Bool", "_Complex", "_Imaginary"
+    ]
 
-    if name == "":
-        return False
+    # Regular expression pattern for a legal C variable name
+    pattern = r'^[a-zA-Z_][a-zA-Z0-9_]*$'
 
-    if " " in name:
-        return False
-
-    if "." in name:
-        return False
-
-    if not name[0].isalpha():
-        return False
-
-    return True
+    # Check if the input string matches the pattern and is not a reserved keyword
+    return re.match(pattern, name) and name not in reserved_keywords
 
 
 def is_legal_filename(name):
