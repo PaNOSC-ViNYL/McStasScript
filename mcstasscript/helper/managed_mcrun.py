@@ -540,7 +540,11 @@ def load_metadata_nexus(data_folder_name, filename="mccode.h5"):
 def decode_dict(dictionary):
     for key, value in dictionary.items():
         if isinstance(value, bytes):
-            dictionary[key] = value.decode('utf-8')
+            try:
+                dictionary[key] = value.decode('utf-8')
+            except:
+                # Investigate cases where this fail when reading from nexus
+                dictionary[key] = value.decode('utf-8', errors='replace')  # Replaces invalid bytes with '?'
 
     return dictionary
 
