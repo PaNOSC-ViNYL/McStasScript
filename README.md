@@ -16,7 +16,7 @@ After installation it is necessary to configure the package so the McStas/McXtra
     import mcstasscript as ms
     my_configurator = ms.Configurator()
     my_configurator.set_mcrun_path("/usr/bin/")
-    my_configurator.set_mcstas_path("/usr/share/mcstas/2.5/")
+    my_configurator.set_mcstas_path("/usr/share/mcstas/resources/")
     my_configurator.set_mxrun_path("/usr/bin/")
     my_configurator.set_mcxtrace_path("/usr/share/mcxtrace/1.5/")
 
