@@ -2654,7 +2654,7 @@ class McCode_instr(BaseCalculator):
 
         return self.backengine()
 
-    def show_instrument(self, format="webgl", width=800, height=450, new_tab=False):
+    def show_instrument(self, format="webgl-classic", width=800, height=450, new_tab=False):
         """
         Uses mcdisplay to show the instrument in web browser
 
@@ -2664,13 +2664,13 @@ class McCode_instr(BaseCalculator):
         Keyword arguments
         -----------------
             format : str
-                'webgl' or 'window' format for display
+                'webgl' (currently broken), 'webgl-classic' or 'window' format for display
             width : int
                 width of IFrame if used in notebook
             height : int
                 height of IFrame if used in notebook
             new_tab : bool
-                Open webgl in new browser tab
+                Open webgl/webgl-classic in new browser tab
         """
 
         parameters = {}
@@ -2696,6 +2696,8 @@ class McCode_instr(BaseCalculator):
 
         if format == "webgl":
             executable = executable+"-webgl"
+        elif format == "webgl-classic":
+            executable = executable+"-webgl-classic"
         elif format == "window":
             executable = executable+"-pyqtgraph"
 
@@ -2729,7 +2731,7 @@ class McCode_instr(BaseCalculator):
             is_notebook = False
 
         options = ""
-        if is_notebook and executable == "mcdisplay-webgl" and not new_tab:
+        if is_notebook and "webgl" in executable and not new_tab:
             options += "--nobrowse "
 
         full_command = ('"' + bin_path + '" '
@@ -2744,7 +2746,7 @@ class McCode_instr(BaseCalculator):
                                  universal_newlines=True,
                                  cwd=self.input_path)
 
-        if not is_notebook or executable != "mcdisplay-webgl":
+        if not is_notebook or "webgl" not in executable:
             print(process.stderr)
             print(process.stdout)
             return
