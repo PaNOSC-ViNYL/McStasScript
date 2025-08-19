@@ -186,6 +186,8 @@ def make_animation(data_list, **kwargs):
         data = data_list[index]
         intensity = data.Intensity
 
+        ax0.set_title(data.metadata.title)
+
         im.set_array(intensity.ravel())
         return im,
 

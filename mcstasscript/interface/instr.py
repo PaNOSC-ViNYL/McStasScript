@@ -2700,6 +2700,9 @@ class McCode_instr(BaseCalculator):
             executable = executable+"-webgl-classic"
         elif format == "window":
             executable = executable+"-pyqtgraph"
+        else:
+            raise ValueError(f"Did not recognize given format '{format}', "
+                             f"must be webgl-classic, webgl or window.")
 
         # Platform dependent, check both package_path and bin
         executable_path = self._run_settings["executable_path"]

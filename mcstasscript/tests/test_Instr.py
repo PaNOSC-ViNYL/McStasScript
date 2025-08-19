@@ -2317,7 +2317,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         os.chdir(current_work_dir)
 
-        expected_path = os.path.join(executable_path, "bin", "mcdisplay-webgl")
+        expected_path = os.path.join(executable_path, "bin", "mcdisplay-webgl-classic")
         expected_path = '"' + expected_path + '"'
         expected_instr_path = os.path.join(THIS_DIR, "test_instrument.instr")
 
