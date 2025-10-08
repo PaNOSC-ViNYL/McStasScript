@@ -2083,9 +2083,9 @@ class McCode_instr(BaseCalculator):
         fo.write("* Please write a longer instrument description here\n.")
         fo.write("* \n")
         fo.write("* \n")
-        fo.write("* Please fill in a parameter table below, formatted like this:")
-        fo.write("* parameter: [unit] Descriptive string\n")
+        fo.write("* Please fill in a parameter table below, formatted like this:\n")
         fo.write("* %Parameters\n")
+        fo.write("* parameter: [unit] Descriptive string\n")
         # Add description of parameters here
         fo.write("* \n")
         fo.write("* %End \n")
