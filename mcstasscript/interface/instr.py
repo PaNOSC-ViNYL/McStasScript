@@ -2080,12 +2080,15 @@ class McCode_instr(BaseCalculator):
         fo.write("* !!Please write a short instrument description (1 line) here!!\n")
         fo.write("* \n")
         fo.write("* %Description\n")
-        fo.write("* Please write a longer instrument description here\n.")
+        fo.write("* Please write a longer instrument description here!\n")
         fo.write("* \n")
         fo.write("* \n")
-        fo.write("* Please fill in a parameter table below, formatted like this:\n")
         fo.write("* %Parameters\n")
-        fo.write("* parameter: [unit] Descriptive string\n")
+        # Insert parameter names and template for filling in mcdoc table
+        for param in list(self.parameters):
+            fo.write("* " + param.name + ": [unit] Parameter type (" + param.type ") Please add a more descriptive text \n")
+        fo.write("* \n")
+        fo.write("* %Link \n")
         # Add description of parameters here
         fo.write("* \n")
         fo.write("* %End \n")
