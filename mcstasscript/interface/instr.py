@@ -2086,7 +2086,7 @@ class McCode_instr(BaseCalculator):
         fo.write("* %Parameters\n")
         # Insert parameter names and template for filling in mcdoc table
         for param in list(self.parameters):
-            fo.write("* " + param.name + ": [unit] Parameter type (" + param.type + ") Please add a more descriptive text \n")
+            fo.write("* " + param.name + ": [unit] Parameter type (" + param.type + ") " + param.comment + "\n")
         fo.write("* \n")
         fo.write("* %Link \n")
         # Add description of parameters here
