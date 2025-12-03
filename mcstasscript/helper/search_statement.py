@@ -33,6 +33,10 @@ class SearchStatement:
         """
         return self.make_string()
 
+    def __EQ__(self, other):
+        if self.statement == other.statement and self.SHELL == other.SHELL:
+            return True
+
 
 class SearchStatementList:
     def __init__(self):
@@ -72,6 +76,17 @@ class SearchStatementList:
             string += statement.make_string() + "\n"
 
         return string
+
+    def __EQ__(self, other):
+        print("in list EQ")
+        if len(self.statements) != len(other.statements):
+            return False
+
+        for index, statement in enumerate(self.statements):
+            if statement != other.statements[index]:
+                return False
+
+        return True
 
     def __repr__(self):
         """

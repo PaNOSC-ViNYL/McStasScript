@@ -75,7 +75,8 @@ def setup_instr_with_path():
     with WorkInTestDir() as handler:
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         dummy_path = os.path.join(THIS_DIR, "dummy_mcstas")
-        instrument = McStas_instr("test_instrument", package_path=dummy_path)
+        instrument = McStas_instr("test_instrument",
+                                  package_path=dummy_path, executable_path=dummy_path)
 
     return instrument
 
@@ -805,7 +806,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(output[0],
                          "The following components are found in the "
-                         + "work_directory / input_path:")
+                         + "work directory / input_path:")
         self.assertEqual(output[1], "     test_for_reading.comp")
         self.assertEqual(output[2], "These definitions will be used "
                          + "instead of the installed versions.")
@@ -837,7 +838,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(output[0],
                          "The following components are found in the "
-                         + "work_directory / input_path:")
+                         + "work directory / input_path:")
         self.assertEqual(output[1], "     test_for_reading.comp")
         self.assertEqual(output[2], "These definitions will be used "
                          + "instead of the installed versions.")
@@ -862,7 +863,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(output[0],
                          "The following components are found in the "
-                         + "work_directory / input_path:")
+                         + "work directory / input_path:")
         self.assertEqual(output[1], "     test_for_structure.comp")
         self.assertEqual(output[2], "These definitions will be used "
                          + "instead of the installed versions.")
@@ -889,7 +890,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         self.assertEqual(output[0],
                          "The following components are found in the "
-                         + "work_directory / input_path:")
+                         + "work directory / input_path:")
         self.assertEqual(output[1], "     test_for_structure.comp")
         self.assertEqual(output[2], "These definitions will be used "
                          + "instead of the installed versions.")
@@ -1659,7 +1660,8 @@ class TestMcStas_instr(unittest.TestCase):
 
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
-    def test_write_full_instrument_simple(self, mock_f):
+    @unittest.mock.patch('datetime.datetime')
+    def test_write_full_instrument_simple(self, mock_datetime, mock_f):
         """
         The write_full_instrument method write the information
         contained in the instrument instance to a file with McStas
@@ -1669,6 +1671,10 @@ class TestMcStas_instr(unittest.TestCase):
         data that has an accuracy of 1 second.  It is unlikely to fail
         due to this, but it can happen.
         """
+
+        # Fix datetime for call
+        fixed_datetime = datetime.datetime(2023, 12, 14, 12, 44, 21)
+        mock_datetime.now.return_value = fixed_datetime
 
         instr = setup_populated_instr()
         instr.write_full_instrument()
@@ -1690,11 +1696,11 @@ class TestMcStas_instr(unittest.TestCase):
          my_call("* European Spallation Source Data Management and \n"),
          my_call("* Software Centre\n"),
          my_call("* \n"),
-         my_call("* Instrument test_instrument\n"),
+         my_call("* Instrument: test_instrument\n"),
          my_call("* \n"),
          my_call("* %Identification\n"),
          my_call("* Written by: Python McStas Instrument Generator\n"),
-         my_call("* Date: %s\n" % datetime.datetime.now().strftime(t_format)),
+         my_call("* Date: %s\n" % fixed_datetime.strftime(t_format)),
          my_call("* Origin: ESS DMSC\n"),
          my_call("* %INSTRUMENT_SITE: Generated_instruments\n"),
          my_call("* \n"),
@@ -1785,7 +1791,7 @@ class TestMcStas_instr(unittest.TestCase):
             my_call("* European Spallation Source Data Management and \n"),
             my_call("* Software Centre\n"),
             my_call("* \n"),
-            my_call("* Instrument test_instrument\n"),
+            my_call("* Instrument:test_instrument\n"),
             my_call("* \n"),
             my_call("* %Identification\n"),
             my_call("* Written by: Python McStas Instrument Generator\n"),
@@ -1884,7 +1890,7 @@ class TestMcStas_instr(unittest.TestCase):
             my_call("* European Spallation Source Data Management and \n"),
             my_call("* Software Centre\n"),
             my_call("* \n"),
-            my_call("* Instrument test_instrument\n"),
+            my_call("* Instrument:test_instrument\n"),
             my_call("* \n"),
             my_call("* %Identification\n"),
             my_call("* Written by: Python McStas Instrument Generator\n"),
@@ -1910,8 +1916,6 @@ class TestMcStas_instr(unittest.TestCase):
             my_call(""),
             my_call("\n"),
             my_call(")\n"),
-            my_call('SEARCH "first_search"\n'),
-            my_call('SEARCH SHELL "second search"\n'),
             my_call("\n"),
             my_call("DECLARE \n%{\n"),
             my_call("double two_theta;"),
@@ -1922,6 +1926,8 @@ class TestMcStas_instr(unittest.TestCase):
                     + "two_theta = 2.0*theta;\n"),
             my_call("%}\n\n"),
             my_call("TRACE \n"),
+            my_call('SEARCH "first_search"\n'),
+            my_call('SEARCH SHELL "second search"\n'),
             my_call("COMPONENT first_component = test_for_reading("),
             my_call(")\n"),
             my_call("AT (0, 0, 0)"),
@@ -2122,7 +2128,8 @@ class TestMcStas_instr(unittest.TestCase):
                            executable_path=executable_path,
                            mpi=5, ncount=19373, openacc=True,
                            NeXus=True, force_compile=False,
-                           seed=300, gravity=True, checks=False)
+                           seed=300, gravity=True, checks=False,
+                           save_comp_pars=True)
             instr.backengine()
 
         expected_path = os.path.join(executable_path, "mcrun")
@@ -2315,7 +2322,7 @@ class TestMcStas_instr(unittest.TestCase):
 
         os.chdir(current_work_dir)
 
-        expected_path = os.path.join(executable_path, "bin", "mcdisplay-webgl")
+        expected_path = os.path.join(executable_path, "bin", "mcdisplay-webgl-classic")
         expected_path = '"' + expected_path + '"'
         expected_instr_path = os.path.join(THIS_DIR, "test_instrument.instr")
 

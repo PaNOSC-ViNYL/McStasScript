@@ -8,6 +8,27 @@ from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import BoundaryNorm
 
 from mcstasscript.data.data import McStasData
+from mcstasscript.data.data import McStasDataEvent
+
+
+def remove_eventdata(data_list, verbose=True):
+    """
+    Removes event data from a list, useful as these can't be plotted
+    """
+    reduced_data_list = []
+    skipped_names = []
+    for element in data_list:
+        if not isinstance(element, McStasDataEvent):
+            reduced_data_list.append(element)
+        else:
+            skipped_names.append(element.metadata.component_name)
+
+    if verbose:
+        for name in skipped_names:
+            print(f"Skipped plotting {name} as it contains event data.")
+
+    return reduced_data_list
+
 
 def _fmt(x, pos):
     """
@@ -18,7 +39,7 @@ def _fmt(x, pos):
     if abs(float(a) - 1) < 0.01:
         return r'$10^{{{}}}$'.format(b)
     else:
-        return r'${} \times 10^{{{}}}$'.format(a, b)
+        return r'${}\cdot 10^{{{}}}$'.format(a, b)
 
 
 def _find_min_max_I(data):
@@ -76,7 +97,7 @@ def _plot_fig_ax(data, fig, ax, **kwargs):
     """
     Plots the content of a single McStasData object
 
-    Plotting is controlled through options assosciated with the
+    Plotting is controlled through options associated with the
     McStasData objects.
 
     When plotting 2D objects, returns the pcolormesh object
@@ -188,8 +209,11 @@ def _plot_fig_ax(data, fig, ax, **kwargs):
             if "colorbar_axes" in kwargs:
                 cax = kwargs["colorbar_axes"]
 
-            fig.colorbar(im, ax=ax, cax=cax,
-                         format=matplotlib.ticker.FuncFormatter(_fmt))
+            colorbar = fig.colorbar(im, ax=ax, cax=cax,
+                                    format=matplotlib.ticker.FuncFormatter(_fmt))
+
+            if data.metadata.zlabel is not None:
+                colorbar.set_label(data.metadata.zlabel)
 
             if "colorbar_axes" in kwargs:
                 cax.set_aspect(20)
@@ -222,10 +246,10 @@ def _handle_kwargs(data_list, **kwargs):
     """
     Handle kwargs when list of McStasData objects given.
 
-    Returns figsize and data_list
+    Returns data_list
 
-    figsize has a default value, but can be changed with keyword argument
     data_list is turned into a list if it isn't already
+    event data is removed as it can't be plotted directly
 
     Any kwargs can be given as a list, in that case apply them to given
     to the corresponding index.
@@ -240,6 +264,9 @@ def _handle_kwargs(data_list, **kwargs):
     if isinstance(data_list, McStasData):
         # Only a single element, put it in a list for easier syntax later
         data_list = [data_list]
+
+    # Remove event data that can't be plotted in meaningful way
+    data_list = remove_eventdata(data_list)
 
     known_plotting_kwargs = ["log", "orders_of_mag",
                              "top_lim", "bottom_lim",
@@ -274,11 +301,4 @@ def _handle_kwargs(data_list, **kwargs):
             # Remove option from kwargs
             del kwargs[option]
 
-    if "figsize" in kwargs:
-        figsize = kwargs["figsize"]
-        if isinstance(figsize, list):
-            figsize = (figsize[0], figsize[1])
-    else:
-        figsize = (13, 7)
-
-    return figsize, data_list
+    return data_list

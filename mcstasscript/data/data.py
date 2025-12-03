@@ -1,6 +1,7 @@
 import matplotlib.pyplot
 import numpy as np
 import copy
+import re
 
 
 class McStasMetaData:
@@ -66,6 +67,7 @@ class McStasMetaData:
 
         self.xlabel = None
         self.ylabel = None
+        self.zlabel = None
         self.title = None
 
         self.total_I = None
@@ -137,6 +139,8 @@ class McStasMetaData:
             self.xlabel = self.info["xlabel"].rstrip()
         if "ylabel" in self.info:
             self.ylabel = self.info["ylabel"].rstrip()
+        if "zlabel" in self.info:
+            self.zlabel = self.info["zlabel"].rstrip()
         if "title" in self.info:
             self.title = self.info["title"].rstrip()
 
@@ -159,6 +163,10 @@ class McStasMetaData:
         """Sets ylabel for plotting"""
         self.ylabel = string
 
+    def set_zlabel(self, string):
+        """Sets zlabel for plotting"""
+        self.zlabel = string
+
     def __repr__(self):
         string = "metadata object\n"
         if self.component_name is not None:
@@ -174,6 +182,8 @@ class McStasMetaData:
                     string += " " + self.xlabel + "\n"
                 if self.ylabel is not None:
                     string += " " + self.ylabel + "\n"
+                if self.zlabel is not None:
+                    string += " " + self.zlabel + "\n"
 
             elif type(self.dimension) == int and self.dimension != 0:
                 string += "1D data of length " + str(self.dimension) + "\n"
@@ -184,6 +194,8 @@ class McStasMetaData:
                     string += " " + self.xlabel + "\n"
                 if self.ylabel is not None:
                     string += " " + self.ylabel + "\n"
+                if self.zlabel is not None:
+                    string += " " + self.zlabel + "\n"
 
             elif len(self.dimension) == 2:
                 string += "2D data of dimension (" + str(self.dimension[0])
@@ -199,6 +211,9 @@ class McStasMetaData:
                         string += "  [" + str(self.limits[2]) + ": "
                         string += str(self.limits[3]) + "]"
                     string += " " + self.ylabel + "\n"
+
+                if self.zlabel is not None:
+                    string += " " + self.zlabel + "\n"
 
         if self.parameters is not None and len(self.parameters)>0:
             string += "Instrument parameters: \n"
@@ -486,6 +501,9 @@ class McStasData:
     def set_ylabel(self, string):
         self.metadata.set_ylabel(string)
 
+    def set_zlabel(self, string):
+        self.metadata.set_zlabel(string)
+
     def set_title(self, string):
         self.metadata.set_title(string)
 
@@ -561,6 +579,9 @@ class McStasDataBinned(McStasData):
         sets xlabel of data for plotting
 
     set_ylabel : string
+        sets ylabel of data for plotting
+
+    set_zlabel : string
         sets ylabel of data for plotting
 
     set_title : string
@@ -654,6 +675,9 @@ class McStasDataEvent(McStasData):
     set_ylabel : string
         sets ylabel of data for plotting
 
+    set_zlabel : string
+        sets zlabel of data for plotting
+
     set_title : string
         sets title of data for plotting
 
@@ -683,22 +707,25 @@ class McStasDataEvent(McStasData):
         self.Events = events
         self.data_type = "Events"
 
-        # Intensity for compatibility with plotting routine
-        data_lines = metadata.dimension[1]
-        self.Intensity = self.Events[0:data_lines, :]
-
         self.variables = self.metadata.info["variables"].strip()
         self.variables = self.variables.split()
 
         # Calculate I, E and N
-        p_array = self.get_data_column("p")
-        total_I = p_array.sum()
-        total_E = np.sqrt((p_array ** 2).sum())
-        total_N = len(p_array)
+        if "p" in self.variables:
+            p_array = self.get_data_column("p")
+            total_I = p_array.sum()
+            total_E = np.sqrt((p_array ** 2).sum())
+            total_N = len(p_array)
 
-        self.metadata.total_I = total_I
-        self.metadata.total_E = total_E
-        self.metadata.total_N = total_N
+            self.metadata.total_I = total_I
+            self.metadata.total_E = total_E
+            self.metadata.total_N = total_N
+
+        else:
+
+            self.metadata.total_I = None
+            self.metadata.total_E = None
+            self.metadata.total_N = None
 
         self.labels = {"t": "t [s]",
                        "x": "x [m]",
@@ -941,3 +968,62 @@ class McStasDataEvent(McStasData):
 
     def __repr__(self):
         return "\n" + self.__str__()
+
+def parse_coordinates(line, keyword):
+    # Extract the coordinates from the line
+    match = re.search(r'\(([^)]+)\)', line)
+    if match:
+        coords = match.group(1).split(',')
+        coords = [float(coord.strip()) for coord in coords]
+        return {f'{keyword}_x': coords[0], f'{keyword}_y': coords[1], f'{keyword}_z': coords[2]}
+    return {}
+
+class ComponentData:
+    def __init__(self, file_path):
+        self.file_path = file_path
+        self.data = None
+
+    def read(self):
+
+        components = {}
+
+        current_component = None
+
+        with open(self.file_path, 'r') as file:
+            for line in file:
+                line = line.strip()
+                if line.startswith('COMPONENT'):
+                    match = re.match(r'COMPONENT (\S+) = (\S+)', line)
+                    if match:
+                        component_name = match.group(1)
+                        component_type = match.group(2)
+                        current_component = {'component': component_type}
+                        components[component_name] = current_component
+                        current_component["parameters"] = {}
+                elif '=' in line:
+                    if current_component is not None:
+                        key, value = line.split('=',1)
+                        try:
+                            value = float(value)
+                        except:
+                            pass
+                        current_component["parameters"][key] = value
+                elif line.startswith('AT'):
+                    if current_component is not None:
+                        current_component.update(parse_coordinates(line, 'AT'))
+                        if line.endswith('ABSOLUTE'):
+                            current_component['AT_relative'] = "ABSOLUTE"
+                        else:
+                            current_component['AT_relative'] = line.split('RELATIVE')[1].strip()
+                elif line.startswith('ROTATED'):
+                    if current_component is not None:
+                        current_component.update(parse_coordinates(line, 'ROTATED'))
+                        if line.endswith('ABSOLUTE'):
+                            current_component['ROTATED_relative'] = "ABSOLUTE"
+                        else:
+                            current_component['ROTATED_relative'] = line.split('RELATIVE')[1].strip()
+
+        self.data = components
+
+        return components
+

@@ -1,11 +1,13 @@
 from __future__ import print_function
 
 import os
+import shutil
 import datetime
 import yaml
 import subprocess
 import copy
 import warnings
+import re
 
 from IPython.display import IFrame
 
@@ -240,7 +242,8 @@ class McCode_instr(BaseCalculator):
                  increment_folder_name=None, custom_flags=None,
                  executable_path=None, executable=None,
                  suppress_output=None, gravity=None, input_path=None,
-                 package_path=None, checks=None, NeXus=None, openacc=None):
+                 package_path=None, checks=None, NeXus=None,
+                 save_comp_pars=None, openacc=None):
         """
         Initialization of McStas Instrument
 
@@ -294,6 +297,9 @@ class McCode_instr(BaseCalculator):
 
             gravity : bool
                 If True, gravity will be simulated
+
+            save_comp_pars : bool
+                If True, McStas run writes all comp pars to disk
         """
 
         super().__init__(name, input=[],
@@ -362,7 +368,9 @@ class McCode_instr(BaseCalculator):
             self._run_settings["package_path"] = package_path
 
         # Settings for run that can be adjusted by user
-        provided_run_settings = {"executable": executable, "checks": True}
+        provided_run_settings = {"executable": executable,
+                                 "checks": True,
+                                 "NeXus": False}
 
         if executable_path is not None:
             provided_run_settings["executable_path"] = str(executable_path)
@@ -401,6 +409,11 @@ class McCode_instr(BaseCalculator):
 
         if NeXus is not None:
             provided_run_settings["NeXus"] = NeXus
+
+        if save_comp_pars is not None:
+            provided_run_settings["save_comp_pars"] = save_comp_pars
+        else:
+            provided_run_settings["save_comp_pars"] = False
 
         if openacc is not None:
             provided_run_settings["openacc"] = openacc
@@ -463,7 +476,7 @@ class McCode_instr(BaseCalculator):
 
     def _read_calibration(self):
         """
-        Place holder method that should be overwritten by classes
+        Placeholder method that should be overwritten by classes
         that inherit from McCode_instr.
         """
         pass
@@ -2055,7 +2068,7 @@ class McCode_instr(BaseCalculator):
         fo.write("* European Spallation Source Data Management and \n")
         fo.write("* Software Centre\n")
         fo.write("* \n")
-        fo.write("* Instrument %s\n" % self.name)
+        fo.write("* Instrument: %s\n" % self.name)
         fo.write("* \n")
         fo.write("* %Identification\n")  # Could allow the user to insert this
         fo.write("* Written by: %s\n" % self.author)
@@ -2064,8 +2077,18 @@ class McCode_instr(BaseCalculator):
         fo.write("* Origin: %s\n" % self.origin)
         fo.write("* %INSTRUMENT_SITE: Generated_instruments\n")
         fo.write("* \n")
+        fo.write("* !!Please write a short instrument description (1 line) here!!\n")
+        fo.write("* \n")
+        fo.write("* %Description\n")
+        fo.write("* Please write a longer instrument description here!\n")
+        fo.write("* \n")
         fo.write("* \n")
         fo.write("* %Parameters\n")
+        # Insert parameter names and template for filling in mcdoc table
+        for param in list(self.parameters):
+            fo.write("* " + param.name + ": [unit] " + param.comment + "\n")
+        fo.write("* \n")
+        fo.write("* %Link \n")
         # Add description of parameters here
         fo.write("* \n")
         fo.write("* %End \n")
@@ -2083,7 +2106,6 @@ class McCode_instr(BaseCalculator):
         fo.write(")\n")
         if self.dependency_statement != "":
             fo.write("DEPENDENCY " + str(self.dependency_statement) + "\n")
-        self.search_statement_list.write(fo)
         fo.write("\n")
 
         # Write declare
@@ -2114,13 +2136,32 @@ class McCode_instr(BaseCalculator):
         fo.write("%include "generated_includes/"
                   + self.name + "_initialize.c")
         """
+
+        save_parameter_code = ""
+        for component in self.make_component_subset():
+            if component.save_parameters or self._run_settings["save_comp_pars"]:
+                save_parameter_code += component.make_write_string()
+
+        if save_parameter_code != "":
+            fo.write('MPI_MASTER(\n')
+            fo.write('FILE *file = fopen("component_parameters.txt", "w");\n')
+            fo.write('if (file) {\n')
+            fo.write(save_parameter_code)
+            fo.write('} else {\n')
+            fo.write('  perror("fopen");\n')
+            fo.write('}\n')
+            fo.write(')\n')
+
         fo.write("%}\n\n")
 
         # Write trace
         fo.write("TRACE \n")
 
+        # Write all components, the first should get the instrument search list
+        search_object = copy.deepcopy(self.search_statement_list)
         for component in self.make_component_subset():
-            component.write_component(fo)
+            component.write_component(fo, instrument_search=search_object)
+            search_object = None  # Remove for remaining components
 
         # Write finally
         fo.write("FINALLY \n%{\n")
@@ -2236,7 +2277,7 @@ class McCode_instr(BaseCalculator):
 
         self.dependency_statement = string
 
-    def add_search(self, statement, SHELL=False):
+    def add_search(self, statement, SHELL=False, help_name=""):
         """
         Adds a search statement to the instrument
 
@@ -2250,9 +2291,13 @@ class McCode_instr(BaseCalculator):
 
             SHELL : bool (default False)
                 if True, shell keyword is added
+
+            help_name : str
+                Name used in help messages regarding the component search
         """
 
         self.search_statement_list.add_statement(SearchStatement(statement, SHELL=SHELL))
+        self.component_reader.load_components_from_folder(statement, name=help_name)
 
     def clear_search(self):
         """
@@ -2260,6 +2305,13 @@ class McCode_instr(BaseCalculator):
         """
 
         self.search_statement_list.clear()
+
+        # Reset component_reader
+        self.component_class_lib = {}
+        package_path = self._run_settings["package_path"]
+        run_path = self._run_settings["run_path"]
+        self.component_reader = ComponentReader(package_path,
+                                                input_path=run_path)
 
     def show_search(self):
         """
@@ -2273,7 +2325,7 @@ class McCode_instr(BaseCalculator):
                  increment_folder_name=None, custom_flags=None,
                  executable=None, executable_path=None,
                  suppress_output=None, gravity=None, checks=None,
-                 openacc=None, NeXus=None):
+                 openacc=None, NeXus=None, save_comp_pars=False):
         """
         Sets settings for McStas run performed with backengine
 
@@ -2310,6 +2362,8 @@ class McCode_instr(BaseCalculator):
                 If True, adds --openacc to mcrun call
             NeXus : bool
                 If True, adds --format=NeXus to mcrun call
+            save_comp_pars : bool
+                If True, McStas run writes all comp pars to disk
         """
 
         settings = {}
@@ -2370,6 +2424,9 @@ class McCode_instr(BaseCalculator):
 
         if NeXus is not None:
             settings["NeXus"] = bool(NeXus)
+
+        if save_comp_pars is not None:
+            settings["save_comp_pars"] = bool(save_comp_pars)
 
         self._run_settings.update(settings)
 
@@ -2445,6 +2502,11 @@ class McCode_instr(BaseCalculator):
             description += "  openacc:".ljust(variable_space)
             description += str(value) + "\n"
 
+        if "save_comp_pars" in self._run_settings:
+            value = self._run_settings["save_comp_pars"]
+            description += "  save_comp_pars:".ljust(variable_space)
+            description += str(value) + "\n"
+
         return description.strip()
 
     def show_settings(self):
@@ -2484,7 +2546,7 @@ class McCode_instr(BaseCalculator):
         simulation = ManagedMcrun(self.name + ".instr", **options)
 
         # Run the simulation and return data
-        simulation.run_simulation(**self._run_settings)
+        simulation.run_simulation()
 
         # Load data and store in __data
         #data = simulation.load_results()
@@ -2602,7 +2664,7 @@ class McCode_instr(BaseCalculator):
 
         return self.backengine()
 
-    def show_instrument(self, format="webgl", width=800, height=450, new_tab=False):
+    def show_instrument(self, format="webgl-classic", width=800, height=450, new_tab=False):
         """
         Uses mcdisplay to show the instrument in web browser
 
@@ -2612,13 +2674,13 @@ class McCode_instr(BaseCalculator):
         Keyword arguments
         -----------------
             format : str
-                'webgl' or 'window' format for display
+                'webgl' (currently broken), 'webgl-classic' or 'window' format for display
             width : int
                 width of IFrame if used in notebook
             height : int
                 height of IFrame if used in notebook
             new_tab : bool
-                Open webgl in new browser tab
+                Open webgl/webgl-classic in new browser tab
         """
 
         parameters = {}
@@ -2637,13 +2699,29 @@ class McCode_instr(BaseCalculator):
                                 + "="
                                 + str(val))  # parameter value
 
-        package_path = self._run_settings["package_path"]
-        bin_path = os.path.join(package_path, "bin", "")
+        if self.package_name == "McXtrace":
+            executable = "mxdisplay"
+        else:
+            executable = "mcdisplay"
 
         if format == "webgl":
-            executable = "mcdisplay-webgl"
+            executable = executable+"-webgl"
+        elif format == "webgl-classic":
+            executable = executable+"-webgl-classic"
         elif format == "window":
-            executable = "mcdisplay"
+            executable = executable+"-pyqtgraph"
+        else:
+            raise ValueError(f"Did not recognize given format '{format}', "
+                             f"must be webgl-classic, webgl or window.")
+
+        # Platform dependent, check both package_path and bin
+        executable_path = self._run_settings["executable_path"]
+        bin_path = os.path.join(executable_path, executable)
+
+        if not os.path.isfile(bin_path):
+            # Take bin in package path into account
+            package_path = self._run_settings["package_path"]
+            bin_path = os.path.join(package_path, "bin", executable)
 
         dir_name_original = self.name + "_mcdisplay"
         dir_name = dir_name_original
@@ -2666,10 +2744,10 @@ class McCode_instr(BaseCalculator):
             is_notebook = False
 
         options = ""
-        if is_notebook and executable == "mcdisplay-webgl" and not new_tab:
+        if is_notebook and "webgl" in executable and not new_tab:
             options += "--nobrowse "
 
-        full_command = ('"' + bin_path + executable + '" '
+        full_command = ('"' + bin_path + '" '
                         + dir_control
                         + options
                         + instr_path
@@ -2681,7 +2759,7 @@ class McCode_instr(BaseCalculator):
                                  universal_newlines=True,
                                  cwd=self.input_path)
 
-        if not is_notebook or executable != "mcdisplay-webgl":
+        if not is_notebook or "webgl" not in executable:
             print(process.stderr)
             print(process.stdout)
             return
@@ -2931,9 +3009,14 @@ class McStas_instr(McCode_instr):
             config = yaml.safe_load(ymlfile)
 
         if type(config) is dict:
+            self.line_limit = config["other"]["characters_per_line"]
+
+        if "MCSTAS" in os.environ: # We are in a McStas environment, use that
+            self._run_settings["executable_path"] = os.path.dirname(shutil.which("mcrun"))
+            self._run_settings["package_path"] = os.environ["MCSTAS"]
+        elif type(config) is dict:
             self._run_settings["executable_path"] = config["paths"]["mcrun_path"]
             self._run_settings["package_path"] = config["paths"]["mcstas_path"]
-            self.line_limit = config["other"]["characters_per_line"]
         else:
             # This happens in unit tests that mocks open
             self._run_settings["executable_path"] = ""
@@ -3159,9 +3242,14 @@ class McXtrace_instr(McCode_instr):
             config = yaml.safe_load(ymlfile)
 
         if type(config) is dict:
+            self.line_limit = config["other"]["characters_per_line"]
+
+        if "MCXTRACE" in os.environ: # We are in a McXtrace environment, use that
+            self._run_settings["executable_path"] = os.path.dirname(shutil.which("mxrun"))
+            self._run_settings["package_path"] = os.environ["MCXTRACE"]
+        elif type(config) is dict:
             self._run_settings["executable_path"] = config["paths"]["mxrun_path"]
             self._run_settings["package_path"] = config["paths"]["mcxtrace_path"]
-            self.line_limit = config["other"]["characters_per_line"]
         else:
             # This happens in unit tests that mocks open
             self._run_settings["executable_path"] = ""

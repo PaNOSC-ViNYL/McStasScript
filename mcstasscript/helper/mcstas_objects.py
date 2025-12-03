@@ -482,7 +482,7 @@ class Component:
                  AT_RELATIVE=None, ROTATED=None, ROTATED_RELATIVE=None,
                  RELATIVE=None, WHEN=None, EXTEND=None, GROUP=None,
                  JUMP=None, SPLIT=None, comment=None, c_code_before=None,
-                 c_code_after=None):
+                 c_code_after=None, save_parameters=False):
         """
         Initializes McStas component with specified name and component
 
@@ -556,6 +556,7 @@ class Component:
         self.c_code_before = ""
         self.c_code_after = ""
         self.search_statement_list = SearchStatementList()
+        self.save_parameters = save_parameters
 
         # references to component names
         self.AT_reference = None
@@ -581,7 +582,8 @@ class Component:
     def set_keyword_input(self, AT=None, AT_RELATIVE=None, ROTATED=None,
                           ROTATED_RELATIVE=None, RELATIVE=None, WHEN=None,
                           EXTEND=None, GROUP=None, JUMP=None, SPLIT=None,
-                          comment=None, c_code_before=None, c_code_after=None):
+                          comment=None, c_code_before=None, c_code_after=None,
+                          save_parameters=None):
         # Allow addition of attributes in init
         self._unfreeze()
 
@@ -958,6 +960,12 @@ class Component:
                                + "given " + str(type(string)))
         self.c_code_after = string
 
+    def set_save_parameters(self, value):
+        if value:
+            self.save_parameters = True
+        else:
+            self.save_parameters = False
+
     def add_search(self, statement, SHELL=False):
         """
         Adds a search statement to the component
@@ -990,7 +998,7 @@ class Component:
 
         print(self.search_statement_list)
 
-    def write_component(self, fo):
+    def write_component(self, fo, instrument_search=None):
         """
         Method that writes component to file
 
@@ -1001,6 +1009,8 @@ class Component:
         parameters_per_line = 2
         # Could use character limit on lines instead
         parameters_written = 0  # internal parameter
+
+        save_parameter_string = ""
 
         if len(self.c_code_before) > 0:
             explanation = "From component named " + self.name
@@ -1013,6 +1023,10 @@ class Component:
 
         # Write search statements
         self.search_statement_list.write(fo)
+
+        # Add search statement for instrument if supplied
+        if instrument_search is not None:
+            instrument_search.write(fo)
 
         if self.SPLIT != 0:
             fo.write("SPLIT " + str(self.SPLIT) + " ")
@@ -1064,6 +1078,9 @@ class Component:
 
         fo.write(f" {self.AT_relative}\n")
 
+        if self.save_parameters:
+            save_parameter_string += " %s\n" % self.AT_relative
+
         if self.ROTATED_specified:
             fo.write(f"ROTATED {tuple(self.ROTATED_data[:3])}") # is ROTATED_data ever more than 3 elements?
             fo.write(f" {self.ROTATED_relative}\n")
@@ -1083,6 +1100,59 @@ class Component:
 
         # Leave a new line between components for readability
         fo.write("\n")
+
+    def make_write_string(self):
+        string = ""
+
+        string += f'fprintf(file, "COMPONENT {self.name} = {self.component_name}\\n");\n'
+
+        component_parameters = {}
+        for key in self.parameter_names:
+            val = getattr(self, key)
+            if val is None:
+                if self.parameter_defaults[key] is None:
+                    raise NameError("Required parameter named "
+                                    + key
+                                    + " in component named "
+                                    + self.name
+                                    + " not set.")
+                else:
+                    continue
+            elif isinstance(val, (Parameter, DeclareVariable)):
+                # Extract the parameter name
+                val = val.name
+
+            component_parameters[key] = val
+
+        for key, val in component_parameters.items():
+            par_type = self.parameter_types[key] # from component reader
+
+            cast = ""
+            if par_type == "" or par_type == "double":
+                type_string = "%lf"
+                cast = "(double)"
+            elif par_type == "int":
+                type_string = "%d"
+                cast = "(int)"
+            elif par_type == "string":
+                type_string = "%s"
+            else:
+                raise ValueError("Unknown parameter type: " + par_type)
+
+            string += f'fprintf(file, "{key}={type_string}\\n", {cast} {val});\n'
+
+        string += f'fprintf(file, "AT (%lf,%lf,%lf) {self.AT_relative}\\n",'
+        string += "(double) " + str(self.AT_data[0]) + ","
+        string += "(double) " + str(self.AT_data[1]) + ","
+        string += "(double) " + str(self.AT_data[2]) + ");\n"
+
+        if self.ROTATED_specified:
+            string += f'fprintf(file, "ROTATED (%lf,%lf,%lf) {self.ROTATED_relative}\\n",'
+            string += "(double) " + str(self.ROTATED_data[0]) + ","
+            string += "(double) " + str(self.ROTATED_data[1]) + ","
+            string += "(double) " + str(self.ROTATED_data[2]) + ");\n"
+
+        return string
 
     def __str__(self):
         """

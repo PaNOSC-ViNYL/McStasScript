@@ -126,29 +126,47 @@ class ComponentReader:
             print("input_path: ", input_directory)
             raise ValueError("Can't find given input_path,"
                              + " directory must exist.")
+
         """
         If components are present both in the McStas install and the
         work directory, the version in the work directory is used. The user
         is informed of this behavior when the instrument object is created.
         """
+
+        self.load_components_from_folder(input_directory, "work directory")
+
+    def load_components_from_folder(self, folder, name, verbose=True):
+        """
+        Loads McStas components from given absolute path
+
+        folder : (str) Path for folder to search for components in
+        name : (str) Used for displaying help messages about these components
+        verbose : (bool) If True, help messages are shown about the process
+        """
+
+        if not os.path.isdir(folder):
+            if verbose:
+                print("Did not find specified folder: " + folder)
+            return
+
         overwritten_components = []
-        for file in os.listdir(input_directory):
+        for file in os.listdir(folder):
             if file.endswith(".comp"):
-                abs_path = os.path.join(input_directory, file)
+                abs_path = os.path.join(folder, file)
                 component_name = os.path.split(abs_path)[1].split(".")[-2]
 
                 if component_name in self.component_path:
                     overwritten_components.append(file)
 
                 self.component_path[component_name] = abs_path
-                self.component_category[component_name] = "work directory"
+                self.component_category[component_name] = name
 
         # Report components found in the work directory and install to the user
-        if len(overwritten_components) > 0:
-            print("The following components are found in the work_directory"
+        if len(overwritten_components) > 0 and verbose:
+            print(f"The following components are found in the {name}"
                   + " / input_path:")
-            for name in overwritten_components:
-                print("    ", name)
+            for component_name in overwritten_components:
+                print("    ", component_name)
 
             print("These definitions will be used instead of the installed "
                   + "versions.")
@@ -369,7 +387,7 @@ class ComponentReader:
                 while True:
                     line = file_o.readline()
 
-                    end_keywords = ("SHARE", "INITIALIZE", "INITIALISE", "DECLARE", "TRACE")
+                    end_keywords = ("SHARE", "INITIALIZE", "INITIALISE", "DECLARE", "TRACE", "DEPENDENCY")
                     if line.strip().upper().startswith(end_keywords) or not line:
                         break
 

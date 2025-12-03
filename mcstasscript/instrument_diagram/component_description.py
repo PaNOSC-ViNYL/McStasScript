@@ -19,7 +19,7 @@ def component_description(component):
     if component.SPLIT != 0:
         string += "SPLIT " + str(component.SPLIT) + " "
     string += "COMPONENT " + str(component.name)
-    string += " = $\\bf{" + str(component.component_name).replace("_", "\_") + "}$\n"
+    string += " = $\\bf{" + str(component.component_name).replace("_", "\\_") + "}$\n"
     for key in component.parameter_names:
         val = getattr(component, key)
         parameter_name = key
@@ -34,13 +34,13 @@ def component_description(component):
             else:
                 val_string = str(val)
 
-            value = "$\\bf{" + val_string.replace("_", "\_").replace('\"', "''").replace('"', "\''") + "}$"
-            string += "  $\\bf{" + parameter_name.replace("_", "\_") + "}$"
+            value = "$\\bf{" + val_string.replace("_", "\\_").replace('\"', "''").replace('"', "\''") + "}$"
+            string += "  $\\bf{" + parameter_name.replace("_", "\\_") + "}$"
             string += " = " + value + " " + unit + "\n"
         else:
             if component.parameter_defaults[key] is None:
-                string += "  $\\bf{" + parameter_name.replace("_", "\_") + "}$"
-                string += " : $\\bf{Required\ parameter\ not\ yet\ specified}$\n"
+                string += "  $\\bf{" + parameter_name.replace("_", "\\_") + "}$"
+                string += " : $\\bf{Required\\ parameter\\ not\\ yet\\ specified}$\n"
 
     if not component.WHEN == "":
         string += component.WHEN + "\n"
@@ -49,14 +49,14 @@ def component_description(component):
     if component.AT_reference is None:
         string += " $\\it{ABSOLUTE}$\n"
     else:
-        string += " RELATIVE $\\it{" + component.AT_reference.replace("_", "\_") + "}$\n"
+        string += " RELATIVE $\\it{" + component.AT_reference.replace("_", "\\_") + "}$\n"
 
     if component.ROTATED_specified:
         string += "ROTATED " + str(component.ROTATED_data)
         if component.ROTATED_reference is None:
             string += " $\\it{ABSOLUTE}$\n"
         else:
-            string += " $\\it{" + component.ROTATED_reference.replace("_", "\_") + "}$\n"
+            string += " $\\it{" + component.ROTATED_reference.replace("_", "\\_") + "}$\n"
 
     if not component.GROUP == "":
         string += "GROUP " + component.GROUP + "\n"

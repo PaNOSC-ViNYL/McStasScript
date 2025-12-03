@@ -8,21 +8,21 @@ jobs:
   build:
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.8", "3.9", "3.10"]
     runs-on: macos-latest
       
     steps:
       - name: Temporary developer McStasScript checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ env.BRANCH }}
           path: mcstasscript
     
       - name: Temporary developer libpyvinyl checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: PaNOSC-ViNYL/libpyvinyl
-          ref: master
+          ref: remove_pint_pin
           path: libpyvinyl
     
       - name: Set up Python ${{ matrix.python-version }}

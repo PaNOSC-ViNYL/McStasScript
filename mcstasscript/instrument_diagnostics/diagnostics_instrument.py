@@ -104,7 +104,7 @@ class DiagnosticsInstrument:
 
             # Find original index and the name of the original target
             original_comp_index = original_comp_names.index(comp.name)
-            comp_target_name = original_comp_names[original_comp_index + comp.target_index]
+            comp_target_name = original_comp_names[original_comp_index + int(comp.target_index)]
 
             # Find index of the original and target in modified instrument
             modified_comp_index = modified_comp_names.index(comp.name)

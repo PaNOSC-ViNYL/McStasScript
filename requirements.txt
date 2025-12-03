@@ -4,3 +4,4 @@ PyYAML
 ipywidgets
 libpyvinyl
 ipympl
+h5py
