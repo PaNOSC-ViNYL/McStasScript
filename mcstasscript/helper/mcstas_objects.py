@@ -1074,15 +1074,14 @@ class Component:
             fo.write(f"{self.WHEN}\n")
 
         # Write AT and ROTATED section
-        fo.write(f"AT {tuple(self.AT_data[:3])}") # is AT_data ever more than 3 elements?
-
+        fo.write(f"AT ({self.AT_data[0]}, {self.AT_data[1]}, {self.AT_data[2]})")
         fo.write(f" {self.AT_relative}\n")
 
         if self.save_parameters:
             save_parameter_string += " %s\n" % self.AT_relative
 
         if self.ROTATED_specified:
-            fo.write(f"ROTATED {tuple(self.ROTATED_data[:3])}") # is ROTATED_data ever more than 3 elements?
+            fo.write(f"ROTATED ({self.ROTATED_data[0]}, {self.ROTATED_data[1]}, {self.ROTATED_data[2]})")
             fo.write(f" {self.ROTATED_relative}\n")
 
         if not self.GROUP == "":

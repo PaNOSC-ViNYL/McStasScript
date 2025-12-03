@@ -4,6 +4,7 @@ import io
 import unittest
 import unittest.mock
 import datetime
+import shutil
 
 from libpyvinyl.Parameters.Collections import CalculatorParameters
 
@@ -337,8 +338,16 @@ class TestMcStas_instr(unittest.TestCase):
         # Check the value matches what is loaded by initialization
         my_instrument = setup_instr_no_path()
 
-        self.assertEqual(my_instrument._run_settings["executable_path"], correct_mcrun_path)
-        self.assertEqual(my_instrument._run_settings["package_path"], correct_mcstas_path)
+        if "MCSTAS" in os.environ:
+            # If MCSTAS is in path, we expect the configuration to find that:
+            self.assertEqual(my_instrument._run_settings["executable_path"], os.path.dirname(shutil.which("mcrun")))
+            self.assertEqual(my_instrument._run_settings["package_path"], os.environ["MCSTAS"])
+        else:
+            # Otherweise, the configuration file
+            self.assertEqual(my_instrument._run_settings["executable_path"], correct_mcrun_path)
+            self.assertEqual(my_instrument._run_settings["package_path"], correct_mcstas_path)
+
+        # In both cases it ought to read the number of characters from the file
         self.assertEqual(my_instrument.line_limit, correct_n_of_characters)
 
     def test_load_config_file_x_ray(self):
@@ -1704,8 +1713,17 @@ class TestMcStas_instr(unittest.TestCase):
          my_call("* Origin: ESS DMSC\n"),
          my_call("* %INSTRUMENT_SITE: Generated_instruments\n"),
          my_call("* \n"),
+         my_call("* !!Please write a short instrument description (1 line) here!!\n"),
          my_call("* \n"),
+         my_call('* %Description\n'),
+         my_call('* Please write a longer instrument description here!\n'),
+         my_call('* \n'),
+         my_call('* \n'),
          my_call("* %Parameters\n"),
+         my_call('* theta: [unit] \n'),
+         my_call('* has_default: [unit] \n'),
+         my_call('* \n'),
+         my_call('* %Link \n'),
          my_call("* \n"),
          my_call("* %End \n"),
          my_call("*"*80 + "/\n"),
@@ -1791,7 +1809,7 @@ class TestMcStas_instr(unittest.TestCase):
             my_call("* European Spallation Source Data Management and \n"),
             my_call("* Software Centre\n"),
             my_call("* \n"),
-            my_call("* Instrument:test_instrument\n"),
+            my_call("* Instrument: test_instrument\n"),
             my_call("* \n"),
             my_call("* %Identification\n"),
             my_call("* Written by: Python McStas Instrument Generator\n"),
@@ -1799,8 +1817,17 @@ class TestMcStas_instr(unittest.TestCase):
             my_call("* Origin: ESS DMSC\n"),
             my_call("* %INSTRUMENT_SITE: Generated_instruments\n"),
             my_call("* \n"),
+            my_call("* !!Please write a short instrument description (1 line) here!!\n"),
             my_call("* \n"),
+            my_call('* %Description\n'),
+            my_call('* Please write a longer instrument description here!\n'),
+            my_call('* \n'),
+            my_call('* \n'),
             my_call("* %Parameters\n"),
+            my_call('* theta: [unit] \n'),
+            my_call('* has_default: [unit] \n'),
+            my_call('* \n'),
+            my_call('* %Link \n'),
             my_call("* \n"),
             my_call("* %End \n"),
             my_call("*" * 80 + "/\n"),
@@ -1890,7 +1917,7 @@ class TestMcStas_instr(unittest.TestCase):
             my_call("* European Spallation Source Data Management and \n"),
             my_call("* Software Centre\n"),
             my_call("* \n"),
-            my_call("* Instrument:test_instrument\n"),
+            my_call("* Instrument: test_instrument\n"),
             my_call("* \n"),
             my_call("* %Identification\n"),
             my_call("* Written by: Python McStas Instrument Generator\n"),
@@ -1898,8 +1925,17 @@ class TestMcStas_instr(unittest.TestCase):
             my_call("* Origin: ESS DMSC\n"),
             my_call("* %INSTRUMENT_SITE: Generated_instruments\n"),
             my_call("* \n"),
+            my_call("* !!Please write a short instrument description (1 line) here!!\n"),
             my_call("* \n"),
+            my_call('* %Description\n'),
+            my_call('* Please write a longer instrument description here!\n'),
+            my_call('* \n'),
+            my_call('* \n'),
             my_call("* %Parameters\n"),
+            my_call('* theta: [unit] \n'),
+            my_call('* has_default: [unit] \n'),
+            my_call('* \n'),
+            my_call('* %Link \n'),
             my_call("* \n"),
             my_call("* %End \n"),
             my_call("*" * 80 + "/\n"),

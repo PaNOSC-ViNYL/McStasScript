@@ -3010,6 +3010,8 @@ class McStas_instr(McCode_instr):
 
         if type(config) is dict:
             self.line_limit = config["other"]["characters_per_line"]
+        else:
+            self.line_limit = 85 # default value in case no configuration file is found
 
         if "MCSTAS" in os.environ: # We are in a McStas environment, use that
             self._run_settings["executable_path"] = os.path.dirname(shutil.which("mcrun"))
