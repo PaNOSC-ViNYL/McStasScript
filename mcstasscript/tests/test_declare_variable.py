@@ -166,13 +166,12 @@ class Test_DeclareVariable(unittest.TestCase):
         with mock_f('test.txt', 'w') as m_fo:
             var.write_line(m_fo)
 
-        expected_writes = [unittest.mock.call("double test[3] = {"),
-                           unittest.mock.call("5,"),
-                           unittest.mock.call("4,"),
-                           unittest.mock.call("3.1}; // test comment")]
+        expected_writes = [unittest.mock.call("double test[3] = {5,4,3.1}; // test comment")]
 
         mock_f.assert_called_with('test.txt', 'w')
         handle = mock_f()
+        for c, w in zip(handle.write.call_args_list, expected_writes):
+            assert(c == w)
         handle.write.assert_has_calls(expected_writes, any_order=False)
 
 

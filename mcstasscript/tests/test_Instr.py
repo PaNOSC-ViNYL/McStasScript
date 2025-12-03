@@ -1639,19 +1639,22 @@ class TestMcStas_instr(unittest.TestCase):
          call("// Start of trace section for generated test_instrument\n"),
          call("COMPONENT first_component = test_for_reading("),
          call(")\n"),
-         call("AT (0,0,0)"),
+         call("AT (0, 0, 0)"),
          call(" ABSOLUTE\n"),
          call("\n"),
          call("COMPONENT second_component = test_for_reading("),
          call(")\n"),
-         call("AT (0,0,0)"),
+         call("AT (0, 0, 0)"),
          call(" ABSOLUTE\n"),
          call("\n"),
          call("COMPONENT third_component = test_for_reading("),
          call(")\n"),
-         call("AT (0,0,0)"),
+         call("AT (0, 0, 0)"),
          call(" ABSOLUTE\n"),
          call("\n")]
+        
+        for c, w in zip(handle.write.call_args_list, wrts):
+            assert(c == w)
 
         handle.write.assert_has_calls(wrts, any_order=False)
 
@@ -1731,17 +1734,17 @@ class TestMcStas_instr(unittest.TestCase):
          my_call("TRACE \n"),
          my_call("COMPONENT first_component = test_for_reading("),
          my_call(")\n"),
-         my_call("AT (0,0,0)"),
+         my_call("AT (0, 0, 0)"),
          my_call(" ABSOLUTE\n"),
          my_call("\n"),
          my_call("COMPONENT second_component = test_for_reading("),
          my_call(")\n"),
-         my_call("AT (0,0,0)"),
+         my_call("AT (0, 0, 0)"),
          my_call(" ABSOLUTE\n"),
          my_call("\n"),
          my_call("COMPONENT third_component = test_for_reading("),
          my_call(")\n"),
-         my_call("AT (0,0,0)"),
+         my_call("AT (0, 0, 0)"),
          my_call(" ABSOLUTE\n"),
          my_call("\n"),
          my_call("FINALLY \n%{\n"),
@@ -1827,17 +1830,17 @@ class TestMcStas_instr(unittest.TestCase):
             my_call("TRACE \n"),
             my_call("COMPONENT first_component = test_for_reading("),
             my_call(")\n"),
-            my_call("AT (0,0,0)"),
+            my_call("AT (0, 0, 0)"),
             my_call(" ABSOLUTE\n"),
             my_call("\n"),
             my_call("COMPONENT second_component = test_for_reading("),
             my_call(")\n"),
-            my_call("AT (0,0,0)"),
+            my_call("AT (0, 0, 0)"),
             my_call(" ABSOLUTE\n"),
             my_call("\n"),
             my_call("COMPONENT third_component = test_for_reading("),
             my_call(")\n"),
-            my_call("AT (0,0,0)"),
+            my_call("AT (0, 0, 0)"),
             my_call(" ABSOLUTE\n"),
             my_call("\n"),
             my_call("FINALLY \n%{\n"),
@@ -1848,6 +1851,8 @@ class TestMcStas_instr(unittest.TestCase):
         expected_path = os.path.join(".", "test_instrument.instr")
         mock_f.assert_called_with(expected_path, "w")
         handle = mock_f()
+        for c, w in zip(handle.write.call_args_list, wrts):
+            assert(c == w)
         handle.write.assert_has_calls(wrts, any_order=False)
 
     @unittest.mock.patch('__main__.__builtins__.open',
@@ -1925,17 +1930,17 @@ class TestMcStas_instr(unittest.TestCase):
             my_call('SEARCH SHELL "second search"\n'),
             my_call("COMPONENT first_component = test_for_reading("),
             my_call(")\n"),
-            my_call("AT (0,0,0)"),
+            my_call("AT (0, 0, 0)"),
             my_call(" ABSOLUTE\n"),
             my_call("\n"),
             my_call("COMPONENT second_component = test_for_reading("),
             my_call(")\n"),
-            my_call("AT (0,0,0)"),
+            my_call("AT (0, 0, 0)"),
             my_call(" ABSOLUTE\n"),
             my_call("\n"),
             my_call("COMPONENT third_component = test_for_reading("),
             my_call(")\n"),
-            my_call("AT (0,0,0)"),
+            my_call("AT (0, 0, 0)"),
             my_call(" ABSOLUTE\n"),
             my_call("\n"),
             my_call("FINALLY \n%{\n"),
