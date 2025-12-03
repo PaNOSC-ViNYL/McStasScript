@@ -2068,7 +2068,7 @@ class McCode_instr(BaseCalculator):
         fo.write("* European Spallation Source Data Management and \n")
         fo.write("* Software Centre\n")
         fo.write("* \n")
-        fo.write("* Instrument %s\n" % self.name)
+        fo.write("* Instrument: %s\n" % self.name)
         fo.write("* \n")
         fo.write("* %Identification\n")  # Could allow the user to insert this
         fo.write("* Written by: %s\n" % self.author)
@@ -2077,8 +2077,18 @@ class McCode_instr(BaseCalculator):
         fo.write("* Origin: %s\n" % self.origin)
         fo.write("* %INSTRUMENT_SITE: Generated_instruments\n")
         fo.write("* \n")
+        fo.write("* !!Please write a short instrument description (1 line) here!!\n")
+        fo.write("* \n")
+        fo.write("* %Description\n")
+        fo.write("* Please write a longer instrument description here!\n")
+        fo.write("* \n")
         fo.write("* \n")
         fo.write("* %Parameters\n")
+        # Insert parameter names and template for filling in mcdoc table
+        for param in list(self.parameters):
+            fo.write("* " + param.name + ": [unit] " + param.comment + "\n")
+        fo.write("* \n")
+        fo.write("* %Link \n")
         # Add description of parameters here
         fo.write("* \n")
         fo.write("* %End \n")
