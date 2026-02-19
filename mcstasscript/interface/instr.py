@@ -3016,14 +3016,19 @@ class McStas_instr(McCode_instr):
         if "MCSTAS" in os.environ: # We are in a McStas environment, use that
             self._run_settings["executable_path"] = os.path.dirname(shutil.which("mcrun"))
             self._run_settings["package_path"] = os.environ["MCSTAS"]
-        elif type(config) is dict:
-            self._run_settings["executable_path"] = config["paths"]["mcrun_path"]
-            self._run_settings["package_path"] = config["paths"]["mcstas_path"]
         else:
-            # This happens in unit tests that mocks open
-            self._run_settings["executable_path"] = ""
-            self._run_settings["package_path"] = ""
-            self.line_limit = 180
+            try: # Otherwise, try to ask mcrun for the resourcedir
+                self._run_settings["executable_path"] = os.path.dirname(shutil.which("mcrun"))
+                self._run_settings["package_path"] = subprocess.check_output("mcrun --showcfg=resourcedir",shell=True).decode('utf-8').rstrip()
+            except:
+                if type(config) is dict:
+                    self._run_settings["executable_path"] = config["paths"]["mcrun_path"]
+                    self._run_settings["package_path"] = config["paths"]["mcstas_path"]
+                else:
+                    # This happens in unit tests that mocks open
+                    self._run_settings["executable_path"] = ""
+                    self._run_settings["package_path"] = ""
+                    self.line_limit = 180
 
     @classmethod
     def from_dump(cls, dumpfile: str):
@@ -3249,14 +3254,19 @@ class McXtrace_instr(McCode_instr):
         if "MCXTRACE" in os.environ: # We are in a McXtrace environment, use that
             self._run_settings["executable_path"] = os.path.dirname(shutil.which("mxrun"))
             self._run_settings["package_path"] = os.environ["MCXTRACE"]
-        elif type(config) is dict:
-            self._run_settings["executable_path"] = config["paths"]["mxrun_path"]
-            self._run_settings["package_path"] = config["paths"]["mcxtrace_path"]
         else:
-            # This happens in unit tests that mocks open
-            self._run_settings["executable_path"] = ""
-            self._run_settings["package_path"] = ""
-            self.line_limit = 180
+            try: # Otherwise, try to ask mxrun for the resourcedir
+                self._run_settings["executable_path"] = os.path.dirname(shutil.which("mxrun"))
+                self._run_settings["package_path"] = subprocess.check_output("mxrun --showcfg=resourcedir",shell=True).decode('utf-8').rstrip()
+            except:
+                if type(config) is dict:
+                    self._run_settings["executable_path"] = config["paths"]["mxrun_path"]
+                    self._run_settings["package_path"] = config["paths"]["mcxtrace_path"]
+                else:
+                    # This happens in unit tests that mocks open
+                    self._run_settings["executable_path"] = ""
+                    self._run_settings["package_path"] = ""
+                    self.line_limit = 180
 
     @classmethod
     def from_dump(cls, dumpfile: str):
