@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import BoundaryNorm
+import matplotlib.ticker as mticker
 
 from mcstasscript.data.data import McStasData
 from mcstasscript.data.data import McStasDataEvent
@@ -40,6 +41,18 @@ def _fmt(x, pos):
         return r'$10^{{{}}}$'.format(b)
     else:
         return r'${}\cdot 10^{{{}}}$'.format(a, b)
+
+
+def _fmt(x, pos):
+    a, b = f"{x:.2e}".split("e")
+    b = int(b)
+
+    if abs(float(a) - 1) < 0.01:
+        return rf"10^{{{b}}}"
+    else:
+        return rf"{a}\cdot 10^{{{b}}}"
+
+formatter = mticker.FuncFormatter(lambda x, pos: rf"${_fmt(x, pos)}$")
 
 
 def _find_min_max_I(data):
@@ -209,8 +222,13 @@ def _plot_fig_ax(data, fig, ax, **kwargs):
             if "colorbar_axes" in kwargs:
                 cax = kwargs["colorbar_axes"]
 
-            colorbar = fig.colorbar(im, ax=ax, cax=cax,
-                                    format=matplotlib.ticker.FuncFormatter(_fmt))
+            colorbar = fig.colorbar(im, ax=ax, cax=cax)
+
+            # If your colorbar is logarithmic:
+            #colorbar.locator = mticker.LogLocator(base=10)
+            #colorbar.formatter = mticker.LogFormatterMathtext(base=10)
+
+            #colorbar.update_ticks()
 
             if data.metadata.zlabel is not None:
                 colorbar.set_label(data.metadata.zlabel)
