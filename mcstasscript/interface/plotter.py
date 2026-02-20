@@ -31,12 +31,18 @@ def make_plot(data_list, **kwargs):
         figsize = (13, 7)
 
     for data in data_list:
+        #fig, ax0 = plt.subplots(figsize=figsize, constrained_layout=True)
         fig, ax0 = plt.subplots(figsize=figsize, tight_layout=True)
         _plot_fig_ax(data, fig, ax0, **kwargs)
 
+        if "return_fig_ax" in kwargs and len(data_list) == 1:
+            if kwargs["return_fig_ax"]:
+                return fig, ax0
+
     if "filename" in kwargs:
-        fig.tight_layout()
+        #fig.tight_layout()
         fig.savefig(kwargs["filename"])
+        plt.close()
     else:
         plt.show()
 
@@ -95,6 +101,9 @@ def make_sub_plot(data_list, **kwargs):
         _plot_fig_ax(data, fig, ax0, **kwargs)
 
     fig.tight_layout()
+
+    if "return_fig_ax" in kwargs and kwargs["return_fig_ax"]:
+        return fig, ax
 
     if "filename" in kwargs:
         fig.tight_layout()
