@@ -119,9 +119,9 @@ def _plot_fig_ax(data, fig, ax, **kwargs):
     if type(data.metadata.dimension) == int and data.metadata.dimension == 0:
         # Can't plot 0D data, show the info
         ax.text(0.5, 0.9, data.metadata.title, ha="center")
-        ax.text(0.5, 0.7, "I: " + str(float(data.Intensity)), ha="center")
-        ax.text(0.5, 0.5, "E: " + str(float(data.Error)), ha="center")
-        ax.text(0.5, 0.3, "N: " + str(int(data.Ncount)), ha="center")
+        ax.text(0.5, 0.7, "I: " + str(float(data.metadata.total_I)), ha="center")
+        ax.text(0.5, 0.5, "E: " + str(float(data.metadata.total_E)), ha="center")
+        ax.text(0.5, 0.3, "N: " + str(int(data.metadata.total_N)), ha="center")
         ax.axis("off")
 
     elif type(data.metadata.dimension) == int and data.metadata.dimension != 0:

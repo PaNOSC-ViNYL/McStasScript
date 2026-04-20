@@ -171,11 +171,14 @@ class IntensityDiagnostics(DiagnosticsInstrument):
 
         index = 0
         for I_monitor_name, component_name in self.monitors:
-            mon_data = name_search(I_monitor_name, self.data)
-            values = mon_data.metadata.info["values"].split()
-            # values contain strings of: Intensity, Error, Ncount
-            intensities.append(float(values[0]))
-            ray_counts.append(float(values[2]))
+            try:
+                mon_data = name_search(I_monitor_name, self.data)
+                intensities.append(mon_data.metadata.total_I)
+                ray_counts.append(mon_data.metadata.total_N)
+            except:
+                intensities.append(0)
+                ray_counts.append(0)
+
             component_names.append(component_name)
             indicies.append(index)
             index += 1
