@@ -2718,6 +2718,10 @@ class McCode_instr(BaseCalculator):
         executable_path = self._run_settings["executable_path"]
         bin_path = os.path.join(executable_path, executable)
 
+        # Append .bat on windows - or script will not be found...
+        if os.name == 'nt':
+            bin_path = bin_path + '.bat'
+
         if not os.path.isfile(bin_path):
             # Take bin in package path into account
             package_path = self._run_settings["package_path"]
