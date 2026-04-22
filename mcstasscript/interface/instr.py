@@ -1443,6 +1443,17 @@ class McCode_instr(BaseCalculator):
         new_component = copy.deepcopy(component_to_copy)
         new_component.name = name  # Set new name, duplicate names not allowed
 
+        # McStas does not copy EXTEND, GROUP, JUMP, SPLIT at copy, replicate that behavior here
+        new_component.WHEN = ""
+        new_component.EXTEND = ""
+        new_component.GROUP = ""
+        new_component.JUMP = ""
+        new_component.SPLIT = 0
+        new_component.comment = ""
+        new_component.c_code_before = ""
+        new_component.c_code_after = ""
+        new_component.search_statement_list = SearchStatementList()
+
         self._insert_component(new_component, before=before, after=after)
 
         # Run set_keyword_input for keyword arguments to take effect
