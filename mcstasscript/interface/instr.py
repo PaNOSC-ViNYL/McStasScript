@@ -2608,9 +2608,9 @@ class McCode_instr(BaseCalculator):
                     absfilepath+=".gz"
                 if os.path.exists(absfilepath) is False:
                     raise RuntimeError(f"MCPL file: {absfilepath} nor {absfilepath}.gz not found")
-                mcpl_file =  pyvinylMCPLData.from_file(absfilepath)
+                mcpl_file = pyvinylMCPLData.from_file(absfilepath)
                 if num_mcpl_files>1:
-                    mcpl_file.key = mcpl_file+str(num_mcpl_files)
+                    mcpl_file.key = str(mcpl_file.key) + "_" + str(num_mcpl_files)
                 self.output.add_data(mcpl_file)
                 self.output_keys.append(mcpl_file.key)
         
