@@ -439,7 +439,7 @@ def load_metadata_text(data_folder_name):
                 in_data = False
 
             if in_sim:
-                if "Param" in lines:
+                if lines.strip().startswith("Param:"):
                     parm_lst = lines.split(':')[1].split('=')
                     try:
                         value = float(parm_lst[1].strip())
