@@ -350,12 +350,16 @@ class BeamDiagnostics(DiagnosticsInstrument):
             options = f'"previous n x y z vx vy vz t{flags_str}, list {ray_str}"'
             mon = self.instr.add_component(name, "Monitor_nD", after=point.component)
 
-        mon.set_parameters(restore_neutron=1,
-                           xwidth=100, yheight=100,
+        mon.set_parameters(xwidth=100, yheight=100,
                            options=options,
                            user1=user_vars[0], user2=user_vars[1], user3=user_vars[2],
                            filename='"' + name + ".diag" + '"')
 
+        if hasattr(mon, "restore_xray"):
+            mon.restore_neutron = 1
+
+        if hasattr(mon, "restore_neutron"):
+            mon.restore_neutron = 1
 
         mon.set_AT(comp_instance.AT_data, RELATIVE=comp_instance.AT_reference)
         if comp_instance.ROTATED_specified:

@@ -21,10 +21,15 @@ class IntensityDiagnostics(DiagnosticsInstrument):
         name = "I_before_" + before.name
         mon = self.instr.add_component(name, "Monitor_nD", before=before)
 
-        mon.set_parameters(restore_neutron=1,
-                           xwidth=100, yheight=100,
+        mon.set_parameters(xwidth=100, yheight=100,
                            options=options,
                            filename='"' + name + ".diag" + '"')
+
+        if hasattr(mon, "restore_xray"):
+            mon.restore_neutron = 1
+
+        if hasattr(mon, "restore_neutron"):
+            mon.restore_neutron = 1
 
         mon.set_AT(before.AT_data, RELATIVE=before.AT_reference)
         if before.ROTATED_specified:
