@@ -8,6 +8,8 @@ import subprocess
 import copy
 import warnings
 import re
+import io
+import hashlib
 
 from IPython.display import IFrame
 
@@ -150,6 +152,9 @@ class McCode_instr(BaseCalculator):
 
     component_help(name)
         Shows help on component of given name
+
+    add_component_dir(path)
+        Add path to the search dir for components
 
     add_component(instance_name, component_name, **kwargs)
         Add a component to the instrument file
@@ -346,6 +351,8 @@ class McCode_instr(BaseCalculator):
                 parameter.type = None
 
         self._run_settings = {}  # Settings for running simulation
+
+        self._run_settings["component_dirs"] = []
 
         # Sets max_line_length and adds paths to run_settings
         self._read_calibration()
@@ -948,7 +955,7 @@ class McCode_instr(BaseCalculator):
         if declare_par.name in names:
             raise NameError("Variable with name '" + declare_par.name
                             + "' already present in instrument!")
-        
+
         self.declare_list.append(declare_par)
         return declare_par
 
@@ -1203,6 +1210,19 @@ class McCode_instr(BaseCalculator):
 
         return self.component_class_lib[component_name](name, component_name,
                                                         **kwargs)
+
+    def add_component_dir(self, path=".", category="custom"):
+        """
+        Method for adding a directory to the list of directories where to search for components"
+        """
+        self.component_reader.add_custom_component_dir(path, category)
+
+        current_directory = os.getcwd()
+
+        if not os.path.isabs(path):
+            path = os.path.join(current_directory, path)
+
+        self._run_settings["component_dirs"].append(path)
 
     def add_component(self, name, component_name=None, *, before=None,
                       after=None, AT=None, AT_RELATIVE=None, ROTATED=None,
@@ -2038,7 +2058,15 @@ class McCode_instr(BaseCalculator):
                 full_line = line_number + line
                 print(full_line.replace("\n", ""))
 
-    def write_full_instrument(self):
+
+    def __hash__(self):
+        """ Define a hashing specifically for this calculator
+        The hash method in the BaseCalculator would pack also the internals of this class and it changes when calling the backengine
+        """
+        contents = self.write_full_instrument(False)
+        return int.from_bytes(hashlib.sha256(contents.encode()).digest(), "big")
+
+    def write_full_instrument(self, do_write=True) -> str:
         """
         Method for writing full instrument file to disk
 
@@ -2052,8 +2080,12 @@ class McCode_instr(BaseCalculator):
             self.check_for_errors()
 
         # Create file identifier
-        fo = open(os.path.join(self.input_path, self.name + ".instr"), "w")
-
+        run_path = self._run_settings["run_path"]
+        fo = None
+        if do_write:
+            fo = open(os.path.join(run_path, self.name + ".instr"), "w")
+        else:
+            fo = io.StringIO()
         # Write quick doc start
         fo.write("/" + 80*"*" + "\n")
         fo.write("* \n")
@@ -2073,7 +2105,8 @@ class McCode_instr(BaseCalculator):
         fo.write("* %Identification\n")  # Could allow the user to insert this
         fo.write("* Written by: %s\n" % self.author)
         t_format = "%H:%M:%S on %B %d, %Y"
-        fo.write("* Date: %s\n" % datetime.datetime.now().strftime(t_format))
+        if do_write:
+            fo.write("* Date: %s\n" % datetime.datetime.now().strftime(t_format))
         fo.write("* Origin: %s\n" % self.origin)
         fo.write("* %INSTRUMENT_SITE: Generated_instruments\n")
         fo.write("* \n")
@@ -2096,14 +2129,18 @@ class McCode_instr(BaseCalculator):
         fo.write("\n")
         fo.write("DEFINE INSTRUMENT %s (" % self.name)
         fo.write("\n")
-        # Insert parameters
-        parameter_list = list(self.parameters)
-        end_chars = [", "]*len(parameter_list)
-        if len(end_chars) >= 1:
-            end_chars[-1] = " "
-        for variable, end_char in zip(parameter_list, end_chars):
-            write_parameter(fo, variable, end_char)
-        fo.write(")\n")
+
+        # remove parameters when calculating hash because don't want
+        # variations in the parameter values to trigger a new hash
+        if do_write:
+            # Insert parameters
+            parameter_list = list(self.parameters)
+            end_chars = [", "]*len(parameter_list)
+            if len(end_chars) >= 1:
+                end_chars[-1] = " "
+            for variable, end_char in zip(parameter_list, end_chars):
+                write_parameter(fo, variable, end_char)
+            fo.write(")\n")
         if self.dependency_statement != "":
             fo.write("DEPENDENCY " + str(self.dependency_statement) + "\n")
         fo.write("\n")
@@ -2172,7 +2209,11 @@ class McCode_instr(BaseCalculator):
         # End instrument file
         fo.write("\nEND\n")
 
+        instrument_file_as_string = ""
+        if do_write is False:
+            instrument_file_as_string = fo.getvalue()
         fo.close()
+        return instrument_file_as_string
 
     def get_component_subset_index_range(self, start_ref=None, end_ref=None):
         """
@@ -2325,7 +2366,7 @@ class McCode_instr(BaseCalculator):
                  increment_folder_name=None, custom_flags=None,
                  executable=None, executable_path=None,
                  suppress_output=None, gravity=None, checks=None,
-                 openacc=None, NeXus=None, save_comp_pars=False):
+                 openacc=None, NeXus=None, save_comp_pars=False, component_dirs=None, run_path=None):
         """
         Sets settings for McStas run performed with backengine
 
@@ -2364,6 +2405,10 @@ class McCode_instr(BaseCalculator):
                 If True, adds --format=NeXus to mcrun call
             save_comp_pars : bool
                 If True, McStas run writes all comp pars to disk
+            component_dirs : list
+                Additional directories where to find components (use absolute paths)
+            run_path : str
+                Change the directory where the code is compiled and run
         """
 
         settings = {}
@@ -2427,6 +2472,15 @@ class McCode_instr(BaseCalculator):
 
         if save_comp_pars is not None:
             settings["save_comp_pars"] = bool(save_comp_pars)
+
+        if component_dirs is not None:
+            if len(component_dirs) > 0:
+                settings["component_dirs"].append( component_dirs)
+            else:
+                settings["component_dirs"] = []
+
+        if run_path is not None:
+            settings["run_path"] = os.path.abspath(run_path)
 
         self._run_settings.update(settings)
 
@@ -2527,7 +2581,11 @@ class McCode_instr(BaseCalculator):
         self.__add_input_to_mcpl()
 
         instrument_path = os.path.join(self.input_path, self.name + ".instr")
+
+        run_path = self._run_settings["run_path"]
+        instrument_path = os.path.join(run_path, self.name + ".instr")
         if not os.path.exists(instrument_path) or self._run_settings["force_compile"]:
+            print("Instrument file not found: ", instrument_path, os.path.exists(instrument_path), self._run_settings["force_compile"])
             self.write_full_instrument()
 
         parameters = {}
@@ -2543,7 +2601,7 @@ class McCode_instr(BaseCalculator):
         options["output_path"] = self.output_path
 
         # Set up the simulation
-        simulation = ManagedMcrun(self.name + ".instr", **options)
+        simulation = ManagedMcrun(instrument_path, **options) #self.name + ".instr", **options)
 
         # Run the simulation and return data
         simulation.run_simulation()
@@ -2551,7 +2609,7 @@ class McCode_instr(BaseCalculator):
         # Load data and store in __data
         #data = simulation.load_results()
         #self._set_data(data)
-        
+
         ## look for MCPL_output components and the defined filenames
         self.__add_mcpl_to_output(simulation)
 
@@ -2560,7 +2618,7 @@ class McCode_instr(BaseCalculator):
         data_dict = {"data": data}
         # adding to the libpyvinyl output datacollection with key = sim_data_key
         sim_data_key = self.output_keys[0]
-        output_data = self.output[sim_data_key] 
+        output_data = self.output[sim_data_key]
         output_data.set_dict(data_dict)
 
         if self.run_to_ref is not None:
@@ -2613,7 +2671,7 @@ class McCode_instr(BaseCalculator):
                     mcpl_file.key = mcpl_file+str(num_mcpl_files)
                 self.output.add_data(mcpl_file)
                 self.output_keys.append(mcpl_file.key)
-        
+
     def run_full_instrument(self, **kwargs):
         """
         Runs McStas instrument described by this class, returns list of
@@ -2802,15 +2860,17 @@ class McCode_instr(BaseCalculator):
         if variable is not None:
             analysis = True
 
-        instrument_diagram(self, analysis=analysis, variable=variable, limits=limits)
+        fig = instrument_diagram(self, analysis=analysis, variable=variable, limits=limits)
 
         if self._run_settings["checks"]:
             self.check_for_errors()
 
+        return fig
+
     def show_analysis(self, variable=None):
         beam_diag = IntensityDiagnostics(self)
         beam_diag.run_general(variable=variable)
-        beam_diag.plot()
+        return beam_diag.plot()
 
     def saveH5(self, filename: str, openpmd: bool = True):
         """

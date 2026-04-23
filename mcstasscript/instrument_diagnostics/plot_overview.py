@@ -62,6 +62,7 @@ class PlotOverview:
                 major_label_set = True
 
         fig.tight_layout()
+        return fig
 
     def set_same_scale(self):
         """

@@ -159,8 +159,8 @@ def write_parameter(fo, parameter, stop_character):
     else:
         fo.write(parameter.name)
 
-    if parameter.unit != 'dimensionless':
-        fo.write(f'("{parameter.unit}")')
+    #if parameter.unit != 'dimensionless':
+    #    fo.write(f'("{parameter.unit}")')
 
     if parameter.value is not None:
         if isinstance(parameter.value, int):

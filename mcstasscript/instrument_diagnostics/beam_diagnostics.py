@@ -413,5 +413,5 @@ class BeamDiagnostics(DiagnosticsInstrument):
                 print("No data to plot! Use the run method to generate data.")
 
         overview = PlotOverview(self.event_plotters, self.views)
-        overview.plot_all()
+        return overview.plot_all()
 
