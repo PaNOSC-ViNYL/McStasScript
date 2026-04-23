@@ -10,6 +10,7 @@ from mcstasscript.helper.formatting import bcolors
 from mcstasscript.data.data import McStasMetaData
 from mcstasscript.data.data import McStasDataBinned
 from mcstasscript.data.data import McStasDataEvent
+from mcstasscript.data.data import ComponentData
 
 
 class ManagedMcrun:
@@ -109,6 +110,8 @@ class ManagedMcrun:
         self.run_path = "."
         self.seed = None
         self.suppress_output = False
+        self.component_data = None
+        self.simulation_performed = False
 
         # executable_path always in kwargs
         if "executable_path" in kwargs:
@@ -298,6 +301,8 @@ class ManagedMcrun:
         if not os.path.isdir(self.data_folder_name):
             warnings.warn("Simulation did not create data folder, most likely failed.")
 
+        self.simulation_performed = True
+
     def load_results(self, *args):
         """
         Method for loading data from a mcstas simulation
@@ -327,6 +332,21 @@ class ManagedMcrun:
             warnings.warn("No data available to load.")
             return None
 
+    def load_component_data(self):
+        """
+        Loads component data if file exists and the simulation has been performed
+
+        Avoids reloading the data if it already has been loaded successfully
+        """
+
+        if self.simulation_performed and self.component_data is None:
+            component_data_path = os.path.join(self.run_path,
+                                               "component_parameters.txt")
+            try:
+                self.component_data = ComponentData(component_data_path)
+                self.component_data = self.component_data.read()
+            except:
+                pass
 
 def load_results(data_folder_name):
     """
@@ -439,7 +459,7 @@ def load_metadata_text(data_folder_name):
                 in_data = False
 
             if in_sim:
-                if "Param" in lines:
+                if lines.strip().startswith("Param:"):
                     parm_lst = lines.split(':')[1].split('=')
                     try:
                         value = float(parm_lst[1].strip())
