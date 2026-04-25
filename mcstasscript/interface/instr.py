@@ -2336,7 +2336,7 @@ class McCode_instr(BaseCalculator):
                  increment_folder_name=None, custom_flags=None,
                  executable=None, executable_path=None,
                  suppress_output=None, gravity=None, checks=None,
-                 openacc=None, NeXus=None, save_comp_pars=False):
+                 openacc=None, NeXus=None, save_comp_pars=None):
         """
         Sets settings for McStas run performed with backengine
 

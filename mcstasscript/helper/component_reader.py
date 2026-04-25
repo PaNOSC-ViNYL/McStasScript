@@ -99,7 +99,8 @@ class ComponentReader:
                        "contrib",
                        "obsolete",
                        "union",
-                       "astrox"]
+                       "astrox",
+                       "sasmodels"]
 
         self.component_path = {}
         self.component_category = {}
@@ -387,7 +388,8 @@ class ComponentReader:
                 while True:
                     line = file_o.readline()
 
-                    end_keywords = ("SHARE", "INITIALIZE", "INITIALISE", "DECLARE", "TRACE", "DEPENDENCY")
+                    end_keywords = ("SHARE", "INITIALIZE", "USERVARS", "INITIALISE",
+                                    "DECLARE", "TRACE", "DEPENDENCY", "NOACC")
                     if line.strip().upper().startswith(end_keywords) or not line:
                         break
 
@@ -438,8 +440,8 @@ class ComponentReader:
                         # remove double from part
                         part = "".join(possible_declare[1:])
                     if "vector" == possible_type:
-                        temp_par_type = "double"
-                        # remove double from part
+                        temp_par_type = "vector"
+                        # remove vector from part
                         part = "".join(possible_declare[1:])
 
                     part = part.replace(" ", "")
