@@ -366,6 +366,14 @@ class DiagramCanvas:
             # Plot arrows on left side
             arrow.plot_left_side(ax)
 
+        if self.intensity_analysis_mode:
+            # Run simulation early to check if it succeeds
+            self.intensity_diagnostics.run_general(variable=self.variable, limits=self.limits)
+            if self.intensity_diagnostics.data is None or len(self.intensity_diagnostics.data) == 0:
+                # If simulation fails, abort trying to show intensity and tell user
+                print("Simulation run failed, showing normal diagram.")
+                self.intensity_analysis_mode = False
+
         if not self.intensity_analysis_mode:
             for arrow in self.right_side_arrows:
                 # Plot arrows on right side
@@ -409,7 +417,6 @@ class DiagramCanvas:
             ax.set_zorder(4)
 
             # Plot graph, convey tick positions and ylimits to match main diagram
-            self.intensity_diagnostics.run_general(variable=self.variable, limits=self.limits)
             self.intensity_diagnostics.plot(ax=inset_ax, fig=fig,
                                             y_tick_positions=y_positions,
                                             ylimits=[lower_y_lim, upper_y_lim],

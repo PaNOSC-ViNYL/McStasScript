@@ -1127,6 +1127,7 @@ class Component:
             par_type = self.parameter_types[key] # from component reader
 
             cast = ""
+            can_write = True
             if par_type == "" or par_type == "double":
                 type_string = "%lf"
                 cast = "(double)"
@@ -1135,10 +1136,14 @@ class Component:
                 cast = "(int)"
             elif par_type == "string":
                 type_string = "%s"
+            elif par_type == "vector":
+                # Not writing vectors as length unknown
+                can_write = False
             else:
                 raise ValueError("Unknown parameter type: " + par_type)
 
-            string += f'fprintf(file, "{key}={type_string}\\n", {cast} {val});\n'
+            if can_write:
+                string += f'fprintf(file, "{key}={type_string}\\n", {cast} {val});\n'
 
         string += f'fprintf(file, "AT (%lf,%lf,%lf) {self.AT_relative}\\n",'
         string += "(double) " + str(self.AT_data[0]) + ","
