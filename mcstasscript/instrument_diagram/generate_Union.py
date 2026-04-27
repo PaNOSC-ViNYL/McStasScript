@@ -1,3 +1,4 @@
+from mcstasscript.helper.mcstas_objects import parameter_is_default
 from mcstasscript.instrument_diagram.connections import ConnectionList
 from mcstasscript.instrument_diagram.arrow import Arrow
 
@@ -24,7 +25,7 @@ def generate_Union_arrows(components, component_box_dict, box_names, component_c
         category = component_categories[component.component_name]
         if category == "union" or True:
             if "_process" in component.component_name:
-                # Process component
+                # Assume Union process component
                 process_names.append(component.name)
 
             elif component.component_name == "Union_make_material":
@@ -33,6 +34,9 @@ def generate_Union_arrows(components, component_box_dict, box_names, component_c
 
                 process_string = component.process_string
                 if not isinstance(process_string, str):
+                    continue
+
+                if parameter_is_default(component, "process_string"):
                     continue
 
                 processes = process_string.strip('"').split(",")
@@ -60,28 +64,29 @@ def generate_Union_arrows(components, component_box_dict, box_names, component_c
 
                 geometry_activation_counters[component.name] = number_of_activations
 
-                if component.material_string is not None:
+                if not parameter_is_default(component, "material_string"):
                     simulated_geometry_names.append(component.name)
 
-                if isinstance(component.material_string, str):
-                    material = component.material_string.strip('"')
-                    if material not in material_names:
-                        if material not in ["Vacuum", "vacuum", "Exit", "exit"]:
-                            print("Didn't find material of name '" + material + "'")
-                            print(material_names)
-                    else:
-                        origin = component_box_dict[material]
-                        connections.add(origin, component_box_dict[component.name])
-
-                if isinstance(component.mask_string, str):
-                    masks = component.mask_string.strip('"').split(",")
-                    for mask in masks:
-                        if mask not in geometry_names:
-                            print("Didn't find geometry target of name '" + mask + "'")
-                            print(geometry_names)
+                    if isinstance(component.material_string, str):
+                        material = component.material_string.strip('"')
+                        if material not in material_names:
+                            if material not in ["Vacuum", "vacuum", "Exit", "exit"]:
+                                print("Didn't find material of name '" + material + "'")
+                                print(material_names)
                         else:
-                            target = component_box_dict[mask]
-                            connections.add(component_box_dict[component.name], target)
+                            origin = component_box_dict[material]
+                            connections.add(origin, component_box_dict[component.name])
+
+                if not parameter_is_default(component, "mask_string") :
+                    if isinstance(component.mask_string, str):
+                        masks = component.mask_string.strip('"').split(",")
+                        for mask in masks:
+                            if mask not in geometry_names:
+                                print("Didn't find geometry target of name '" + mask + "'")
+                                print(geometry_names)
+                            else:
+                                target = component_box_dict[mask]
+                                connections.add(component_box_dict[component.name], target)
 
             elif "_logger" in component.component_name:
 
