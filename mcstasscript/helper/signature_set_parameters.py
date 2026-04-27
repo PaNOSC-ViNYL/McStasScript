@@ -89,7 +89,7 @@ class SetParametersCallable:
                 lines.append("    Instrument parameter.")
 
             if type_name == "string":
-                lines.append(f"    Remember '{'"'}string_input{'"'}' format for literal strings")
+                lines.append(f"    Remember '\"string_input\"' format for literal strings")
 
         lines.extend([
             "",
