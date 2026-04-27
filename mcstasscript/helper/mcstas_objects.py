@@ -7,6 +7,39 @@ from mcstasscript.helper.search_statement import SearchStatement, SearchStatemen
 from libpyvinyl.Parameters.Parameter import Parameter
 
 
+def parameter_is_default(comp, parameter_name):
+    """
+    Checks if a parameter of a given component object has the default value
+    """
+
+    value = getattr(comp, parameter_name)
+    if value is None:
+        return True
+
+    default = comp.parameter_defaults[parameter_name]
+    if value == default:
+        return True
+
+    if isinstance(value, str):
+        # If the value given is string and the default is numerical, try to cast
+        par_type = comp.parameter_types[parameter_name]
+        if par_type == "int":
+            try:
+                value_as_int = int("".join(value.split()))
+                if value_as_int == default:
+                    return True
+            except:
+                pass
+        elif par_type == "double":
+            try:
+                value_as_int = float("".join(value.split()))
+                if value_as_int == default:
+                    return True
+            except:
+                pass
+
+    return False
+
 def provide_parameter(*args, **kwargs):
     """Makes a libpyvinyl parameter object
 

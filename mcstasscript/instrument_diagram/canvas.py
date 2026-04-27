@@ -371,7 +371,8 @@ class DiagramCanvas:
             self.intensity_diagnostics.run_general(variable=self.variable, limits=self.limits)
             if self.intensity_diagnostics.data is None or len(self.intensity_diagnostics.data) == 0:
                 # If simulation fails, abort trying to show intensity and tell user
-                print("Simulation run failed, showing normal diagram.")
+                print("Simulation run failed, showing normal diagram. Use .backengine",
+                      " or the generated instrument file to debug.")
                 self.intensity_analysis_mode = False
 
         if not self.intensity_analysis_mode:

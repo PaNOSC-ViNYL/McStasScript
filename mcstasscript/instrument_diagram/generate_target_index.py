@@ -1,3 +1,4 @@
+from mcstasscript.helper.mcstas_objects import parameter_is_default
 from mcstasscript.instrument_diagram.connections import ConnectionList
 from mcstasscript.instrument_diagram.arrow import Arrow
 
@@ -19,15 +20,22 @@ def generate_target_index_arrows(components, component_box_dict, box_names, colo
         if component.target_index == 0:
             # target_index is disabled
             continue
+        if parameter_is_default(component, "target_index"):
+            continue
 
         try:
-            int(component.target_index)
+            if isinstance(component.target_index, int):
+                # If integer, use that directly
+                target_index_as_int = component.target_index
+            elif isinstance(component.target_index, str):
+                # If string attempt to parse as number
+                target_index_as_int = int("".join(component.target_index.split()))
         except:
             # Skip cases where target_index is not an integer
             continue
 
         this_component_index = component_names.index(component.name)
-        target_component_index = this_component_index + int(component.target_index)
+        target_component_index = this_component_index + target_index_as_int
         target_component_reference = component_names[target_component_index]
 
         if target_component_reference not in component_box_dict:

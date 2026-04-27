@@ -96,7 +96,7 @@ class DiagnosticsInstrument:
             if comp.target_index is None:
                 # A value has not been specified for target_index setting
                 continue
-            if comp.target_index == 0:
+            if comp.target_index == 0 or comp.target_index == "0":
                 # target_index is disabled
                 continue
 
@@ -104,7 +104,19 @@ class DiagnosticsInstrument:
 
             # Find original index and the name of the original target
             original_comp_index = original_comp_names.index(comp.name)
-            comp_target_name = original_comp_names[original_comp_index + int(comp.target_index)]
+
+            if isinstance(comp.target_index, int):
+                # If integer, use that directly
+                target_index_as_int = comp.target_index
+            elif isinstance(comp.target_index, str):
+                # If string attempt to parse as number
+                try:
+                    target_index_as_int = int("".join(comp.target_index.split()))
+                except:
+                    ValueError(f"Could not parse target_component of {comp.name},"
+                               f" value was {comp.target_index}")
+
+            comp_target_name = original_comp_names[original_comp_index + target_index_as_int]
 
             # Find index of the original and target in modified instrument
             modified_comp_index = modified_comp_names.index(comp.name)
