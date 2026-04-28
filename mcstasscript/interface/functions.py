@@ -2,6 +2,7 @@ import yaml
 import os
 
 from mcstasscript.data.data import McStasData
+from mcstasscript.tools.cryostat import Cryostat
 import mcstasscript.helper.managed_mcrun as managed_mcrun
 
 
