@@ -2407,8 +2407,12 @@ class McCode_instr(BaseCalculator):
             settings["ncount"] = ncount
 
         if mpi != "not_set":  # None is a legal value for mpi
-            if not isinstance(mpi, (type(None), int)):
-                raise TypeError("mpi must be an integer or None.")
+            # check for special case of 'auto', as supported by mcrun
+            if mpi=='auto':
+                pass
+            else:
+                if not isinstance(mpi, (type(None), int)):
+                    raise TypeError("mpi must be an integer or None.")
             settings["mpi"] = mpi
 
         if gravity is not None:
