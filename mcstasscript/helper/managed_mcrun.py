@@ -140,13 +140,15 @@ class ManagedMcrun:
                 self.mpi = int(self.mpi)
             except (TypeError, ValueError) as e:
                 if self.mpi is not None:
-                    raise RuntimeError("MPI should be an integer, was "
-                                       + str(self.mpi))
+                    if not self.mpi == 'auto':
+                        raise RuntimeError("MPI should be an integer, was "
+                                        + str(self.mpi))
 
             if self.mpi is not None:
-                if self.mpi < 1:
-                    raise ValueError("MPI should be an integer larger than"
-                                     + " 0, was " + str(self.mpi))
+                if not self.mpi == 'auto':
+                    if self.mpi < 1:
+                        raise ValueError("MPI should be an integer larger than"
+                                        + " 0, was " + str(self.mpi))
 
         if "gravity" in kwargs:
             self.gravity = kwargs["gravity"]
