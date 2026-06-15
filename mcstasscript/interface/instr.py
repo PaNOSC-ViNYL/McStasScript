@@ -33,7 +33,7 @@ from mcstasscript.helper.check_mccode_version import check_mcstas_major_version
 from mcstasscript.helper.check_mccode_version import check_mcxtrace_major_version
 from mcstasscript.helper.name_inspector import find_python_variable_name
 from mcstasscript.helper.search_statement import SearchStatement, SearchStatementList
-from mcstasscript.helper.signature_set_parameters import SetParametersCallable
+from mcstasscript.helper.signature_set_parameters import SetParametersCallableInstrument
 from mcstasscript.instrument_diagram.make_diagram import instrument_diagram
 from mcstasscript.instrument_diagnostics.intensity_diagnostics import IntensityDiagnostics
 
@@ -435,7 +435,7 @@ class McCode_instr(BaseCalculator):
         self.mccode_version = None
 
         # Overwrite set_parameters to version that can autocomplete
-        self.set_parameters = SetParametersCallable(self)
+        self.set_parameters = SetParametersCallableInstrument(self)
 
         # Avoid initializing if loading from dump
         if not hasattr(self, "declare_list"):
@@ -2852,33 +2852,6 @@ class McCode_instr(BaseCalculator):
         Not relevant, but required from BaseCalculator, will be removed
         """
         pass
-
-    def __patch_set_parameters_signature(self):
-        import inspect
-        simple_par_dict = {}
-
-        for key, value in self.parameters.parameters.items():
-            this_type = value.type
-            if this_type in ("double", ""):
-                simple_par_dict[key] = float
-            elif this_type == "int":
-                simple_par_dict[key] = int
-            elif this_type == "string":
-                simple_par_dict[key] = str
-
-        params = []
-
-        for name, annotation in simple_par_dict.items():
-            params.append(
-                inspect.Parameter(
-                    name=name,
-                    kind=inspect.Parameter.KEYWORD_ONLY,
-                    default=None,
-                    annotation=annotation
-                )
-            )
-
-        self.set_parameters.__signature__ = inspect.Signature(params)
 
 
 class McStas_instr(McCode_instr):

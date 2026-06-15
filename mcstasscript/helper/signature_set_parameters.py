@@ -3,9 +3,9 @@ from inspect import Signature, Parameter
 from typing import Any
 
 
-class SetParametersCallable:
+class SetParametersCallableInstrument:
     """
-    Method that can overwrite set_parameters on instr object and provide help
+    Class that can overwrite set_parameters on instr object and provide help
 
     Help is provided as docstring which is updated whenever add_parameters is
     called, and signature which provide autocompletion in jupyter notebooks.
@@ -15,18 +15,21 @@ class SetParametersCallable:
         self.refresh_docstring()
 
     def __call__(self, args_as_dict=None, **kwargs: Any) -> None:
-        if args_as_dict is not None:
-            kwargs.update(args_as_dict)
-
-        allowed = set(self.owner.get_parameter_names())
-        unknown = set(kwargs) - allowed
-        if unknown:
-            raise KeyError(f"Unknown parameters: {sorted(unknown)}")
-
+        """
+        This method is called when set_parameters is used on the instrument
+        object, updates the parameters accordingly
+        """
+        parameter_dict = {}
         if args_as_dict is not None:
             parameter_dict = args_as_dict
-        else:
-            parameter_dict = kwargs
+
+        # Parameters specified both in arg_as_dict and kwarg use kwarg value
+        parameter_dict.update(kwargs)
+
+        allowed = set(self.owner.get_parameter_names())
+        unknown = set(parameter_dict) - allowed
+        if unknown:
+            raise KeyError(f"Unknown parameters: {sorted(unknown)}")
 
         for key, parameter_value in parameter_dict.items():
             self.owner.parameters[key].value = parameter_value
@@ -61,6 +64,8 @@ class SetParametersCallable:
             "",
             "Parameters can be supplied either as keyword arguments or as a dictionary.",
             "",
+            "The .show_parameters method shows all available parameters",
+            "",
             "Parameters",
             "----------",
             "args_as_dict : dict, optional",
@@ -71,7 +76,7 @@ class SetParametersCallable:
 
         if len(current_parameters) == 0:
             lines.append("")
-            lines.append("This instrument current does not have any parameters, "
+            lines.append("This instrument currently does not have any parameters, "
                          "can be added with add_parameter method")
 
         for parameter in current_parameters:
