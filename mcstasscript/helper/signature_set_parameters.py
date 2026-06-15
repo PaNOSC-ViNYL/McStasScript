@@ -21,7 +21,7 @@ class SetParametersCallableInstrument:
         """
         parameter_dict = {}
         if args_as_dict is not None:
-            parameter_dict = args_as_dict
+            parameter_dict = dict(args_as_dict)
 
         # Parameters specified both in arg_as_dict and kwarg use kwarg value
         parameter_dict.update(kwargs)
@@ -125,7 +125,7 @@ class SetParametersCallableIComponent:
         """
         parameter_dict = {}
         if args_as_dict is not None:
-            parameter_dict = args_as_dict
+            parameter_dict = dict(args_as_dict)
 
         # Parameters specified both in arg_as_dict and kwarg use kwarg value
         parameter_dict.update(kwargs)
