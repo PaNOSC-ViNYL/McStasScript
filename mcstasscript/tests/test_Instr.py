@@ -18,9 +18,20 @@ from mcstasscript.helper.beam_dump_database import BeamDump
 
 run_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '.')
 
+
 class DummyComponent(Component):
     def __init__(self, *args, **kwargs):
+        self.parameter_names = ["filename", "test_keyword"]
+        self.parameter_defaults = {}
+        self.parameter_types = {'filename': 'string', 'test_keyword': 'double'}
+        self.parameter_units = {}
+        self.parameter_comments = {}
+        self.category = {}
+
+        self.test_keyword = None
+        self.filename = None
         super().__init__(*args, **kwargs)
+
 
     def set_parameters(self, *args, **kwargs):
         pass

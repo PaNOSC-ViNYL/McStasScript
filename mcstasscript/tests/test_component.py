@@ -305,9 +305,14 @@ class TestComponent(unittest.TestCase):
 
         comp = Component("test_component", "Arm")
 
+
+
         # Need to add some parameters to this bare component
         # Parameters are usually added by McStas_Instr
         comp._unfreeze()
+
+        comp.parameter_names = ["new_par1", "new_par2", "this_par"]
+
         comp.new_par1 = 1
         comp.new_par2 = 3
         comp.this_par = 1492.2

@@ -1211,8 +1211,11 @@ class McCode_instr(BaseCalculator):
 
             self.component_class_lib[component_name] = dynamic_component_class
 
-        return self.component_class_lib[component_name](name, component_name,
-                                                        **kwargs)
+        out = self.component_class_lib[component_name](name, component_name,
+                                                       **kwargs)
+        out.set_parameters.refresh_docstring()
+
+        return out
 
     def add_component(self, name, component_name=None, *, before=None,
                       after=None, AT=None, AT_RELATIVE=None, ROTATED=None,
