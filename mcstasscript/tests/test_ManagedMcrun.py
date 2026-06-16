@@ -81,6 +81,29 @@ class TestManagedMcrun(unittest.TestCase):
         expected_run_path = os.path.join(THIS_DIR, "test_data_set")
         self.assertEqual(mcrun_obj.run_path, expected_run_path)
 
+    def test_ManagedMcrun_init_set_values_mpi_auto(self):
+        """
+        Check values given to ManagedMcrun are internalized
+
+        Here with mpi set to auto which is a special case
+        """
+        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+        executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
+
+        with WorkInTestDir() as handler:
+            mcrun_obj = ManagedMcrun("test.instr",
+                                     output_path="test_folder",
+                                     executable="mcrun",
+                                     executable_path=executable_path,
+                                     run_path="test_data_set",
+                                     mpi="auto",
+                                     ncount=128)
+
+        self.assertEqual(mcrun_obj.mpi, "auto")
+        self.assertEqual(mcrun_obj.ncount, 128)
+        expected_run_path = os.path.join(THIS_DIR, "test_data_set")
+        self.assertEqual(mcrun_obj.run_path, expected_run_path)
+
     def test_ManagedMcrun_init_set_parameters(self):
         """
         Check parameters can be given as dictionary
