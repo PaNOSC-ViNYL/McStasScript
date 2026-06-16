@@ -2408,7 +2408,7 @@ class McCode_instr(BaseCalculator):
 
         if mpi != "not_set":  # None is a legal value for mpi
             # check for special case of 'auto', as supported by mcrun
-            if mpi=='auto':
+            if mpi == 'auto':
                 pass
             else:
                 if not isinstance(mpi, (type(None), int)):
@@ -2461,8 +2461,12 @@ class McCode_instr(BaseCalculator):
         if "mpi" in self._run_settings:
             value = self._run_settings["mpi"]
             if value is not None:
-                description += "  mpi:".ljust(variable_space)
-                description += str(int(value)) + "\n"
+                if value == "auto":
+                    description += "  mpi:".ljust(variable_space)
+                    description += "auto \n"
+                else:
+                    description += "  mpi:".ljust(variable_space)
+                    description += str(int(value)) + "\n"
 
         if "gravity" in self._run_settings:
             value = self._run_settings["gravity"]

@@ -245,7 +245,7 @@ class SimInterface:
         change: widget change
             state change of widget
         """
-        if change.new == "disabled":
+        if change.new in ("disabled", "auto"):
             self.mpi = change.new
 
         try:
