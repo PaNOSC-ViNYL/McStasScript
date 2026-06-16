@@ -2567,10 +2567,33 @@ class McCode_instr(BaseCalculator):
         # Run the simulation and return data
         simulation.run_simulation()
 
-        # Load data and store in __data
-        #data = simulation.load_results()
-        #self._set_data(data)
-        
+        if simulation.simulation_succeeded:
+            # Good return code and data generated
+            return self.__handle_simulation_output(simulation)
+        elif simulation.simulation_wrote_data:
+            # Something went wrong, in some cases data can still be read
+            try:
+                #  Attempt to read the data
+                return self.__handle_simulation_output(simulation)
+            except:
+                # If data could not be read, acknowledge failure (run_simulation will print errors)
+                raise ValueError("Simulation failed and it was not possible to read results")
+        else:
+            raise ValueError("Simulation failed and no data was written to disk")
+
+    def __handle_simulation_output(self, simulation):
+        """
+        Reads simulation data, stores it according to libpyvinyl convention
+
+        Parameters
+        ----------
+        output_path : ManagedMcrun object
+                Simulation that has been executed
+        """
+
+        if not simulation.simulation_performed:
+            raise ValueError("Simulation was not executed.")
+
         ## look for MCPL_output components and the defined filenames
         self.__add_mcpl_to_output(simulation)
 
@@ -2579,7 +2602,7 @@ class McCode_instr(BaseCalculator):
         data_dict = {"data": data}
         # adding to the libpyvinyl output datacollection with key = sim_data_key
         sim_data_key = self.output_keys[0]
-        output_data = self.output[sim_data_key] 
+        output_data = self.output[sim_data_key]
         output_data.set_dict(data_dict)
 
         if self.run_to_ref is not None:

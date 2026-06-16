@@ -15,6 +15,7 @@ def sanitise_comp_name(comp_name):
 
     return comp_name
 
+
 class DiagnosticsPoint:
     def __init__(self, instr, comp_name, before=True, rays=50000):
         comp_name = sanitise_comp_name(comp_name)

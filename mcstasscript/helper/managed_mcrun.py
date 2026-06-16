@@ -112,6 +112,9 @@ class ManagedMcrun:
         self.suppress_output = False
         self.component_data = None
         self.simulation_performed = False
+        self.simulation_wrote_data = False
+        self.simulation_succeeded = False
+
 
         # executable_path always in kwargs
         if "executable_path" in kwargs:
@@ -297,13 +300,22 @@ class ManagedMcrun:
                                  universal_newlines=True,
                                  cwd=self.run_path)
 
-        if self.suppress_output is False:
+        if process.returncode != 0:
+            print("Simulation signaled that it failed by non-zero return code")
+            print(highlight(process.stdout, "error", return_section=True,
+                            after_lines=5, highlight_type="FAIL"))
+        elif self.suppress_output is False:
             print_sim_output(process.stdout)
 
-        if not os.path.isdir(self.data_folder_name):
+        if os.path.isdir(self.data_folder_name):
+            self.simulation_wrote_data = True
+        else:
             warnings.warn("Simulation did not create data folder, most likely failed.")
 
-        self.simulation_performed = True
+        self.simulation_performed = True  # Signals simulation was executed
+
+        if process.returncode == 0 and self.simulation_wrote_data:
+            self.simulation_succeeded = True  # Signals simulation ran as expected
 
     def load_results(self, *args):
         """
