@@ -33,6 +33,7 @@ from mcstasscript.helper.check_mccode_version import check_mcstas_major_version
 from mcstasscript.helper.check_mccode_version import check_mcxtrace_major_version
 from mcstasscript.helper.name_inspector import find_python_variable_name
 from mcstasscript.helper.search_statement import SearchStatement, SearchStatementList
+from mcstasscript.helper.signature_set_parameters import SetParametersCallableInstrument
 from mcstasscript.instrument_diagram.make_diagram import instrument_diagram
 from mcstasscript.instrument_diagnostics.intensity_diagnostics import IntensityDiagnostics
 
@@ -433,6 +434,9 @@ class McCode_instr(BaseCalculator):
         # Holds major version of underlying package
         self.mccode_version = None
 
+        # Overwrite set_parameters to version that can autocomplete
+        self.set_parameters = SetParametersCallableInstrument(self)
+
         # Avoid initializing if loading from dump
         if not hasattr(self, "declare_list"):
             self.declare_list = []
@@ -744,7 +748,13 @@ class McCode_instr(BaseCalculator):
 
         self.parameters.add(par)
 
+        # set_parameters will now need an updated docstring
+        self.set_parameters.refresh_docstring()
+
         return par
+
+    def get_parameter_names(self):
+        return [parameter.name for parameter in self.parameters.parameters.values()]
 
     def show_parameters(self, line_length=None):
         """
@@ -1201,8 +1211,11 @@ class McCode_instr(BaseCalculator):
 
             self.component_class_lib[component_name] = dynamic_component_class
 
-        return self.component_class_lib[component_name](name, component_name,
-                                                        **kwargs)
+        out = self.component_class_lib[component_name](name, component_name,
+                                                       **kwargs)
+        out.set_parameters.refresh_docstring()
+
+        return out
 
     def add_component(self, name, component_name=None, *, before=None,
                       after=None, AT=None, AT_RELATIVE=None, ROTATED=None,

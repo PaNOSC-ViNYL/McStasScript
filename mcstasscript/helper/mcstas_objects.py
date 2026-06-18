@@ -3,6 +3,7 @@ from mcstasscript.helper.formatting import is_legal_parameter
 from mcstasscript.helper.exceptions import McStasError
 from mcstasscript.helper.name_inspector import find_python_variable_name
 from mcstasscript.helper.search_statement import SearchStatement, SearchStatementList
+from mcstasscript.helper.signature_set_parameters import SetParametersCallableIComponent
 
 from libpyvinyl.Parameters.Parameter import Parameter
 
@@ -591,6 +592,9 @@ class Component:
         self.search_statement_list = SearchStatementList()
         self.save_parameters = save_parameters
 
+        # Provides help for set_parameters when used in jupyter notebooks
+        self.set_parameters = SetParametersCallableIComponent(self)
+
         # references to component names
         self.AT_reference = None
         self.ROTATED_reference = None
@@ -840,37 +844,8 @@ class Component:
             self.ROTATED_relative = "RELATIVE " + relative
             self.ROTATED_reference = relative
 
-    def set_parameters(self, args_as_dict=None, **kwargs):
-        """
-        Set Component parameters from dictionary input or keyword arguments
-
-        Relies on attributes added when McCode_Instr creates a subclass from
-        the Component class where each component parameter is added as an
-        attribute.
-
-        An error is raised if trying to set a parameter that does not exist
-
-        Parameters
-        ----------
-        args_as_dict : dict
-            Parameters names and their values as dictionary
-        """
-        if args_as_dict is not None:
-            parameter_dict = args_as_dict
-        else:
-            parameter_dict = kwargs
-
-        for key, val in parameter_dict.items():
-            if not hasattr(self, key):
-                raise NameError("No parameter called "
-                                + key
-                                + " in component named "
-                                + self.name
-                                + " of component type "
-                                + self.component_name
-                                + ".")
-            else:
-                setattr(self, key, val)
+    def get_parameter_names(self):
+        return self.parameter_names
 
     def set_WHEN(self, string):
         """

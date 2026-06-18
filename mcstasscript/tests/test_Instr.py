@@ -31,7 +31,17 @@ def mock_isdir(path):
 
 class DummyComponent(Component):
     def __init__(self, *args, **kwargs):
+        self.parameter_names = ["filename", "test_keyword"]
+        self.parameter_defaults = {}
+        self.parameter_types = {'filename': 'string', 'test_keyword': 'double'}
+        self.parameter_units = {}
+        self.parameter_comments = {}
+        self.category = {}
+
+        self.test_keyword = None
+        self.filename = None
         super().__init__(*args, **kwargs)
+
 
     def set_parameters(self, *args, **kwargs):
         pass
