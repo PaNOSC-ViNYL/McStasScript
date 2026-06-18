@@ -302,9 +302,9 @@ class ManagedMcrun:
 
         if process.returncode != 0:
             print("Simulation signaled that it failed by non-zero return code")
-            print(highlight(process.stdout, "error", return_section=True,
-                            after_lines=5, highlight_type="FAIL"))
-        elif self.suppress_output is False:
+            print_sim_output(process.stdout)
+
+        if self.suppress_output is False and process.returncode == 0:
             print_sim_output(process.stdout)
 
         if os.path.isdir(self.data_folder_name):

@@ -15,8 +15,19 @@ from mcstasscript.tests.helpers_for_tests import WorkInTestDir
 from mcstasscript.helper.exceptions import McStasError
 from mcstasscript.helper.mcstas_objects import Component
 from mcstasscript.helper.beam_dump_database import BeamDump
+from mcstasscript.helper.managed_mcrun import ManagedMcrun
 
 run_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '.')
+
+
+real_isdir = os.path.isdir
+
+def mock_isdir(path):
+    if os.path.basename(path) == "folder_name_which_is_unused":
+        print("specific path mocked")
+        return True
+    print("mock_isdir called with ", path)
+    return real_isdir(path)
 
 class DummyComponent(Component):
     def __init__(self, *args, **kwargs):
@@ -2044,10 +2055,12 @@ class TestMcStas_instr(unittest.TestCase):
                                    + "test_run_backengine_basic")
 
             instr = setup_populated_x_ray_instr_with_dummy_path()
-            instr.run_full_instrument(output_path=new_folder_name,
-                                      increment_folder_name=False,
-                                      executable_path=executable_path,
-                                      parameters={"theta": 1})
+            with unittest.mock.patch("os.path.isdir", side_effect=mock_isdir):
+                with unittest.mock.patch.object(ManagedMcrun, "load_results", return_value=None):
+                    instr.run_full_instrument(output_path=new_folder_name,
+                                              increment_folder_name=False,
+                                              executable_path=executable_path,
+                                              parameters={"theta": 1})
 
         expected_path = os.path.join(executable_path, "mxrun")
         expected_path = '"' + expected_path + '"'
@@ -2089,6 +2102,8 @@ class TestMcStas_instr(unittest.TestCase):
             with self.assertRaises(NameError):
                 instr.backengine()
 
+
+
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     @unittest.mock.patch("subprocess.run")
     def test_run_backengine_basic(self, mock_sub, mock_stdout):
@@ -2116,7 +2131,9 @@ class TestMcStas_instr(unittest.TestCase):
             instr.settings(output_path=new_folder_name,
                            increment_folder_name=True,
                            executable_path=executable_path)
-            instr.backengine()
+            with unittest.mock.patch("os.path.isdir", side_effect=mock_isdir):
+                with unittest.mock.patch.object(ManagedMcrun, "load_results", return_value=None):
+                    instr.backengine()
 
         expected_path = os.path.join(executable_path, "mcrun")
         expected_path = '"' + expected_path + '"'
@@ -2167,7 +2184,9 @@ class TestMcStas_instr(unittest.TestCase):
                            seed=300, gravity=True, checks=False,
                            save_comp_pars=True)
             instr.show_settings()
-            instr.backengine()
+            with unittest.mock.patch("os.path.isdir", side_effect=mock_isdir):
+                with unittest.mock.patch.object(ManagedMcrun, "load_results", return_value=None):
+                    instr.backengine()
 
         expected_path = os.path.join(executable_path, "mcrun")
         expected_path = '"' + expected_path + '"'
@@ -2220,7 +2239,9 @@ class TestMcStas_instr(unittest.TestCase):
                            seed=300, gravity=True, checks=False,
                            save_comp_pars=True)
             instr.show_settings()
-            instr.backengine()
+            with unittest.mock.patch("os.path.isdir", side_effect=mock_isdir):
+                with unittest.mock.patch.object(ManagedMcrun, "load_results", return_value=None):
+                    instr.backengine()
 
         expected_path = os.path.join(executable_path, "mcrun")
         expected_path = '"' + expected_path + '"'
@@ -2268,17 +2289,19 @@ class TestMcStas_instr(unittest.TestCase):
             instr.add_parameter("A")
             instr.add_parameter("BC")
 
-            instr.run_full_instrument(output_path=new_folder_name,
-                                      increment_folder_name=False,
-                                      executable_path=executable_path,
-                                      mpi=7,
-                                      seed=300,
-                                      ncount=48.4,
-                                      gravity=True,
-                                      custom_flags="-fo",
-                                      parameters={"A": 2,
-                                                  "BC": "car",
-                                                  "theta": "\"toy\""})
+            with unittest.mock.patch("os.path.isdir", side_effect=mock_isdir):
+                with unittest.mock.patch.object(ManagedMcrun, "load_results", return_value=None):
+                    instr.run_full_instrument(output_path=new_folder_name,
+                                              increment_folder_name=False,
+                                              executable_path=executable_path,
+                                              mpi=7,
+                                              seed=300,
+                                              ncount=48.4,
+                                              gravity=True,
+                                              custom_flags="-fo",
+                                              parameters={"A": 2,
+                                                          "BC": "car",
+                                                          "theta": "\"toy\""})
 
         expected_path = os.path.join(executable_path, "mcrun")
         expected_path = '"' + expected_path + '"'
@@ -2321,16 +2344,18 @@ class TestMcStas_instr(unittest.TestCase):
             instr.add_parameter("A")
             instr.add_parameter("BC")
 
-            instr.run_full_instrument(output_path=new_folder_name,
-                                      increment_folder_name=False,
-                                      executable_path=executable_path,
-                                      mpi=7,
-                                      ncount=48.4,
-                                      custom_flags="-fo",
-                                      parameters={"A": 2,
-                                                  "BC": "car",
-                                                  "theta": "\"toy\"",
-                                                  "has_default": 10})
+            with unittest.mock.patch("os.path.isdir", side_effect=mock_isdir):
+                with unittest.mock.patch.object(ManagedMcrun, "load_results", return_value=None):
+                    instr.run_full_instrument(output_path=new_folder_name,
+                                              increment_folder_name=False,
+                                              executable_path=executable_path,
+                                              mpi=7,
+                                              ncount=48.4,
+                                              custom_flags="-fo",
+                                              parameters={"A": 2,
+                                                          "BC": "car",
+                                                          "theta": "\"toy\"",
+                                                          "has_default": 10})
 
         expected_path = os.path.join(executable_path, "mcrun")
         expected_path = '"' + expected_path + '"'
@@ -2371,10 +2396,12 @@ class TestMcStas_instr(unittest.TestCase):
 
             instr = setup_populated_x_ray_instr_with_dummy_path()
 
-            instr.run_full_instrument(output_path=new_folder_name,
-                                      increment_folder_name=False,
-                                      executable_path=executable_path,
-                                      parameters={"theta": 1})
+            with unittest.mock.patch("os.path.isdir", side_effect=mock_isdir):
+                with unittest.mock.patch.object(ManagedMcrun, "load_results", return_value=None):
+                    instr.run_full_instrument(output_path=new_folder_name,
+                                              increment_folder_name=False,
+                                              executable_path=executable_path,
+                                              parameters={"theta": 1})
 
         expected_path = os.path.join(executable_path, "mxrun")
         expected_path = '"' + expected_path + '"'
