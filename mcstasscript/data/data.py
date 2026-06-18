@@ -90,7 +90,7 @@ class McStasMetaData:
                 type_data = type_data.split("(")[1]
                 type_data = type_data.split(")")[0]
                 self.dimension = int(type_data)
-            if "array_2d" in type_data:
+            if "array_2d" in type_data or "list" in type_data:
                 self.dimension = []
                 type_string1 = type_data.split(",")[0]
                 type_string1 = type_string1.split("(")[1]

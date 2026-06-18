@@ -73,7 +73,7 @@ class EventPlotter:
             View for which limits should be retrieved
         """
         if view.axis2 is None:
-            return np.NaN, np.NaN
+            return np.nan, np.nan
         data = self.data.get_data_column(view.axis2, flag_info=self.flag_info)
         return np.min(data), np.max(data)
 
