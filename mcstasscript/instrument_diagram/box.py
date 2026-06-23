@@ -64,7 +64,7 @@ class ComponentBox:
                     linewidth=self.outline_width)
 
         self.t = ax.text(self.position_x + self.box_indent, self.position_y, self.name,
-                         va="center", fontweight="semibold", color="black", #font="monospace",
+                         va="center", fontweight=700, color="black", #font="monospace",
                          bbox=bbox)
 
     def get_text_start(self):
