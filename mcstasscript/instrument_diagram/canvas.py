@@ -6,6 +6,8 @@ import numpy as np
 from mcstasscript.instrument_diagram.box import ComponentBox
 from mcstasscript.instrument_diagram.component_description import component_description
 
+fontweight = 700
+
 class DiagramCanvas:
     def __init__(self, left_side_arrows, component_boxes, right_side_arrows,
                  component_categories, colors, intensity_diagnostics=None,
@@ -190,7 +192,8 @@ class DiagramCanvas:
 
         bbox = dict(boxstyle="round", facecolor="white", edgecolor="white")
 
-        ax.text(0.385, 1.03, "Legend", va="center", ha="center", fontweight="semibold", bbox=bbox, fontsize="large")
+        ax.text(0.385, 1.03, "Legend", va="center", ha="center",
+                fontweight=fontweight, bbox=bbox, fontsize="large")
 
         legend_boxes = [ComponentBox("Arm")]
         for category, color in self.category_color_dict.items():
@@ -264,14 +267,14 @@ class DiagramCanvas:
                  length_includes_head=True, width=arrow_width,
                  head_width=5.0 * arrow_width, head_length=2.5 * arrow_width)
         ax.text(START_WIDTH+TEXT_WIDTH_INDENT, AT_HEIGHT + TEXT_DISPLACEMENT + current_displacement,
-                "RELATIVE AT", va="center", weight="semibold")
+                "RELATIVE AT", va="center", weight=fontweight)
 
         current_displacement -= DISPLACEMENT
         ax.arrow(x=START_WIDTH, y=AT_HEIGHT+current_displacement, dx=LINE_LENGTH, dy=0, color=self.colors["ROTATED"],
                  length_includes_head=True, width=arrow_width,
                  head_width=5.0 * arrow_width, head_length=2.5 * arrow_width)
         ax.text(START_WIDTH + TEXT_WIDTH_INDENT, AT_HEIGHT + current_displacement + TEXT_DISPLACEMENT,
-                "RELATIVE ROTATED", va="center", weight="semibold")
+                "RELATIVE ROTATED", va="center", weight=fontweight)
 
         if show_Union:
             current_displacement -= DISPLACEMENT
@@ -279,7 +282,7 @@ class DiagramCanvas:
                      color=self.colors["Union"], length_includes_head=True, width=arrow_width,
                      head_width=5.0 * arrow_width, head_length=2.5 * arrow_width)
             ax.text(START_WIDTH + TEXT_WIDTH_INDENT, AT_HEIGHT + current_displacement + TEXT_DISPLACEMENT,
-                    "Union", va="center", weight="semibold")
+                    "Union", va="center", weight=fontweight)
 
         if show_JUMP_target_index:
             if any_JUMP and any_target_index:
@@ -294,14 +297,14 @@ class DiagramCanvas:
                      color=self.colors["JUMP"], length_includes_head=True, width=arrow_width,
                      head_width=5.0 * arrow_width, head_length=2.5 * arrow_width)
             ax.text(START_WIDTH + TEXT_WIDTH_INDENT, AT_HEIGHT+current_displacement+TEXT_DISPLACEMENT,
-                    legend_text, va="center", weight="semibold")
+                    legend_text, va="center", weight=fontweight)
 
         if show_GROUP:
             current_displacement -= DISPLACEMENT
             ax.plot([START_WIDTH, START_WIDTH+LINE_LENGTH], 2*[AT_HEIGHT + current_displacement],
                     color=self.colors["GROUP"])
             ax.text(START_WIDTH + TEXT_WIDTH_INDENT, AT_HEIGHT + current_displacement + TEXT_DISPLACEMENT,
-                    "GROUP", va="center", weight="semibold")
+                    "GROUP", va="center", weight=fontweight)
 
         box_y_coordinates = list(np.linspace(margin, box_top, 5))
         box_x_coordinate = 0.83
