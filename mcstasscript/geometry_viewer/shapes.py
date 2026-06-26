@@ -31,11 +31,15 @@ class Shape(ABC):
 
         return mesh
 
+    def __repr__(self):
+        return "BaseShape"
+
 
 @dataclass
-class LineShape(Shape):
-    width: float = 1.0
-
+class BoxShape(Shape):
+    width: float | None = None
+    height: float | None = None
+    depth: float | None = None
 
     def make_geometry(self):
         return p3.BoxGeometry(
@@ -44,10 +48,13 @@ class LineShape(Shape):
             depth=self.depth,
         )
 
+    def __repr__(self):
+        return f"BoxShape w{self.width} h{self.height} d{self.depth}"
+
 
 @dataclass
-class BoxShape(Shape):
-    points: np.array = None
+class LineShape(Shape):
+    points: np.array | None = None
 
     def make_geometry(self):
         return p3.BufferGeometry(
@@ -66,11 +73,45 @@ class BoxShape(Shape):
 
         return line
 
+    def __repr__(self):
+        return f"LineShape {self.points}"
+
+
+@dataclass
+class CircleShape(Shape):
+    radius: float | None = None
+    segments: int | None = None
+    align_axis: tuple[float, float, float] | None = None
+
+    def make_geometry(self):
+        print(self.segments)
+        return p3.CircleGeometry(
+            radius=self.radius,
+            segments=self.segments,
+        )
+
+    def make_mesh(self, material):
+        mesh = super().make_mesh(material)
+
+        if self.align_axis is not None:
+            mesh.quaternion = quaternion_from_vectors(
+                (0, 0, 1),  # default circle axis
+                self.align_axis,
+            )
+
+        #if self.transform is not None:
+        #    self.transform.apply_to(mesh)
+
+        return mesh
+
+    def __repr__(self):
+        return f"CylinderShape r{self.radius} h{self.height}"
+
 @dataclass
 class CylinderShape(Shape):
-    radius: float = 1.0
-    height: float = 1.0
-    radial_segments: int = 32
+    radius: float | None = None
+    height: float | None = None
+    radial_segments: int | None = None
     align_axis: tuple[float, float, float] | None = None
 
     def make_geometry(self):
@@ -90,10 +131,13 @@ class CylinderShape(Shape):
                 self.align_axis,
             )
 
-        if self.transform is not None:
-            self.transform.apply_to(mesh)
+        #if self.transform is not None:
+        #    self.transform.apply_to(mesh)
 
         return mesh
+
+    def __repr__(self):
+        return f"CylinderShape r{self.radius} h{self.height}"
 
 
 def triangulate_faces(faces):
@@ -137,3 +181,6 @@ class PolyhedronShape(Shape):
         geometry.exec_three_obj_method("computeVertexNormals")
 
         return geometry
+
+    def __repr__(self):
+        return f"PolyhedronShape {self.faces_vertices_json}"

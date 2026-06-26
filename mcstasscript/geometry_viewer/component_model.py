@@ -1,7 +1,10 @@
 import numpy as np
 
+from mcstasscript.geometry_viewer.helpers import Transform
+
 from mcstasscript.geometry_viewer.shapes import LineShape
 from mcstasscript.geometry_viewer.shapes import BoxShape
+from mcstasscript.geometry_viewer.shapes import CircleShape
 from mcstasscript.geometry_viewer.shapes import CylinderShape
 from mcstasscript.geometry_viewer.shapes import PolyhedronShape
 from mcstasscript.geometry_viewer.helpers import pos_rot_from_list
@@ -28,10 +31,15 @@ class ComponentModel:
 
         pos, R  = pos_rot_from_list(json_dict["m4"])
 
-        self.global_position = pos
-        self.rotation_matrix = R
+        #self.global_position = pos
+        #self.rotation_matrix = R
 
         self.shape_list = []
+
+        transform = Transform(position=pos, rotation_matrix=R)
+
+        combine_multilines = True
+        running_points = None
 
         shape = None
         for drawcall in json_dict["drawcalls"]:
@@ -39,11 +47,25 @@ class ComponentModel:
                 args = drawcall["args"]
 
                 points = np.array(args, dtype=np.float32).reshape((-1, 3))
-                points = points @ self.rotation_matrix
+                #points = points @ R + pos
 
-                shape = LineShape(points)
+                if combine_multilines:
+                    if running_points is None:
+                        running_points = points
+                    else:
+                        #print(running_points[-1], points[0], np.all(running_points[-1] == points[0]))
+                        if len(points) > 1 and np.all(running_points[-1] == points[0]):
+                            # If this is continuing a linepiece, combine them
+                            running_points = np.vstack((running_points, points[1:]))
+                        else:
+                            # If this is a new linepiece, dump the current and start a new
+                            shape = LineShape(transform=transform, points=running_points)
+                            running_points = points
 
-            if drawcall["key"] == "box":
+                else:
+                    shape = LineShape(transform=transform, points=points)
+
+            elif drawcall["key"] == "box":
                 args = drawcall["args"]
 
                 x = args[0]
@@ -57,7 +79,8 @@ class ComponentModel:
                 ny = args[8]
                 nz = args[9]
 
-                shape = BoxShape(width=xwidth, height=yheight, depth=zdepth)
+                shape = BoxShape(width=xwidth, height=yheight, depth=zdepth,
+                                 transform=transform)
 
             elif drawcall["key"] == "cylinder":
                 args = drawcall["args"]
@@ -74,18 +97,57 @@ class ComponentModel:
 
                 shape = CylinderShape(radius=radius, height=height,
                                       radial_segments=32,
-                                      align_axis=(nx, ny, nz))
+                                      align_axis=(nx, ny, nz),
+                                      transform=transform)
+
+            elif drawcall["key"] == "circle":
+                args = drawcall["args"]
+
+                plane = args[0]
+                x = args[1]
+                y = args[2]
+                z = args[3]
+                radius = args[4]
+
+                nx = 0
+                ny = 0
+                nz = 0
+                if plane == "xy":
+                    nz = 1
+                elif plane == "xz":
+                    ny = 1
+                elif plane == "yz":
+                    nx = 1
+                else:
+                    print("unknown plane in circle")
+
+                print(plane, nx, ny, nz)
+
+
+
+                shape = CircleShape(radius=radius,
+                                    segments=64,
+                                    align_axis=(nx, ny, nz),
+                                    transform=Transform(position=pos + np.array([x,y,z]),
+                                                        rotation_matrix=R))
 
             elif drawcall["key"] == "polyhedron":
                 faces_vertices_json = drawcall["args"]
 
-                PolyhedronShape(faces_vertices_json=faces_vertices_json)
+                PolyhedronShape(faces_vertices_json=faces_vertices_json,
+                                transform=transform)
 
             else:
+                print("didn't know this drawclass: ", drawcall["key"])
                 pass
                 # Currently allow unknown drawcalls while writing
 
             if shape is not None:
+                self.shape_list.append(shape)
+
+        if combine_multilines:
+            if running_points is not None:
+                shape = LineShape(transform=transform, points=running_points)
                 self.shape_list.append(shape)
 
         self.loaded = True
