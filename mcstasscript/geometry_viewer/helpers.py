@@ -95,20 +95,65 @@ def quaternion_from_rotation_matrix(R):
 
     return (qx, qy, qz, qw)
 
+def normalize_quaternion(q):
+    q = np.asarray(q, dtype=float)
+    norm = np.linalg.norm(q)
+
+    if norm == 0:
+        raise ValueError("Cannot normalize zero-length quaternion")
+
+    return tuple(q / norm)
+
+
+def quaternion_multiply(q1, q2):
+    """
+    Hamilton product of two quaternions in (x, y, z, w) format.
+
+    Returns q1 * q2.
+
+    When used as a rotation, q1 * q2 means:
+    apply q2 first, then q1.
+    """
+    x1, y1, z1, w1 = q1
+    x2, y2, z2, w2 = q2
+
+    return normalize_quaternion((
+        w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2,
+        w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,
+        w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2,
+        w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2,
+    ))
+
 @dataclass
 class Transform:
     position: np.ndarray | None = None
     rotation_matrix: np.ndarray | None = None
     quaternion: tuple[float, float, float, float] | None = None
 
+    def final_quaternion(self):
+        q = None
+
+        if self.rotation_matrix is not None:
+            q = quaternion_from_rotation_matrix(self.rotation_matrix)
+            q = normalize_quaternion(q)
+
+        if self.quaternion is not None:
+            q_extra = normalize_quaternion(self.quaternion)
+
+            if q is None:
+                q = q_extra
+            else:
+                # Coordinate-system rotation, then local/internal alignment.
+                q = quaternion_multiply(q, q_extra)
+
+        return q
+
     def apply_to(self, obj):
         if self.position is not None:
             obj.position = tuple(np.asarray(self.position, dtype=float))
 
-        if self.quaternion is not None:
-            obj.quaternion = self.quaternion
-
-        elif self.rotation_matrix is not None:
-            obj.quaternion = quaternion_from_rotation_matrix(self.rotation_matrix)
+        q = self.final_quaternion()
+        if q is not None:
+            obj.quaternion = q
 
         return obj
