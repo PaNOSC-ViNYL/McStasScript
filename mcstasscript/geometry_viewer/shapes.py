@@ -153,7 +153,17 @@ class PolyhedronShape(Shape):
     faces_vertices_json: str = ""
 
     def make_geometry(self):
-        parsed = json.loads(self.faces_vertices_json)
+
+        if isinstance(self.faces_vertices_json, list):
+            faces_vertices_json = self.faces_vertices_json[0]
+            if len(self.faces_vertices_json) > 1:
+                print("Got case where PolyhedronShape had actual json list, assumed it only had one element")
+        else:
+            faces_vertices_json = self.faces_vertices_json
+
+        parsed = json.loads(faces_vertices_json)
+
+
 
         vertices = np.array(parsed["vertices"], dtype=np.float32)
         indices = triangulate_faces(parsed["faces"])

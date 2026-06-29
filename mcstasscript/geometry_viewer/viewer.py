@@ -58,7 +58,7 @@ class InstrumentModel:
         py3_model = PyThreeGeometryModel()
 
         for component_model in self.component_models:
-            print(component_model.comp.name)
+            #print(component_model.comp.name)
             color = py3_model.color_cycler.get_color()
             material = p3.MeshBasicMaterial(
                 color=color,
@@ -69,7 +69,7 @@ class InstrumentModel:
                 # depthTest=False
             )
             unique_class_names = {obj.__class__.__name__ for obj in component_model.shape_list}
-            print("n shapes", len(component_model.shape_list), unique_class_names)
+            #print("n shapes", len(component_model.shape_list), unique_class_names)
 
             for shape in component_model.shape_list:
 

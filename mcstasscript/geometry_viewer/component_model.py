@@ -157,8 +157,6 @@ class ComponentModel:
                 else:
                     print("unknown plane in circle")
 
-                print(plane, nx, ny, nz, y, radius)
-
                 quaternion = quaternion_from_vectors(
                     (0, 0, 1),  # default circle axis
                     (nx, ny, nz),
@@ -174,8 +172,8 @@ class ComponentModel:
             elif drawcall["key"] == "polyhedron":
                 faces_vertices_json = drawcall["args"]
 
-                PolyhedronShape(faces_vertices_json=faces_vertices_json,
-                                transform=transform)
+                shape = PolyhedronShape(faces_vertices_json=faces_vertices_json,
+                                        transform=transform)
 
             else:
                 print("didn't know this drawclass: ", drawcall["key"])
