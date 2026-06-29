@@ -62,10 +62,10 @@ class InstrumentModel:
             color = py3_model.color_cycler.get_color()
             material = p3.MeshBasicMaterial(
                 color=color,
-                # transparent=True,
-                # opacity=0.8,
+                transparent=True,
+                opacity=0.8,
                 depthWrite=False,
-                # side="DoubleSide",
+                side="DoubleSide",
                 # depthTest=False
             )
             unique_class_names = {obj.__class__.__name__ for obj in component_model.shape_list}

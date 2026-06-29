@@ -81,38 +81,39 @@ class LineShape(Shape):
 class CircleShape(Shape):
     radius: float | None = None
     segments: int | None = None
-    align_axis: tuple[float, float, float] | None = None
 
     def make_geometry(self):
-        print(self.segments)
         return p3.CircleGeometry(
             radius=self.radius,
             segments=self.segments,
         )
 
-    def make_mesh(self, material):
-        mesh = super().make_mesh(material)
+    def __repr__(self):
+        return f"CylinderShape r{self.radius} h{self.height}"
 
-        if self.align_axis is not None:
-            mesh.quaternion = quaternion_from_vectors(
-                (0, 0, 1),  # default circle axis
-                self.align_axis,
-            )
+@dataclass
+class ConeShape(Shape):
+    radius: float | None = None
+    height: float | None = None
+    radial_segments: int | None = None
 
-        #if self.transform is not None:
-        #    self.transform.apply_to(mesh)
-
-        return mesh
+    def make_geometry(self):
+        return p3.CylinderGeometry(
+            radiusTop=0,
+            radiusBottom=self.radius,
+            height=self.height,
+            radialSegments=self.radial_segments,
+        )
 
     def __repr__(self):
         return f"CylinderShape r{self.radius} h{self.height}"
+
 
 @dataclass
 class CylinderShape(Shape):
     radius: float | None = None
     height: float | None = None
     radial_segments: int | None = None
-    align_axis: tuple[float, float, float] | None = None
 
     def make_geometry(self):
         return p3.CylinderGeometry(
@@ -121,20 +122,6 @@ class CylinderShape(Shape):
             height=self.height,
             radialSegments=self.radial_segments,
         )
-
-    def make_mesh(self, material):
-        mesh = super().make_mesh(material)
-
-        if self.align_axis is not None:
-            mesh.quaternion = quaternion_from_vectors(
-                (0, 1, 0),  # default cylinder axis
-                self.align_axis,
-            )
-
-        #if self.transform is not None:
-        #    self.transform.apply_to(mesh)
-
-        return mesh
 
     def __repr__(self):
         return f"CylinderShape r{self.radius} h{self.height}"
