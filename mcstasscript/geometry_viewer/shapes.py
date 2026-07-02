@@ -150,15 +150,15 @@ class CircleShape(Shape):
         if self.radius <= 0.05:
             opacity = 0.9
         elif self.radius <= 0.5:
-            opacity = 0.85
+            opacity = 0.7
         elif self.radius <= 1.5:
-            opacity = 0.65
-        else:
             opacity = 0.4
+        else:
+            opacity = 0.2
 
         return dict(material_class=p3.MeshLambertMaterial,
                     transparent=True,
-                    opacity=0.8,
+                    opacity=opacity,
                     depthWrite=False,
                     side="DoubleSide")
 
