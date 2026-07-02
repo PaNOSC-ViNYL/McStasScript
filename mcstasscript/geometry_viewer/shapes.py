@@ -11,15 +11,30 @@ from mcstasscript.geometry_viewer.helpers import quaternion_from_rotation_matrix
 
 @dataclass
 class Shape(ABC):
-    #material: p3.Material
     transform: Transform | None = None
 
     @abstractmethod
     def make_geometry(self):
         pass
 
-    def make_mesh(self, material):
+    def material_kwargs(self):
+        return {}
+
+    def make_mesh(self, material_library):
         geometry = self.make_geometry()
+
+        material = material_library.get_material(**self.material_kwargs())
+        """
+        material_kwargs = self.material_kwargs()
+        if "material_class" in material_kwargs:
+            cls = material_kwargs["material_class"]
+            del material_kwargs["material_class"]
+        else:
+            cls = p3.MeshBasicMaterial
+
+        material = cls(**material_kwargs)
+        """
+
 
         mesh = p3.Mesh(
             geometry=geometry,
@@ -40,6 +55,13 @@ class BoxShape(Shape):
     width: float | None = None
     height: float | None = None
     depth: float | None = None
+
+    def material_kwargs(self):
+        return dict(material_class=p3.MeshLambertMaterial,
+                    transparent=True,
+                    opacity=0.8,
+                    depthWrite=False,
+                    side="DoubleSide")
 
     def make_geometry(self):
         return p3.BoxGeometry(
@@ -63,8 +85,13 @@ class LineShape(Shape):
             }
         )
 
-    def make_mesh(self, material):
+    def material_kwargs(self):
+        return dict(material_class=p3.LineBasicMaterial)
+
+    def make_mesh(self, material_library):
         geometry = self.make_geometry()
+
+        material = material_library.get_material(**self.material_kwargs())
 
         line = p3.Line(geometry=geometry, material=material)
 
@@ -78,9 +105,62 @@ class LineShape(Shape):
 
 
 @dataclass
+class LineSegmentsShape(Shape):
+    points: np.ndarray | None = None
+
+    def make_geometry(self):
+        points = np.asarray(self.points, dtype=np.float32)
+
+        if len(points) < 2:
+            raise ValueError("LineSegmentsShape needs at least two points")
+
+        return p3.BufferGeometry(
+            attributes={
+                "position": p3.BufferAttribute(points)
+            }
+        )
+
+    def material_kwargs(self):
+        return dict(material_class=p3.LineBasicMaterial)
+
+    def make_mesh(self, material_library):
+        geometry = self.make_geometry()
+        material = material_library.get_material(**self.material_kwargs())
+
+        line = p3.LineSegments(
+            geometry=geometry,
+            material=material,
+        )
+
+        if self.transform is not None:
+            self.transform.apply_to(line)
+
+        return line
+
+    def __repr__(self):
+        return f"LineSegmentShape {self.points}"
+
+
+@dataclass
 class CircleShape(Shape):
     radius: float | None = None
     segments: int | None = None
+
+    def material_kwargs(self):
+        if self.radius <= 0.05:
+            opacity = 0.9
+        elif self.radius <= 0.5:
+            opacity = 0.85
+        elif self.radius <= 1.5:
+            opacity = 0.65
+        else:
+            opacity = 0.4
+
+        return dict(material_class=p3.MeshLambertMaterial,
+                    transparent=True,
+                    opacity=0.8,
+                    depthWrite=False,
+                    side="DoubleSide")
 
     def make_geometry(self):
         return p3.CircleGeometry(
@@ -97,6 +177,13 @@ class ConeShape(Shape):
     height: float | None = None
     radial_segments: int | None = None
 
+    def material_kwargs(self):
+        return dict(material_class=p3.MeshLambertMaterial,
+                    transparent=True,
+                    opacity=0.80,
+                    depthWrite=True,
+                    side="DoubleSide")
+
     def make_geometry(self):
         return p3.CylinderGeometry(
             radiusTop=0,
@@ -106,7 +193,7 @@ class ConeShape(Shape):
         )
 
     def __repr__(self):
-        return f"CylinderShape r{self.radius} h{self.height}"
+        return f"ConeShape r{self.radius} h{self.height}"
 
 
 @dataclass
@@ -114,6 +201,25 @@ class CylinderShape(Shape):
     radius: float | None = None
     height: float | None = None
     radial_segments: int | None = None
+
+    def material_kwargs(self):
+        # large cylinders more transparent
+        largest_dim = max(2*self.radius, self.height)
+
+        if largest_dim <= 0.05:
+            opacity = 0.9
+        elif largest_dim <= 0.5:
+            opacity = 0.85
+        elif largest_dim <= 1.5:
+            opacity = 0.65
+        else:
+            opacity = 0.4
+
+        return dict(material_class=p3.MeshLambertMaterial,
+                    transparent=True,
+                    opacity=opacity,
+                    depthWrite=True,
+                    side="DoubleSide")
 
     def make_geometry(self):
         return p3.CylinderGeometry(
@@ -152,6 +258,13 @@ def triangulate_faces(faces):
 class PolyhedronShape(Shape):
     faces_vertices_json: str = ""
 
+    def material_kwargs(self):
+        return dict(material_class=p3.MeshBasicMaterial,
+                    transparent=True,
+                    opacity=0.8,
+                    depthWrite=False,
+                    side="DoubleSide")
+
     def make_geometry(self):
 
         if isinstance(self.faces_vertices_json, list):
@@ -162,8 +275,6 @@ class PolyhedronShape(Shape):
             faces_vertices_json = self.faces_vertices_json
 
         parsed = json.loads(faces_vertices_json)
-
-
 
         vertices = np.array(parsed["vertices"], dtype=np.float32)
         indices = triangulate_faces(parsed["faces"])

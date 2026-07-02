@@ -4,6 +4,7 @@ from mcstasscript.geometry_viewer.helpers import Transform
 from mcstasscript.geometry_viewer.helpers import quaternion_from_vectors
 
 from mcstasscript.geometry_viewer.shapes import LineShape
+from mcstasscript.geometry_viewer.shapes import LineSegmentsShape
 from mcstasscript.geometry_viewer.shapes import BoxShape
 from mcstasscript.geometry_viewer.shapes import CircleShape
 from mcstasscript.geometry_viewer.shapes import CylinderShape
@@ -28,7 +29,9 @@ class ComponentModel:
         """
         Takes component dict from mcdisplay-webgl json output
 
-        Adds shape objects to shape_list
+        Adds shape objects to shape_list.
+        Lines are added as line segments, so p1->p2->p3 is stored as
+        p1->p2 - p2->p3 which plays well with PyThreejs LineSegments.
         """
 
         pos, rot  = pos_rot_from_list(json_dict["m4"])
@@ -37,30 +40,27 @@ class ComponentModel:
 
         transform = Transform(position=pos, rotation_matrix=rot)
 
-        combine_multilines = True
         running_points = None
 
+        points = None
         shape = None
         for drawcall in json_dict["drawcalls"]:
             if drawcall["key"] == "multiline":
                 args = drawcall["args"]
 
-                points = np.array(args, dtype=np.float32).reshape((-1, 3))
+                new_points = np.array(args, dtype=np.float32).reshape((-1, 3))
 
-                if combine_multilines:
-                    if running_points is None:
-                        running_points = points
-                    else:
-                        if len(points) > 1 and np.all(running_points[-1] == points[0]):
-                            # If this is continuing a linepiece, combine them
-                            running_points = np.vstack((running_points, points[1:]))
-                        else:
-                            # If this is a new linepiece, dump the current and start a new
-                            shape = LineShape(transform=transform, points=running_points)
-                            running_points = points
-
+                if len(new_points) <= 2:
+                    segment_points = new_points
                 else:
-                    shape = LineShape(transform=transform, points=points)
+                    segment_points = np.empty((2 * (len(new_points) - 1), 3), dtype=np.float32)
+                    segment_points[0::2] = new_points[:-1]
+                    segment_points[1::2] = new_points[1:]
+
+                if points is None:
+                    points = segment_points
+                else:
+                    points = np.vstack((points, segment_points))
 
             elif drawcall["key"] == "box":
                 args = drawcall["args"]
@@ -77,11 +77,11 @@ class ComponentModel:
                 nz = args[9]
 
                 quaternion = quaternion_from_vectors(
-                    (0, 1, 0),  # default cone axis
+                    (0, 1, 0),  # default box axis
                     (nx, ny, nz),
                 )
 
-                this_transform = Transform(position=pos + np.array([x, y, z]),
+                this_transform = Transform(position=pos + np.array([x, y, z]) @ rot.T,
                                            quaternion=quaternion, rotation_matrix=rot)
 
                 shape = BoxShape(width=xwidth, height=yheight, depth=zdepth,
@@ -101,11 +101,11 @@ class ComponentModel:
                 nz = args[8]
 
                 quaternion = quaternion_from_vectors(
-                    (0, 1, 0),  # default cone axis
+                    (0, 1, 0),  # default cylinder axis
                     (nx, ny, nz),
                 )
 
-                this_transform = Transform(position=pos + np.array([x, y, z]),
+                this_transform = Transform(position=pos + np.array([x, y, z]) @ rot.T,
                                            quaternion=quaternion, rotation_matrix=rot)
 
                 shape = CylinderShape(radius=radius, height=height,
@@ -129,7 +129,7 @@ class ComponentModel:
                     (nx, ny, nz),
                 )
 
-                this_transform = Transform(position=pos + np.array([x, y, z]),
+                this_transform = Transform(position=pos + np.array([x, y, z]) @ rot.T,
                                            quaternion=quaternion, rotation_matrix=rot)
 
                 shape = ConeShape(radius=radius, height=height,
@@ -162,7 +162,7 @@ class ComponentModel:
                     (nx, ny, nz),
                 )
 
-                this_transform = Transform(position=pos + np.array([x,y,z]),
+                this_transform = Transform(position=pos + np.array([x,y,z]) @ rot.T,
                                            quaternion=quaternion, rotation_matrix=rot)
 
                 shape = CircleShape(radius=radius,
@@ -182,10 +182,9 @@ class ComponentModel:
             if shape is not None:
                 self.shape_list.append(shape)
 
-        if combine_multilines:
-            if running_points is not None:
-                shape = LineShape(transform=transform, points=running_points)
-                self.shape_list.append(shape)
+        if points is not None:
+            shape = LineSegmentsShape(transform=transform, points=points)
+            self.shape_list.append(shape)
 
         self.loaded = True
 
