@@ -36,11 +36,12 @@ class ComponentModel:
 
         pos, rot  = pos_rot_from_list(json_dict["m4"])
 
+        self.global_position = pos
+        self.rotation_matrix = rot
+
         self.shape_list = []
 
         transform = Transform(position=pos, rotation_matrix=rot)
-
-        running_points = None
 
         points = None
         shape = None
@@ -61,6 +62,8 @@ class ComponentModel:
                     points = segment_points
                 else:
                     points = np.vstack((points, segment_points))
+
+                shape = None
 
             elif drawcall["key"] == "box":
                 args = drawcall["args"]

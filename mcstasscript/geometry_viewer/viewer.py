@@ -1,56 +1,13 @@
 import pythreejs as p3
+import ipywidgets as ipw
 import json
+import os
+import copy
 
 from mcstasscript.geometry_viewer.component_model import ComponentModel
-from mcstasscript.geometry_viewer.pythree_materials import MaterialLibrary
+from mcstasscript.geometry_viewer.pythree_specific import PyThreeGeometryModel
+from mcstasscript.geometry_viewer.mcdisplay_runner import generate_json
 
-
-class PyThreeGeometryModel:
-    def __init__(self):
-        self.mesh_objects = [] # Holds the mesh objects that are added to the scene
-
-        default_colors = ["#ff0000", "#808080", "#00ff00", "#ffff00", "#0000ff",
-                          "#ff00ff", "#00ffff", "#ffa500", "#444444", "#cccccc"]
-        self.material_library = MaterialLibrary(colors=default_colors)
-
-    def next_component(self):
-        self.material_library.next()
-
-    def add_meshs_from_model(self, model):
-        """
-        for shape in model.shape_list:
-            self.group.add(shape.make_mesh(self.material_library))
-        """
-        children = [
-            shape.make_mesh(self.material_library)
-            for shape in model.shape_list
-        ]
-
-        self.mesh_objects += children
-
-    def make_renderer(self, show_axes=True, width=900, height=600):
-        scene = p3.Scene(children=[])
-        ambient = p3.AmbientLight(intensity=1.0)
-        scene.add(ambient)
-
-        if show_axes:
-            axes = p3.AxesHelper(size=1)
-            scene.add(axes)
-
-        scene.add(p3.Group(children=self.mesh_objects))
-
-        camera = p3.PerspectiveCamera(
-            position=[5, 3, 10], aspect=width / height, fov=50, near=0.01, far=2000
-        )
-        camera.lookAt([0, 0, 2])
-
-        # Create renderer with orbit controls
-        controls = p3.OrbitControls(controlling=camera)
-        renderer = p3.Renderer(
-            camera=camera, scene=scene, controls=[controls], width=width, height=height
-        )
-
-        return renderer
 
 class InstrumentModel:
     def __init__(self):
@@ -74,30 +31,14 @@ class InstrumentModel:
         for index, component_model in enumerate(self.component_models):
 
             if index_min <= index < index_max:
-                py3_model.add_meshs_from_model(component_model)
+                py3_model.add_component_model(component_model)
                 py3_model.next_component()
 
                 unique_class_names = {obj.__class__.__name__ for obj in component_model.shape_list}
                 shape_classes = shape_classes.union(unique_class_names)
 
-
-            """
-            #print(component_model.comp.name)
-            color = py3_model.color_cycler.get_color()
-            material = p3.MeshBasicMaterial(
-                color=color,
-                transparent=True,
-                opacity=0.8,
-                depthWrite=False,
-                side="DoubleSide",
-                # depthTest=False
-            )
-            unique_class_names = {obj.__class__.__name__ for obj in component_model.shape_list}
-            #print("n shapes", len(component_model.shape_list), unique_class_names)
-            """
-
-        print("materials in cache", len(py3_model.material_library._cache))
-        print("shapes:", shape_classes)
+        #print("materials in cache", len(py3_model.material_library._cache))
+        #print("shapes:", shape_classes)
 
         return py3_model
 
@@ -122,7 +63,6 @@ def view_with_guess(instrument_object):
 
     return p3_model.make_renderer()
 
-
 def view_with_json(instrument_object, json_dict, index_min=None, index_max=None):
     """
     Plots instrument geometry with json input
@@ -132,9 +72,6 @@ def view_with_json(instrument_object, json_dict, index_min=None, index_max=None)
 
     for json_component in json_dict["components"]:
         name = json_component["name"]
-
-        #if name not in  ["source", "sample"]:
-        #    continue
 
         component_object = None
         for comp in instrument_object.component_list:
@@ -153,7 +90,11 @@ def view_with_json(instrument_object, json_dict, index_min=None, index_max=None)
     p3_model = instrument_model.make_PyThreeGeometry_model(index_min=index_min,
                                                            index_max=index_max)
 
-    return p3_model.make_renderer()
+    renderer = p3_model.make_renderer()
+
+    navigator = p3_model.create_component_navigator(renderer)
+
+    return ipw.VBox([navigator, renderer])
 
 
 def view(instrument_object, json_dict=None, json_file=None,
@@ -162,12 +103,45 @@ def view(instrument_object, json_dict=None, json_file=None,
     Plots quick geometry if possible, runs mcdisplay if necessary
     """
 
-    if json_file is not None:
-        with open(json_file, "r") as f:
-            json_dict = json.load(f)
+    if json_file is None:
 
-        return view_with_json(instrument_object, json_dict,
-                              index_min=index_min, index_max=index_max)
+        if instrument_object.package_name == "McXtrace":
+            executable = "mxdisplay"
+        else:
+            executable = "mcdisplay"
+
+        instr_path = os.path.join(instrument_object.input_path,
+                                  instrument_object.name + ".instr")
+
+        instr_path = os.path.abspath(instr_path)
+
+        parameters = {}
+        for parameter in instrument_object.parameters:
+            if parameter.value is None:
+                raise RuntimeError("Parameter value not set for parameter: '" + parameter.name
+                                   + "' set with set_parameters.")
+
+            parameters[parameter.name] = parameter.value
+
+        options = copy.deepcopy(instrument_object._run_settings)
+        options["parameters"] = parameters
+        options["output_path"] = instrument_object.output_path
+        options["input_path"] = instrument_object.input_path
+
+        instrument_object.write_full_instrument()
+        json_folder = generate_json(base_executable_name=executable,
+                                  abs_instr_path=instr_path,
+                                  **options)
+        json_file = os.path.join(json_folder, "instrument.json")
+
+        if json_file is None:
+            return RuntimeError("Generating json file failed.")
+
+    with open(json_file, "r") as f:
+        json_dict = json.load(f)
+
+    return view_with_json(instrument_object, json_dict,
+                          index_min=index_min, index_max=index_max)
 
 
     """
