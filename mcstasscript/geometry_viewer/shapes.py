@@ -6,8 +6,6 @@ import numpy as np
 import pythreejs as p3
 
 from mcstasscript.geometry_viewer.helpers import Transform
-from mcstasscript.geometry_viewer.helpers import quaternion_from_vectors
-from mcstasscript.geometry_viewer.helpers import quaternion_from_rotation_matrix
 
 @dataclass
 class Shape(ABC):
@@ -24,17 +22,6 @@ class Shape(ABC):
         geometry = self.make_geometry()
 
         material = material_library.get_material(**self.material_kwargs())
-        """
-        material_kwargs = self.material_kwargs()
-        if "material_class" in material_kwargs:
-            cls = material_kwargs["material_class"]
-            del material_kwargs["material_class"]
-        else:
-            cls = p3.MeshBasicMaterial
-
-        material = cls(**material_kwargs)
-        """
-
 
         mesh = p3.Mesh(
             geometry=geometry,
@@ -169,7 +156,7 @@ class CircleShape(Shape):
         )
 
     def __repr__(self):
-        return f"CylinderShape r{self.radius} h{self.height}"
+        return f"CircleShape r{self.radius}"
 
 @dataclass
 class ConeShape(Shape):
