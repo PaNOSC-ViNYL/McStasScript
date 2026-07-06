@@ -44,8 +44,9 @@ class ComponentModel:
         transform = Transform(position=pos, rotation_matrix=rot)
 
         points = None
-        shape = None
         for drawcall in json_dict["drawcalls"]:
+            shape = None
+
             if drawcall["key"] == "multiline":
                 args = drawcall["args"]
 
@@ -62,8 +63,6 @@ class ComponentModel:
                     points = segment_points
                 else:
                     points = np.vstack((points, segment_points))
-
-                shape = None
 
             elif drawcall["key"] == "box":
                 args = drawcall["args"]

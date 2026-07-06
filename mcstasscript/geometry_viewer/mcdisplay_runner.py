@@ -32,12 +32,11 @@ def generate_json(base_executable_name, abs_instr_path, **kwargs):
         bin_path = os.path.join(package_path, "bin", executable)
 
     dir_name_original = kwargs["output_path"] + "_mcdisplay"
-    dir_name = dir_name_original
+    dir_name = os.path.abspath(dir_name_original)
     index = 0
-    while os.path.exists(os.path.join(kwargs["input_path"], dir_name)):
+    while os.path.exists(dir_name):
         dir_name = dir_name_original + "_" + str(index)
         index += 1
-
     dir_control = "--dirname " + dir_name + " "
 
     full_command = ('"' + bin_path + '" '
@@ -60,3 +59,5 @@ def generate_json(base_executable_name, abs_instr_path, **kwargs):
 
     if os.path.isdir(dir_name):
         return dir_name
+    else:
+        print("Didn't find created data")
