@@ -190,13 +190,96 @@ class ComponentModel:
 
         self.loaded = True
 
-    def guess_geometry_from_comp_object(self):
+    def guess_geometry_from_comp_object(self, instr_parameters):
         """
         Takes component object
 
         Adds shape objects to shape_list
         """
 
-        self.shape_list = []
+        # TODO: read transform
+
+        if len(self.comp.parameter_names) == 0:
+            # Arm type component
+            axis_length = 1.0
+
+            points = np.array([
+                               [0,0,0],[axis_length, 0, 0],
+                               [0,0,0],[0, axis_length, 0],
+                               [0,0,0],[0, 0, axis_length],
+                               ])
+
+            shape = LineSegmentsShape(transform=transform, points=points)
+            self.shape_list.append(shape)
+            return True
+
+        specified_pars = dict()
+        for par in self.comp.parameter_names:
+            par_value = getattr(self.comp, par)
+            if par_value == self.comp.parameter_defaults[par]:
+                specified_pars[par] = par_value
+
+
+        def check_conditions(conditions, parameter_names, specified_pars):
+
+            for par_name, requirement in conditions["has_pars"].items():
+                par_is_there = par_name in parameter_names
+                if par_is_there != requirement:
+                    return False
+
+            for par_name, requirement in conditions["used_pars"].items():
+                par_is_there = par_name in specified_pars
+                if par_is_there != requirement:
+                    return False
+
+            return True
+
+        def evaluate(expression, parameters):
+
+            try:
+                return float(expression)
+            except ValueError:
+                try:
+                    return eval(expression)
+                except NameError:
+                    if isinstance(expression, str):
+                        for par, value in parameters.items():
+                            expression = expression.replace(par, str(value))
+
+                        return eval(expression)
+            except:
+                raise RuntimeError("Could not evaluate ", expression)
+
+
+        # Want to specify cases with:
+        # Has these parameters
+        # Do not have these parameters
+        # Has these parameters filled
+        # Do not have these parameters filled
+        # Do something if all conditions met
+
+        # xy rectangle
+        conditions = dict(has_pars=dict(xwidth=True, yheight=True, zdepth=False,
+                                        l=False, length=False),
+                          used_pars=dict(xwidth=True, yheight=True, radius=False))
+
+        if check_conditions(conditions, self.comp.parameter_names, specified_pars):
+            # Add line segments for xy rectangle
+            xwidth = evaluate(specified_pars["xwidth"], instr_parameters)
+            yheight = evaluate(specified_pars["yheight"], instr_parameters)
+
+            points = np.array([
+                               [xwidth/2, yheight/2, 0],[xwidth/2, -yheight/2, 0],
+                               [xwidth/2, -yheight/2, 0],[-xwidth/2, -yheight/2, 0],
+                               [-xwidth/2, -yheight/2, 0], [-xwidth/2, yheight/2, 0],
+                               [-xwidth/2, yheight/2, 0], [xwidth/2, yheight/2, 0]
+                               ])
+
+            shape = LineSegmentsShape(transform=transform, points=points)
+            self.shape_list.append(shape)
+
+            return True
+
+
 
         self.loaded = True
