@@ -1,0 +1,40 @@
+name: Build Documentation
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package
+        run: pip install -e .
+
+      - name: Install doc dependencies
+        run: pip install -r docs/requirements.txt
+
+      - name: Build documentation (with notebook execution)
+        run: |
+          cd docs
+          python -m sphinx \
+            -b html \
+            -D nb_execution_mode=force \
+            -D nb_execution_timeout=300 \
+            source build/html
+
+      - name: Upload documentation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: docs/build/html
+          retention-days: 30
