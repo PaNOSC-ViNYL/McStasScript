@@ -41,3 +41,11 @@ jobs:
           name: documentation
           path: docs/build/html
           retention-days: 30
+
+      - name: Deploy to GitHub Pages
+        if: github.event_name == 'push' && github.repository == 'PaNOSC-ViNYL/McStasScript'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/build/html
+          force_orphan: true
