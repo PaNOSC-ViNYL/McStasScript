@@ -33,6 +33,11 @@ jobs:
             -b html \
             -D nb_execution_mode=force \
             -D nb_execution_timeout=300 \
+            source build/html || \
+          python -m sphinx \
+            -b html \
+            -D nb_execution_mode=force \
+            -D nb_execution_timeout=300 \
             source build/html
 
       - name: Upload documentation artifact
