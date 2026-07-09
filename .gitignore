@@ -1,3 +1,29 @@
 *.pyc
 LOCAL_AGENTS.md
+opencode.json
 mcstasscript/tests/test_instrument.instr
+test_instrument.instr
+.coverage
+*.egg-info/
+
+# Doc build artifacts
+docs/build/
+docs/source/_autosummary/
+
+# Simulation output generated during notebook execution
+docs/source/**/*.c
+docs/source/**/*.instr
+docs/source/**/*.out
+docs/source/**/*.out.dSYM/
+docs/source/**/data_folder/
+docs/source/**/run_folder/
+docs/source/**/*_0/
+docs/source/**/*_1/
+docs/source/**/*_2/
+docs/source/**/*_3/
+docs/source/**/*_4/
+docs/source/**/*_5/
+docs/source/**/*_6/
+docs/source/**/*_7/
+docs/source/**/*_8/
+docs/source/**/*_db/

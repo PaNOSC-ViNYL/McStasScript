@@ -1,0 +1,11 @@
+name: mcstasscript-docs
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - mcstas
+  - pip
+  - pip:
+    - sphinx
+    - sphinx-book-theme
+    - myst-nb

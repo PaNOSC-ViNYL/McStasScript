@@ -53,20 +53,27 @@ Documentation
    tutorial/Union_tutorial_7_Tagging_history.ipynb
    
 .. autosummary::
-   :toctree: _autosummary
-   :template: custom-module-template.rst
-   :caption: Reference
-   :recursive:
-   
-   mcstasscript
-   
+    :toctree: _autosummary
+    :template: custom-module-template.rst
+    :caption: Reference
+
+    mcstasscript
+    mcstasscript.data
+    mcstasscript.instr_reader
+    mcstasscript.interface
+    mcstasscript.jb_interface
+    mcstasscript.tools
+
 .. autosummary::
-   :toctree: _autosummary
-   :template: custom-module-template.rst
-   :caption: Reference (libpyvinyl)
-   :recursive:
-   
-   libpyvinyl
+    :toctree: _autosummary
+    :template: custom-module-template.rst
+    :caption: Reference (libpyvinyl)
+
+    libpyvinyl
+
+.. note::
+    The libpyvinyl reference requires ``libpyvinyl`` to be installed.
+    If unavailable, Sphinx will emit a warning but the build will succeed.
 
 Indices and tables
 ==================
