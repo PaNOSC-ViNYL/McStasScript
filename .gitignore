@@ -1,1 +1,3 @@
 *.pyc
+LOCAL_AGENTS.md
+mcstasscript/tests/test_instrument.instr
