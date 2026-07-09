@@ -93,11 +93,12 @@ class TestComponentReader(unittest.TestCase):
         component_reader = setup_component_reader()
 
         n_components_found = len(component_reader.component_path)
-        self.assertEqual(n_components_found, 4)
+        self.assertEqual(n_components_found, 5)
         self.assertIn("test_for_reading", component_reader.component_path)
         self.assertIn("test_for_structure", component_reader.component_path)
         self.assertIn("test_for_structure2", component_reader.component_path)
         self.assertIn("test_for_skipped_sections", component_reader.component_path)
+        self.assertIn("Monitor_nD", component_reader.component_path)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_ComponentReader_init_component_paths(self, mock_stdout):
@@ -112,7 +113,7 @@ class TestComponentReader(unittest.TestCase):
         component_reader = setup_component_reader()
 
         n_components_found = len(component_reader.component_path)
-        self.assertEqual(n_components_found, 4)
+        self.assertEqual(n_components_found, 5)
 
         expected_path = os.path.join(THIS_DIR, "test_for_reading.comp")
         path = component_reader.component_path["test_for_reading"]
@@ -156,7 +157,7 @@ class TestComponentReader(unittest.TestCase):
         component_reader = setup_component_reader_input_path()
 
         n_components_found = len(component_reader.component_path)
-        self.assertEqual(n_components_found, 4)
+        self.assertEqual(n_components_found, 5)
 
         self.assertIn("test_for_reading", component_reader.component_path)
 
@@ -266,7 +267,7 @@ class TestComponentReader(unittest.TestCase):
         output = mock_stdout.getvalue()
         output = output.split("\n")
 
-        self.assertEqual(len(output), 6)
+        self.assertEqual(len(output), 7)
         self.assertIn(" test_for_structure", output)
         # Check overwritten component is not in the output
         self.assertNotIn(" test_for_reading", output)
@@ -384,10 +385,11 @@ class TestComponentReader(unittest.TestCase):
         os.chdir(current_work_dir)  # Return to original work directory
 
         n_components_found = len(component_reader.component_path)
-        self.assertEqual(n_components_found, 3)
+        self.assertEqual(n_components_found, 4)
         self.assertIn("test_for_reading", component_reader.component_path)
         self.assertIn("test_for_structure", component_reader.component_path)
         self.assertIn("test_for_skipped_sections", component_reader.component_path)
+        self.assertIn("Monitor_nD", component_reader.component_path)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_ComponentReader_find_components_categories(self, mock_stdout):
@@ -408,7 +410,7 @@ class TestComponentReader(unittest.TestCase):
         os.chdir(current_work_dir)  # Return to original work directory
 
         n_components_found = len(component_reader.component_category)
-        self.assertEqual(n_components_found, 3)
+        self.assertEqual(n_components_found, 4)
 
         category = component_reader.component_category["test_for_reading"]
         self.assertEqual(category, "misc")
