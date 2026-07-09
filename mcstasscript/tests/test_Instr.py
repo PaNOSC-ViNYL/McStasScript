@@ -1798,16 +1798,16 @@ class TestMcStas_instr(unittest.TestCase):
 
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
-    def test_write_full_instrument_dependency(self, mock_f):
+    @unittest.mock.patch('datetime.datetime')
+    def test_write_full_instrument_dependency(self, mock_datetime, mock_f):
         """
         The write_full_instrument method write the information
         contained in the instrument instance to a file with McStas
         syntax. Here tested with the dependency section enabled.
-
-        The test includes a time stamp in the written and expected
-        data that has an accuracy of 1 second.  It is unlikely to fail
-        due to this, but it can happen.
         """
+
+        fixed_datetime = datetime.datetime(2023, 12, 14, 12, 44, 21)
+        mock_datetime.now.return_value = fixed_datetime
 
         instr = setup_populated_instr()
         instr.set_dependency("-DMCPLPATH=GETPATH(data)")
@@ -1834,7 +1834,7 @@ class TestMcStas_instr(unittest.TestCase):
             my_call("* \n"),
             my_call("* %Identification\n"),
             my_call("* Written by: Python McStas Instrument Generator\n"),
-            my_call("* Date: %s\n" % datetime.datetime.now().strftime(t_format)),
+            my_call("* Date: %s\n" % fixed_datetime.strftime(t_format)),
             my_call("* Origin: ESS DMSC\n"),
             my_call("* %INSTRUMENT_SITE: Generated_instruments\n"),
             my_call("* \n"),
@@ -1905,16 +1905,16 @@ class TestMcStas_instr(unittest.TestCase):
 
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
-    def test_write_full_instrument_search(self, mock_f):
+    @unittest.mock.patch('datetime.datetime')
+    def test_write_full_instrument_search(self, mock_datetime, mock_f):
         """
         The write_full_instrument method write the information
         contained in the instrument instance to a file with McStas
         syntax. Here tested with the search section enabled.
-
-        The test includes a time stamp in the written and expected
-        data that has an accuracy of 1 second.  It is unlikely to fail
-        due to this, but it can happen.
         """
+
+        fixed_datetime = datetime.datetime(2023, 12, 14, 12, 44, 21)
+        mock_datetime.now.return_value = fixed_datetime
 
         instr = setup_populated_instr()
         instr.add_search("first_search")
@@ -1942,7 +1942,7 @@ class TestMcStas_instr(unittest.TestCase):
             my_call("* \n"),
             my_call("* %Identification\n"),
             my_call("* Written by: Python McStas Instrument Generator\n"),
-            my_call("* Date: %s\n" % datetime.datetime.now().strftime(t_format)),
+            my_call("* Date: %s\n" % fixed_datetime.strftime(t_format)),
             my_call("* Origin: ESS DMSC\n"),
             my_call("* %INSTRUMENT_SITE: Generated_instruments\n"),
             my_call("* \n"),
