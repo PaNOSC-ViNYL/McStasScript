@@ -1,0 +1,36 @@
+name: McStasScript integration tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  integration_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+
+      - name: Set up conda with mamba
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: true
+          channels: conda-forge
+          channel-priority: strict
+          activate-base: true
+
+      - name: Install McStas
+        shell: bash -l {0}
+        run: |
+          mamba install -y mcstas
+
+      - name: Install McStasScript from PR branch
+        shell: bash -l {0}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e . --no-deps
+
+      - name: Run integration tests
+        shell: bash -l {0}
+        run: |
+          python -m unittest discover -s mcstasscript/integration_tests -v
