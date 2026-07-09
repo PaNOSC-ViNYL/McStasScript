@@ -5,7 +5,7 @@ import unittest.mock
 import copy
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('Agg')  # Use non-interactive backend to avoid display issues in tests
 import matplotlib.pyplot as plt
 
 from mcstasscript.tests.helpers_for_tests import WorkInTestDir
@@ -851,6 +851,8 @@ class TestEventPlotter(unittest.TestCase):
         plotter = EventPlotter("test", data)
         view = View(axis1="x", axis2="y")
         lim_min, lim_max = plotter.get_view_limits_axis2(view)
+        self.assertIsInstance(lim_min, float)
+        self.assertIsInstance(lim_max, float)
         self.assertFalse(np.isnan(lim_min))
         self.assertFalse(np.isnan(lim_max))
 
