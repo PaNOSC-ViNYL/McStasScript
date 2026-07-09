@@ -12,18 +12,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v2
         with:
-          python-version: "3.11"
+          environment-file: docs/environment.yml
+          condarc: |
+            channels:
+              - conda-forge
+            channel_priority: strict
 
       - name: Install package
+        shell: bash -el {0}
         run: pip install -e .
 
-      - name: Install doc dependencies
-        run: pip install -r docs/requirements.txt
-
       - name: Build documentation (with notebook execution)
+        shell: bash -el {0}
         run: |
           cd docs
           python -m sphinx \
