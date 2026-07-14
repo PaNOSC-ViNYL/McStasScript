@@ -185,15 +185,15 @@ class ComponentModel:
         specified_pars = {}
         for par in self.comp.parameter_names:
             par_value = getattr(self.comp, par)
-            if par_value == self.comp.parameter_defaults[par]:
+            if par_value != self.comp.parameter_defaults[par]:
                 specified_pars[par] = par_value
 
         def check_conditions(conditions, parameter_names, specified_pars):
             for par_name, requirement in conditions["has_pars"].items():
-                if par_name in parameter_names != requirement:
+                if (par_name in parameter_names) != requirement:
                     return False
             for par_name, requirement in conditions["used_pars"].items():
-                if par_name in specified_pars != requirement:
+                if (par_name in specified_pars) != requirement:
                     return False
             return True
 

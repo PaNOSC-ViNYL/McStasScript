@@ -30,13 +30,20 @@
 
 14. **Matplotlib line segments** — ~~Circular `_ax` dependency: `_render_line_segments` called `self._ax.plot()` before axis existed.~~ **Fixed:** `_render_line_segments` returns a `LineDescriptor(points, color)` dataclass. `make_scene` handles it alongside `Poly3DCollection` when adding children to the axis. Works for both 3D and 2D mode.
 
+15. **No tests** — ~~Zero test coverage for this module.~~ **Fixed:** 69 unit tests in `mcstasscript/tests/test_geometry_viewer.py` covering transforms, shapes, drawcall parsers, ComponentModel, InstrumentModel, config, and API. Tests run in ~30ms.
+
 ## Remaining
 
-1. **No tests** — Zero test coverage for this module.
+1. **Not exposed in main package** — `mcstasscript/__init__.py` still doesn't import from `geometry_viewer`.
 
-2. **Not exposed in main package** — `mcstasscript/__init__.py` still doesn't import from `geometry_viewer`.
+2. **`guess_geometry_from_comp_object`** — Still incomplete. Only handles parameterless components (axis triad) and xy-rectangle components. Could be extended to cover more component types (Arms, guides, etc.).
 
-3. **`guess_geometry_from_comp_object`** — Still incomplete. Only handles Arm-type components and xy-rectangle components. The condition checking logic has bugs (`in` operator precedence).
+## Fixed by Tests
+
+The following bugs were discovered and fixed when writing tests (July 2025):
+
+- **`specified_pars` inverted condition** — `==` should have been `!=` in `guess_geometry_from_comp_object`. Parameters matching defaults were collected instead of parameters differing from defaults.
+- **`check_conditions` operator precedence** — `par_name in parameter_names != requirement` is a Python chained comparison. Fixed to `(par_name in parameter_names) != requirement`.
 
 ## Current Structure
 
