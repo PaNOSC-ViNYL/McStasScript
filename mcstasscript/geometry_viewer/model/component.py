@@ -1,15 +1,23 @@
+import json
+
 import numpy as np
 
-from mcstasscript.geometry_viewer.helpers import Transform
-from mcstasscript.geometry_viewer.helpers import quaternion_from_vectors
-
-from mcstasscript.geometry_viewer.shapes import LineSegmentsShape
-from mcstasscript.geometry_viewer.shapes import BoxShape
-from mcstasscript.geometry_viewer.shapes import CircleShape
-from mcstasscript.geometry_viewer.shapes import CylinderShape
-from mcstasscript.geometry_viewer.shapes import ConeShape
-from mcstasscript.geometry_viewer.shapes import PolyhedronShape
-from mcstasscript.geometry_viewer.helpers import pos_rot_from_list
+from mcstasscript.geometry_viewer.transform import Transform
+from mcstasscript.geometry_viewer.transform import quaternion_from_vectors
+from mcstasscript.geometry_viewer.transform import pos_rot_from_list
+from mcstasscript.geometry_viewer.model.shapes import (
+    LineSegmentsShape,
+    BoxShape,
+    CircleShape,
+    CylinderShape,
+    ConeShape,
+    PolyhedronShape,
+    triangulate_faces,
+)
+from mcstasscript.geometry_viewer.config import (
+    DEFAULT_RADIAL_SEGMENTS,
+    DEFAULT_CIRCLE_SEGMENTS,
+)
 
 
 def _make_axis_transform(pos, rot, offset, default_axis, normal):
@@ -41,7 +49,6 @@ def _parse_box(drawcall, pos, rot):
     x, y, z = args[0], args[1], args[2]
     xwidth, yheight, zdepth = args[3], args[4], args[5]
     nx, ny, nz = args[7], args[8], args[9]
-
     transform = _make_axis_transform(pos, rot, (x, y, z), (0, 1, 0), (nx, ny, nz))
     return BoxShape(width=xwidth, height=yheight, depth=zdepth, transform=transform)
 
@@ -51,9 +58,10 @@ def _parse_cylinder(drawcall, pos, rot):
     x, y, z = args[0], args[1], args[2]
     radius, height = args[3], args[4]
     nx, ny, nz = args[6], args[7], args[8]
-
     transform = _make_axis_transform(pos, rot, (x, y, z), (0, 1, 0), (nx, ny, nz))
-    return CylinderShape(radius=radius, height=height, radial_segments=32, transform=transform)
+    return CylinderShape(
+        radius=radius, height=height, radial_segments=DEFAULT_RADIAL_SEGMENTS, transform=transform
+    )
 
 
 def _parse_cone(drawcall, pos, rot):
@@ -61,9 +69,10 @@ def _parse_cone(drawcall, pos, rot):
     x, y, z = args[0], args[1], args[2]
     radius, height = args[3], args[4]
     nx, ny, nz = args[5], args[6], args[7]
-
     transform = _make_axis_transform(pos, rot, (x, y, z), (0, 1, 0), (nx, ny, nz))
-    return ConeShape(radius=radius, height=height, radial_segments=32, transform=transform)
+    return ConeShape(
+        radius=radius, height=height, radial_segments=DEFAULT_RADIAL_SEGMENTS, transform=transform
+    )
 
 
 def _parse_circle(drawcall, pos, rot):
@@ -83,16 +92,20 @@ def _parse_circle(drawcall, pos, rot):
         return None
 
     transform = _make_axis_transform(pos, rot, (x, y, z), (0, 0, 1), normal)
-    return CircleShape(radius=radius, segments=64, transform=transform)
+    return CircleShape(radius=radius, segments=DEFAULT_CIRCLE_SEGMENTS, transform=transform)
 
 
 def _parse_polyhedron(drawcall, transform):
     faces_vertices_json = drawcall["args"]
-    return PolyhedronShape(faces_vertices_json=faces_vertices_json, transform=transform)
+    if isinstance(faces_vertices_json, list):
+        faces_vertices_json = faces_vertices_json[0]
+
+    parsed = json.loads(faces_vertices_json)
+    vertices = np.array(parsed["vertices"], dtype=np.float32)
+    indices = triangulate_faces(parsed["faces"])
+    return PolyhedronShape(vertices=vertices, indices=indices, transform=transform)
 
 
-# Dispatch table: drawcall key -> parser function
-# Functions receiving "multiline" return raw points (accumulated), all others return a Shape.
 DRAWCALL_PARSERS = {
     "box": _parse_box,
     "cylinder": _parse_cylinder,
@@ -104,28 +117,19 @@ DRAWCALL_PARSERS = {
 
 class ComponentModel:
     def __init__(self, component_object):
-        """
-        Holds geometry model of a group
-        """
         self.comp = component_object
-
         self.shape_list = []
         self.loaded = False
-
         self.global_position = None
         self.rotation_matrix = None
 
     def load_geometry_from_mcdisplay_dict(self, json_dict):
         """
         Takes component dict from mcdisplay-webgl json output.
-
         Adds shape objects to shape_list.
-        Lines are added as line segments, so p1->p2->p3 is stored as
-        p1->p2 - p2->p3 which plays well with PyThreejs LineSegments.
+        Lines are added as line segments: p1->p2->p3 is stored as p1->p2, p2->p3.
         """
-
         pos, rot = pos_rot_from_list(json_dict["m4"])
-
         self.global_position = pos
         self.rotation_matrix = rot
         self.shape_list = []
@@ -162,52 +166,38 @@ class ComponentModel:
 
         self.loaded = True
 
-    def guess_geometry_from_comp_object(self, instr_parameters):
+    def guess_geometry_from_comp_object(self, instr_parameters=None):
         """
-        Takes component object
-
-        Adds shape objects to shape_list
+        Takes component object, attempts to guess geometry from parameters.
+        Adds shape objects to shape_list.
         """
-
-        # TODO: read transform
-
         if len(self.comp.parameter_names) == 0:
-            # Arm type component
             axis_length = 1.0
-
             points = np.array([
-                               [0,0,0],[axis_length, 0, 0],
-                               [0,0,0],[0, axis_length, 0],
-                               [0,0,0],[0, 0, axis_length],
-                               ])
-
-            shape = LineSegmentsShape(transform=transform, points=points)
+                [0, 0, 0], [axis_length, 0, 0],
+                [0, 0, 0], [0, axis_length, 0],
+                [0, 0, 0], [0, 0, axis_length],
+            ])
+            shape = LineSegmentsShape(points=points)
             self.shape_list.append(shape)
             return True
 
-        specified_pars = dict()
+        specified_pars = {}
         for par in self.comp.parameter_names:
             par_value = getattr(self.comp, par)
             if par_value == self.comp.parameter_defaults[par]:
                 specified_pars[par] = par_value
 
-
         def check_conditions(conditions, parameter_names, specified_pars):
-
             for par_name, requirement in conditions["has_pars"].items():
-                par_is_there = par_name in parameter_names
-                if par_is_there != requirement:
+                if par_name in parameter_names != requirement:
                     return False
-
             for par_name, requirement in conditions["used_pars"].items():
-                par_is_there = par_name in specified_pars
-                if par_is_there != requirement:
+                if par_name in specified_pars != requirement:
                     return False
-
             return True
 
         def evaluate(expression, parameters):
-
             try:
                 return float(expression)
             except ValueError:
@@ -217,41 +207,29 @@ class ComponentModel:
                     if isinstance(expression, str):
                         for par, value in parameters.items():
                             expression = expression.replace(par, str(value))
-
                         return eval(expression)
-            except:
+            except Exception:
                 raise RuntimeError("Could not evaluate ", expression)
 
-
-        # Want to specify cases with:
-        # Has these parameters
-        # Do not have these parameters
-        # Has these parameters filled
-        # Do not have these parameters filled
-        # Do something if all conditions met
-
-        # xy rectangle
-        conditions = dict(has_pars=dict(xwidth=True, yheight=True, zdepth=False,
-                                        l=False, length=False),
-                          used_pars=dict(xwidth=True, yheight=True, radius=False))
+        conditions = dict(
+            has_pars=dict(xwidth=True, yheight=True, zdepth=False, l=False, length=False),
+            used_pars=dict(xwidth=True, yheight=True, radius=False),
+        )
 
         if check_conditions(conditions, self.comp.parameter_names, specified_pars):
-            # Add line segments for xy rectangle
-            xwidth = evaluate(specified_pars["xwidth"], instr_parameters)
-            yheight = evaluate(specified_pars["yheight"], instr_parameters)
+            xwidth = evaluate(specified_pars["xwidth"], instr_parameters or {})
+            yheight = evaluate(specified_pars["yheight"], instr_parameters or {})
 
             points = np.array([
-                               [xwidth/2, yheight/2, 0],[xwidth/2, -yheight/2, 0],
-                               [xwidth/2, -yheight/2, 0],[-xwidth/2, -yheight/2, 0],
-                               [-xwidth/2, -yheight/2, 0], [-xwidth/2, yheight/2, 0],
-                               [-xwidth/2, yheight/2, 0], [xwidth/2, yheight/2, 0]
-                               ])
+                [xwidth / 2, yheight / 2, 0], [xwidth / 2, -yheight / 2, 0],
+                [xwidth / 2, -yheight / 2, 0], [-xwidth / 2, -yheight / 2, 0],
+                [-xwidth / 2, -yheight / 2, 0], [-xwidth / 2, yheight / 2, 0],
+                [-xwidth / 2, yheight / 2, 0], [xwidth / 2, yheight / 2, 0],
+            ])
 
-            shape = LineSegmentsShape(transform=transform, points=points)
+            shape = LineSegmentsShape(points=points)
             self.shape_list.append(shape)
-
             return True
 
-
-
         self.loaded = True
+        return True

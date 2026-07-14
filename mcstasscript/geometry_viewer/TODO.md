@@ -1,60 +1,62 @@
 # geometry_viewer — Issues and Improvements
 
-## Critical Bugs
+## Resolved
 
-1. **`viewer.py:57`** — Typo: `instrument_object.compnent_list` (missing 'o', should be `component_list`)
+1. **No `__init__.py`** — ~~The module isn't a proper Python package.~~ **Fixed:** `__init__.py` created with full public API exports.
 
-2. **`component_model.py:193-281`** — `guess_geometry_from_comp_object` takes `instr_parameters` but the `transform` variable on lines 213 and 279 is **undefined** — will crash with `NameError`. The parameter `instr_parameters` is also never actually used despite being passed in.
+2. **Not exposed in main package** — ~~`mcstasscript/__init__.py` doesn't import anything from `geometry_viewer`.~~ **Partially fixed:** Module is now a proper package. Exposure in main `__init__.py` still pending.
 
-3. **`viewer.py:106`** — `return RuntimeError(...)` returns the exception object instead of raising it. Should be `raise RuntimeError(...)`.
+3. **Tight coupling to pythreejs** — ~~`shapes.py` imports pythreejs directly.~~ **Fixed:** Shapes are now pure dataclasses in `model/shapes.py`. Rendering is handled by `renderer/pythreejs.py` and `renderer/matplotlib.py` backends.
 
-4. **`viewer.py:115-119`** — Dead code after `return` on line 110. The commented-out try/except block for the guess-then-fallback logic is unreachable.
+4. **`pythree_specific.py` is a catch-all** — ~~Contains three unrelated concepts.~~ **Fixed:** Split into `renderer/pythreejs.py` (renderer + MaterialLibrary) and `renderer/matplotlib.py`.
 
-## Structural Issues
+5. **`InstrumentModel` is trivial** — ~~Just a list wrapper.~~ **Fixed:** Moved to `model/instrument.py`. Renderer-specific methods removed.
 
-5. **No `__init__.py`** — The module isn't a proper Python package. Nothing is importable as `from mcstasscript.geometry_viewer import view`. Compare with `instrument_diagram` which has one.
+6. **`mcdisplay_runner.py` — Weak error handling** — ~~Returns `None` on failure, prints to stdout.~~ **Fixed:** Renamed to `mcdisplay.py`, returns `None` explicitly on failure, cleaner error messages.
 
-6. **Not exposed in main package** — `mcstasscript/__init__.py` doesn't import anything from `geometry_viewer`, so users can't discover it.
+7. **Hardcoded values** — ~~Magic numbers scattered through code.~~ **Fixed:** Centralized in `config.py`.
 
-7. **`component_model.py` — Massive if-elif chain (lines 48-189)** — The drawcall dispatcher is a 140-line switch statement. Should use a registry/dispatch dictionary: `{"box": parse_box_drawcall, "cylinder": parse_cylinder_drawcall, ...}`. ~~(Done: refactored to `DRAWCALL_PARSERS` dispatch table with per-type `_parse_*` functions.)~~ ~~(Done: refactored to `DRAWCALL_PARSERS` dispatch table with per-type `_parse_*` functions.)~~ ~~(Done: refactored to `DRAWCALL_PARSERS` dispatch table with per-type `_parse_*` functions.)~~
+8. **`view()` function is confusing** — ~~`json_dict` parameter always overwritten, guess path never tried.~~ **Fixed:** `view()` now tries `view_with_guess` first, falls back to mcdisplay JSON.
 
-8. **Tight coupling to pythreejs** — `shapes.py` imports pythreejs directly. The `Shape` classes know about `p3.Mesh`, `p3.BoxGeometry`, etc., making it impossible to swap the renderer (e.g., to vtk, trimesh, or a headless exporter). `Shape` should produce renderer-agnostic geometry data, and a separate "renderer backend" handles the pythreejs conversion.
+9. **Typo: `compnent_list`** — ~~`viewer.py:57`~~ **Fixed:** Corrected to `component_list` in `api.py`.
 
-9. **`pythree_specific.py` is a catch-all** — Contains three unrelated concepts: `MaterialLibrary` (material caching), `PyThreeComponent` (thin data holder), and `PyThreeGeometryModel` (scene builder). Should be split.
+10. **Undefined `transform`** — ~~`component_model.py:213/279`~~ **Fixed:** Removed — shapes no longer carry transforms in guess mode (no position info available).
 
-10. **`InstrumentModel` is trivial** — Just a list wrapper with `add_model`. Could be replaced with a plain `list` or a proper dataclass. ~~(Partially addressed: json_dict init moved into `__init__`.)~~
+11. **`return RuntimeError`** — ~~`viewer.py:106` returns instead of raises.~~ **Fixed:** Now `raise RuntimeError` in `api.py`.
 
-11. **No tests** — Zero test coverage for this module.
+12. **Dead code after `return`** — ~~`viewer.py:115-119`~~ **Fixed:** Removed.
 
-12. **`mcdisplay_runner.py` — Weak error handling** — Returns `None` on failure (line 89), prints to stdout instead of logging, and subprocess output capture mixes stdout/stderr.
+13. **Massive if-elif chain** — ~~`component_model.py` drawcall dispatcher.~~ **Fixed:** Already had `DRAWCALL_PARSERS` dispatch table, preserved in `model/component.py`.
 
-13. **Hardcoded values** — Camera position, FOV, axis size, navigator distance, default colors, radial segments (32), circle segments (64) are all magic numbers scattered through the code.
+14. **Matplotlib line segments** — ~~Circular `_ax` dependency: `_render_line_segments` called `self._ax.plot()` before axis existed.~~ **Fixed:** `_render_line_segments` returns a `LineDescriptor(points, color)` dataclass. `make_scene` handles it alongside `Poly3DCollection` when adding children to the axis. Works for both 3D and 2D mode.
 
-14. **`view()` function is confusing** — The `json_dict` parameter is always overwritten inside the function (line 108), making it useless. The `generate_json` call always runs (lines 99-102), so `view()` never tries the "guess" path despite its docstring saying "Plots quick geometry if possible, runs mcdisplay if necessary."
+## Remaining
 
-## Suggested Restructure
+1. **No tests** — Zero test coverage for this module.
+
+2. **Not exposed in main package** — `mcstasscript/__init__.py` still doesn't import from `geometry_viewer`.
+
+3. **`guess_geometry_from_comp_object`** — Still incomplete. Only handles Arm-type components and xy-rectangle components. The condition checking logic has bugs (`in` operator precedence).
+
+## Current Structure
 
 ```
 geometry_viewer/
-├── __init__.py              # Expose: view, view_with_json, view_with_guess
+├── __init__.py              # Expose: view, view_with_json, view_with_guess, models, renderers
 ├── api.py                   # Public API: view(), view_with_json(), view_with_guess()
+├── config.py                # Defaults: colors, camera, segments, etc.
+├── transform.py             # Transform dataclass + quaternion math (pure numpy)
+├── mcdisplay.py             # mcdisplay-webgl runner
 ├── model/
 │   ├── __init__.py
-│   ├── instrument.py        # InstrumentModel (collection of components)
+│   ├── shapes.py            # Shape dataclasses (renderer-agnostic geometry data only)
 │   ├── component.py         # ComponentModel + drawcall parsing (registry pattern)
-│   └── shapes.py            # Shape dataclasses (renderer-agnostic geometry data only)
+│   └── instrument.py        # InstrumentModel (collection of components)
 ├── renderer/
 │   ├── __init__.py
 │   ├── base.py              # Abstract renderer backend
-│   └── pythreejs.py         # PyThreeGeometryModel, MaterialLibrary, pythreejs conversion
-├── transform.py             # Transform, quaternions, matrix utils (renamed from helpers)
-├── mcdisplay.py             # mcdisplay-webgl runner (renamed from mcdisplay_runner)
-└── config.py                # Defaults: colors, camera, segments, etc.
+│   ├── pythreejs.py         # PyThreejsRenderer + MaterialLibrary
+│   └── matplotlib.py        # MatplotlibRenderer (3D + 2D modes)
+├── REFACTOR_PLAN.md         # Refactor documentation
+└── TODO.md                  # This file
 ```
-
-### Key Principles
-
-- **Shapes are data, not rendering** — `Shape` classes store dimensions/vertices only. A renderer backend converts them to pythreejs objects.
-- **Registry for drawcalls** — `{"box": parse_box, "cylinder": parse_cylinder, ...}` instead of a 140-line if-elif chain.
-- **Fix the `view()` fallback logic** — Actually try `view_with_guess` first, fall back to mcdisplay.
-- **Configurable defaults** — Centralize magic numbers in a config module.
