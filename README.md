@@ -52,7 +52,9 @@ my_source.show_parameters()  # Show available parameters for Source_simple
 Set parameters as attributes, in jupyter notebooks these are autocompleted if the object has been created:
 
 ```python
-my_source.set_parameters(xwidth=0.12, yheight=0.12, lambda0=3, dlambda = 2.2, focus_xw = 0.05, focus_yh = 0.05)
+my_source.set_parameters(xwidth=0.12, yheight=0.12,
+                         lambda0=3, dlambda=2.2,
+                         focus_xw=0.05, focus_yh=0.05)
 ```
 
 Add a monitor (notice the use of single and double quotes to set a string literal in the file):
