@@ -65,15 +65,11 @@ Documentation
     mcstasscript.tools
 
 .. autosummary::
-    :toctree: _autosummary
-    :template: custom-module-template.rst
-    :caption: Reference (libpyvinyl)
+     :toctree: _autosummary
+     :template: custom-module-template.rst
+     :caption: Reference (libpyvinyl)
 
-    libpyvinyl
-
-.. note::
-    The libpyvinyl reference requires ``libpyvinyl`` to be installed.
-    If unavailable, Sphinx will emit a warning but the build will succeed.
+     libpyvinyl
 
 Indices and tables
 ==================
