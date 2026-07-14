@@ -39,7 +39,7 @@ import mcstasscript as ms
 Create a new instrument (use `McXtrace_instr` for McXtrace):
 
 ```python
-my_instrument = ms.McStas_instr("my_instrument_file")
+my_instrument = ms.McStas_instr("my_instrument")
 ```
 
 Add components:
@@ -49,26 +49,17 @@ my_source = my_instrument.add_component("source", "Source_simple")
 my_source.show_parameters()  # Show available parameters for Source_simple
 ```
 
-Set parameters as attributes:
+Set parameters as attributes, in jupyter notebooks these are autocompleted if the object has been created:
 
 ```python
-my_source.xwidth = 0.12
-my_source.yheight = 0.12
-my_source.lambda0 = 3
-my_source.dlambda = 2.2
-my_source.focus_xw = 0.05
-my_source.focus_yh = 0.05
+my_source.set_parameters(xwidth=0.12, yheight=0.12, lambda0=3, dlambda = 2.2, focus_xw = 0.05, focus_yh = 0.05)
 ```
 
-Add a monitor:
+Add a monitor (notice the use of single and double quotes to set a string literal in the file):
 
 ```python
 PSD = my_instrument.add_component("PSD", "PSD_monitor", AT=[0,0,1], RELATIVE="source")
-PSD.xwidth = 0.1
-PSD.yheight = 0.1
-PSD.nx = 5
-PSD.ny = 5
-PSD.filename = '"PSD.dat"'
+PSD.set_parameters(xwidth=0.1, yheight=0.1, nx=5, ny=5, filename='"PSD.dat"')
 ```
 
 Set simulation options and run:
@@ -115,21 +106,11 @@ data = sim_widget.get_data()
 
 ## Use existing instrument files
 
-Read an existing `.instr` file and convert it to McStasScript Python code:
-
-```python
-Reader = ms.McStas_file("PSI_DMC.instr")
-Reader.write_python_file("PSI_DMC_generated.py")
+The McStas package now includes the ability to create McStasScript python files from instrument files.
 ```
-
-Or add the instrument contents directly to a McStasScript instrument object:
-
-```python
-Reader = ms.McStas_file("PSI_DMC.instr")
-Reader.add_to_instr(my_instrument)
+mcstas-pygen my_isntrument.instr
 ```
-
-It is advised to verify the generated file against the original to ensure correctness.
+This can also be done through mcgui using the Pylab button.
 
 ## Method overview
 
@@ -164,9 +145,7 @@ McStas_instr(name)  # Returns instrument object
 ├── backengine()                 # Run simulation, returns data
 ├── run_to(component, ...)       # Set simulation end point (saves MCPL dump)
 ├── run_from(component, ...)     # Set simulation start point (loads MCPL dump)
-├── show_dumps()                 # Show available beam dumps
-├── interface()                  # Show Jupyter widget interface
-└── get_interface_data()         # Get data from widget simulation
+└── show_dumps()                 # Show available beam dumps
 ```
 
 ### Component (returned by `add_component`)
@@ -176,8 +155,8 @@ Component parameters are set directly as attributes. Additional methods:
 ```
 ├── show_parameters()           # Show component parameters
 ├── set_parameters(**kwargs)    # Set parameters (dict or kwargs)
-├── set_AT(list, RELATIVE)      # Set position
-├── set_ROTATED(list, RELATIVE) # Set rotation
+├── set_AT(list 3, RELATIVE)    # Set position
+├── set_ROTATED(list 3, RELATIVE) # Set rotation
 ├── set_RELATIVE(name)          # Set position and rotation reference
 ├── set_WHEN(string)            # Set WHEN condition
 ├── append_EXTEND(string)       # Append C code to EXTEND section
@@ -187,8 +166,7 @@ Component parameters are set directly as attributes. Additional methods:
 ├── set_comment(string)         # Set component comment
 ├── set_c_code_before(string)   # Set C code before component
 ├── set_c_code_after(string)    # Set C code after component
-├── print_long()                # Print full component info
-└── print_short()               # Print brief component info
+└── print_long()                # Print full component info
 ```
 
 Placement attributes (`AT`, `ROTATED`, `RELATIVE`, `WHEN`, `EXTEND`, `GROUP`, `JUMP`, `SPLIT`) can also be set via keyword arguments in `add_component()`.
