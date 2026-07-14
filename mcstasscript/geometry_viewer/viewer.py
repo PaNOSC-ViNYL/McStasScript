@@ -73,14 +73,7 @@ def view_with_json(instrument_object, json_dict, index_min=None, index_max=None)
     for json_component in json_dict["components"]:
         name = json_component["name"]
 
-        component_object = None
-        for comp in instrument_object.component_list:
-            if comp.name == name:
-                component_object = comp
-                break
-
-        if component_object is None:
-            raise ValueError(f"Component {name} not found in instrument object.")
+        component_object = instrument_object.get_component(name)
 
         component_model = ComponentModel(component_object)
         component_model.load_geometry_from_mcdisplay_dict(json_component)
