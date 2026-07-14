@@ -3,7 +3,6 @@ import numpy as np
 from mcstasscript.geometry_viewer.helpers import Transform
 from mcstasscript.geometry_viewer.helpers import quaternion_from_vectors
 
-from mcstasscript.geometry_viewer.shapes import LineShape
 from mcstasscript.geometry_viewer.shapes import LineSegmentsShape
 from mcstasscript.geometry_viewer.shapes import BoxShape
 from mcstasscript.geometry_viewer.shapes import CircleShape
@@ -11,6 +10,97 @@ from mcstasscript.geometry_viewer.shapes import CylinderShape
 from mcstasscript.geometry_viewer.shapes import ConeShape
 from mcstasscript.geometry_viewer.shapes import PolyhedronShape
 from mcstasscript.geometry_viewer.helpers import pos_rot_from_list
+
+
+def _make_axis_transform(pos, rot, offset, default_axis, normal):
+    """Create a Transform for a shape with an axis-aligned orientation."""
+    quaternion = quaternion_from_vectors(default_axis, normal)
+    return Transform(
+        position=pos + np.array(offset) @ rot.T,
+        quaternion=quaternion,
+        rotation_matrix=rot,
+    )
+
+
+def _parse_multiline(drawcall, pos, rot):
+    """Parse a multiline drawcall, returning segment points (not a shape)."""
+    args = drawcall["args"]
+    new_points = np.array(args, dtype=np.float32).reshape((-1, 3))
+
+    if len(new_points) <= 2:
+        return new_points
+
+    segment_points = np.empty((2 * (len(new_points) - 1), 3), dtype=np.float32)
+    segment_points[0::2] = new_points[:-1]
+    segment_points[1::2] = new_points[1:]
+    return segment_points
+
+
+def _parse_box(drawcall, pos, rot):
+    args = drawcall["args"]
+    x, y, z = args[0], args[1], args[2]
+    xwidth, yheight, zdepth = args[3], args[4], args[5]
+    nx, ny, nz = args[7], args[8], args[9]
+
+    transform = _make_axis_transform(pos, rot, (x, y, z), (0, 1, 0), (nx, ny, nz))
+    return BoxShape(width=xwidth, height=yheight, depth=zdepth, transform=transform)
+
+
+def _parse_cylinder(drawcall, pos, rot):
+    args = drawcall["args"]
+    x, y, z = args[0], args[1], args[2]
+    radius, height = args[3], args[4]
+    nx, ny, nz = args[6], args[7], args[8]
+
+    transform = _make_axis_transform(pos, rot, (x, y, z), (0, 1, 0), (nx, ny, nz))
+    return CylinderShape(radius=radius, height=height, radial_segments=32, transform=transform)
+
+
+def _parse_cone(drawcall, pos, rot):
+    args = drawcall["args"]
+    x, y, z = args[0], args[1], args[2]
+    radius, height = args[3], args[4]
+    nx, ny, nz = args[5], args[6], args[7]
+
+    transform = _make_axis_transform(pos, rot, (x, y, z), (0, 1, 0), (nx, ny, nz))
+    return ConeShape(radius=radius, height=height, radial_segments=32, transform=transform)
+
+
+def _parse_circle(drawcall, pos, rot):
+    args = drawcall["args"]
+    plane = args[0]
+    x, y, z = args[1], args[2], args[3]
+    radius = args[4]
+
+    plane_normals = {
+        "xy": (0, 0, 1),
+        "xz": (0, 1, 0),
+        "yz": (1, 0, 0),
+    }
+    normal = plane_normals.get(plane)
+    if normal is None:
+        print(f"unknown plane in circle: {plane}")
+        return None
+
+    transform = _make_axis_transform(pos, rot, (x, y, z), (0, 0, 1), normal)
+    return CircleShape(radius=radius, segments=64, transform=transform)
+
+
+def _parse_polyhedron(drawcall, transform):
+    faces_vertices_json = drawcall["args"]
+    return PolyhedronShape(faces_vertices_json=faces_vertices_json, transform=transform)
+
+
+# Dispatch table: drawcall key -> parser function
+# Functions receiving "multiline" return raw points (accumulated), all others return a Shape.
+DRAWCALL_PARSERS = {
+    "box": _parse_box,
+    "cylinder": _parse_cylinder,
+    "cone": _parse_cone,
+    "circle": _parse_circle,
+    "polyhedron": _parse_polyhedron,
+}
+
 
 class ComponentModel:
     def __init__(self, component_object):
@@ -27,166 +117,48 @@ class ComponentModel:
 
     def load_geometry_from_mcdisplay_dict(self, json_dict):
         """
-        Takes component dict from mcdisplay-webgl json output
+        Takes component dict from mcdisplay-webgl json output.
 
         Adds shape objects to shape_list.
         Lines are added as line segments, so p1->p2->p3 is stored as
         p1->p2 - p2->p3 which plays well with PyThreejs LineSegments.
         """
 
-        pos, rot  = pos_rot_from_list(json_dict["m4"])
+        pos, rot = pos_rot_from_list(json_dict["m4"])
 
         self.global_position = pos
         self.rotation_matrix = rot
-
         self.shape_list = []
 
         transform = Transform(position=pos, rotation_matrix=rot)
 
-        points = None
+        line_points = None
         for drawcall in json_dict["drawcalls"]:
-            shape = None
+            key = drawcall["key"]
 
-            if drawcall["key"] == "multiline":
-                args = drawcall["args"]
-
-                new_points = np.array(args, dtype=np.float32).reshape((-1, 3))
-
-                if len(new_points) <= 2:
-                    segment_points = new_points
+            if key == "multiline":
+                segment_points = _parse_multiline(drawcall, pos, rot)
+                if line_points is None:
+                    line_points = segment_points
                 else:
-                    segment_points = np.empty((2 * (len(new_points) - 1), 3), dtype=np.float32)
-                    segment_points[0::2] = new_points[:-1]
-                    segment_points[1::2] = new_points[1:]
+                    line_points = np.vstack((line_points, segment_points))
+                continue
 
-                if points is None:
-                    points = segment_points
-                else:
-                    points = np.vstack((points, segment_points))
+            parser = DRAWCALL_PARSERS.get(key)
+            if parser is None:
+                print(f"didn't know this drawclass: {key}")
+                continue
 
-            elif drawcall["key"] == "box":
-                args = drawcall["args"]
-
-                x = args[0]
-                y = args[1]
-                z = args[2]
-                xwidth = args[3]
-                yheight = args[4]
-                zdepth = args[5]
-                thickness = args[6]
-                nx = args[7]
-                ny = args[8]
-                nz = args[9]
-
-                quaternion = quaternion_from_vectors(
-                    (0, 1, 0),  # default box axis
-                    (nx, ny, nz),
-                )
-
-                this_transform = Transform(position=pos + np.array([x, y, z]) @ rot.T,
-                                           quaternion=quaternion, rotation_matrix=rot)
-
-                shape = BoxShape(width=xwidth, height=yheight, depth=zdepth,
-                                 transform=this_transform)
-
-            elif drawcall["key"] == "cylinder":
-                args = drawcall["args"]
-
-                x = args[0]
-                y = args[1]
-                z = args[2]
-                radius = args[3]
-                height = args[4]
-                thickness = args[5]
-                nx = args[6]
-                ny = args[7]
-                nz = args[8]
-
-                quaternion = quaternion_from_vectors(
-                    (0, 1, 0),  # default cylinder axis
-                    (nx, ny, nz),
-                )
-
-                this_transform = Transform(position=pos + np.array([x, y, z]) @ rot.T,
-                                           quaternion=quaternion, rotation_matrix=rot)
-
-                shape = CylinderShape(radius=radius, height=height,
-                                      radial_segments=32,
-                                      transform=this_transform)
-
-            elif drawcall["key"] == "cone":
-                args = drawcall["args"]
-
-                x = args[0]
-                y = args[1]
-                z = args[2]
-                radius = args[3]
-                height = args[4]
-                nx = args[5]
-                ny = args[6]
-                nz = args[7]
-
-                quaternion = quaternion_from_vectors(
-                    (0, 1, 0),  # default cone axis
-                    (nx, ny, nz),
-                )
-
-                this_transform = Transform(position=pos + np.array([x, y, z]) @ rot.T,
-                                           quaternion=quaternion, rotation_matrix=rot)
-
-                shape = ConeShape(radius=radius, height=height,
-                                  radial_segments=32,
-                                  transform=this_transform)
-
-            elif drawcall["key"] == "circle":
-                args = drawcall["args"]
-
-                plane = args[0]
-                x = args[1]
-                y = args[2]
-                z = args[3]
-                radius = args[4]
-
-                nx = 0
-                ny = 0
-                nz = 0
-                if plane == "xy":
-                    nz = 1
-                elif plane == "xz":
-                    ny = 1
-                elif plane == "yz":
-                    nx = 1
-                else:
-                    print("unknown plane in circle")
-
-                quaternion = quaternion_from_vectors(
-                    (0, 0, 1),  # default circle axis
-                    (nx, ny, nz),
-                )
-
-                this_transform = Transform(position=pos + np.array([x,y,z]) @ rot.T,
-                                           quaternion=quaternion, rotation_matrix=rot)
-
-                shape = CircleShape(radius=radius,
-                                    segments=64,
-                                    transform=this_transform)
-
-            elif drawcall["key"] == "polyhedron":
-                faces_vertices_json = drawcall["args"]
-
-                shape = PolyhedronShape(faces_vertices_json=faces_vertices_json,
-                                        transform=transform)
-
+            if key == "polyhedron":
+                shape = parser(drawcall, transform)
             else:
-                print("didn't know this drawclass: ", drawcall["key"])
-                # Currently allow unknown drawcalls while writing
+                shape = parser(drawcall, pos, rot)
 
             if shape is not None:
                 self.shape_list.append(shape)
 
-        if points is not None:
-            shape = LineSegmentsShape(transform=transform, points=points)
-            self.shape_list.append(shape)
+        if line_points is not None:
+            self.shape_list.append(LineSegmentsShape(transform=transform, points=line_points))
 
         self.loaded = True
 
