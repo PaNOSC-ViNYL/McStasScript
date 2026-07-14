@@ -152,7 +152,7 @@ class MatplotlibRenderer(RendererBackend):
 
         tri_faces = []
         for i in range(shape.segments):
-            tri_faces.append([pts[0], pts[i + 1], pts[i + 2 % (shape.segments + 1)]])
+            tri_faces.append([pts[0], pts[i + 1], pts[(i + 2) % (shape.segments + 1)]])
 
         if shape.transform:
             tri_faces = [self._transform_points(np.array(f), shape.transform).tolist() for f in tri_faces]
