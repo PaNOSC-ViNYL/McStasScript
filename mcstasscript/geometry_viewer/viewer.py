@@ -105,33 +105,7 @@ def view(instrument_object, json_dict=None, json_file=None,
 
     if json_file is None:
 
-        if instrument_object.package_name == "McXtrace":
-            executable = "mxdisplay"
-        else:
-            executable = "mcdisplay"
-
-        instr_path = os.path.join(instrument_object.input_path,
-                                  instrument_object.name + ".instr")
-
-        instr_path = os.path.abspath(instr_path)
-
-        parameters = {}
-        for parameter in instrument_object.parameters:
-            if parameter.value is None:
-                raise RuntimeError("Parameter value not set for parameter: '" + parameter.name
-                                   + "' set with set_parameters.")
-
-            parameters[parameter.name] = parameter.value
-
-        options = copy.deepcopy(instrument_object._run_settings)
-        options["parameters"] = parameters
-        options["output_path"] = instrument_object.output_path
-        options["input_path"] = instrument_object.input_path
-
-        instrument_object.write_full_instrument()
-        json_folder = generate_json(base_executable_name=executable,
-                                  abs_instr_path=instr_path,
-                                  **options)
+        json_folder = generate_json(instrument_object)
         json_file = os.path.join(json_folder, "instrument.json")
 
         if json_file is None:

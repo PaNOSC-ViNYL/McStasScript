@@ -1,12 +1,38 @@
 
 import os
 import subprocess
+import copy
 
 
-def generate_json(base_executable_name, abs_instr_path, **kwargs):
+def generate_json(instrument_object):
 
-    if "parameters" in kwargs:
-        parameters = kwargs["parameters"]
+    if instrument_object.package_name == "McXtrace":
+        executable = "mxdisplay"
+    else:
+        executable = "mcdisplay"
+
+    instr_path = os.path.join(instrument_object.input_path,
+                              instrument_object.name + ".instr")
+
+    instr_path = os.path.abspath(instr_path)
+
+    parameters = {}
+    for parameter in instrument_object.parameters:
+        if parameter.value is None:
+            raise RuntimeError("Parameter value not set for parameter: '" + parameter.name
+                               + "' set with set_parameters.")
+
+        parameters[parameter.name] = parameter.value
+
+    options = copy.deepcopy(instrument_object._run_settings)
+    options["parameters"] = parameters
+    options["output_path"] = instrument_object.output_path
+    options["input_path"] = instrument_object.input_path
+
+    instrument_object.write_full_instrument()
+
+    if "parameters" in options:
+        parameters = options["parameters"]
     else:
         raise ValueError("generate_json needs parameters dict in input")
 
@@ -17,8 +43,8 @@ def generate_json(base_executable_name, abs_instr_path, **kwargs):
                             + "="
                             + str(val))  # parameter value
 
-    executable_path = kwargs["executable_path"]
-    executable = base_executable_name + "-webgl"
+    executable_path = options["executable_path"]
+    executable = executable + "-webgl"
 
     bin_path = os.path.join(executable_path, executable)
 
@@ -28,10 +54,10 @@ def generate_json(base_executable_name, abs_instr_path, **kwargs):
 
     if not os.path.isfile(bin_path):
         # Take bin in package path into account
-        package_path = kwargs["package_path"]
+        package_path = options["package_path"]
         bin_path = os.path.join(package_path, "bin", executable)
 
-    dir_name_original = kwargs["output_path"] + "_mcdisplay"
+    dir_name_original = options["output_path"] + "_mcdisplay"
     dir_name = os.path.abspath(dir_name_original)
     index = 0
     while os.path.exists(dir_name):
@@ -42,10 +68,10 @@ def generate_json(base_executable_name, abs_instr_path, **kwargs):
     full_command = ('"' + bin_path + '" '
                     + dir_control
                     + "--nobrowse "
-                    + abs_instr_path
+                    + instr_path
                     + " " + parameter_string)
 
-    instrument_folder = os.path.dirname(abs_instr_path)
+    instrument_folder = os.path.dirname(instr_path)
 
     process = subprocess.run(full_command, shell=True,
                              stdout=subprocess.PIPE,
