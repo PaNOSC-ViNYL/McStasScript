@@ -16,7 +16,7 @@
 
 6. **Not exposed in main package** — `mcstasscript/__init__.py` doesn't import anything from `geometry_viewer`, so users can't discover it.
 
-7. **`component_model.py` — Massive if-elif chain (lines 48-189)** — The drawcall dispatcher is a 140-line switch statement. Should use a registry/dispatch dictionary: `{"box": parse_box_drawcall, "cylinder": parse_cylinder_drawcall, ...}`.
+7. **`component_model.py` — Massive if-elif chain (lines 48-189)** — The drawcall dispatcher is a 140-line switch statement. Should use a registry/dispatch dictionary: `{"box": parse_box_drawcall, "cylinder": parse_cylinder_drawcall, ...}`. ~~(Done: refactored to `DRAWCALL_PARSERS` dispatch table with per-type `_parse_*` functions.)~~ ~~(Done: refactored to `DRAWCALL_PARSERS` dispatch table with per-type `_parse_*` functions.)~~ ~~(Done: refactored to `DRAWCALL_PARSERS` dispatch table with per-type `_parse_*` functions.)~~
 
 8. **Tight coupling to pythreejs** — `shapes.py` imports pythreejs directly. The `Shape` classes know about `p3.Mesh`, `p3.BoxGeometry`, etc., making it impossible to swap the renderer (e.g., to vtk, trimesh, or a headless exporter). `Shape` should produce renderer-agnostic geometry data, and a separate "renderer backend" handles the pythreejs conversion.
 
