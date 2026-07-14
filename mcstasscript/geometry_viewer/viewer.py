@@ -10,8 +10,16 @@ from mcstasscript.geometry_viewer.mcdisplay_runner import generate_json
 
 
 class InstrumentModel:
-    def __init__(self):
+    def __init__(self, instrument_object=None, json_dict=None):
         self.component_models = []
+
+        if json_dict is not None and instrument_object is not None:
+            for json_component in json_dict["components"]:
+                name = json_component["name"]
+                component_object = instrument_object.get_component(name)
+                component_model = ComponentModel(component_object)
+                component_model.load_geometry_from_mcdisplay_dict(json_component)
+                self.component_models.append(component_model)
 
     def add_model(self, model):
         self.component_models.append(model)
@@ -68,17 +76,7 @@ def view_with_json(instrument_object, json_dict, index_min=None, index_max=None)
     Plots instrument geometry with json input
     """
 
-    instrument_model = InstrumentModel()
-
-    for json_component in json_dict["components"]:
-        name = json_component["name"]
-
-        component_object = instrument_object.get_component(name)
-
-        component_model = ComponentModel(component_object)
-        component_model.load_geometry_from_mcdisplay_dict(json_component)
-
-        instrument_model.add_model(component_model)
+    instrument_model = InstrumentModel(instrument_object=instrument_object, json_dict=json_dict)
 
     p3_model = instrument_model.make_PyThreeGeometry_model(index_min=index_min,
                                                            index_max=index_max)
