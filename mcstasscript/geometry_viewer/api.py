@@ -3,9 +3,9 @@ import os
 
 from mcstasscript.geometry_viewer.model.component import ComponentModel
 from mcstasscript.geometry_viewer.model.instrument import InstrumentModel
-from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
 from mcstasscript.geometry_viewer.renderer.matplotlib import MatplotlibRenderer
 from mcstasscript.geometry_viewer.mcdisplay import (
+    _is_notebook,
     generate_json,
     run_mcdisplay,
     display_mcdisplay_html,
@@ -14,6 +14,7 @@ from mcstasscript.geometry_viewer.mcdisplay import (
 
 def _get_renderer(backend: str = "pythreejs", **kwargs):
     if backend == "pythreejs":
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
         return PyThreejsRenderer(**kwargs)
     elif backend in ("matplotlib", "matplotlib_3d"):
         return MatplotlibRenderer(mode="3d", **kwargs)
@@ -59,6 +60,8 @@ def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
         index_min = 0
     if index_max is None:
         index_max = len(instrument_model.component_models)
+
+    from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
 
     all_children = []
     for index, component_model in enumerate(instrument_model.component_models):
@@ -117,9 +120,19 @@ def view(instrument_object, backend: str = "pythreejs",
 
     # --- mcdisplay HTML backends ---
     if backend in ("webgl", "webgl-classic", "window"):
+        if backend == "webgl" and _is_notebook():
+            print("Starting mcdisplay-webgl (Vite dev server)...")
+            print("A browser tab will open with the visualization.")
+            print("Press the Stop button in the notebook toolbar to return here.")
         html_path = run_mcdisplay(instrument_object, format=backend)
+        if backend == "window":
+            return None
         if html_path is None:
             raise RuntimeError(f"mcdisplay run with format '{backend}' failed.")
+        if backend == "webgl":
+            # mcdisplay-webgl starts a Vite dev server and opens the browser
+            # itself with the correct URL (http://localhost:5173).
+            return None
         return display_mcdisplay_html(html_path, width=width, height=height)
 
     # --- guess-only backend ---

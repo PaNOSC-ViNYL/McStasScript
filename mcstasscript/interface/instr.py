@@ -2775,7 +2775,17 @@ class McCode_instr(BaseCalculator):
         if new_tab and backend in ("webgl", "webgl-classic"):
             backend = "pythreejs"
 
-        return view(self, backend=backend or "pythreejs",
+        resolved_backend = backend or "pythreejs"
+        if resolved_backend == "pythreejs":
+            try:
+                import pythreejs  # noqa: F401
+            except ImportError:
+                raise ImportError(
+                    "pythreejs is required for the 'pythreejs' backend. "
+                    "Install it with: pip install pythreejs"
+                )
+
+        return view(self, backend=resolved_backend,
                     width=width, height=height, **kwargs)
 
     def show_diagram(self, analysis=False, variable=None, limits=None):

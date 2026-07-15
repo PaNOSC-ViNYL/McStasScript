@@ -104,7 +104,9 @@ def run_mcdisplay(instrument_object, format="webgl-classic", nobrowse=None):
 
     notebook = _is_notebook()
     if nobrowse is None:
-        nobrowse = notebook and format != "window"
+        # webgl starts a Vite dev server — mcdisplay must open the browser
+        # itself since it knows the correct URL (http://localhost:5173).
+        nobrowse = notebook and format not in ("window", "webgl")
 
     options = ""
     if nobrowse:
@@ -151,7 +153,7 @@ def display_mcdisplay_html(html_path, width=800, height=450):
     Display mcdisplay HTML output.
 
     In a notebook, returns an IFrame widget. In a terminal, opens the
-    browser.
+    browser. Used for webgl-classic (static HTML that embeds correctly).
 
     Parameters
     ----------

@@ -10,6 +10,8 @@ The module implements a backend-agnostic instrument geometry viewer. The archite
 
 All major refactoring goals have been implemented: shapes are pure data, transforms are pure numpy, style is hints-not-materials, and drawcall parsing uses a registry pattern. The old duplicated mcdisplay logic in `instr.py::show_instrument()` is consolidated into `mcdisplay.py` with a thin wrapper. The module has 69 unit tests.
 
+`PyThreejsRenderer` is imported lazily — the module loads without pythreejs installed. `show_instrument()` checks for pythreejs before using it and raises `ImportError` with an install hint if missing.
+
 ## Remaining Considerations
 
 ### Missing import — `Any` in `matplotlib.py`
@@ -27,10 +29,6 @@ All major refactoring goals have been implemented: shapes are pure data, transfo
 ### Error output via `print()` in `mcdisplay.py`
 
 `mcdisplay.py` uses `print()` for error messages (lines 132, 140-143) rather than `logging`. The caller in `api.py` checks for `None` return and raises `RuntimeError`, so errors are handled, but diagnostic output goes to stdout rather than a proper logging facility.
-
-### WebGL backend shows nothing in notebook
-
-The `webgl` backend produces no visible output when run inside a Jupyter notebook. It works correctly from a terminal, where it opens a new browser tab displaying the geometry. The `display_mcdisplay_html()` function already uses `IPython.display.IFrame` for notebook environments, but it passes a local filesystem path as `src`, which becomes a `file://` URL. Browsers block `file://` URLs inside iframes when the parent Jupyter page is served over HTTP, so the iframe renders blank. A fix could read the HTML and embed it inline with `IPython.display.HTML()`, serve it via a local HTTP server, or use the Jupyter server's `files/` URL prefix.
 
 ### Matplotlib circle and cylinder geometries are axis-flipped
 

@@ -5,7 +5,7 @@ from mcstasscript.geometry_viewer.model import (
     ComponentModel, InstrumentModel,
 )
 from mcstasscript.geometry_viewer.renderer import (
-    RendererBackend, PyThreejsRenderer, MatplotlibRenderer,
+    RendererBackend, MatplotlibRenderer,
 )
 from mcstasscript.geometry_viewer.transform import Transform
 from mcstasscript.geometry_viewer.mcdisplay import (
@@ -13,6 +13,14 @@ from mcstasscript.geometry_viewer.mcdisplay import (
     run_mcdisplay,
     display_mcdisplay_html,
 )
+
+
+def __getattr__(name):
+    if name == "PyThreejsRenderer":
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        return PyThreejsRenderer
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = [
     "view", "view_with_json", "view_with_guess",
