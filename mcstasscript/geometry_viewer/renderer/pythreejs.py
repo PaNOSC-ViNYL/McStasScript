@@ -12,7 +12,7 @@ from mcstasscript.geometry_viewer.model.shapes import (
     LineSegmentsShape, PolyhedronShape, Style,
 )
 from mcstasscript.geometry_viewer.transform import Transform
-from mcstasscript.geometry_viewer.config import DEFAULT_COLORS
+from mcstasscript.geometry_viewer.config import DEFAULT_COLORS, index_to_color
 
 
 @dataclass
@@ -27,12 +27,22 @@ class MaterialLibrary:
         return self.colors[self.color_index]
 
     def next(self) -> str:
+        color = self.color
         self.color_index = (self.color_index + 1) % len(self.colors)
-        return self.color
+        return color
 
     def get_material(self, material_class: type | None = None, **kwargs: Any):
         cls = material_class or self.material_class
         kwargs = {"color": self.color, **kwargs}
+        key = self._make_key(cls, kwargs)
+        if key not in self._cache:
+            self._cache[key] = cls(**kwargs)
+        return self._cache[key]
+
+    def get_material_for_color(self, color: str, material_class: type | None = None, **kwargs: Any):
+        """Create or retrieve a material with a specific color (bypasses current color index)."""
+        cls = material_class or self.material_class
+        kwargs = {"color": color, **kwargs}
         key = self._make_key(cls, kwargs)
         if key not in self._cache:
             self._cache[key] = cls(**kwargs)
@@ -63,9 +73,13 @@ def _compute_opacity_for_size(largest_dim: float, base_opacities: tuple = (0.9, 
 
 
 class PyThreejsRenderer(RendererBackend):
-    def __init__(self, colors: list[str] | None = None):
+    def __init__(self, colors: list[str] | None = None, colormode: str = "default", num_components: int = 0):
         self.material_library = MaterialLibrary(colors=colors or DEFAULT_COLORS)
+        self.colormode = colormode
+        self.num_components = num_components
         self.simple_components = []
+        self.component_children: dict[int, list] = {}
+        self.component_colors: dict[int, str] = {}
 
     def register_component(self, component_model):
         self.simple_components.append({
@@ -75,8 +89,35 @@ class PyThreejsRenderer(RendererBackend):
             "component_name": component_model.comp.component_name,
         })
 
-    def next_component(self):
-        self.material_library.next()
+    def next_component(self) -> None:
+        if self.colormode != "component":
+            self.material_library.next()
+
+    def render_component(self, component: Any, component_index: int = 0) -> list[Any]:
+        self._current_component_index = component_index
+        if self.colormode == "component" and self.num_components > 0:
+            self._temp_color = index_to_color(component_index, self.num_components)
+        else:
+            self._temp_color = None
+        children = super().render_component(component, component_index)
+        self.component_children[component_index] = children
+        self.component_colors[component_index] = self._temp_color or self.material_library.color
+        return children
+
+    def _get_material(self, material_class: type | None = None, **kwargs: Any):
+        """Get a material, using temp_color if in component colormode."""
+        if self._temp_color is not None:
+            return self.material_library.get_material_for_color(self._temp_color, material_class=material_class, **kwargs)
+        return self.material_library.get_material(material_class=material_class, **kwargs)
+
+    def update_component_color(self, component_index: int, color: str) -> None:
+        """Update the color of all meshes belonging to a component."""
+        if component_index not in self.component_children:
+            return
+        self.component_colors[component_index] = color
+        for child in self.component_children[component_index]:
+            if hasattr(child, 'material') and hasattr(child.material, 'color'):
+                child.material.color = color
 
     def create_material(self, style: Style | None, color: str, **kwargs) -> Any:
         mat_kwargs = {}
@@ -104,7 +145,7 @@ class PyThreejsRenderer(RendererBackend):
 
     def _render_box(self, shape: BoxShape) -> p3.Mesh:
         geometry = p3.BoxGeometry(width=shape.width, height=shape.height, depth=shape.depth)
-        material = self.material_library.get_material(
+        material = self._get_material(
             material_class=p3.MeshLambertMaterial,
             transparent=True,
             opacity=0.8,
@@ -124,7 +165,7 @@ class PyThreejsRenderer(RendererBackend):
             height=shape.height,
             radialSegments=shape.radial_segments,
         )
-        material = self.material_library.get_material(
+        material = self._get_material(
             material_class=p3.MeshLambertMaterial,
             transparent=True,
             opacity=opacity,
@@ -142,7 +183,7 @@ class PyThreejsRenderer(RendererBackend):
             height=shape.height,
             radialSegments=shape.radial_segments,
         )
-        material = self.material_library.get_material(
+        material = self._get_material(
             material_class=p3.MeshLambertMaterial,
             transparent=True,
             opacity=0.80,
@@ -163,7 +204,7 @@ class PyThreejsRenderer(RendererBackend):
         else:
             opacity = 0.2
         geometry = p3.CircleGeometry(radius=shape.radius, segments=shape.segments)
-        material = self.material_library.get_material(
+        material = self._get_material(
             material_class=p3.MeshLambertMaterial,
             transparent=True,
             opacity=opacity,
@@ -179,7 +220,7 @@ class PyThreejsRenderer(RendererBackend):
         geometry = p3.BufferGeometry(
             attributes={"position": p3.BufferAttribute(points)}
         )
-        material = self.material_library.get_material(material_class=p3.LineBasicMaterial)
+        material = self._get_material(material_class=p3.LineBasicMaterial)
         line = p3.LineSegments(geometry=geometry, material=material)
         self.apply_transform(line, shape.transform)
         return line
@@ -190,7 +231,7 @@ class PyThreejsRenderer(RendererBackend):
             index=p3.BufferAttribute(shape.indices, normalized=False),
         )
         geometry.exec_three_obj_method("computeVertexNormals")
-        material = self.material_library.get_material(
+        material = self._get_material(
             material_class=p3.MeshBasicMaterial,
             transparent=True,
             opacity=0.8,
@@ -212,7 +253,7 @@ class PyThreejsRenderer(RendererBackend):
         return visual_obj
 
     def make_scene(self, children: list[Any], show_axes: bool = True,
-                   width: int = 900, height: int = 600) -> p3.Renderer:
+                    width: int = 900, height: int = 600, **kwargs) -> p3.Renderer:
         scene = p3.Scene(children=[])
         ambient = p3.AmbientLight(intensity=1.0)
         scene.add(ambient)

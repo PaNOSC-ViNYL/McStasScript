@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,7 +14,7 @@ from mcstasscript.geometry_viewer.model.shapes import (
     LineSegmentsShape, PolyhedronShape, Style,
 )
 from mcstasscript.geometry_viewer.transform import Transform, quaternion_to_rotation_matrix
-from mcstasscript.geometry_viewer.config import DEFAULT_COLORS
+from mcstasscript.geometry_viewer.config import DEFAULT_COLORS, index_to_color
 
 
 @dataclass
@@ -23,21 +24,64 @@ class LineDescriptor:
 
 
 class MatplotlibRenderer(RendererBackend):
-    def __init__(self, mode: str = "3d", colors: list[str] | None = None, projection: str = "zx"):
+    def __init__(self, mode: str = "3d", colors: list[str] | None = None, projection: str = "zx",
+                 colormode: str = "default", num_components: int = 0):
         self.mode = mode
         self.colors = colors or DEFAULT_COLORS
         self._color_index = 0
         self.projection = projection.lower() if self.mode == "2d" else "xy"
+        self.colormode = colormode
+        self.num_components = num_components
         self._validate_projection()
+        self.component_children: dict[int, list] = {}
+        self.component_colors: dict[int, str] = {}
+
+    @property
+    def current_color(self) -> str:
+        """Return the current color without advancing the index."""
+        if self.colormode == "component" and self.num_components > 0:
+            return index_to_color(self._color_index, self.num_components)
+        return self.colors[self._color_index]
 
     def _next_color(self) -> str:
-        color = self.colors[self._color_index]
+        color = self.current_color
         self._color_index = (self._color_index + 1) % len(self.colors)
         return color
+
+    def next_component(self) -> None:
+        """Advance to the next color for the upcoming component."""
+        if self.colormode == "component" and self.num_components > 0:
+            self._color_index += 1
+        else:
+            self._next_color()
 
     def _validate_projection(self):
         if self.projection not in ("xy", "zx", "zy"):
             raise ValueError(f"Invalid projection: {self.projection!r}. Must be one of 'xy', 'zx', 'zy'.")
+
+    def render_component(self, component: Any, component_index: int = 0) -> list[Any]:
+        color = self.current_color
+        children = super().render_component(component, component_index)
+        self.component_children[component_index] = children
+        self.component_colors[component_index] = color
+        return children
+
+    def update_component_color(self, component_index: int, color: str) -> None:
+        """Update the color of all artists belonging to a component."""
+        if component_index not in self.component_children:
+            return
+        self.component_colors[component_index] = color
+        for child in self.component_children[component_index]:
+            if isinstance(child, PolyCollection):
+                child.set_facecolors(color)
+                if child.get_edgecolors() is not None and not np.array_equal(child.get_edgecolors(), [[0, 0, 0, 0]]):
+                    child.set_edgecolors(color)
+            elif isinstance(child, Poly3DCollection):
+                child.set_facecolors(color)
+                if child.get_edgecolors() is not None and not np.array_equal(child.get_edgecolors(), [[0, 0, 0, 0]]):
+                    child.set_edgecolors(color)
+            elif hasattr(child, 'set_color'):
+                child.set_color(color)
 
     def create_material(self, style: Style | None, color: str, **kwargs) -> dict:
         props = {"color": color}
@@ -82,7 +126,21 @@ class MatplotlibRenderer(RendererBackend):
         mapping = {"xy": [0, 1, 2], "zx": [2, 0, 1], "zy": [2, 1, 0]}
         return pts[:, mapping[self.projection]]
 
-    def _render_box(self, shape: BoxShape) -> Poly3DCollection:
+    def _make_collection(self, faces, color, alpha, edge_color="none", lw=0.5):
+        """Create a PolyCollection (2D) or Poly3DCollection (3D) from face data."""
+        if self.mode == "2d":
+            faces_2d = [np.array(f)[:, :2] for f in faces]
+            return PolyCollection(
+                faces_2d, facecolors=color, edgecolors=edge_color,
+                alpha=alpha, linewidths=lw,
+            )
+        else:
+            return Poly3DCollection(
+                faces, facecolors=color, edgecolors=edge_color,
+                alpha=alpha, linewidths=lw,
+            )
+
+    def _render_box(self, shape: BoxShape):
         w, h, d = shape.width, shape.height, shape.depth
         vx = [-w / 2, w / 2]
         vy = [-h / 2, h / 2]
@@ -103,11 +161,8 @@ class MatplotlibRenderer(RendererBackend):
         else:
             faces = [self._remap_to_display(np.array(f)).tolist() for f in faces]
 
-        color = self._next_color()
-        return Poly3DCollection(
-            faces, facecolors=color, edgecolors=color,
-            alpha=0.8, linewidths=0.5,
-        )
+        color = self.current_color
+        return self._make_collection(faces, color, 0.8, edge_color=color)
 
     def _sample_cylinder_mesh(self, radius_top, radius_bottom, height, segments):
         verts = np.linspace(0, 2 * np.pi, segments + 1)
@@ -127,7 +182,7 @@ class MatplotlibRenderer(RendererBackend):
             mesh.append(quad)
         return mesh
 
-    def _render_cylinder(self, shape: CylinderShape) -> Poly3DCollection:
+    def _render_cylinder(self, shape: CylinderShape):
         mesh = self._sample_cylinder_mesh(shape.radius, shape.radius, shape.height, shape.radial_segments)
         if shape.transform:
             mesh = [self._remap_to_display(self._transform_points(np.array(f), shape.transform)).tolist() for f in mesh]
@@ -144,26 +199,20 @@ class MatplotlibRenderer(RendererBackend):
         else:
             alpha = 0.4
 
-        color = self._next_color()
-        return Poly3DCollection(
-            mesh, facecolors=color, edgecolors=color,
-            alpha=alpha, linewidths=0.5,
-        )
+        color = self.current_color
+        return self._make_collection(mesh, color, alpha, edge_color=color)
 
-    def _render_cone(self, shape: ConeShape) -> Poly3DCollection:
+    def _render_cone(self, shape: ConeShape):
         mesh = self._sample_cylinder_mesh(0, shape.radius, shape.height, shape.radial_segments)
         if shape.transform:
             mesh = [self._remap_to_display(self._transform_points(np.array(f), shape.transform)).tolist() for f in mesh]
         else:
             mesh = [self._remap_to_display(np.array(f)).tolist() for f in mesh]
 
-        color = self._next_color()
-        return Poly3DCollection(
-            mesh, facecolors=color, edgecolors=color,
-            alpha=0.8, linewidths=0.5,
-        )
+        color = self.current_color
+        return self._make_collection(mesh, color, 0.8, edge_color=color)
 
-    def _render_circle(self, shape: CircleShape) -> Poly3DCollection:
+    def _render_circle(self, shape: CircleShape):
         angles = np.linspace(0, 2 * np.pi, shape.segments + 1)
         pts = np.column_stack([
             shape.radius * np.cos(angles),
@@ -189,26 +238,20 @@ class MatplotlibRenderer(RendererBackend):
         else:
             alpha = 0.2
 
-        color = self._next_color()
-        return Poly3DCollection(
-            tri_faces, facecolors=color, edgecolors="none",
-            alpha=alpha,
-        )
+        color = self.current_color
+        return self._make_collection(tri_faces, color, alpha)
 
     def _render_line_segments(self, shape: LineSegmentsShape) -> LineDescriptor:
         points = self._remap_to_display(self._transform_points(shape.points, shape.transform))
-        color = self._next_color()
+        color = self.current_color
         return LineDescriptor(points=points, color=color)
 
-    def _render_polyhedron(self, shape: PolyhedronShape) -> Poly3DCollection:
+    def _render_polyhedron(self, shape: PolyhedronShape):
         vertices = self._remap_to_display(self._transform_points(shape.vertices, shape.transform))
         faces = vertices[shape.indices.reshape(-1, 3)]
 
-        color = self._next_color()
-        return Poly3DCollection(
-            faces, facecolors=color, edgecolors=color,
-            alpha=0.8, linewidths=0.5,
-        )
+        color = self.current_color
+        return self._make_collection(faces, color, 0.8, edge_color=color)
 
     def apply_transform(self, visual_obj: Any, transform: Transform | None) -> Any:
         return visual_obj
@@ -231,11 +274,17 @@ class MatplotlibRenderer(RendererBackend):
                 for paths in child.get_paths():
                     all_verts.extend(paths.vertices)
             elif isinstance(child, LineDescriptor):
-                ax.plot(
+                line, = ax.plot(
                     child.points[:, 0], child.points[:, 1], child.points[:, 2],
                     c=child.color, linewidth=1,
                 )
                 all_verts.extend(child.points)
+                comp_idx = getattr(child, '_component_index', 0)
+                if comp_idx in self.component_children:
+                    for i, c in enumerate(self.component_children[comp_idx]):
+                        if c is child:
+                            self.component_children[comp_idx][i] = line
+                            break
 
         if show_axes:
             ax.set_xlabel("Z")
@@ -266,7 +315,11 @@ class MatplotlibRenderer(RendererBackend):
 
         all_verts = []
         for child in children:
-            if isinstance(child, Poly3DCollection):
+            if isinstance(child, PolyCollection):
+                ax.add_collection(child)
+                for face in child.get_paths():
+                    all_verts.extend(face.vertices)
+            elif isinstance(child, Poly3DCollection):
                 proj_faces = []
                 for face in child.get_paths():
                     verts = face.vertices[:, :2]
@@ -281,11 +334,17 @@ class MatplotlibRenderer(RendererBackend):
                     )
                     ax.add_collection(collection)
             elif isinstance(child, LineDescriptor):
-                ax.plot(
+                line, = ax.plot(
                     child.points[:, 0], child.points[:, 1],
                     c=child.color, linewidth=1,
                 )
                 all_verts.extend(child.points[:, :2])
+                comp_idx = getattr(child, '_component_index', 0)
+                if comp_idx in self.component_children:
+                    for i, c in enumerate(self.component_children[comp_idx]):
+                        if c is child:
+                            self.component_children[comp_idx][i] = line
+                            break
 
         if show_axes:
             label_map = {"xy": ("X", "Y"), "zx": ("Z", "X"), "zy": ("Z", "Y")}
