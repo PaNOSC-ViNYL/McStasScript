@@ -85,6 +85,16 @@ def quaternion_from_rotation_matrix(R):
     return (qx, qy, qz, qw)
 
 
+def quaternion_to_rotation_matrix(q):
+    """Convert a quaternion (x, y, z, w) to a 3x3 rotation matrix."""
+    x, y, z, w = np.asarray(q, dtype=float)
+    return np.array([
+        [1 - 2*(y*y + z*z),   2*(x*y - z*w),     2*(x*z + y*w)],
+        [   2*(x*y + z*w), 1 - 2*(x*x + z*z),   2*(y*z - x*w)],
+        [   2*(x*z - y*w),   2*(y*z + x*w), 1 - 2*(x*x + y*y)],
+    ])
+
+
 def normalize_quaternion(q):
     q = np.asarray(q, dtype=float)
     norm = np.linalg.norm(q)

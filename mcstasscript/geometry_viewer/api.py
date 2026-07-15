@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import os
 
+import matplotlib.pyplot as plt
+
 from mcstasscript.geometry_viewer.model.component import ComponentModel
 from mcstasscript.geometry_viewer.model.instrument import InstrumentModel
 from mcstasscript.geometry_viewer.renderer.matplotlib import MatplotlibRenderer
@@ -43,7 +45,11 @@ def view_with_guess(instrument_object, backend: str = "pythreejs", **kwargs):
         component_model.guess_geometry_from_comp_object()
 
     renderer = _get_renderer(backend, **kwargs)
-    return renderer.render_instrument(instrument_model, width=width, height=height, **kwargs)
+    result = renderer.render_instrument(instrument_model, width=width, height=height, **kwargs)
+    if isinstance(renderer, MatplotlibRenderer):
+        plt.show()
+        return None
+    return result
 
 
 def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
@@ -79,6 +85,10 @@ def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
         import ipywidgets as ipw
         navigator = renderer.create_component_navigator(scene)
         return ipw.VBox([navigator, scene])
+
+    if isinstance(renderer, MatplotlibRenderer):
+        plt.show()
+        return None
 
     return scene
 

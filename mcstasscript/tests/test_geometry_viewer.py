@@ -10,6 +10,7 @@ from mcstasscript.geometry_viewer.transform import (
     normalize,
     quaternion_from_vectors,
     quaternion_from_rotation_matrix,
+    quaternion_to_rotation_matrix,
     normalize_quaternion,
     quaternion_multiply,
     Transform,
@@ -908,6 +909,76 @@ class TestApi(unittest.TestCase):
         """
         with self.assertRaises(ValueError):
             _get_renderer("unknown_backend")
+
+
+class TestQuaternionToRotationMatrix(unittest.TestCase):
+    """Tests for quaternion_to_rotation_matrix: converts a quaternion to a 3x3 rotation matrix."""
+
+    def test_identity(self):
+        """The identity quaternion should produce the identity matrix."""
+        R = quaternion_to_rotation_matrix((0, 0, 0, 1))
+        np.testing.assert_array_almost_equal(R, np.eye(3))
+
+    def test_90_deg_around_z(self):
+        """A 90-degree quaternion around Z should produce the correct rotation matrix."""
+        q = (0, 0, 0.70710678, 0.70710678)
+        R = quaternion_to_rotation_matrix(q)
+        expected = np.array([
+            [0, -1, 0],
+            [1, 0, 0],
+            [0, 0, 1],
+        ])
+        np.testing.assert_array_almost_equal(R, expected, decimal=3)
+
+    def test_roundtrip(self):
+        """Converting matrix -> quaternion -> matrix should recover the original."""
+        R_orig = np.array([
+            [0, -1, 0],
+            [1, 0, 0],
+            [0, 0, 1],
+        ])
+        q = quaternion_from_rotation_matrix(R_orig)
+        R_back = quaternion_to_rotation_matrix(q)
+        np.testing.assert_array_almost_equal(R_back, R_orig)
+
+
+class TestMatplotlibTransformPoints(unittest.TestCase):
+    """Tests for MatplotlibRenderer._transform_points with quaternion transforms."""
+
+    def setUp(self):
+        from mcstasscript.geometry_viewer.renderer.matplotlib import MatplotlibRenderer
+        self.renderer = MatplotlibRenderer()
+
+    def test_quaternion_only(self):
+        """A transform with only a quaternion should rotate points correctly."""
+        q = quaternion_from_vectors([0, 0, 1], [0, 1, 0])
+        t = Transform(quaternion=q)
+        pts = np.array([[0, 0, 1]])
+        result = self.renderer._transform_points(pts, t)
+        expected = np.array([[0, 1, 0]])
+        np.testing.assert_array_almost_equal(result, expected)
+
+    def test_quaternion_and_rotation_matrix(self):
+        """A transform with both quaternion and rotation_matrix should combine them."""
+        R = np.array([
+            [0, -1, 0],
+            [1, 0, 0],
+            [0, 0, 1],
+        ])
+        q = quaternion_from_vectors([0, 1, 0], [1, 0, 0])
+        t = Transform(rotation_matrix=R, quaternion=q, position=np.array([10, 0, 0]))
+        pts = np.array([[0, 1, 0]])
+        result = self.renderer._transform_points(pts, t)
+        fq = t.final_quaternion()
+        R_combined = quaternion_to_rotation_matrix(fq)
+        expected = (pts @ R_combined.T) + np.array([10, 0, 0])
+        np.testing.assert_array_almost_equal(result, expected)
+
+    def test_none_transform(self):
+        """A None transform should return the points unchanged."""
+        pts = np.array([[1, 2, 3]])
+        result = self.renderer._transform_points(pts, None)
+        np.testing.assert_array_almost_equal(result, pts)
 
 
 if __name__ == '__main__':
