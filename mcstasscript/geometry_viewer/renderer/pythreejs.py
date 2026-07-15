@@ -321,3 +321,27 @@ class PyThreejsRenderer(RendererBackend):
 
         dropdown.observe(on_component_select, names="value")
         return dropdown
+
+    def create_colormode_selector(self):
+        import ipywidgets as ipw
+
+        selector = ipw.Dropdown(
+            options={"Default": "default", "Component": "component"},
+            value=self.colormode,
+            description="Colormode: ",
+            style={"description_width": "initial"},
+        )
+
+        def on_colormode_change(change):
+            if change["type"] != "change":
+                return
+            self.colormode = change["new"]
+            for idx in self.component_children:
+                if self.colormode == "component" and self.num_components > 0:
+                    color = index_to_color(idx, self.num_components)
+                else:
+                    color = DEFAULT_COLORS[idx % len(DEFAULT_COLORS)]
+                self.update_component_color(idx, color)
+
+        selector.observe(on_colormode_change, names="value")
+        return selector

@@ -44,6 +44,8 @@ def view_with_guess(instrument_object, backend: str = "pythreejs", **kwargs):
         component_model = ComponentModel(component)
         component_model.guess_geometry_from_comp_object()
 
+    num_components = len(instrument_model.component_models)
+    kwargs.setdefault("num_components", num_components)
     renderer = _get_renderer(backend, **kwargs)
     result = renderer.render_instrument(instrument_model, width=width, height=height, **kwargs)
     if isinstance(renderer, MatplotlibRenderer):
@@ -62,12 +64,14 @@ def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
 
     instrument_model = InstrumentModel(instrument_object=instrument_object, json_dict=json_dict)
 
-    renderer = _get_renderer(backend, **kwargs)
-
     if index_min is None:
         index_min = 0
     if index_max is None:
         index_max = len(instrument_model.component_models)
+
+    num_components = index_max - index_min
+    kwargs.setdefault("num_components", num_components)
+    renderer = _get_renderer(backend, **kwargs)
 
     from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
 
@@ -76,15 +80,16 @@ def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
         if index_min <= index < index_max:
             if isinstance(renderer, PyThreejsRenderer):
                 renderer.register_component(component_model)
-                renderer.next_component()
-            all_children.extend(renderer.render_component(component_model))
+            all_children.extend(renderer.render_component(component_model, component_index=index))
+            renderer.next_component()
 
     scene = renderer.make_scene(all_children, width=width, height=height, **kwargs)
 
     if isinstance(renderer, PyThreejsRenderer):
         import ipywidgets as ipw
         navigator = renderer.create_component_navigator(scene)
-        return ipw.VBox([navigator, scene])
+        colormode_selector = renderer.create_colormode_selector()
+        return ipw.VBox([navigator, colormode_selector, scene])
 
     if isinstance(renderer, MatplotlibRenderer):
         plt.show()
@@ -131,6 +136,10 @@ def view(instrument_object, backend: str = "pythreejs",
     projection : str
         Axis projection for matplotlib_2d backend. One of 'xy', 'zx', 'zy'.
         Default 'zx' (matches McStas beam-layout convention). Ignored for 3D backends.
+    colormode : str
+        Color assignment mode. Options:
+        - 'default' (default): cycle through a fixed palette of colors
+        - 'component': map component index to a viridis colorscale
     """
 
     # --- mcdisplay HTML backends ---
