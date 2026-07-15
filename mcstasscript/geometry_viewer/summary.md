@@ -65,3 +65,7 @@ The `num_components` parameter is passed through from `view_with_json()` and `vi
 ### Matplotlib component colormode shows single color — FIXED
 
 **Resolved:** `MatplotlibRenderer.next_component()` always called `_next_color()` which advanced `_color_index` modulo `len(self.colors)`, causing all components to cycle through the same palette instead of mapping to unique viridis colors. In component mode, `next_component()` now increments `_color_index` linearly so each component gets a distinct color from `index_to_color()`.
+
+### Colormode dropdown in pythreejs widget — ADDED
+
+**Resolved:** Added `PyThreejsRenderer.create_colormode_selector()` which returns an `ipywidgets.Dropdown` with "Default" and "Component" options. When the user switches modes, the callback iterates over all `component_children` and calls `update_component_color()` to re-color each component in place — no re-rendering needed. The selector is wired into `api.py` and displayed in the widget's `VBox` between the component navigator and the 3D scene.
