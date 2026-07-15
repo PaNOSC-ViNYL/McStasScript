@@ -23,15 +23,21 @@ class LineDescriptor:
 
 
 class MatplotlibRenderer(RendererBackend):
-    def __init__(self, mode: str = "3d", colors: list[str] | None = None):
+    def __init__(self, mode: str = "3d", colors: list[str] | None = None, projection: str = "zx"):
         self.mode = mode
         self.colors = colors or DEFAULT_COLORS
         self._color_index = 0
+        self.projection = projection.lower() if self.mode == "2d" else "xy"
+        self._validate_projection()
 
     def _next_color(self) -> str:
         color = self.colors[self._color_index]
         self._color_index = (self._color_index + 1) % len(self.colors)
         return color
+
+    def _validate_projection(self):
+        if self.projection not in ("xy", "zx", "zy"):
+            raise ValueError(f"Invalid projection: {self.projection!r}. Must be one of 'xy', 'zx', 'zy'.")
 
     def create_material(self, style: Style | None, color: str, **kwargs) -> dict:
         props = {"color": color}
@@ -71,8 +77,10 @@ class MatplotlibRenderer(RendererBackend):
         return pts
 
     def _remap_to_display(self, pts: np.ndarray) -> np.ndarray:
-        """Remap data (X, Y, Z) → display (Z, X, Y) so Z is horizontal."""
-        return pts[:, [2, 0, 1]]
+        if self.mode == "3d":
+            return pts[:, [2, 0, 1]]
+        mapping = {"xy": [0, 1, 2], "zx": [2, 0, 1], "zy": [2, 1, 0]}
+        return pts[:, mapping[self.projection]]
 
     def _render_box(self, shape: BoxShape) -> Poly3DCollection:
         w, h, d = shape.width, shape.height, shape.depth
@@ -280,8 +288,9 @@ class MatplotlibRenderer(RendererBackend):
                 all_verts.extend(child.points[:, :2])
 
         if show_axes:
-            ax.set_xlabel("X")
-            ax.set_ylabel("Y")
+            label_map = {"xy": ("X", "Y"), "zx": ("Z", "X"), "zy": ("Z", "Y")}
+            ax.set_xlabel(label_map[self.projection][0])
+            ax.set_ylabel(label_map[self.projection][1])
 
         if all_verts:
             all_verts = np.array(all_verts)

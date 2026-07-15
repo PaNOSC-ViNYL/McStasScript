@@ -37,3 +37,7 @@ All major refactoring goals have been implemented: shapes are pure data, transfo
 ### Matplotlib backend displays both static image and interactive widget — FIXED
 
 **Resolved:** `view_with_json()` and `view_with_guess()` in `api.py` now call `plt.show()` and return `None` for matplotlib backends. With `%matplotlib widget`, the widget is already displayed by `plt.figure()` and `return None` suppresses Jupyter's auto-display of the returned `plt.Figure` as a duplicate static PNG. With `%matplotlib inline`, `plt.show()` renders the figure and `return None` prevents a second copy.
+
+### Matplotlib 2D projection selection
+
+`MatplotlibRenderer` accepts a `projection` keyword argument (`"xy"`, `"zx"`, `"zy"`) that controls which axes are displayed in 2D mode. The first character is the horizontal axis, the second is vertical. Default is `"zx"` (Z horizontal = beam direction, X vertical), matching McStas convention. The parameter flows through `**kwargs` from `view()` → `_get_renderer()` → `MatplotlibRenderer`, allowing a future widget to select the projection without API changes.

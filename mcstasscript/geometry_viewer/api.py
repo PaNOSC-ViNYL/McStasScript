@@ -128,6 +128,9 @@ def view(instrument_object, backend: str = "pythreejs",
         Width of output widget/figure.
     height : int
         Height of output widget/figure.
+    projection : str
+        Axis projection for matplotlib_2d backend. One of 'xy', 'zx', 'zy'.
+        Default 'zx' (matches McStas beam-layout convention). Ignored for 3D backends.
     """
 
     # --- mcdisplay HTML backends ---
