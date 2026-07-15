@@ -3025,12 +3025,17 @@ class McStas_instr(McCode_instr):
         else:
             self.line_limit = 85 # default value in case no configuration file is found
 
+        mcrun_path = shutil.which("mcrun")
         if "MCSTAS" in os.environ: # We are in a McStas environment, use that
-            self._run_settings["executable_path"] = os.path.dirname(shutil.which("mcrun"))
+            if mcrun_path:
+                self._run_settings["executable_path"] = os.path.dirname(mcrun_path)
+            elif type(config) is dict:
+                self._run_settings["executable_path"] = config["paths"]["mcrun_path"]
             self._run_settings["package_path"] = os.environ["MCSTAS"]
         else:
             try: # Otherwise, try to ask mcrun for the resourcedir
-                self._run_settings["executable_path"] = os.path.dirname(shutil.which("mcrun"))
+                if mcrun_path:
+                    self._run_settings["executable_path"] = os.path.dirname(mcrun_path)
                 self._run_settings["package_path"] = subprocess.check_output("mcrun --showcfg=resourcedir",shell=True).decode('utf-8').rstrip()
             except:
                 if type(config) is dict:
@@ -3263,12 +3268,17 @@ class McXtrace_instr(McCode_instr):
         if type(config) is dict:
             self.line_limit = config["other"]["characters_per_line"]
 
+        mxrun_path = shutil.which("mxrun")
         if "MCXTRACE" in os.environ: # We are in a McXtrace environment, use that
-            self._run_settings["executable_path"] = os.path.dirname(shutil.which("mxrun"))
+            if mxrun_path:
+                self._run_settings["executable_path"] = os.path.dirname(mxrun_path)
+            elif type(config) is dict:
+                self._run_settings["executable_path"] = config["paths"]["mxrun_path"]
             self._run_settings["package_path"] = os.environ["MCXTRACE"]
         else:
             try: # Otherwise, try to ask mxrun for the resourcedir
-                self._run_settings["executable_path"] = os.path.dirname(shutil.which("mxrun"))
+                if mxrun_path:
+                    self._run_settings["executable_path"] = os.path.dirname(mxrun_path)
                 self._run_settings["package_path"] = subprocess.check_output("mxrun --showcfg=resourcedir",shell=True).decode('utf-8').rstrip()
             except:
                 if type(config) is dict:
