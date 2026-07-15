@@ -15,10 +15,9 @@ class Style:
     wireframe: bool = False
 
 
-@dataclass(kw_only=True)
 class Shape(ABC):
-    transform: Transform | None = None
-    style: Style | None = None
+    """Base class for all shapes. Subclasses are dataclasses."""
+    pass
 
 
 @dataclass
@@ -26,6 +25,8 @@ class BoxShape(Shape):
     width: float
     height: float
     depth: float
+    transform: Transform | None = None
+    style: Style | None = None
 
     def __repr__(self):
         return f"BoxShape w={self.width} h={self.height} d={self.depth}"
@@ -34,6 +35,8 @@ class BoxShape(Shape):
 @dataclass
 class LineSegmentsShape(Shape):
     points: np.ndarray
+    transform: Transform | None = None
+    style: Style | None = None
 
     def __post_init__(self):
         self.points = np.asarray(self.points, dtype=np.float32)
@@ -48,6 +51,8 @@ class LineSegmentsShape(Shape):
 class CircleShape(Shape):
     radius: float
     segments: int = 64
+    transform: Transform | None = None
+    style: Style | None = None
 
     def __repr__(self):
         return f"CircleShape r={self.radius}"
@@ -58,6 +63,8 @@ class ConeShape(Shape):
     radius: float
     height: float
     radial_segments: int = 32
+    transform: Transform | None = None
+    style: Style | None = None
 
     def __repr__(self):
         return f"ConeShape r={self.radius} h={self.height}"
@@ -68,6 +75,8 @@ class CylinderShape(Shape):
     radius: float
     height: float
     radial_segments: int = 32
+    transform: Transform | None = None
+    style: Style | None = None
 
     def __repr__(self):
         return f"CylinderShape r={self.radius} h={self.height}"
@@ -77,6 +86,8 @@ class CylinderShape(Shape):
 class PolyhedronShape(Shape):
     vertices: np.ndarray
     indices: np.ndarray
+    transform: Transform | None = None
+    style: Style | None = None
 
     def __post_init__(self):
         self.vertices = np.asarray(self.vertices, dtype=np.float32)
