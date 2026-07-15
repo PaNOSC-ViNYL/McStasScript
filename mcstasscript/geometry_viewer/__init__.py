@@ -8,7 +8,11 @@ from mcstasscript.geometry_viewer.renderer import (
     RendererBackend, PyThreejsRenderer, MatplotlibRenderer,
 )
 from mcstasscript.geometry_viewer.transform import Transform
-from mcstasscript.geometry_viewer.mcdisplay import generate_json
+from mcstasscript.geometry_viewer.mcdisplay import (
+    generate_json,
+    run_mcdisplay,
+    display_mcdisplay_html,
+)
 
 __all__ = [
     "view", "view_with_json", "view_with_guess",
@@ -16,5 +20,6 @@ __all__ = [
     "LineSegmentsShape", "PolyhedronShape", "Style",
     "ComponentModel", "InstrumentModel",
     "RendererBackend", "PyThreejsRenderer", "MatplotlibRenderer",
-    "Transform", "generate_json",
+    "Transform",
+    "generate_json", "run_mcdisplay", "display_mcdisplay_html",
 ]

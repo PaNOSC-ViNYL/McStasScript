@@ -1,6 +1,7 @@
 import os
 import os.path
 import io
+import subprocess
 import unittest
 import unittest.mock
 import datetime
@@ -2430,11 +2431,24 @@ class TestMcStas_instr(unittest.TestCase):
                                     cwd=run_path)
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    @unittest.mock.patch("mcstasscript.geometry_viewer.mcdisplay.os.path.exists")
     @unittest.mock.patch("subprocess.run")
-    def test_show_instrument_basic(self, mock_sub, mock_stdout):
+    def test_show_instrument_basic(self, mock_sub, mock_exists, mock_stdout):
         """
-        Test show_instrument methods makes correct system calls
+        Test show_instrument with webgl-classic backend makes correct system calls.
         """
+        mock_result = unittest.mock.Mock()
+        mock_result.returncode = 0
+        mock_result.stdout = ""
+        mock_result.stderr = ""
+        mock_sub.return_value = mock_result
+
+        def fake_exists(path):
+            if path and "index.html" in str(path):
+                return True
+            return False
+
+        mock_exists.side_effect = fake_exists
 
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         executable_path = os.path.join(THIS_DIR, "dummy_mcstas")
@@ -2445,7 +2459,7 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_populated_instr_with_dummy_path()
 
         instr.set_parameters(theta=1.2)
-        instr.show_instrument()
+        instr.show_instrument(backend="webgl-classic")
 
         os.chdir(current_work_dir)
 
@@ -2453,15 +2467,15 @@ class TestMcStas_instr(unittest.TestCase):
         expected_path = '"' + expected_path + '"'
         expected_instr_path = os.path.join(THIS_DIR, "test_instrument.instr")
 
-        # a double space because of a missing option
         expected_call = (expected_path
-                         + " --dirname test_instrument_mcdisplay"
-                         + " " + expected_instr_path
-                         + "  theta=1.2 has_default=37")
+                         + " --dirname test_instrument_mcdisplay "
+                         + expected_instr_path
+                         + " theta=1.2 has_default=37")
 
         mock_sub.assert_called_with(expected_call,
                                     shell=True,
-                                    stderr=-1, stdout=-1,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
                                     universal_newlines=True,
                                     cwd=".")
 

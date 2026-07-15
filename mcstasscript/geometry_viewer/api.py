@@ -5,7 +5,11 @@ from mcstasscript.geometry_viewer.model.component import ComponentModel
 from mcstasscript.geometry_viewer.model.instrument import InstrumentModel
 from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
 from mcstasscript.geometry_viewer.renderer.matplotlib import MatplotlibRenderer
-from mcstasscript.geometry_viewer.mcdisplay import generate_json
+from mcstasscript.geometry_viewer.mcdisplay import (
+    generate_json,
+    run_mcdisplay,
+    display_mcdisplay_html,
+)
 
 
 def _get_renderer(backend: str = "pythreejs", **kwargs):
@@ -27,14 +31,16 @@ def view_with_guess(instrument_object, backend: str = "pythreejs", **kwargs):
     - If non-trivial declared variables used in AT / ROTATED
     - If non-trivial calculations are made in AT / ROTATED
     """
+    width = kwargs.pop("width", 900)
+    height = kwargs.pop("height", 600)
+
     instrument_model = InstrumentModel()
     for component in instrument_object.component_list:
         component_model = ComponentModel(component)
         component_model.guess_geometry_from_comp_object()
-        instrument_model.add_model(component_model)
 
     renderer = _get_renderer(backend, **kwargs)
-    return renderer.render_instrument(instrument_model, **kwargs)
+    return renderer.render_instrument(instrument_model, width=width, height=height, **kwargs)
 
 
 def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
@@ -42,6 +48,9 @@ def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
     """
     Plots instrument geometry with json input from mcdisplay-webgl.
     """
+    width = kwargs.pop("width", 900)
+    height = kwargs.pop("height", 600)
+
     instrument_model = InstrumentModel(instrument_object=instrument_object, json_dict=json_dict)
 
     renderer = _get_renderer(backend, **kwargs)
@@ -59,7 +68,7 @@ def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
                 renderer.next_component()
             all_children.extend(renderer.render_component(component_model))
 
-    scene = renderer.make_scene(all_children, **kwargs)
+    scene = renderer.make_scene(all_children, width=width, height=height, **kwargs)
 
     if isinstance(renderer, PyThreejsRenderer):
         import ipywidgets as ipw
@@ -70,15 +79,63 @@ def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
 
 
 def view(instrument_object, backend: str = "pythreejs",
+         allow_guess: bool = False,
          json_dict: dict | None = None, json_file: str | None = None,
-         index_min: int | None = None, index_max: int | None = None, **kwargs):
+         index_min: int | None = None, index_max: int | None = None,
+         width: int = 900, height: int = 600, **kwargs):
     """
-    Plots instrument geometry. Tries guess-based geometry first,
-    falls back to mcdisplay-webgl JSON generation if needed.
+    Plots instrument geometry.
+
+    Parameters
+    ----------
+    instrument_object : McStas_instr or McXtrace_instr
+        Instrument to visualize.
+    backend : str
+        Rendering backend. Options:
+        - 'pythreejs' (default): generate JSON via mcdisplay-webgl, render as pythreejs widget
+        - 'matplotlib' / 'matplotlib_2d': generate JSON, render as matplotlib figure
+        - 'webgl': generate HTML via mcdisplay-webgl, display as IFrame or browser
+        - 'webgl-classic': generate HTML via mcdisplay-webgl-classic, display as IFrame or browser
+        - 'window': launch mcdisplay-pyqtgraph native window
+        - 'guess': skip mcdisplay, guess geometry from component parameters
+    allow_guess : bool
+        If True, try geometry guess first, fall back to mcdisplay JSON on error.
+        Default False.
+    json_dict : dict, optional
+        Pre-loaded instrument.json dict (skips mcdisplay generation).
+    json_file : str, optional
+        Path to instrument.json file (skips mcdisplay generation).
+    index_min : int, optional
+        First component index to render (for JSON-based backends).
+    index_max : int, optional
+        Last component index to render (for JSON-based backends).
+    width : int
+        Width of output widget/figure.
+    height : int
+        Height of output widget/figure.
     """
-    try:
-        return view_with_guess(instrument_object, backend=backend, **kwargs)
-    except Exception:
+
+    # --- mcdisplay HTML backends ---
+    if backend in ("webgl", "webgl-classic", "window"):
+        html_path = run_mcdisplay(instrument_object, format=backend)
+        if html_path is None:
+            raise RuntimeError(f"mcdisplay run with format '{backend}' failed.")
+        return display_mcdisplay_html(html_path, width=width, height=height)
+
+    # --- guess-only backend ---
+    if backend == "guess":
+        renderer = kwargs.pop("renderer", "pythreejs")
+        return view_with_guess(instrument_object, backend=renderer, width=width, height=height, **kwargs)
+
+    # --- Python rendering backends (pythreejs, matplotlib, matplotlib_2d) ---
+    if allow_guess:
+        try:
+            return view_with_guess(instrument_object, backend=backend, width=width, height=height, **kwargs)
+        except Exception:
+            pass
+
+    # Load or generate JSON data
+    if json_dict is None:
         if json_file is None:
             json_folder = generate_json(instrument_object)
             if json_folder is None:
@@ -88,10 +145,12 @@ def view(instrument_object, backend: str = "pythreejs",
         with open(json_file, "r") as f:
             json_dict = json.load(f)
 
-        return view_with_json(
-            instrument_object, json_dict,
-            backend=backend,
-            index_min=index_min,
-            index_max=index_max,
-            **kwargs,
-        )
+    return view_with_json(
+        instrument_object, json_dict,
+        backend=backend,
+        index_min=index_min,
+        index_max=index_max,
+        width=width,
+        height=height,
+        **kwargs,
+    )
