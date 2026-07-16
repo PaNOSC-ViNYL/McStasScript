@@ -1,4 +1,4 @@
-from mcstasscript.geometry_viewer.api import view, view_with_json, view_with_guess
+from mcstasscript.geometry_viewer.api import view, view_with_json, view_with_guess, view_with_analysis
 from mcstasscript.geometry_viewer.model import (
     Shape, BoxShape, CylinderShape, ConeShape, CircleShape,
     LineSegmentsShape, PolyhedronShape, Style,
@@ -23,7 +23,7 @@ def __getattr__(name):
 
 
 __all__ = [
-    "view", "view_with_json", "view_with_guess",
+    "view", "view_with_json", "view_with_guess", "view_with_analysis",
     "Shape", "BoxShape", "CylinderShape", "ConeShape", "CircleShape",
     "LineSegmentsShape", "PolyhedronShape", "Style",
     "ComponentModel", "InstrumentModel",

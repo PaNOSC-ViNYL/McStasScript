@@ -24,13 +24,21 @@ class RendererBackend(ABC):
     def make_scene(self, children: list[Any], **kwargs) -> Any:
         """Assemble final viewable widget/figure."""
 
-    def render_component(self, component: Any) -> list[Any]:
-        """Render all shapes in a component's shape_list."""
-        return [self.render_shape(s) for s in component.shape_list]
+    def next_component(self) -> None:
+        """Called before rendering each component to advance per-component state (e.g. color)."""
+        pass
+
+    def render_component(self, component: Any, component_index: int = 0) -> list[Any]:
+        """Render all shapes in a component's shape_list, annotating each child with component_index."""
+        children = [self.render_shape(s) for s in component.shape_list]
+        for child in children:
+            child._component_index = component_index
+        return children
 
     def render_instrument(self, instrument: Any, **kwargs) -> Any:
         """Render all components in an instrument model."""
         all_children = []
-        for component in instrument.component_models:
-            all_children.extend(self.render_component(component))
+        for index, component in enumerate(instrument.component_models):
+            all_children.extend(self.render_component(component, component_index=index))
+            self.next_component()
         return self.make_scene(all_children, **kwargs)

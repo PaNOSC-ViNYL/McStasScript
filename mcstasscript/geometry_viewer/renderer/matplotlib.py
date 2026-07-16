@@ -6,6 +6,8 @@ from typing import Any
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection
+from matplotlib.cm import ScalarMappable
+from matplotlib.colors import Normalize, LogNorm
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 from mcstasscript.geometry_viewer.renderer.base import RendererBackend
@@ -14,7 +16,7 @@ from mcstasscript.geometry_viewer.model.shapes import (
     LineSegmentsShape, PolyhedronShape, Style,
 )
 from mcstasscript.geometry_viewer.transform import Transform, quaternion_to_rotation_matrix
-from mcstasscript.geometry_viewer.config import DEFAULT_COLORS, index_to_color
+from mcstasscript.geometry_viewer.config import DEFAULT_COLORS, index_to_color, intensity_to_color
 
 
 @dataclass
@@ -25,20 +27,35 @@ class LineDescriptor:
 
 class MatplotlibRenderer(RendererBackend):
     def __init__(self, mode: str = "3d", colors: list[str] | None = None, projection: str = "zx",
-                 colormode: str = "default", num_components: int = 0):
+                 colormode: str = "default", num_components: int = 0,
+                 intensity_map: dict | None = None, cmap: str = "inferno", log_scale: bool = True,
+                 colorbar_label: str | None = None):
         self.mode = mode
         self.colors = colors or DEFAULT_COLORS
         self._color_index = 0
         self.projection = projection.lower() if self.mode == "2d" else "xy"
         self.colormode = colormode
         self.num_components = num_components
+        self.intensity_map = intensity_map
+        self.cmap = cmap
+        self.log_scale = log_scale
+        self.colorbar_label = colorbar_label
         self._validate_projection()
         self.component_children: dict[int, list] = {}
         self.component_colors: dict[int, str] = {}
+        self._temp_color = None
+        if intensity_map and intensity_map.values():
+            self._min_I = min(intensity_map.values())
+            self._max_I = max(intensity_map.values())
+        else:
+            self._min_I = 0.0
+            self._max_I = 1.0
 
     @property
     def current_color(self) -> str:
         """Return the current color without advancing the index."""
+        if hasattr(self, '_temp_color') and self._temp_color is not None:
+            return self._temp_color
         if self.colormode == "component" and self.num_components > 0:
             return index_to_color(self._color_index, self.num_components)
         return self.colors[self._color_index]
@@ -50,6 +67,7 @@ class MatplotlibRenderer(RendererBackend):
 
     def next_component(self) -> None:
         """Advance to the next color for the upcoming component."""
+        self._temp_color = None
         if self.colormode == "component" and self.num_components > 0:
             self._color_index += 1
         else:
@@ -60,6 +78,12 @@ class MatplotlibRenderer(RendererBackend):
             raise ValueError(f"Invalid projection: {self.projection!r}. Must be one of 'xy', 'zx', 'zy'.")
 
     def render_component(self, component: Any, component_index: int = 0) -> list[Any]:
+        if self.colormode == "intensity" and self.intensity_map is not None:
+            comp_name = component.comp.name
+            I = self.intensity_map.get(comp_name, 0.0)
+            self._temp_color = intensity_to_color(I, self._min_I, self._max_I, self.cmap, self.log_scale)
+        else:
+            self._temp_color = None
         color = self.current_color
         children = super().render_component(component, component_index)
         self.component_children[component_index] = children
@@ -256,6 +280,26 @@ class MatplotlibRenderer(RendererBackend):
     def apply_transform(self, visual_obj: Any, transform: Transform | None) -> Any:
         return visual_obj
 
+    def _add_colorbar(self, fig):
+        """Add a colorbar to the figure for non-default colormodes."""
+        if self.colormode == "default":
+            return
+        if self.colormode == "intensity" and self.intensity_map is not None:
+            label = self.colorbar_label or "Value"
+            if self.log_scale and self._max_I > 0 and self._min_I > 0:
+                norm = LogNorm(vmin=self._min_I, vmax=self._max_I)
+            else:
+                norm = Normalize(vmin=max(self._min_I, 0), vmax=self._max_I)
+            sm = ScalarMappable(cmap=self.cmap, norm=norm)
+        else:
+            label = self.colorbar_label or "Component index"
+            norm = Normalize(vmin=0, vmax=max(self.num_components - 1, 1))
+            sm = ScalarMappable(cmap="viridis", norm=norm)
+        sm.set_array([])
+        fig.subplots_adjust(right=0.88)
+        cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
+        fig.colorbar(sm, cax=cbar_ax, label=label)
+
     def make_scene(self, children: list[Any], show_axes: bool = True,
                    width: int = 900, height: int = 600, **kwargs) -> plt.Figure:
         if self.mode == "3d":
@@ -307,6 +351,7 @@ class MatplotlibRenderer(RendererBackend):
             ax.set_zlim(-5, 5)
 
         ax.view_init(elev=0, azim=-90)
+        self._add_colorbar(fig)
         return fig
 
     def _make_2d_scene(self, children, show_axes, width, height, **kwargs):
@@ -363,4 +408,5 @@ class MatplotlibRenderer(RendererBackend):
             ax.set_ylim(-5, 5)
 
         ax.set_aspect("equal")
+        self._add_colorbar(fig)
         return fig

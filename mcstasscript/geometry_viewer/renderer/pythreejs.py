@@ -12,7 +12,7 @@ from mcstasscript.geometry_viewer.model.shapes import (
     LineSegmentsShape, PolyhedronShape, Style,
 )
 from mcstasscript.geometry_viewer.transform import Transform
-from mcstasscript.geometry_viewer.config import DEFAULT_COLORS, index_to_color
+from mcstasscript.geometry_viewer.config import DEFAULT_COLORS, index_to_color, intensity_to_color, create_colorbar_image
 
 
 @dataclass
@@ -73,13 +73,26 @@ def _compute_opacity_for_size(largest_dim: float, base_opacities: tuple = (0.9, 
 
 
 class PyThreejsRenderer(RendererBackend):
-    def __init__(self, colors: list[str] | None = None, colormode: str = "default", num_components: int = 0):
+    def __init__(self, colors: list[str] | None = None, colormode: str = "default", num_components: int = 0,
+                 intensity_map: dict | None = None, cmap: str = "inferno", log_scale: bool = True,
+                 colorbar_label: str | None = None):
         self.material_library = MaterialLibrary(colors=colors or DEFAULT_COLORS)
         self.colormode = colormode
         self.num_components = num_components
+        self.intensity_map = intensity_map
+        self.cmap = cmap
+        self.log_scale = log_scale
+        self.colorbar_label = colorbar_label
+        self._colorbar_widget = None
         self.simple_components = []
         self.component_children: dict[int, list] = {}
         self.component_colors: dict[int, str] = {}
+        if intensity_map and intensity_map.values():
+            self._min_I = min(intensity_map.values())
+            self._max_I = max(intensity_map.values())
+        else:
+            self._min_I = 0.0
+            self._max_I = 1.0
 
     def register_component(self, component_model):
         self.simple_components.append({
@@ -95,7 +108,11 @@ class PyThreejsRenderer(RendererBackend):
 
     def render_component(self, component: Any, component_index: int = 0) -> list[Any]:
         self._current_component_index = component_index
-        if self.colormode == "component" and self.num_components > 0:
+        if self.colormode == "intensity" and self.intensity_map is not None:
+            comp_name = component.comp.name
+            I = self.intensity_map.get(comp_name, 0.0)
+            self._temp_color = intensity_to_color(I, self._min_I, self._max_I, self.cmap, self.log_scale)
+        elif self.colormode == "component" and self.num_components > 0:
             self._temp_color = index_to_color(component_index, self.num_components)
         else:
             self._temp_color = None
@@ -322,11 +339,45 @@ class PyThreejsRenderer(RendererBackend):
         dropdown.observe(on_component_select, names="value")
         return dropdown
 
+    def create_colorbar(self):
+        """Create a colorbar widget for the current colormode."""
+        import ipywidgets as ipw
+        self._colorbar_widget = self._make_colorbar_image()
+        return self._colorbar_widget
+
+    def _make_colorbar_image(self):
+        """Generate a colorbar image widget for the current colormode."""
+        import ipywidgets as ipw
+        if self.colormode == "default":
+            return ipw.Label()
+        if self.colormode == "intensity" and self.intensity_map is not None:
+            label = self.colorbar_label or "Value"
+            img = create_colorbar_image(self.cmap, self._min_I, self._max_I,
+                                         label, self.log_scale)
+        else:
+            label = self.colorbar_label or "Component index"
+            img = create_colorbar_image("viridis", 0, max(self.num_components - 1, 1),
+                                         label, log_scale=False)
+        return ipw.Image(value=img, format='png', layout=ipw.Layout(width='60px'))
+
+    def _update_colorbar(self):
+        """Update the colorbar widget in-place after a colormode change."""
+        if self._colorbar_widget is not None:
+            new = self._make_colorbar_image()
+            if isinstance(new, ipw.Image):
+                self._colorbar_widget.value = new.value
+                self._colorbar_widget.layout = new.layout
+            else:
+                self._colorbar_widget.value = b''
+
     def create_colormode_selector(self):
         import ipywidgets as ipw
 
+        options = {"Default": "default", "Component": "component"}
+        if self.intensity_map is not None:
+            options["Intensity"] = "intensity"
         selector = ipw.Dropdown(
-            options={"Default": "default", "Component": "component"},
+            options=options,
             value=self.colormode,
             description="Colormode: ",
             style={"description_width": "initial"},
@@ -337,11 +388,16 @@ class PyThreejsRenderer(RendererBackend):
                 return
             self.colormode = change["new"]
             for idx in self.component_children:
-                if self.colormode == "component" and self.num_components > 0:
+                if self.colormode == "intensity" and self.intensity_map is not None:
+                    comp_name = self.simple_components[idx]["name"]
+                    I = self.intensity_map.get(comp_name, 0.0)
+                    color = intensity_to_color(I, self._min_I, self._max_I, self.cmap, self.log_scale)
+                elif self.colormode == "component" and self.num_components > 0:
                     color = index_to_color(idx, self.num_components)
                 else:
                     color = DEFAULT_COLORS[idx % len(DEFAULT_COLORS)]
                 self.update_component_color(idx, color)
+            self._update_colorbar()
 
         selector.observe(on_colormode_change, names="value")
         return selector

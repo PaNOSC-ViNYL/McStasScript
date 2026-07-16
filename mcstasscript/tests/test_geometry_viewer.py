@@ -47,6 +47,7 @@ from mcstasscript.geometry_viewer.config import (
     DEFAULT_RADIAL_SEGMENTS,
     DEFAULT_CIRCLE_SEGMENTS,
     DEFAULT_NAVIGATOR_DISTANCE,
+    intensity_to_color,
 )
 from mcstasscript.geometry_viewer.api import _get_renderer
 
@@ -979,6 +980,380 @@ class TestMatplotlibTransformPoints(unittest.TestCase):
         pts = np.array([[1, 2, 3]])
         result = self.renderer._transform_points(pts, None)
         np.testing.assert_array_almost_equal(result, pts)
+
+
+class TestIntensityToColor(unittest.TestCase):
+    """Tests for intensity_to_color: maps intensity values to hex colors."""
+
+    def test_basic_log_scale(self):
+        """Log-scale mapping should produce valid hex colors."""
+        color = intensity_to_color(1.0, 0.1, 10.0, log_scale=True)
+        self.assertTrue(color.startswith("#"))
+        self.assertEqual(len(color), 7)
+
+    def test_zero_intensity(self):
+        """Zero intensity should map to the lowest color of the colormap."""
+        color = intensity_to_color(0.0, 0.1, 10.0, log_scale=True)
+        inferno_zero = intensity_to_color(0.0, 0.1, 10.0, cmap="inferno", log_scale=True)
+        self.assertEqual(color, inferno_zero)
+
+    def test_max_intensity(self):
+        """Max intensity should map to the highest color of the colormap."""
+        color = intensity_to_color(10.0, 0.1, 10.0, log_scale=True)
+        self.assertTrue(color.startswith("#"))
+
+    def test_linear_scale(self):
+        """Linear scale should produce valid colors."""
+        color = intensity_to_color(5.0, 0.0, 10.0, log_scale=False)
+        self.assertTrue(color.startswith("#"))
+        self.assertEqual(len(color), 7)
+
+    def test_linear_midpoint(self):
+        """Midpoint intensity in linear mode should give t=0.5 color."""
+        c_low = intensity_to_color(0.0, 0.0, 10.0, cmap="viridis", log_scale=False)
+        c_mid = intensity_to_color(5.0, 0.0, 10.0, cmap="viridis", log_scale=False)
+        c_high = intensity_to_color(10.0, 0.0, 10.0, cmap="viridis", log_scale=False)
+        self.assertNotEqual(c_low, c_high)
+
+    def test_equal_min_max(self):
+        """When min_I == max_I, should return the top color."""
+        color = intensity_to_color(5.0, 5.0, 5.0, log_scale=True)
+        self.assertTrue(color.startswith("#"))
+
+    def test_negative_max(self):
+        """Negative max_I should return the lowest color."""
+        color = intensity_to_color(1.0, 0.0, -1.0, log_scale=True)
+        self.assertTrue(color.startswith("#"))
+
+    def test_different_colormaps(self):
+        """Different colormaps should produce different colors for the same intensity."""
+        c_inferno = intensity_to_color(5.0, 0.1, 10.0, cmap="inferno", log_scale=True)
+        c_viridis = intensity_to_color(5.0, 0.1, 10.0, cmap="viridis", log_scale=True)
+        self.assertNotEqual(c_inferno, c_viridis)
+
+    def test_log_floor(self):
+        """Very small positive intensity should not produce t=0 exactly (uses log floor)."""
+        c_zero = intensity_to_color(0.0, 0.1, 10.0, log_scale=True)
+        c_tiny = intensity_to_color(1e-50, 0.1, 10.0, log_scale=True)
+        self.assertEqual(c_zero, c_tiny)
+
+
+class TestAggregateIntensity(unittest.TestCase):
+    """Tests for _aggregate_intensity: reduces 1D monitor data to a scalar.
+
+    In 1D mode, aggregations operate on axis values (e.g. wavelength)
+    weighted by intensity, not on the intensity values themselves.
+    """
+
+    def _make_mock_data(self, intensity_arr, xaxis=None, dimension=None):
+        data = MagicMock()
+        intensity = np.asarray(intensity_arr, dtype=float)
+        data.metadata.dimension = dimension if dimension is not None else len(intensity)
+        data.metadata.total_I = float(np.sum(intensity))
+        data.Intensity = intensity
+        data.xaxis = xaxis if xaxis is not None else np.linspace(0, 1, len(intensity))
+        return data
+
+    def test_total_aggregation(self):
+        """Total aggregation should return sum of bins."""
+        from mcstasscript.geometry_viewer.api import _aggregate_intensity
+        data = self._make_mock_data(np.array([1.0, 2.0, 3.0, 4.0]), xaxis=np.array([1.0, 2.0, 3.0, 4.0]))
+        self.assertAlmostEqual(_aggregate_intensity(data, "total"), 10.0)
+
+    def test_max_aggregation(self):
+        """Max aggregation should return highest axis value with non-zero intensity."""
+        from mcstasscript.geometry_viewer.api import _aggregate_intensity
+        data = self._make_mock_data(np.array([1.0, 0.0, 3.0, 2.0]), xaxis=np.array([1.0, 2.0, 3.0, 4.0]))
+        self.assertAlmostEqual(_aggregate_intensity(data, "max"), 4.0)
+
+    def test_min_aggregation(self):
+        """Min aggregation should return lowest axis value with non-zero intensity."""
+        from mcstasscript.geometry_viewer.api import _aggregate_intensity
+        data = self._make_mock_data(np.array([0.0, 5.0, 3.0, 2.0]), xaxis=np.array([1.0, 2.0, 3.0, 4.0]))
+        self.assertAlmostEqual(_aggregate_intensity(data, "min"), 2.0)
+
+    def test_span_aggregation(self):
+        """Span aggregation should return max_axis - min_axis with intensity."""
+        from mcstasscript.geometry_viewer.api import _aggregate_intensity
+        data = self._make_mock_data(np.array([0.0, 5.0, 3.0, 2.0]), xaxis=np.array([1.0, 2.0, 3.0, 4.0]))
+        self.assertAlmostEqual(_aggregate_intensity(data, "span"), 2.0)
+
+    def test_mean_aggregation(self):
+        """Mean aggregation should return intensity-weighted average of axis values."""
+        from mcstasscript.geometry_viewer.api import _aggregate_intensity
+        data = self._make_mock_data(np.array([1.0, 1.0]), xaxis=np.array([0.0, 10.0]))
+        self.assertAlmostEqual(_aggregate_intensity(data, "mean"), 5.0)
+
+    def test_mean_weighted(self):
+        """Weighted mean should be pulled toward higher-intensity bins."""
+        from mcstasscript.geometry_viewer.api import _aggregate_intensity
+        data = self._make_mock_data(np.array([1.0, 3.0]), xaxis=np.array([0.0, 10.0]))
+        expected = (0.0 * 1.0 + 10.0 * 3.0) / 4.0
+        self.assertAlmostEqual(_aggregate_intensity(data, "mean"), expected)
+
+    def test_average_aggregation(self):
+        """Average aggregation should be an alias for mean."""
+        from mcstasscript.geometry_viewer.api import _aggregate_intensity
+        data = self._make_mock_data(np.array([1.0, 3.0]), xaxis=np.array([0.0, 10.0]))
+        self.assertAlmostEqual(_aggregate_intensity(data, "average"),
+                               _aggregate_intensity(data, "mean"))
+
+    def test_median_aggregation(self):
+        """Median aggregation should return axis value at cumulative intensity median."""
+        from mcstasscript.geometry_viewer.api import _aggregate_intensity
+        data = self._make_mock_data(np.array([1.0, 1.0, 1.0, 1.0]), xaxis=np.array([1.0, 2.0, 3.0, 4.0]))
+        result = _aggregate_intensity(data, "median")
+        self.assertTrue(2.0 <= result <= 3.0)
+
+    def test_median_weighted(self):
+        """Median should be pulled toward higher-intensity bins."""
+        from mcstasscript.geometry_viewer.api import _aggregate_intensity
+        data = self._make_mock_data(np.array([1.0, 1.0, 1.0, 9.0]), xaxis=np.array([1.0, 2.0, 3.0, 4.0]))
+        self.assertAlmostEqual(_aggregate_intensity(data, "median"), 4.0)
+
+    def test_0d_mode(self):
+        """In 0D mode (dimension=0), should return total_I regardless of aggregation."""
+        from mcstasscript.geometry_viewer.api import _aggregate_intensity
+        data = MagicMock()
+        data.metadata.dimension = 0
+        data.metadata.total_I = 42.0
+        self.assertAlmostEqual(_aggregate_intensity(data, "total"), 42.0)
+        self.assertAlmostEqual(_aggregate_intensity(data, "max"), 42.0)
+        self.assertAlmostEqual(_aggregate_intensity(data, "mean"), 42.0)
+        self.assertAlmostEqual(_aggregate_intensity(data, "median"), 42.0)
+        self.assertAlmostEqual(_aggregate_intensity(data, "span"), 42.0)
+        self.assertAlmostEqual(_aggregate_intensity(data, "min"), 42.0)
+        self.assertAlmostEqual(_aggregate_intensity(data, "average"), 42.0)
+
+    def test_all_zero_intensity(self):
+        """When all intensities are zero, should return 0.0."""
+        from mcstasscript.geometry_viewer.api import _aggregate_intensity
+        data = self._make_mock_data(np.array([0.0, 0.0, 0.0]), xaxis=np.array([1.0, 2.0, 3.0]))
+        self.assertAlmostEqual(_aggregate_intensity(data, "max"), 0.0)
+        self.assertAlmostEqual(_aggregate_intensity(data, "min"), 0.0)
+        self.assertAlmostEqual(_aggregate_intensity(data, "mean"), 0.0)
+        self.assertAlmostEqual(_aggregate_intensity(data, "median"), 0.0)
+        self.assertAlmostEqual(_aggregate_intensity(data, "span"), 0.0)
+
+    def test_invalid_aggregation(self):
+        """view_with_analysis should reject invalid aggregation values."""
+        from mcstasscript.geometry_viewer.api import view_with_analysis
+        instr = MagicMock()
+        instr.component_list = []
+        instr._simulation_parameters = {}
+        instr._declared_variables = {}
+        with self.assertRaises(ValueError):
+            view_with_analysis(instr, aggregation="invalid")
+
+
+class TestPyThreejsIntensity(unittest.TestCase):
+    """Tests for PyThreejsRenderer intensity colormode."""
+
+    def setUp(self):
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        self.intensity_map = {"comp1": 1.0, "comp2": 10.0, "comp3": 100.0}
+        self.renderer = PyThreejsRenderer(
+            intensity_map=self.intensity_map,
+            colormode="intensity",
+            cmap="inferno",
+            log_scale=True,
+        )
+
+    def test_init_with_intensity_map(self):
+        """Renderer should store intensity params and compute min/max."""
+        self.assertEqual(self.renderer.intensity_map, self.intensity_map)
+        self.assertEqual(self.renderer._min_I, 1.0)
+        self.assertEqual(self.renderer._max_I, 100.0)
+        self.assertEqual(self.renderer.cmap, "inferno")
+        self.assertEqual(self.renderer.log_scale, True)
+
+    def test_render_component_intensity_color(self):
+        """Rendering a component in intensity mode should set _temp_color."""
+        comp = make_mock_component("comp2")
+        comp_model = ComponentModel(comp)
+        comp_model.shape_list = [BoxShape(width=1, height=1, depth=1)]
+        self.renderer.render_component(comp_model, component_index=0)
+        self.assertIsNotNone(self.renderer._temp_color)
+        expected = intensity_to_color(10.0, 1.0, 100.0, "inferno", True)
+        self.assertEqual(self.renderer._temp_color, expected)
+
+    def test_render_component_missing_intensity(self):
+        """A component not in the intensity_map should use 0.0 intensity."""
+        comp = make_mock_component("unknown_comp")
+        comp_model = ComponentModel(comp)
+        comp_model.shape_list = [BoxShape(width=1, height=1, depth=1)]
+        self.renderer.render_component(comp_model, component_index=0)
+        expected = intensity_to_color(0.0, 1.0, 100.0, "inferno", True)
+        self.assertEqual(self.renderer._temp_color, expected)
+
+    def test_colormode_selector_has_intensity(self):
+        """The colormode selector should include 'Intensity' when intensity_map is set."""
+        selector = self.renderer.create_colormode_selector()
+        self.assertIn("Intensity", selector.options)
+
+    def test_colormode_selector_no_intensity(self):
+        """Without intensity_map, selector should not include 'Intensity'."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        renderer = PyThreejsRenderer()
+        selector = renderer.create_colormode_selector()
+        self.assertNotIn("Intensity", selector.options)
+
+    def test_no_intensity_map_falls_through(self):
+        """Without intensity_map, default colormode should work as before."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        renderer = PyThreejsRenderer(colormode="default")
+        comp = make_mock_component("test")
+        comp_model = ComponentModel(comp)
+        comp_model.shape_list = [BoxShape(width=1, height=1, depth=1)]
+        renderer.render_component(comp_model, component_index=0)
+        self.assertIsNone(renderer._temp_color)
+
+
+class TestMatplotlibIntensity(unittest.TestCase):
+    """Tests for MatplotlibRenderer intensity colormode."""
+
+    def setUp(self):
+        from mcstasscript.geometry_viewer.renderer.matplotlib import MatplotlibRenderer
+        self.intensity_map = {"comp1": 1.0, "comp2": 10.0, "comp3": 100.0}
+        self.renderer = MatplotlibRenderer(
+            intensity_map=self.intensity_map,
+            colormode="intensity",
+            cmap="inferno",
+            log_scale=True,
+        )
+
+    def test_init_with_intensity_map(self):
+        """Renderer should store intensity params and compute min/max."""
+        self.assertEqual(self.renderer.intensity_map, self.intensity_map)
+        self.assertEqual(self.renderer._min_I, 1.0)
+        self.assertEqual(self.renderer._max_I, 100.0)
+
+    def test_render_component_intensity_color(self):
+        """Rendering a component in intensity mode should use intensity color."""
+        comp = make_mock_component("comp2")
+        comp_model = ComponentModel(comp)
+        comp_model.shape_list = [BoxShape(width=1, height=1, depth=1)]
+        self.renderer.render_component(comp_model, component_index=0)
+        expected = intensity_to_color(10.0, 1.0, 100.0, "inferno", True)
+        self.assertEqual(self.renderer.component_colors[0], expected)
+
+    def test_render_component_missing_intensity(self):
+        """A component not in the intensity_map should use 0.0 intensity."""
+        comp = make_mock_component("unknown_comp")
+        comp_model = ComponentModel(comp)
+        comp_model.shape_list = [BoxShape(width=1, height=1, depth=1)]
+        self.renderer.render_component(comp_model, component_index=0)
+        expected = intensity_to_color(0.0, 1.0, 100.0, "inferno", True)
+        self.assertEqual(self.renderer.component_colors[0], expected)
+
+    def test_no_intensity_map_falls_through(self):
+        """Without intensity_map, default colormode should work as before."""
+        from mcstasscript.geometry_viewer.renderer.matplotlib import MatplotlibRenderer
+        renderer = MatplotlibRenderer(colormode="default")
+        comp = make_mock_component("test")
+        comp_model = ComponentModel(comp)
+        comp_model.shape_list = [BoxShape(width=1, height=1, depth=1)]
+        renderer.render_component(comp_model, component_index=0)
+        self.assertEqual(renderer.component_colors[0], renderer.colors[0])
+
+
+class TestColorbarImage(unittest.TestCase):
+    """Tests for create_colorbar_image: generates a PNG colorbar."""
+
+    def test_returns_png_bytes(self):
+        """Should return valid PNG bytes."""
+        from mcstasscript.geometry_viewer.config import create_colorbar_image
+        result = create_colorbar_image("inferno", 0.1, 10.0, "Test", log_scale=True)
+        self.assertIsInstance(result, bytes)
+        self.assertTrue(result.startswith(b'\x89PNG'))
+
+    def test_linear_scale(self):
+        """Linear scale should produce valid PNG."""
+        from mcstasscript.geometry_viewer.config import create_colorbar_image
+        result = create_colorbar_image("viridis", 0, 100, "Index", log_scale=False)
+        self.assertIsInstance(result, bytes)
+        self.assertTrue(result.startswith(b'\x89PNG'))
+
+    def test_different_colormaps(self):
+        """Different colormaps should produce different images."""
+        from mcstasscript.geometry_viewer.config import create_colorbar_image
+        img1 = create_colorbar_image("inferno", 1.0, 100.0, "Test", log_scale=True)
+        img2 = create_colorbar_image("viridis", 1.0, 100.0, "Test", log_scale=True)
+        self.assertNotEqual(img1, img2)
+
+    def test_zero_min(self):
+        """Zero min with log scale should fall back to linear."""
+        from mcstasscript.geometry_viewer.config import create_colorbar_image
+        result = create_colorbar_image("inferno", 0.0, 10.0, "Test", log_scale=True)
+        self.assertIsInstance(result, bytes)
+
+
+class TestPyThreejsColorbar(unittest.TestCase):
+    """Tests for PyThreejsRenderer colorbar widget."""
+
+    def test_colorbar_intensity_mode(self):
+        """In intensity mode, create_colorbar should return an Image widget."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        import ipywidgets as ipw
+        renderer = PyThreejsRenderer(
+            intensity_map={"a": 1.0, "b": 10.0},
+            colormode="intensity",
+        )
+        cb = renderer.create_colorbar()
+        self.assertIsInstance(cb, ipw.Image)
+
+    def test_colorbar_default_mode(self):
+        """In default mode, create_colorbar should return a Label (hidden)."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        import ipywidgets as ipw
+        renderer = PyThreejsRenderer(colormode="default")
+        cb = renderer.create_colorbar()
+        self.assertIsInstance(cb, ipw.Label)
+
+    def test_colorbar_component_mode(self):
+        """In component mode, create_colorbar should return an Image widget."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        import ipywidgets as ipw
+        renderer = PyThreejsRenderer(colormode="component", num_components=10)
+        cb = renderer.create_colorbar()
+        self.assertIsInstance(cb, ipw.Image)
+
+    def test_colorbar_label_stored(self):
+        """colorbar_label should be stored on the renderer."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        renderer = PyThreejsRenderer(colorbar_label="Wavelength [Å]")
+        self.assertEqual(renderer.colorbar_label, "Wavelength [Å]")
+
+
+class TestMatplotlibColorbar(unittest.TestCase):
+    """Tests for MatplotlibRenderer colorbar."""
+
+    def test_colorbar_added_intensity(self):
+        """Colorbar axis should be added for intensity mode."""
+        from mcstasscript.geometry_viewer.renderer.matplotlib import MatplotlibRenderer
+        renderer = MatplotlibRenderer(
+            intensity_map={"a": 1.0, "b": 10.0},
+            colormode="intensity",
+        )
+        fig = renderer.make_scene([])
+        axes = fig.get_axes()
+        self.assertGreaterEqual(len(axes), 2)
+
+    def test_colorbar_not_added_default(self):
+        """No colorbar axis for default mode."""
+        from mcstasscript.geometry_viewer.renderer.matplotlib import MatplotlibRenderer
+        renderer = MatplotlibRenderer(colormode="default")
+        fig = renderer.make_scene([])
+        axes = fig.get_axes()
+        self.assertEqual(len(axes), 1)
+        import matplotlib.pyplot as plt
+        plt.close(fig)
+
+    def test_colorbar_label_stored(self):
+        """colorbar_label should be stored on the renderer."""
+        from mcstasscript.geometry_viewer.renderer.matplotlib import MatplotlibRenderer
+        renderer = MatplotlibRenderer(colorbar_label="Test label")
+        self.assertEqual(renderer.colorbar_label, "Test label")
 
 
 if __name__ == '__main__':
