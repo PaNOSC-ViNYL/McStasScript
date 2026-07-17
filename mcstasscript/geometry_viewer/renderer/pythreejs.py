@@ -74,8 +74,8 @@ def _compute_opacity_for_size(largest_dim: float, base_opacities: tuple = (0.9, 
 
 class PyThreejsRenderer(RendererBackend):
     def __init__(self, colors: list[str] | None = None, colormode: str = "default", num_components: int = 0,
-                 intensity_map: dict | None = None, cmap: str = "inferno", log_scale: bool = True,
-                 colorbar_label: str | None = None):
+                  intensity_map: dict | None = None, cmap: str = "inferno", log_scale: bool = True,
+                  colorbar_label: str | None = None, instrument_object=None):
         self.material_library = MaterialLibrary(colors=colors or DEFAULT_COLORS)
         self.colormode = colormode
         self.num_components = num_components
@@ -93,6 +93,16 @@ class PyThreejsRenderer(RendererBackend):
         else:
             self._min_I = 0.0
             self._max_I = 1.0
+
+        # Intensity simulation state
+        self.instrument_object = instrument_object
+        self._diag_data = None
+        self._diag_monitors = None
+        self._diag_data_dim = None
+        self._diag_variable = None
+        self._data_stale = intensity_map is None
+        self._intensity_controls_container = None
+        self._intensity_widgets = {}
 
     def register_component(self, component_model):
         self.simple_components.append({
@@ -349,33 +359,288 @@ class PyThreejsRenderer(RendererBackend):
         """Generate a colorbar image widget for the current colormode."""
         import ipywidgets as ipw
         if self.colormode == "default":
-            return ipw.Label()
-        if self.colormode == "intensity" and self.intensity_map is not None:
-            label = self.colorbar_label or "Value"
-            img = create_colorbar_image(self.cmap, self._min_I, self._max_I,
-                                         label, self.log_scale)
-        else:
-            label = self.colorbar_label or "Component index"
-            img = create_colorbar_image("viridis", 0, max(self.num_components - 1, 1),
-                                         label, log_scale=False)
+            return ipw.Image(value=b'', format='png', layout=ipw.Layout(width='60px'))
+        if self.colormode == "intensity":
+            if self.intensity_map is not None:
+                label = self.colorbar_label or "Value"
+                img = create_colorbar_image(self.cmap, self._min_I, self._max_I,
+                                              label, self.log_scale)
+                return ipw.Image(value=img, format='png', layout=ipw.Layout(width='60px'))
+            return ipw.Image(value=b'', format='png', layout=ipw.Layout(width='60px'))
+        label = self.colorbar_label or "Component index"
+        img = create_colorbar_image("viridis", 0, max(self.num_components - 1, 1),
+                                      label, log_scale=False)
         return ipw.Image(value=img, format='png', layout=ipw.Layout(width='60px'))
 
     def _update_colorbar(self):
         """Update the colorbar widget in-place after a colormode change."""
         if self._colorbar_widget is not None:
             new = self._make_colorbar_image()
-            if isinstance(new, ipw.Image):
-                self._colorbar_widget.value = new.value
-                self._colorbar_widget.layout = new.layout
+            self._colorbar_widget.value = new.value
+            self._colorbar_widget.layout = new.layout
+
+    def _grey_all_components(self):
+        """Set all components to grey to indicate stale/no data."""
+        for idx in self.component_children:
+            self.update_component_color(idx, "#808080")
+
+    def _apply_intensity_from_data(self, aggregation: str | None = None):
+        """Build intensity_map from cached diagnostic data and re-color components."""
+        if self._diag_data is None or self._diag_monitors is None:
+            return
+        from mcstasscript.geometry_viewer.api import _aggregate_intensity
+        from mcstasscript.interface.functions import name_search
+
+        if aggregation is None:
+            aggregation = self._intensity_widgets.get("aggregate", "total")
+            if hasattr(aggregation, "value"):
+                aggregation = aggregation.value
+
+        intensity_map = {}
+        for mon_name, comp_name in self._diag_monitors:
+            try:
+                mon_data = name_search(mon_name, self._diag_data)
+                intensity_map[comp_name] = _aggregate_intensity(mon_data, aggregation)
+            except Exception:
+                intensity_map[comp_name] = 0.0
+
+        # Also color the source component using first monitor data
+        if self._diag_monitors and self.simple_components:
+            try:
+                first_mon_name = self._diag_monitors[0][0]
+                first_mon_data = name_search(first_mon_name, self._diag_data)
+                source_name = self.instrument_object.component_list[0].name
+                intensity_map[source_name] = _aggregate_intensity(first_mon_data, aggregation)
+            except Exception:
+                pass
+
+        self.intensity_map = intensity_map
+        if intensity_map and intensity_map.values():
+            self._min_I = min(intensity_map.values())
+            self._max_I = max(intensity_map.values())
+
+        # Update colorbar label
+        try:
+            first_mon_name = self._diag_monitors[0][0]
+            first_mon_data = name_search(first_mon_name, self._diag_data)
+            if self._diag_data_dim == 1 and first_mon_data.metadata.xlabel:
+                self.colorbar_label = first_mon_data.metadata.xlabel
             else:
-                self._colorbar_widget.value = b''
+                self.colorbar_label = "Intensity [n/s]"
+        except Exception:
+            self.colorbar_label = "Intensity [n/s]"
+
+        for idx in self.component_children:
+            comp_name = self.simple_components[idx]["name"]
+            I = intensity_map.get(comp_name, 0.0)
+            color = intensity_to_color(I, self._min_I, self._max_I, self.cmap, self.log_scale)
+            self.update_component_color(idx, color)
+        self._update_colorbar()
+
+    def _disable_intensity_controls(self, disabled: bool):
+        """Enable/disable all intensity control widgets."""
+        for w in self._intensity_widgets.values():
+            if hasattr(w, "disabled"):
+                w.disabled = disabled
+
+    def _update_limits_visibility(self):
+        """Show/hide limits fields based on variable selection and limits checkbox."""
+        variable_widget = self._intensity_widgets.get("variable")
+        limits_check = self._intensity_widgets.get("limits_check")
+        limits_min = self._intensity_widgets.get("limits_min")
+        limits_max = self._intensity_widgets.get("limits_max")
+        if not (variable_widget and limits_check and limits_min and limits_max):
+            return
+        has_variable = variable_widget.value is not None
+        use_limits = limits_check.value
+        show = has_variable and use_limits
+        limits_min.layout.display = "" if show else "none"
+        limits_max.layout.display = "" if show else "none"
+
+    def _on_variable_change(self, change):
+        """Handle variable dropdown change — mark data stale, grey components, toggle limits."""
+        if change["type"] != "change":
+            return
+        self._data_stale = True
+        self._diag_variable = change["new"]
+        self._update_limits_visibility()
+        if self.colormode == "intensity":
+            self._grey_all_components()
+
+    def _on_limits_check_change(self, change):
+        """Handle limits checkbox change — show/hide limits fields."""
+        if change["type"] != "change":
+            return
+        self._update_limits_visibility()
+
+    def _on_run_click(self, btn):
+        """Run intensity simulation and apply results."""
+        if self.instrument_object is None:
+            return
+        self._disable_intensity_controls(True)
+        btn.icon = "hourglass"
+        btn.description = "Running..."
+
+        try:
+            from mcstasscript.instrument_diagnostics.intensity_diagnostics import IntensityDiagnostics
+
+            ncount_val = self._intensity_widgets.get("ncount")
+            variable_val = self._intensity_widgets.get("variable")
+            limits_min_val = self._intensity_widgets.get("limits_min")
+            limits_max_val = self._intensity_widgets.get("limits_max")
+
+            ncount = int(ncount_val.value) if ncount_val else 1000000
+            variable = variable_val.value if variable_val else None
+
+            limits = None
+            limits_check = self._intensity_widgets.get("limits_check")
+            if variable is not None and limits_check and limits_check.value:
+                if limits_min_val and limits_max_val:
+                    try:
+                        limits = [float(limits_min_val.value), float(limits_max_val.value)]
+                    except (ValueError, TypeError):
+                        limits = None
+
+            diag = IntensityDiagnostics(self.instrument_object)
+            if ncount:
+                diag.instr.settings(ncount=ncount)
+            if variable is not None:
+                diag.run_general(variable=variable, limits=limits)
+            else:
+                diag.run()
+
+            self._diag_data = diag.data
+            self._diag_monitors = diag.monitors
+            self._diag_data_dim = diag.data_dim
+            self._diag_variable = variable
+            self._data_stale = False
+
+            agg = self._intensity_widgets.get("aggregate")
+            aggregation = agg.value if hasattr(agg, "value") else "total"
+            self._apply_intensity_from_data(aggregation)
+
+        except Exception:
+            pass
+        finally:
+            btn.icon = "play"
+            btn.description = "Run"
+            self._disable_intensity_controls(False)
+
+    def _on_aggregate_change(self, change):
+        """Handle aggregate dropdown change — re-apply from cached data if not stale."""
+        if change["type"] != "change":
+            return
+        if not self._data_stale and self._diag_data is not None:
+            self._apply_intensity_from_data(change["new"])
+
+    def create_intensity_controls(self):
+        """Create the intensity simulation control widgets."""
+        import ipywidgets as ipw
+
+        default_ncount = 1000000
+        if self.instrument_object and hasattr(self.instrument_object, "_run_settings"):
+            default_ncount = self.instrument_object._run_settings.get("ncount", 1000000)
+
+        ncount_widget = ipw.IntText(
+            value=int(default_ncount),
+            description="ncount:",
+            style={"description_width": "initial"},
+            layout=ipw.Layout(width="160px"),
+        )
+
+        variable_options = {
+            "None (0D total)": None,
+            "l (wavelength)": "l",
+            "x (position)": "x",
+            "y (position)": "y",
+            "z (position)": "z",
+            "t (time)": "t",
+            "px": "px",
+            "py": "py",
+            "pz": "pz",
+            "p4": "p4",
+            "e (energy)": "e",
+            "s1": "s1",
+            "s2": "s2",
+            "s3": "s3",
+        }
+        variable_widget = ipw.Dropdown(
+            options=variable_options,
+            value=None,
+            description="Variable:",
+            style={"description_width": "initial"},
+            layout=ipw.Layout(width="180px"),
+        )
+
+        limits_check_widget = ipw.Checkbox(
+            value=False,
+            description="Limits",
+            tooltip="Enable min/max limits for variable scan",
+            style={"description_width": "initial"},
+            layout=ipw.Layout(width="90px"),
+        )
+
+        limits_min_widget = ipw.Text(
+            value="",
+            description="Min:",
+            style={"description_width": "initial"},
+            layout=ipw.Layout(width="100px", display="none"),
+        )
+        limits_max_widget = ipw.Text(
+            value="",
+            description="Max:",
+            style={"description_width": "initial"},
+            layout=ipw.Layout(width="100px", display="none"),
+        )
+
+        aggregate_options = {
+            "total": "total",
+            "min": "min",
+            "max": "max",
+            "average": "average",
+            "median": "median",
+            "span": "span",
+        }
+        aggregate_widget = ipw.Dropdown(
+            options=aggregate_options,
+            value="total",
+            description="Aggregate:",
+            style={"description_width": "initial"},
+            layout=ipw.Layout(width="140px"),
+        )
+
+        run_button = ipw.Button(
+            description="Run",
+            button_style="",
+            icon="play",
+            layout=ipw.Layout(width="100px"),
+        )
+
+        variable_widget.observe(self._on_variable_change, names="value")
+        limits_check_widget.observe(self._on_limits_check_change, names="value")
+        aggregate_widget.observe(self._on_aggregate_change, names="value")
+        run_button.on_click(self._on_run_click)
+
+        self._intensity_widgets = {
+            "ncount": ncount_widget,
+            "variable": variable_widget,
+            "limits_check": limits_check_widget,
+            "limits_min": limits_min_widget,
+            "limits_max": limits_max_widget,
+            "aggregate": aggregate_widget,
+            "run_button": run_button,
+        }
+
+        row1 = ipw.HBox([ncount_widget, variable_widget, limits_check_widget, limits_min_widget, limits_max_widget, run_button])
+        row2 = ipw.HBox([aggregate_widget])
+        container = ipw.VBox([row1, row2], layout=ipw.Layout(display="none"))
+        self._intensity_controls_container = container
+        return container
 
     def create_colormode_selector(self):
         import ipywidgets as ipw
 
-        options = {"Default": "default", "Component": "component"}
-        if self.intensity_map is not None:
-            options["Intensity"] = "intensity"
+        options = {"Default": "default", "Component": "component", "Intensity": "intensity"}
         selector = ipw.Dropdown(
             options=options,
             value=self.colormode,
@@ -387,8 +652,21 @@ class PyThreejsRenderer(RendererBackend):
             if change["type"] != "change":
                 return
             self.colormode = change["new"]
+
+            if self._intensity_controls_container is not None:
+                if self.colormode == "intensity":
+                    self._intensity_controls_container.layout.display = ""
+                    if self._data_stale:
+                        self._grey_all_components()
+                    elif self.intensity_map is not None:
+                        agg = self._intensity_widgets.get("aggregate")
+                        aggregation = agg.value if hasattr(agg, "value") else "total"
+                        self._apply_intensity_from_data(aggregation)
+                else:
+                    self._intensity_controls_container.layout.display = "none"
+
             for idx in self.component_children:
-                if self.colormode == "intensity" and self.intensity_map is not None:
+                if self.colormode == "intensity" and self.intensity_map is not None and not self._data_stale:
                     comp_name = self.simple_components[idx]["name"]
                     I = self.intensity_map.get(comp_name, 0.0)
                     color = intensity_to_color(I, self._min_I, self._max_I, self.cmap, self.log_scale)

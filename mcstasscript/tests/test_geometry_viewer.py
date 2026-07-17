@@ -1191,12 +1191,12 @@ class TestPyThreejsIntensity(unittest.TestCase):
         selector = self.renderer.create_colormode_selector()
         self.assertIn("Intensity", selector.options)
 
-    def test_colormode_selector_no_intensity(self):
-        """Without intensity_map, selector should not include 'Intensity'."""
+    def test_colormode_selector_always_has_intensity(self):
+        """Intensity colormode is always available (runs simulation on-demand)."""
         from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
         renderer = PyThreejsRenderer()
         selector = renderer.create_colormode_selector()
-        self.assertNotIn("Intensity", selector.options)
+        self.assertIn("Intensity", selector.options)
 
     def test_no_intensity_map_falls_through(self):
         """Without intensity_map, default colormode should work as before."""
@@ -1207,6 +1207,67 @@ class TestPyThreejsIntensity(unittest.TestCase):
         comp_model.shape_list = [BoxShape(width=1, height=1, depth=1)]
         renderer.render_component(comp_model, component_index=0)
         self.assertIsNone(renderer._temp_color)
+
+    def test_intensity_controls_exist(self):
+        """create_intensity_controls returns a VBox with hidden display."""
+        container = self.renderer.create_intensity_controls()
+        import ipywidgets as ipw
+        self.assertIsInstance(container, ipw.VBox)
+        self.assertEqual(container.layout.display, "none")
+
+    def test_intensity_widgets_populated(self):
+        """After creating controls, _intensity_widgets dict is populated."""
+        self.renderer.create_intensity_controls()
+        expected_keys = {"ncount", "variable", "limits_check", "limits_min", "limits_max", "aggregate", "run_button"}
+        self.assertEqual(set(self.renderer._intensity_widgets.keys()), expected_keys)
+
+    def test_variable_dropdown_options(self):
+        """Variable dropdown includes common McStas variables."""
+        self.renderer.create_intensity_controls()
+        var_widget = self.renderer._intensity_widgets["variable"]
+        self.assertIsNone(var_widget.value)
+        self.assertIn(None, var_widget.options.values())
+        self.assertIn("l", var_widget.options.values())
+
+    def test_aggregate_dropdown_options(self):
+        """Aggregate dropdown includes all aggregation modes."""
+        self.renderer.create_intensity_controls()
+        agg_widget = self.renderer._intensity_widgets["aggregate"]
+        self.assertEqual(agg_widget.value, "total")
+        expected = {"total", "min", "max", "average", "median", "span"}
+        self.assertEqual(set(agg_widget.options.keys()), expected)
+
+    def test_grey_all_components(self):
+        """_grey_all_components sets all component colors to grey."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        renderer = PyThreejsRenderer()
+        comp = make_mock_component("test")
+        comp_model = ComponentModel(comp)
+        comp_model.shape_list = [BoxShape(width=1, height=1, depth=1)]
+        renderer.render_component(comp_model, component_index=0)
+        renderer._grey_all_components()
+        self.assertEqual(renderer.component_colors[0], "#808080")
+
+    def test_data_stale_default(self):
+        """Without intensity_map, _data_stale should be True."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        renderer = PyThreejsRenderer()
+        self.assertTrue(renderer._data_stale)
+
+    def test_data_not_stale_with_map(self):
+        """With intensity_map, _data_stale should be False."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        renderer = PyThreejsRenderer(intensity_map={"a": 1.0})
+        self.assertFalse(renderer._data_stale)
+
+    def test_colorbar_stale_intensity(self):
+        """In intensity mode without data, colorbar should be empty Image."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        import ipywidgets as ipw
+        renderer = PyThreejsRenderer(colormode="intensity")
+        cb = renderer.create_colorbar()
+        self.assertIsInstance(cb, ipw.Image)
+        self.assertEqual(cb.value, b'')
 
 
 class TestMatplotlibIntensity(unittest.TestCase):
@@ -1303,12 +1364,13 @@ class TestPyThreejsColorbar(unittest.TestCase):
         self.assertIsInstance(cb, ipw.Image)
 
     def test_colorbar_default_mode(self):
-        """In default mode, create_colorbar should return a Label (hidden)."""
+        """In default mode, create_colorbar should return an empty Image."""
         from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
         import ipywidgets as ipw
         renderer = PyThreejsRenderer(colormode="default")
         cb = renderer.create_colorbar()
-        self.assertIsInstance(cb, ipw.Label)
+        self.assertIsInstance(cb, ipw.Image)
+        self.assertEqual(cb.value, b'')
 
     def test_colorbar_component_mode(self):
         """In component mode, create_colorbar should return an Image widget."""

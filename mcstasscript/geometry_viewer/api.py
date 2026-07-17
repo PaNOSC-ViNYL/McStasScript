@@ -21,12 +21,14 @@ def _get_renderer(backend: str = "pythreejs", **kwargs):
     if backend == "pythreejs":
         from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
         return PyThreejsRenderer(**kwargs)
-    elif backend in ("matplotlib", "matplotlib_3d"):
-        return MatplotlibRenderer(mode="3d", **kwargs)
-    elif backend == "matplotlib_2d":
-        return MatplotlibRenderer(mode="2d", **kwargs)
     else:
-        raise ValueError(f"Unknown backend: {backend}. Use 'pythreejs', 'matplotlib', or 'matplotlib_2d'.")
+        kwargs.pop("instrument_object", None)
+        if backend in ("matplotlib", "matplotlib_3d"):
+            return MatplotlibRenderer(mode="3d", **kwargs)
+        elif backend == "matplotlib_2d":
+            return MatplotlibRenderer(mode="2d", **kwargs)
+        else:
+            raise ValueError(f"Unknown backend: {backend}. Use 'pythreejs', 'matplotlib', or 'matplotlib_2d'.")
 
 
 def _aggregate_intensity(mon_data, aggregation: str) -> float:
@@ -182,15 +184,38 @@ def view_with_guess(instrument_object, backend: str = "pythreejs", **kwargs):
     kwargs.setdefault("num_components", num_components)
     intensity_map = kwargs.get("intensity_map")
     if intensity_map is not None:
-        colormode = "intensity"
+        kwargs["colormode"] = "intensity"
     else:
-        colormode = kwargs.get("colormode", "default")
-    renderer = _get_renderer(backend, **kwargs)
-    result = renderer.render_instrument(instrument_model, width=width, height=height, **kwargs)
+        kwargs.setdefault("colormode", "default")
+
+    kwargs_for_renderer = dict(kwargs)
+    kwargs_for_renderer["instrument_object"] = instrument_object
+    renderer = _get_renderer(backend, **kwargs_for_renderer)
+
+    from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+
+    all_children = []
+    for index, component_model in enumerate(instrument_model.component_models):
+        if isinstance(renderer, PyThreejsRenderer):
+            renderer.register_component(component_model)
+        all_children.extend(renderer.render_component(component_model, component_index=index))
+        renderer.next_component()
+
+    scene = renderer.make_scene(all_children, width=width, height=height, **kwargs)
+
+    if isinstance(renderer, PyThreejsRenderer):
+        import ipywidgets as ipw
+        navigator = renderer.create_component_navigator(scene)
+        colormode_selector = renderer.create_colormode_selector()
+        intensity_controls = renderer.create_intensity_controls()
+        colorbar = renderer.create_colorbar()
+        return ipw.VBox([navigator, colormode_selector, intensity_controls, ipw.HBox([scene, colorbar])])
+
     if isinstance(renderer, MatplotlibRenderer):
         plt.show()
         return None
-    return result
+
+    return scene
 
 
 def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
@@ -215,7 +240,9 @@ def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
     if intensity_map is not None:
         kwargs["colormode"] = "intensity"
 
-    renderer = _get_renderer(backend, **kwargs)
+    kwargs_for_renderer = dict(kwargs)
+    kwargs_for_renderer["instrument_object"] = instrument_object
+    renderer = _get_renderer(backend, **kwargs_for_renderer)
 
     from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
 
@@ -233,8 +260,9 @@ def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
         import ipywidgets as ipw
         navigator = renderer.create_component_navigator(scene)
         colormode_selector = renderer.create_colormode_selector()
+        intensity_controls = renderer.create_intensity_controls()
         colorbar = renderer.create_colorbar()
-        return ipw.VBox([navigator, colormode_selector, ipw.HBox([scene, colorbar])])
+        return ipw.VBox([navigator, colormode_selector, intensity_controls, ipw.HBox([scene, colorbar])])
 
     if isinstance(renderer, MatplotlibRenderer):
         plt.show()
