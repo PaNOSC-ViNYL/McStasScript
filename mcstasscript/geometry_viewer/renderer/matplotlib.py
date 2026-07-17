@@ -296,9 +296,11 @@ class MatplotlibRenderer(RendererBackend):
             norm = Normalize(vmin=0, vmax=max(self.num_components - 1, 1))
             sm = ScalarMappable(cmap="viridis", norm=norm)
         sm.set_array([])
-        fig.subplots_adjust(right=0.88)
-        cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
-        fig.colorbar(sm, cax=cbar_ax, label=label)
+        fig.subplots_adjust(right=0.87)
+        cbar_ax = fig.add_axes([0.91, 0.15, 0.03, 0.7])
+        cbar = fig.colorbar(sm, cax=cbar_ax, label=label)
+        cbar.ax.tick_params(labelsize=10)
+        cbar.ax.set_ylabel(label, fontsize=10, rotation=90, labelpad=10)
 
     def make_scene(self, children: list[Any], show_axes: bool = True,
                    width: int = 900, height: int = 600, **kwargs) -> plt.Figure:

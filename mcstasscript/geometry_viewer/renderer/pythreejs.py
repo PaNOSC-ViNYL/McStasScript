@@ -12,7 +12,7 @@ from mcstasscript.geometry_viewer.model.shapes import (
     LineSegmentsShape, PolyhedronShape, Style,
 )
 from mcstasscript.geometry_viewer.transform import Transform
-from mcstasscript.geometry_viewer.config import DEFAULT_COLORS, index_to_color, intensity_to_color, create_colorbar_image
+from mcstasscript.geometry_viewer.config import DEFAULT_COLORS, index_to_color, intensity_to_color
 
 
 @dataclass
@@ -352,32 +352,71 @@ class PyThreejsRenderer(RendererBackend):
     def create_colorbar(self):
         """Create a colorbar widget for the current colormode."""
         import ipywidgets as ipw
-        self._colorbar_widget = self._make_colorbar_image()
+        import matplotlib
+        matplotlib.use('module://ipympl.backend_nbagg', force=True)
+        import matplotlib.pyplot as plt
+
+        self._colorbar_widget = ipw.VBox()
+        self._colorbar_fig = plt.figure(figsize=(1.5, 3.5), dpi=100)
+        self._colorbar_ax = self._colorbar_fig.add_axes([0.25, 0.08, 0.35, 0.78])
+        self._colorbar_cbar = None
+        self._colorbar_widget.children = (self._colorbar_fig.canvas,)
+        self._update_colorbar_figure()
         return self._colorbar_widget
 
-    def _make_colorbar_image(self):
-        """Generate a colorbar image widget for the current colormode."""
-        import ipywidgets as ipw
-        if self.colormode == "default":
-            return ipw.Image(value=b'', format='png', layout=ipw.Layout(width='60px'))
+    def _update_colorbar_figure(self):
+        """Update the embedded matplotlib colorbar in-place."""
+        import matplotlib.pyplot as plt
+        from matplotlib.cm import ScalarMappable
+        from matplotlib.colors import Normalize, LogNorm
+        from matplotlib.ticker import MaxNLocator, LogLocator, LogFormatterMathtext
+
+        if self.colormode == "default" or \
+           (self.colormode == "intensity" and self.intensity_map is None):
+            self._colorbar_ax.cla()
+            self._colorbar_ax.axis('off')
+            self._colorbar_cbar = None
+            self._colorbar_fig.canvas.draw_idle()
+            return
+
         if self.colormode == "intensity":
-            if self.intensity_map is not None:
-                label = self.colorbar_label or "Value"
-                img = create_colorbar_image(self.cmap, self._min_I, self._max_I,
-                                              label, self.log_scale)
-                return ipw.Image(value=img, format='png', layout=ipw.Layout(width='60px'))
-            return ipw.Image(value=b'', format='png', layout=ipw.Layout(width='60px'))
-        label = self.colorbar_label or "Component index"
-        img = create_colorbar_image("viridis", 0, max(self.num_components - 1, 1),
-                                      label, log_scale=False)
-        return ipw.Image(value=img, format='png', layout=ipw.Layout(width='60px'))
+            label = self.colorbar_label or "Value"
+            cmap_name = self.cmap
+            vmin, vmax = self._min_I, self._max_I
+            log_scale = self.log_scale
+        else:
+            label = self.colorbar_label or "Component index"
+            cmap_name = "viridis"
+            vmin, vmax = 0, max(self.num_components - 1, 1)
+            log_scale = False
+
+        use_log = log_scale and vmax > 0 and vmin > 0
+
+        if use_log:
+            norm = LogNorm(vmin=vmin, vmax=vmax)
+        else:
+            norm = Normalize(vmin=max(vmin, 0), vmax=vmax)
+
+        sm = ScalarMappable(cmap=cmap_name, norm=norm)
+        sm.set_array([])
+
+        self._colorbar_ax.cla()
+        self._colorbar_cbar = self._colorbar_fig.colorbar(sm, cax=self._colorbar_ax, label=label)
+
+        if use_log:
+            self._colorbar_cbar.locator = LogLocator(base=10)
+            self._colorbar_cbar.formatter = LogFormatterMathtext(base=10)
+        else:
+            self._colorbar_cbar.locator = MaxNLocator(nbins=5)
+        self._colorbar_cbar.update_ticks()
+
+        self._colorbar_cbar.ax.tick_params(labelsize=10)
+        self._colorbar_cbar.ax.set_ylabel(label, fontsize=11, rotation=90, labelpad=10)
+        self._colorbar_fig.canvas.draw_idle()
 
     def _update_colorbar(self):
         """Update the colorbar widget in-place after a colormode change."""
-        if self._colorbar_widget is not None:
-            new = self._make_colorbar_image()
-            self._colorbar_widget.value = new.value
-            self._colorbar_widget.layout = new.layout
+        self._update_colorbar_figure()
 
     def _grey_all_components(self):
         """Set all components to grey to indicate stale/no data."""

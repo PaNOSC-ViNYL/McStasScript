@@ -1261,13 +1261,13 @@ class TestPyThreejsIntensity(unittest.TestCase):
         self.assertFalse(renderer._data_stale)
 
     def test_colorbar_stale_intensity(self):
-        """In intensity mode without data, colorbar should be empty Image."""
+        """In intensity mode without data, colorbar VBox has canvas but no colorbar content."""
         from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
         import ipywidgets as ipw
         renderer = PyThreejsRenderer(colormode="intensity")
         cb = renderer.create_colorbar()
-        self.assertIsInstance(cb, ipw.Image)
-        self.assertEqual(cb.value, b'')
+        self.assertIsInstance(cb, ipw.VBox)
+        self.assertEqual(len(cb.children), 1)
 
 
 class TestMatplotlibIntensity(unittest.TestCase):
@@ -1353,7 +1353,7 @@ class TestPyThreejsColorbar(unittest.TestCase):
     """Tests for PyThreejsRenderer colorbar widget."""
 
     def test_colorbar_intensity_mode(self):
-        """In intensity mode, create_colorbar should return an Image widget."""
+        """In intensity mode, create_colorbar should return a VBox with content."""
         from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
         import ipywidgets as ipw
         renderer = PyThreejsRenderer(
@@ -1361,30 +1361,53 @@ class TestPyThreejsColorbar(unittest.TestCase):
             colormode="intensity",
         )
         cb = renderer.create_colorbar()
-        self.assertIsInstance(cb, ipw.Image)
+        self.assertIsInstance(cb, ipw.VBox)
+        self.assertGreater(len(cb.children), 0)
 
     def test_colorbar_default_mode(self):
-        """In default mode, create_colorbar should return an empty Image."""
+        """In default mode, create_colorbar should return a VBox with canvas but no colorbar."""
         from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
         import ipywidgets as ipw
         renderer = PyThreejsRenderer(colormode="default")
         cb = renderer.create_colorbar()
-        self.assertIsInstance(cb, ipw.Image)
-        self.assertEqual(cb.value, b'')
+        self.assertIsInstance(cb, ipw.VBox)
+        self.assertEqual(len(cb.children), 1)
 
     def test_colorbar_component_mode(self):
-        """In component mode, create_colorbar should return an Image widget."""
+        """In component mode, create_colorbar should return a VBox with content."""
         from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
         import ipywidgets as ipw
         renderer = PyThreejsRenderer(colormode="component", num_components=10)
         cb = renderer.create_colorbar()
-        self.assertIsInstance(cb, ipw.Image)
+        self.assertIsInstance(cb, ipw.VBox)
+        self.assertGreater(len(cb.children), 0)
 
     def test_colorbar_label_stored(self):
         """colorbar_label should be stored on the renderer."""
         from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
         renderer = PyThreejsRenderer(colorbar_label="Wavelength [Å]")
         self.assertEqual(renderer.colorbar_label, "Wavelength [Å]")
+
+    def test_colorbar_no_duplicates_on_update(self):
+        """Updating colorbar mode should not accumulate multiple colorbars."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        import ipywidgets as ipw
+        renderer = PyThreejsRenderer(
+            intensity_map={"a": 1.0, "b": 10.0},
+            colormode="intensity",
+        )
+        cb = renderer.create_colorbar()
+        self.assertEqual(len(cb.children), 1)
+        renderer.colormode = "component"
+        renderer.num_components = 5
+        renderer._update_colorbar()
+        self.assertEqual(len(cb.children), 1)
+        renderer.colormode = "intensity"
+        renderer._update_colorbar()
+        self.assertEqual(len(cb.children), 1)
+        renderer.colormode = "default"
+        renderer._update_colorbar()
+        self.assertEqual(len(cb.children), 1)
 
 
 class TestMatplotlibColorbar(unittest.TestCase):
