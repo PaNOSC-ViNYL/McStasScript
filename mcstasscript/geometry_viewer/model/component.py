@@ -1,4 +1,5 @@
 import json
+import warnings
 
 import numpy as np
 
@@ -12,12 +13,15 @@ from mcstasscript.geometry_viewer.model.shapes import (
     CylinderShape,
     ConeShape,
     PolyhedronShape,
+    SphereShape,
     triangulate_faces,
 )
 from mcstasscript.geometry_viewer.config import (
     DEFAULT_RADIAL_SEGMENTS,
     DEFAULT_CIRCLE_SEGMENTS,
 )
+from mcstasscript.geometry_viewer.rules import GeometryRule, GeometryRuleRegistry
+from mcstasscript.geometry_viewer.expression import safe_eval
 
 
 def _make_axis_transform(pos, rot, offset, default_axis, normal):
@@ -115,6 +119,137 @@ DRAWCALL_PARSERS = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Geometry-guess factories
+# ---------------------------------------------------------------------------
+
+def _get_param(comp, name, instr_parameters=None):
+    """Get a numeric parameter value, resolving expressions if needed."""
+    val = getattr(comp, name, None)
+    if val is None:
+        return None
+    if isinstance(val, (int, float)):
+        return float(val)
+    if isinstance(val, str):
+        return safe_eval(val, instr_parameters)
+    return float(val)
+
+
+def _factory_sphere(comp, instr_parameters=None):
+    """Create a SphereShape from a 'radius' parameter."""
+    radius = _get_param(comp, "radius", instr_parameters)
+    if radius is None or radius <= 0:
+        return None
+    return SphereShape(radius=radius)
+
+
+def _factory_cylinder(comp, instr_parameters=None):
+    """Create a CylinderShape from radius + yheight."""
+    radius = _get_param(comp, "radius", instr_parameters)
+    height = _get_param(comp, "yheight", instr_parameters)
+    if radius is None or radius <= 0 or height is None or height <= 0:
+        return None
+    return CylinderShape(radius=radius, height=height, radial_segments=DEFAULT_RADIAL_SEGMENTS)
+
+
+def _factory_solid_box(comp, instr_parameters=None):
+    """Create a solid BoxShape from xwidth, yheight, zdepth."""
+    xwidth = _get_param(comp, "xwidth", instr_parameters)
+    yheight = _get_param(comp, "yheight", instr_parameters)
+    zdepth = _get_param(comp, "zdepth", instr_parameters)
+    if xwidth is None or xwidth <= 0:
+        return None
+    if yheight is None or yheight <= 0:
+        return None
+    if zdepth is None or zdepth <= 0:
+        return None
+    return BoxShape(width=xwidth, height=yheight, depth=zdepth)
+
+
+def _factory_rectangle_outline(comp, instr_parameters=None):
+    """Create a rectangle outline (LineSegmentsShape) from xwidth + yheight."""
+    xwidth = _get_param(comp, "xwidth", instr_parameters)
+    yheight = _get_param(comp, "yheight", instr_parameters)
+    if xwidth is None or xwidth <= 0 or yheight is None or yheight <= 0:
+        return None
+    hw, hh = xwidth / 2, yheight / 2
+    points = np.array([
+        [hw, hh, 0], [hw, -hh, 0],
+        [hw, -hh, 0], [-hw, -hh, 0],
+        [-hw, -hh, 0], [-hw, hh, 0],
+        [-hw, hh, 0], [hw, hh, 0],
+    ], dtype=np.float32)
+    return LineSegmentsShape(points=points)
+
+
+def _factory_axis_triad(comp, instr_parameters=None):
+    """Create an axis triad for parameterless components."""
+    axis_length = 1.0
+    points = np.array([
+        [0, 0, 0], [axis_length, 0, 0],
+        [0, 0, 0], [0, axis_length, 0],
+        [0, 0, 0], [0, 0, axis_length],
+    ], dtype=np.float32)
+    return LineSegmentsShape(points=points)
+
+
+# ---------------------------------------------------------------------------
+# Built-in rule registry
+# ---------------------------------------------------------------------------
+
+def _make_builtin_registry() -> GeometryRuleRegistry:
+    """Build the default registry of geometry-guess rules."""
+    reg = GeometryRuleRegistry()
+
+    # 1. Sphere: must have 'radius', must NOT have xwidth/yheight/zdepth
+    reg.register(GeometryRule(
+        must_have={"radius": True},
+        must_not_have={"xwidth": False, "yheight": False, "zdepth": False},
+        must_be_set={"radius": True},
+        priority=10,
+        factory=_factory_sphere,
+    ))
+
+    # 2. Cylinder: radius + yheight set; optional xwidth/zdepth are not set
+    reg.register(GeometryRule(
+        must_have={"radius": True, "yheight": True},
+        must_be_set={"radius": True, "yheight": True},
+        must_not_be_set={"xwidth": False, "zdepth": False},
+        priority=20,
+        factory=_factory_cylinder,
+    ))
+
+    # 3. Solid box: must have xwidth, yheight, zdepth all set
+    reg.register(GeometryRule(
+        must_have={"xwidth": True, "yheight": True, "zdepth": True},
+        must_be_set={"xwidth": True, "yheight": True, "zdepth": True},
+        priority=30,
+        factory=_factory_solid_box,
+    ))
+
+    # 4. Rectangle outline: must have xwidth and yheight set, zdepth not set
+    reg.register(GeometryRule(
+        must_have={"xwidth": True, "yheight": True},
+        must_be_set={"xwidth": True, "yheight": True},
+        must_not_be_set={"zdepth": False},
+        priority=40,
+        factory=_factory_rectangle_outline,
+    ))
+
+    # 5. Axis triad: no parameters at all
+    reg.register(GeometryRule(
+        require_empty_params=True,
+        priority=900,
+        factory=_factory_axis_triad,
+    ))
+
+    return reg
+
+
+# Module-level default registry
+_builtin_registry = _make_builtin_registry()
+
+
 class ComponentModel:
     def __init__(self, component_object):
         self.comp = component_object
@@ -166,70 +301,82 @@ class ComponentModel:
 
         self.loaded = True
 
-    def guess_geometry_from_comp_object(self, instr_parameters=None):
+    def set_global_transform(self, transform):
+        """Set the global transform and apply it to all guessed shapes."""
+        self.global_position = transform.position
+        self.rotation_matrix = transform.rotation_matrix
+        for shape in self.shape_list:
+            shape.transform = transform
+
+    def guess_geometry_from_comp_object(
+        self,
+        instr_parameters: dict | None = None,
+        registry: GeometryRuleRegistry | None = None,
+    ) -> bool:
         """
         Takes component object, attempts to guess geometry from parameters.
         Adds shape objects to shape_list.
+
+        Uses the rule-based system: iterates through registered GeometryRule
+        instances in priority order, and uses the first matching rule's factory
+        to create a shape.
+
+        Parameters
+        ----------
+        instr_parameters : dict, optional
+            Instrument-level parameter values for expression resolution.
+        registry : GeometryRuleRegistry, optional
+            Custom rule registry.  Uses the built-in registry if not given.
+
+        Returns
+        -------
+        bool
+            True if a shape was successfully created, False otherwise.
+
+        Raises
+        ------
+        ValueError
+            If the component has parameters but no rule matches (unknown
+            parameterized component).
         """
-        if len(self.comp.parameter_names) == 0:
-            axis_length = 1.0
-            points = np.array([
-                [0, 0, 0], [axis_length, 0, 0],
-                [0, 0, 0], [0, axis_length, 0],
-                [0, 0, 0], [0, 0, axis_length],
-            ])
-            shape = LineSegmentsShape(points=points)
-            self.shape_list.append(shape)
-            return True
+        if registry is None:
+            registry = _builtin_registry
 
-        specified_pars = {}
-        for par in self.comp.parameter_names:
-            par_value = getattr(self.comp, par)
-            if par_value != self.comp.parameter_defaults[par]:
-                specified_pars[par] = par_value
+        self.shape_list = []
+        parameter_names = getattr(self.comp, "parameter_names", []) or []
 
-        def check_conditions(conditions, parameter_names, specified_pars):
-            for par_name, requirement in conditions["has_pars"].items():
-                if (par_name in parameter_names) != requirement:
-                    return False
-            for par_name, requirement in conditions["used_pars"].items():
-                if (par_name in specified_pars) != requirement:
-                    return False
-            return True
+        # Try to find a matching rule
+        rule = registry.match(self.comp)
 
-        def evaluate(expression, parameters):
-            try:
-                return float(expression)
-            except ValueError:
-                try:
-                    return eval(expression)
-                except NameError:
-                    if isinstance(expression, str):
-                        for par, value in parameters.items():
-                            expression = expression.replace(par, str(value))
-                        return eval(expression)
-            except Exception:
-                raise RuntimeError("Could not evaluate ", expression)
+        if rule is not None and rule.factory is not None:
+            shape = rule.factory(self.comp, instr_parameters)
+            if shape is not None:
+                self.shape_list.extend(shape if isinstance(shape, (list, tuple)) else [shape])
+                if self.global_position is not None or self.rotation_matrix is not None:
+                    self.set_global_transform(Transform(
+                        position=self.global_position,
+                        rotation_matrix=self.rotation_matrix,
+                    ))
+                self.loaded = True
+                return True
 
-        conditions = dict(
-            has_pars=dict(xwidth=True, yheight=True, zdepth=False, l=False, length=False),
-            used_pars=dict(xwidth=True, yheight=True, radius=False),
-        )
+        # No rule matched — check if this is a parameterized component
+        if parameter_names:
+            # Component has parameters but no rule matched -> report failure
+            raise ValueError(
+                f"Cannot guess geometry for component '{self.comp.name}' "
+                f"(type '{getattr(self.comp, 'component_name', 'unknown')}'): "
+                f"no matching geometry rule for parameters {parameter_names}"
+            )
 
-        if check_conditions(conditions, self.comp.parameter_names, specified_pars):
-            xwidth = evaluate(specified_pars["xwidth"], instr_parameters or {})
-            yheight = evaluate(specified_pars["yheight"], instr_parameters or {})
-
-            points = np.array([
-                [xwidth / 2, yheight / 2, 0], [xwidth / 2, -yheight / 2, 0],
-                [xwidth / 2, -yheight / 2, 0], [-xwidth / 2, -yheight / 2, 0],
-                [-xwidth / 2, -yheight / 2, 0], [-xwidth / 2, yheight / 2, 0],
-                [-xwidth / 2, yheight / 2, 0], [xwidth / 2, yheight / 2, 0],
-            ])
-
-            shape = LineSegmentsShape(points=points)
-            self.shape_list.append(shape)
-            return True
-
+        # No parameters and no rule matched — fall back to axis triad
+        axis_length = 1.0
+        points = np.array([
+            [0, 0, 0], [axis_length, 0, 0],
+            [0, 0, 0], [0, axis_length, 0],
+            [0, 0, 0], [0, 0, axis_length],
+        ], dtype=np.float32)
+        shape = LineSegmentsShape(points=points)
+        self.shape_list.append(shape)
         self.loaded = True
         return True

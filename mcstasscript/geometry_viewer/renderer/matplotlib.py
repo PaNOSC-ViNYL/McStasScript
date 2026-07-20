@@ -13,7 +13,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from mcstasscript.geometry_viewer.renderer.base import RendererBackend
 from mcstasscript.geometry_viewer.model.shapes import (
     Shape, BoxShape, CylinderShape, ConeShape, CircleShape,
-    LineSegmentsShape, PolyhedronShape, Style,
+    LineSegmentsShape, PolyhedronShape, SphereShape, Style,
 )
 from mcstasscript.geometry_viewer.transform import Transform, quaternion_to_rotation_matrix
 from mcstasscript.geometry_viewer.config import DEFAULT_COLORS, index_to_color, intensity_to_color
@@ -152,6 +152,8 @@ class MatplotlibRenderer(RendererBackend):
             return self._render_line_segments(shape)
         elif isinstance(shape, PolyhedronShape):
             return self._render_polyhedron(shape)
+        elif isinstance(shape, SphereShape):
+            return self._render_sphere(shape)
         raise ValueError(f"Unknown shape type: {type(shape)}")
 
     def _transform_points(self, points: np.ndarray, transform: Transform | None) -> np.ndarray:
@@ -298,6 +300,40 @@ class MatplotlibRenderer(RendererBackend):
 
         color = self.current_color
         return self._make_collection(faces, color, 0.8, edge_color=color)
+
+    def _render_sphere(self, shape: SphereShape):
+        u = np.linspace(0, 2 * np.pi, shape.radial_segments + 1)
+        v = np.linspace(0, np.pi, shape.vertical_segments + 1)
+        verts = np.array([
+            shape.radius * np.outer(np.cos(u), np.sin(v)),
+            shape.radius * np.outer(np.sin(u), np.sin(v)),
+            shape.radius * np.outer(np.ones(np.size(u)), np.cos(v)),
+        ]).T.reshape(-1, 3)
+
+        faces = []
+        for i in range(shape.vertical_segments):
+            for j in range(shape.radial_segments):
+                a = i * (shape.radial_segments + 1) + j
+                b = a + shape.radial_segments + 1
+                quad = [verts[a], verts[b], verts[b + 1], verts[a + 1]]
+                faces.append(quad)
+
+        if shape.transform:
+            faces = [self._remap_to_display(self._transform_points(np.array(f), shape.transform)).tolist() for f in faces]
+        else:
+            faces = [self._remap_to_display(np.array(f)).tolist() for f in faces]
+
+        if shape.radius <= 0.05:
+            alpha = 0.9
+        elif shape.radius <= 0.5:
+            alpha = 0.85
+        elif shape.radius <= 1.5:
+            alpha = 0.65
+        else:
+            alpha = 0.4
+
+        color = self.current_color
+        return self._make_collection(faces, color, alpha, edge_color=color)
 
     def apply_transform(self, visual_obj: Any, transform: Transform | None) -> Any:
         return visual_obj

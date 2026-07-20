@@ -83,6 +83,18 @@ class CylinderShape(Shape):
 
 
 @dataclass
+class SphereShape(Shape):
+    radius: float
+    radial_segments: int = 32
+    vertical_segments: int = 16
+    transform: Transform | None = None
+    style: Style | None = None
+
+    def __repr__(self):
+        return f"SphereShape r={self.radius}"
+
+
+@dataclass
 class PolyhedronShape(Shape):
     vertices: np.ndarray
     indices: np.ndarray

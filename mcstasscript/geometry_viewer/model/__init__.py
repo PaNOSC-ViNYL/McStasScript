@@ -1,6 +1,6 @@
 from mcstasscript.geometry_viewer.model.shapes import (
     Shape, BoxShape, CylinderShape, ConeShape, CircleShape,
-    LineSegmentsShape, PolyhedronShape, Style, triangulate_faces,
+    LineSegmentsShape, PolyhedronShape, SphereShape, Style,
 )
 from mcstasscript.geometry_viewer.model.component import ComponentModel, DRAWCALL_PARSERS
 from mcstasscript.geometry_viewer.model.instrument import InstrumentModel

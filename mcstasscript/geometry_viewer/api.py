@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import warnings
 
 import matplotlib.pyplot as plt
 
@@ -15,6 +17,8 @@ from mcstasscript.geometry_viewer.mcdisplay import (
     display_mcdisplay_html,
 )
 from mcstasscript.geometry_viewer.config import intensity_to_color
+from mcstasscript.geometry_viewer.transform import resolve_transforms, TransformResolutionError
+from mcstasscript.geometry_viewer.expression import safe_eval
 
 
 def _get_renderer(backend: str = "pythreejs", **kwargs):
@@ -178,10 +182,13 @@ def view_with_analysis(instrument_object, backend: str = "pythreejs",
 
 
 def view_with_guess(instrument_object, backend: str = "pythreejs",
-                      component_colors: dict[str, str] | None = None,
-                      component_opacity: dict[str, float] | None = None, **kwargs):
+                       component_colors: dict[str, str] | None = None,
+                       component_opacity: dict[str, float] | None = None, **kwargs):
     """
     Plots instrument geometry with best guesses of geometry.
+
+    Resolves AT/ROTATED transforms recursively and evaluates instrument
+    parameter values for geometry-guess expressions.
 
     Fails if location of a component cannot be determined:
     - If non-trivial declared variables used in AT / ROTATED
@@ -190,11 +197,72 @@ def view_with_guess(instrument_object, backend: str = "pythreejs",
     width = kwargs.pop("width", 900)
     height = kwargs.pop("height", 600)
 
+    # Collect instrument-level parameter values
+    instr_parameters = {}
+    if hasattr(instrument_object, "parameters"):
+        for param in instrument_object.parameters:
+            if param.value is not None:
+                try:
+                    instr_parameters[param.name] = float(param.value)
+                except (TypeError, ValueError):
+                    pass
+    for variable in (
+        getattr(instrument_object, "declare_list", []),
+        getattr(instrument_object, "user_var_list", []),
+    ):
+        for declared in variable:
+            value = getattr(declared, "value", None)
+            if value not in (None, ""):
+                try:
+                    instr_parameters[declared.name] = safe_eval(value, instr_parameters)
+                except (TypeError, ValueError):
+                    pass
+
+    # Resolve global transforms for all components
+    try:
+        global_transforms = resolve_transforms(
+            instrument_object.component_list,
+            variables=instr_parameters,
+        )
+    except TransformResolutionError as exc:
+        # Determine which component failed and which depend on it
+        err_str = str(exc)
+        # Extract referenced component name from error message
+        failed_name = None
+        m = re.search(r"'([^']+)'", err_str)
+        if m:
+            failed_name = m.group(1)
+        dependents = []
+        if failed_name:
+            affected = {failed_name}
+            while True:
+                new_dependents = []
+                for comp in instrument_object.component_list:
+                    at_ref = getattr(comp, "AT_reference", None)
+                    rot_ref = getattr(comp, "ROTATED_reference", None)
+                    if comp.name not in affected and (at_ref in affected or rot_ref in affected):
+                        new_dependents.append(comp.name)
+                if not new_dependents:
+                    break
+                dependents.extend(new_dependents)
+                affected.update(new_dependents)
+        print(f"Geometry guess ABORTED: cannot resolve location of component '{failed_name}'.")
+        if dependents:
+            print(f"  Dependent components that rely on it: {', '.join(dependents)}")
+        raise
+
     instrument_model = InstrumentModel()
     for component in instrument_object.component_list:
-        component_model = ComponentModel(component)
-        component_model.guess_geometry_from_comp_object()
-        instrument_model.add_model(component_model)
+        try:
+            component_model = ComponentModel(component)
+            component_model.guess_geometry_from_comp_object(
+                instr_parameters=instr_parameters,
+            )
+            component_model.set_global_transform(global_transforms[component.name])
+            instrument_model.add_model(component_model)
+        except Exception as exc:
+            print(f"Skipping component '{component.name}': geometry guess failed ({exc})")
+            continue
 
     num_components = len(instrument_model.component_models)
     kwargs.setdefault("num_components", num_components)
@@ -310,17 +378,18 @@ def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
 
 
 def view(instrument_object, backend: str = "pythreejs",
-          allow_guess: bool = False,
-          json_dict: dict | None = None, json_file: str | None = None,
-          index_min: int | None = None, index_max: int | None = None,
-          width: int = 900, height: int = 600,
-          intensity_map: dict | None = None,
-          cmap: str = "inferno",
-          log_scale: bool = True,
-          colorbar_label: str | None = None,
-          component_colors: dict[str, str] | None = None,
-          component_opacity: dict[str, float] | None = None,
-          **kwargs):
+           allow_guess: bool = False,
+           guess: bool = False,
+           json_dict: dict | None = None, json_file: str | None = None,
+           index_min: int | None = None, index_max: int | None = None,
+           width: int = 900, height: int = 600,
+           intensity_map: dict | None = None,
+           cmap: str = "inferno",
+           log_scale: bool = True,
+           colorbar_label: str | None = None,
+           component_colors: dict[str, str] | None = None,
+           component_opacity: dict[str, float] | None = None,
+           **kwargs):
     """
     Plots instrument geometry.
 
@@ -339,6 +408,10 @@ def view(instrument_object, backend: str = "pythreejs",
     allow_guess : bool
         If True, try geometry guess first, fall back to mcdisplay JSON on error.
         Default False.
+    guess : bool
+        If True, explicitly attempt geometry guess first, then fall back to
+        mcdisplay JSON with a warning.  Equivalent to allow_guess=True but
+        emits a warning on fallback.
     json_dict : dict, optional
         Pre-loaded instrument.json dict (skips mcdisplay generation).
     json_file : str, optional
@@ -399,18 +472,34 @@ def view(instrument_object, backend: str = "pythreejs",
     # --- guess-only backend ---
     if backend == "guess":
         renderer = kwargs.pop("renderer", "pythreejs")
-        return view_with_guess(instrument_object, backend=renderer, width=width, height=height,
-                                component_colors=component_colors,
-                                component_opacity=component_opacity, **kwargs)
+        try:
+            return view_with_guess(instrument_object, backend=renderer, width=width, height=height,
+                                   component_colors=component_colors,
+                                   component_opacity=component_opacity, **kwargs)
+        except Exception as exc:
+            warnings.warn(
+                f"Geometry guess failed ({exc}); falling back to mcdisplay JSON.",
+                UserWarning,
+                stacklevel=2,
+            )
+            backend = renderer
+            guess = False
 
     # --- Python rendering backends (pythreejs, matplotlib, matplotlib_2d) ---
-    if allow_guess:
+    if guess or allow_guess:
         try:
             return view_with_guess(instrument_object, backend=backend, width=width, height=height,
                                     component_colors=component_colors,
                                     component_opacity=component_opacity, **kwargs)
         except Exception:
-            pass
+            if guess:
+                warnings.warn(
+                    "Geometry guess failed, falling back to mcdisplay JSON. "
+                    "This may occur if component parameters cannot be resolved "
+                    "to geometry shapes.",
+                    UserWarning,
+                    stacklevel=2,
+                )
 
     # Load or generate JSON data
     if json_dict is None:

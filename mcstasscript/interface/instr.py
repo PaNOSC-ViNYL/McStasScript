@@ -2732,7 +2732,7 @@ class McCode_instr(BaseCalculator):
         return self.backengine()
 
     def show_instrument(self, backend=None, format=None, width=800, height=450,
-                        new_tab=False, **kwargs):
+                        new_tab=False, guess=False, **kwargs):
         """
         Visualize the instrument geometry.
 
@@ -2757,6 +2757,9 @@ class McCode_instr(BaseCalculator):
         new_tab : bool
             If True and backend is webgl/webgl-classic, fall back to pythreejs
             since HTML can't be embedded in a new tab from Python.
+        guess : bool
+            If True, attempt geometry guess first, then fall back to mcdisplay
+            JSON with a warning.  Default False.
         component_colors : dict, optional
             Mapping of component name to hex color string (e.g. {"guide1": "#ff0000"}).
             With the 'pythreejs' backend, adds a "Custom colors" checkbox to the
@@ -2796,7 +2799,7 @@ class McCode_instr(BaseCalculator):
                 )
 
         return view(self, backend=resolved_backend,
-                    width=width, height=height, **kwargs)
+                    width=width, height=height, guess=guess, **kwargs)
 
     def show_diagram(self, analysis=False, variable=None, limits=None):
         """

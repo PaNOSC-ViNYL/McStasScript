@@ -9,7 +9,7 @@ import pythreejs as p3
 from mcstasscript.geometry_viewer.renderer.base import RendererBackend
 from mcstasscript.geometry_viewer.model.shapes import (
     Shape, BoxShape, CylinderShape, ConeShape, CircleShape,
-    LineSegmentsShape, PolyhedronShape, Style,
+    LineSegmentsShape, PolyhedronShape, SphereShape, Style,
 )
 from mcstasscript.geometry_viewer.transform import Transform
 from mcstasscript.geometry_viewer.config import DEFAULT_COLORS, index_to_color, intensity_to_color
@@ -245,6 +245,8 @@ class PyThreejsRenderer(RendererBackend):
             return self._render_line_segments(shape)
         elif isinstance(shape, PolyhedronShape):
             return self._render_polyhedron(shape)
+        elif isinstance(shape, SphereShape):
+            return self._render_sphere(shape)
         raise ValueError(f"Unknown shape type: {type(shape)}")
 
     def _render_box(self, shape: BoxShape) -> p3.Mesh:
@@ -340,6 +342,25 @@ class PyThreejsRenderer(RendererBackend):
             transparent=True,
             opacity=0.8,
             depthWrite=False,
+            side="DoubleSide",
+        )
+        mesh = p3.Mesh(geometry=geometry, material=material)
+        self.apply_transform(mesh, shape.transform)
+        return mesh
+
+    def _render_sphere(self, shape: SphereShape) -> p3.Mesh:
+        largest_dim = 2 * shape.radius
+        opacity = _compute_opacity_for_size(largest_dim)
+        geometry = p3.SphereGeometry(
+            radius=shape.radius,
+            widthSegments=shape.radial_segments,
+            heightSegments=shape.vertical_segments,
+        )
+        material = self._get_material(
+            material_class=p3.MeshLambertMaterial,
+            transparent=True,
+            opacity=opacity,
+            depthWrite=True,
             side="DoubleSide",
         )
         mesh = p3.Mesh(geometry=geometry, material=material)

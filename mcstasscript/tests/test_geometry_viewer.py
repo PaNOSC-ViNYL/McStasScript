@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import unittest
 from unittest.mock import MagicMock
@@ -14,6 +15,9 @@ from mcstasscript.geometry_viewer.transform import (
     normalize_quaternion,
     quaternion_multiply,
     Transform,
+    euler_to_rotation_matrix,
+    resolve_transforms,
+    TransformResolutionError,
 )
 from mcstasscript.geometry_viewer.model.shapes import (
     Style,
@@ -23,6 +27,7 @@ from mcstasscript.geometry_viewer.model.shapes import (
     ConeShape,
     CylinderShape,
     PolyhedronShape,
+    SphereShape,
     triangulate_faces,
 )
 from mcstasscript.geometry_viewer.model.component import (
@@ -51,6 +56,7 @@ from mcstasscript.geometry_viewer.config import (
     intensity_to_color,
 )
 from mcstasscript.geometry_viewer.api import _get_renderer, view_with_guess
+from mcstasscript.geometry_viewer.expression import safe_eval, UnsafeExpressionError
 
 
 # Path to the mcdisplay JSON fixture
@@ -3283,6 +3289,531 @@ class TestMaterialIsolationOpacity(unittest.TestCase):
         orig_opacity = children[0].material.opacity
         renderer._apply_custom_colors()
         self.assertEqual(children[0].material.opacity, orig_opacity)
+
+
+class TestGeometryRule(unittest.TestCase):
+    """Tests for GeometryRule and GeometryRuleRegistry."""
+
+    def test_rule_matches_must_have(self):
+        """Rule with must_have matches when parameter exists."""
+        from mcstasscript.geometry_viewer.rules import GeometryRule
+        comp = MagicMock()
+        comp.parameter_names = ["xwidth", "yheight"]
+        comp.parameter_defaults = {}
+        rule = GeometryRule(must_have={"xwidth": True})
+        self.assertTrue(rule.matches(comp))
+
+    def test_rule_no_match_must_have_missing(self):
+        """Rule with must_have fails when parameter is missing."""
+        from mcstasscript.geometry_viewer.rules import GeometryRule
+        comp = MagicMock()
+        comp.parameter_names = ["yheight"]
+        comp.parameter_defaults = {}
+        rule = GeometryRule(must_have={"xwidth": True})
+        self.assertFalse(rule.matches(comp))
+
+    def test_rule_matches_must_not_have(self):
+        """Rule with must_not_have matches when parameter is absent."""
+        from mcstasscript.geometry_viewer.rules import GeometryRule
+        comp = MagicMock()
+        comp.parameter_names = ["xwidth"]
+        comp.parameter_defaults = {}
+        rule = GeometryRule(must_not_have={"zdepth": False})
+        self.assertTrue(rule.matches(comp))
+
+    def test_rule_no_match_must_not_have_present(self):
+        """Rule with must_not_have fails when parameter exists."""
+        from mcstasscript.geometry_viewer.rules import GeometryRule
+        comp = MagicMock()
+        comp.parameter_names = ["xwidth", "zdepth"]
+        comp.parameter_defaults = {}
+        rule = GeometryRule(must_not_have={"zdepth": False})
+        self.assertFalse(rule.matches(comp))
+
+    def test_rule_matches_must_be_set(self):
+        """Rule with must_be_set matches when parameter differs from default."""
+        from mcstasscript.geometry_viewer.rules import GeometryRule
+        comp = MagicMock()
+        comp.parameter_names = ["xwidth"]
+        comp.xwidth = 2.0
+        comp.parameter_defaults = {"xwidth": 0.0}
+        rule = GeometryRule(must_be_set={"xwidth": True})
+        self.assertTrue(rule.matches(comp))
+
+    def test_rule_no_match_must_be_set_not_set(self):
+        """Rule with must_be_set fails when parameter equals default."""
+        from mcstasscript.geometry_viewer.rules import GeometryRule
+        comp = MagicMock()
+        comp.parameter_names = ["xwidth"]
+        comp.xwidth = 0.0
+        comp.parameter_defaults = {"xwidth": 0.0}
+        rule = GeometryRule(must_be_set={"xwidth": True})
+        self.assertFalse(rule.matches(comp))
+
+    def test_rule_matches_must_not_be_set(self):
+        """Rule with must_not_be_set matches when param not in parameter_names."""
+        from mcstasscript.geometry_viewer.rules import GeometryRule
+        comp = MagicMock()
+        comp.parameter_names = ["xwidth"]
+        comp.parameter_defaults = {"xwidth": 0.0}
+        rule = GeometryRule(must_not_be_set={"zdepth": False})
+        self.assertTrue(rule.matches(comp))
+
+    def test_rule_component_names_filter(self):
+        """Rule with component_names only matches listed types."""
+        from mcstasscript.geometry_viewer.rules import GeometryRule
+        comp = MagicMock()
+        comp.component_name = "MyGuide"
+        comp.parameter_names = []
+        comp.parameter_defaults = {}
+        rule = GeometryRule(component_names=("MyGuide", "Other"), priority=10)
+        self.assertTrue(rule.matches(comp))
+        comp.component_name = "Unknown"
+        self.assertFalse(rule.matches(comp))
+
+    def test_registry_priority_order(self):
+        """Registry returns highest-priority (lowest number) matching rule."""
+        from mcstasscript.geometry_viewer.rules import GeometryRule, GeometryRuleRegistry
+        reg = GeometryRuleRegistry()
+        matched = []
+        def factory_a(comp, instr_parameters=None):
+            matched.append("a")
+            return None
+        def factory_b(comp, instr_parameters=None):
+            matched.append("b")
+            return None
+        reg.register(GeometryRule(priority=20, factory=factory_b))
+        reg.register(GeometryRule(priority=10, factory=factory_a))
+        comp = MagicMock()
+        comp.parameter_names = []
+        comp.parameter_defaults = {}
+        rule = reg.match(comp)
+        self.assertIsNotNone(rule)
+        self.assertEqual(rule.priority, 10)
+
+    def test_registry_no_match(self):
+        """Registry returns None when no rule matches."""
+        from mcstasscript.geometry_viewer.rules import GeometryRule, GeometryRuleRegistry
+        reg = GeometryRuleRegistry()
+        reg.register(GeometryRule(must_have={"missing": True}, priority=10))
+        comp = MagicMock()
+        comp.parameter_names = ["other"]
+        comp.parameter_defaults = {}
+        self.assertIsNone(reg.match(comp))
+
+
+class TestSafeEval(unittest.TestCase):
+    """Tests for safe_eval expression evaluation."""
+
+    def test_numeric_literal(self):
+        """Direct numeric string evaluates correctly."""
+        self.assertAlmostEqual(safe_eval("3.14"), 3.14)
+        self.assertAlmostEqual(safe_eval("42"), 42.0)
+        self.assertAlmostEqual(safe_eval("1.5e-3"), 0.0015)
+
+    def test_arithmetic(self):
+        """Basic arithmetic operations work."""
+        self.assertAlmostEqual(safe_eval("2 + 3"), 5.0)
+        self.assertAlmostEqual(safe_eval("10 - 4"), 6.0)
+        self.assertAlmostEqual(safe_eval("3 * 4"), 12.0)
+        self.assertAlmostEqual(safe_eval("10 / 4"), 2.5)
+
+    def test_constants(self):
+        """Built-in constants PI and DEG2RAD resolve."""
+        self.assertAlmostEqual(safe_eval("PI"), math.pi)
+        self.assertAlmostEqual(safe_eval("45 * DEG2RAD"), math.pi / 4)
+
+    def test_math_functions(self):
+        """Whitelisted math functions work."""
+        self.assertAlmostEqual(safe_eval("sin(PI/2)"), 1.0)
+        self.assertAlmostEqual(safe_eval("sqrt(16)"), 4.0)
+        self.assertAlmostEqual(safe_eval("abs(-5)"), 5.0)
+
+    def test_variables(self):
+        """Instrument variables are resolved."""
+        self.assertAlmostEqual(safe_eval("x + 1", {"x": 3}), 4.0)
+        self.assertAlmostEqual(safe_eval("a * b", {"a": 2, "b": 3}), 6.0)
+
+    def test_unsafe_identifier_raises(self):
+        """Unresolved identifiers raise UnsafeExpressionError."""
+        with self.assertRaises(UnsafeExpressionError):
+            safe_eval("__import__('os')")
+
+    def test_unsafe_variable_raises(self):
+        """Unknown variable raises UnsafeExpressionError."""
+        with self.assertRaises(UnsafeExpressionError):
+            safe_eval("unknown_var")
+
+    def test_empty_expression_raises(self):
+        """Empty expression raises ValueError."""
+        with self.assertRaises(ValueError):
+            safe_eval("")
+
+    def test_none_expression_raises(self):
+        """None expression raises ValueError."""
+        with self.assertRaises(ValueError):
+            safe_eval(None)
+
+
+class TestEulerToRotationMatrix(unittest.TestCase):
+    """Tests for euler_to_rotation_matrix."""
+
+    def test_identity(self):
+        """Zero angles produce identity matrix."""
+        R = euler_to_rotation_matrix(0, 0, 0)
+        np.testing.assert_array_almost_equal(R, np.eye(3))
+
+    def test_x_only(self):
+        """A 90-degree x rotation uses McStas' first angle."""
+        R = euler_to_rotation_matrix(90, 0, 0)
+        expected = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
+        np.testing.assert_array_almost_equal(R, expected)
+
+    def test_elevation_only(self):
+        """90-degree elevation rotates around Y (McStas convention)."""
+        R = euler_to_rotation_matrix(0, 90, 0)
+        # Rz(0) @ Ry(90deg) @ Rz(0) = Ry(90deg)
+        expected = np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]])
+        np.testing.assert_array_almost_equal(R, expected)
+
+    def test_determinant_one(self):
+        """Rotation matrix has determinant 1."""
+        R = euler_to_rotation_matrix(0.3, 0.5, 0.7)
+        self.assertAlmostEqual(np.linalg.det(R), 1.0, places=10)
+
+
+class TestResolveTransforms(unittest.TestCase):
+    """Tests for resolve_transforms."""
+
+    def _make_comp(self, name, at=(0, 0, 0), at_ref=None,
+                   rotated=(0, 0, 0), rot_ref=None, rotated_specified=False):
+        comp = MagicMock()
+        comp.name = name
+        comp.AT_data = list(at)
+        comp.AT_reference = at_ref
+        comp.ROTATED_data = list(rotated)
+        comp.ROTATED_reference = rot_ref
+        comp.ROTATED_specified = rotated_specified
+        return comp
+
+    def test_absolute_only(self):
+        """Components with ABSOLUTE references resolve correctly."""
+        comps = [
+            self._make_comp("A", at=(1, 2, 3)),
+            self._make_comp("B", at=(4, 5, 6)),
+        ]
+        transforms = resolve_transforms(comps)
+        np.testing.assert_array_almost_equal(transforms["A"].position, [1, 2, 3])
+        np.testing.assert_array_almost_equal(transforms["B"].position, [4, 5, 6])
+
+    def test_relative_position(self):
+        """RELATIVE AT composes with parent position."""
+        comps = [
+            self._make_comp("A", at=(1, 0, 0)),
+            self._make_comp("B", at=(0, 0, 2), at_ref="A"),
+        ]
+        transforms = resolve_transforms(comps)
+        np.testing.assert_array_almost_equal(transforms["B"].position, [1, 0, 2])
+
+    def test_relative_rotation(self):
+        """RELATIVE ROTATED composes with parent rotation."""
+        comps = [
+            self._make_comp("A", at=(0, 0, 0), rotated=(90, 0, 0),
+                           rot_ref=None, rotated_specified=True),
+            self._make_comp("B", at=(0, 0, 1), at_ref="A",
+                           rotated=(0, 0, 0), rot_ref="A", rotated_specified=True),
+        ]
+        transforms = resolve_transforms(comps)
+        self.assertIsNotNone(transforms["B"].rotation_matrix)
+
+    def test_circular_reference_raises(self):
+        """Circular AT references raise TransformResolutionError."""
+        comps = [
+            self._make_comp("A", at=(0, 0, 0), at_ref="B"),
+            self._make_comp("B", at=(0, 0, 0), at_ref="A"),
+        ]
+        with self.assertRaises(TransformResolutionError):
+            resolve_transforms(comps)
+
+    def test_missing_reference_raises(self):
+        """Reference to non-existent component raises TransformResolutionError."""
+        comps = [
+            self._make_comp("A", at=(0, 0, 0), at_ref="Missing"),
+        ]
+        with self.assertRaises(TransformResolutionError):
+            resolve_transforms(comps)
+
+
+class TestSphereShape(unittest.TestCase):
+    """Tests for SphereShape."""
+
+    def test_creation(self):
+        """SphereShape stores radius and segment counts."""
+        s = SphereShape(radius=1.0)
+        self.assertEqual(s.radius, 1.0)
+        self.assertEqual(s.radial_segments, 32)
+        self.assertEqual(s.vertical_segments, 16)
+        self.assertIn("SphereShape", repr(s))
+
+    def test_matplotlib_render(self):
+        """MatplotlibRenderer can render a SphereShape."""
+        from mcstasscript.geometry_viewer.renderer.matplotlib import MatplotlibRenderer
+        renderer = MatplotlibRenderer()
+        shape = SphereShape(radius=0.5)
+        result = renderer.render_shape(shape)
+        self.assertIsNotNone(result)
+
+    def test_pythreejs_render(self):
+        """PyThreejsRenderer can render a SphereShape."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        renderer = PyThreejsRenderer()
+        renderer._temp_color = None  # Initialize for standalone render_shape
+        shape = SphereShape(radius=0.5)
+        result = renderer.render_shape(shape)
+        self.assertIsNotNone(result)
+
+
+class TestGuessGeometryBuiltins(unittest.TestCase):
+    """Tests for built-in geometry guess rules."""
+
+    def _make_comp(self, name="test", component_name="TestComp",
+                   parameter_names=None, parameter_defaults=None, **attrs):
+        comp = MagicMock()
+        comp.name = name
+        comp.component_name = component_name
+        comp.parameter_names = parameter_names or []
+        comp.parameter_defaults = parameter_defaults or {}
+        for k, v in attrs.items():
+            setattr(comp, k, v)
+        return comp
+
+    def test_sphere_from_radius(self):
+        """Component with only radius produces SphereShape."""
+        comp = self._make_comp(
+            parameter_names=["radius"],
+            parameter_defaults={"radius": None},
+            radius=0.5,
+        )
+        model = ComponentModel(comp)
+        result = model.guess_geometry_from_comp_object()
+        self.assertTrue(result)
+        self.assertEqual(len(model.shape_list), 1)
+        self.assertIsInstance(model.shape_list[0], SphereShape)
+        self.assertEqual(model.shape_list[0].radius, 0.5)
+
+    def test_cylinder_from_radius_yheight(self):
+        """Component with radius + yheight (no xwidth/zdepth) produces CylinderShape."""
+        comp = self._make_comp(
+            parameter_names=["radius", "yheight"],
+            parameter_defaults={"radius": None, "yheight": None},
+            radius=0.3,
+            yheight=2.0,
+        )
+        model = ComponentModel(comp)
+        result = model.guess_geometry_from_comp_object()
+        self.assertTrue(result)
+        self.assertIsInstance(model.shape_list[0], CylinderShape)
+        self.assertEqual(model.shape_list[0].radius, 0.3)
+        self.assertEqual(model.shape_list[0].height, 2.0)
+
+    def test_solid_box_from_xyz(self):
+        """Component with xwidth, yheight, zdepth produces BoxShape."""
+        comp = self._make_comp(
+            parameter_names=["xwidth", "yheight", "zdepth"],
+            parameter_defaults={"xwidth": None, "yheight": None, "zdepth": None},
+            xwidth=1.0,
+            yheight=2.0,
+            zdepth=0.5,
+        )
+        model = ComponentModel(comp)
+        result = model.guess_geometry_from_comp_object()
+        self.assertTrue(result)
+        self.assertIsInstance(model.shape_list[0], BoxShape)
+        self.assertEqual(model.shape_list[0].width, 1.0)
+        self.assertEqual(model.shape_list[0].height, 2.0)
+        self.assertEqual(model.shape_list[0].depth, 0.5)
+
+    def test_rectangle_outline_xy_only(self):
+        """Component with xwidth+yheight (no zdepth) produces rectangle outline."""
+        comp = self._make_comp(
+            parameter_names=["xwidth", "yheight"],
+            parameter_defaults={"xwidth": 0.0, "yheight": 0.0},
+            xwidth=2.0,
+            yheight=4.0,
+        )
+        model = ComponentModel(comp)
+        result = model.guess_geometry_from_comp_object()
+        self.assertTrue(result)
+        self.assertIsInstance(model.shape_list[0], LineSegmentsShape)
+        self.assertEqual(model.shape_list[0].points.shape, (8, 3))
+
+    def test_axis_triad_no_params(self):
+        """Component with no parameters produces axis triad."""
+        comp = self._make_comp()
+        model = ComponentModel(comp)
+        result = model.guess_geometry_from_comp_object()
+        self.assertTrue(result)
+        self.assertIsInstance(model.shape_list[0], LineSegmentsShape)
+        self.assertEqual(model.shape_list[0].points.shape, (6, 3))
+
+    def test_unknown_params_raises(self):
+        """Component with unrecognized parameters raises ValueError."""
+        comp = self._make_comp(
+            parameter_names=["custom_param"],
+            parameter_defaults={"custom_param": None},
+            custom_param=42,
+        )
+        model = ComponentModel(comp)
+        with self.assertRaises(ValueError) as cm:
+            model.guess_geometry_from_comp_object()
+        self.assertIn("custom_param", str(cm.exception))
+
+    def test_expr_param_resolution(self):
+        """Parameter expressions are resolved via instr_parameters."""
+        comp = self._make_comp(
+            parameter_names=["xwidth", "yheight"],
+            parameter_defaults={"xwidth": 0.0, "yheight": 0.0},
+            xwidth="2 * w",
+            yheight="w + 1",
+        )
+        model = ComponentModel(comp)
+        result = model.guess_geometry_from_comp_object(instr_parameters={"w": 3.0})
+        self.assertTrue(result)
+        pts = model.shape_list[0].points
+        self.assertAlmostEqual(np.max(pts[:, 0]), 3.0)  # xwidth/2 = 6/2 = 3
+        self.assertAlmostEqual(np.max(pts[:, 1]), 2.0)  # yheight/2 = 4/2 = 2
+
+
+class TestGeometryGuessFailureSkip(unittest.TestCase):
+    """Tests for graceful handling of geometry guess failures in view_with_guess."""
+
+    def _make_comp(self, name="test", component_name="TestComp",
+                   parameter_names=None, parameter_defaults=None, **attrs):
+        comp = MagicMock()
+        comp.name = name
+        comp.component_name = component_name
+        comp.parameter_names = parameter_names or []
+        comp.parameter_defaults = parameter_defaults or {}
+        for k, v in attrs.items():
+            setattr(comp, k, v)
+        return comp
+
+    def _make_instr(self, components, parameters=None, declare_list=None, user_var_list=None):
+        instr = MagicMock()
+        instr.component_list = components
+        instr.parameters = parameters or []
+        instr.declare_list = declare_list or []
+        instr.user_var_list = user_var_list or []
+        return instr
+
+    def test_bad_geometry_component_skipped_others_render(self):
+        """A component with unguessable geometry is skipped; others render."""
+        good_comp = self._make_comp(
+            name="good_box",
+            parameter_names=["xwidth", "yheight", "zdepth"],
+            parameter_defaults={"xwidth": None, "yheight": None, "zdepth": None},
+            xwidth=1.0, yheight=1.0, zdepth=1.0,
+        )
+        bad_comp = self._make_comp(
+            name="bad_comp",
+            parameter_names=["weird_param"],
+            parameter_defaults={"weird_param": None},
+            weird_param=42,
+        )
+        another_good = self._make_comp(
+            name="another_good",
+            parameter_names=["radius"],
+            parameter_defaults={"radius": None},
+            radius=0.5,
+        )
+
+        instr = self._make_instr([good_comp, bad_comp, another_good])
+
+        rendered_names = []
+
+        class MockRenderer:
+            def render_component(self, model, component_index=0):
+                rendered_names.append(model.comp.name)
+                return []
+            def make_scene(self, children, **kwargs):
+                return "scene"
+            def next_component(self):
+                pass
+
+        with unittest.mock.patch(
+            "mcstasscript.geometry_viewer.api._get_renderer",
+            return_value=MockRenderer(),
+        ):
+            import io, sys
+            captured = io.StringIO()
+            old_stdout = sys.stdout
+            sys.stdout = captured
+            try:
+                result = view_with_guess(instr, backend="matplotlib")
+            finally:
+                sys.stdout = old_stdout
+
+        output = captured.getvalue()
+        self.assertIn("Skipping component 'bad_comp'", output)
+        self.assertIn("good_box", rendered_names)
+        self.assertIn("another_good", rendered_names)
+        self.assertNotIn("bad_comp", rendered_names)
+
+
+class TestTransformFailureDiagnostics(unittest.TestCase):
+    """Tests for transform failure diagnostics in view_with_guess."""
+
+    def _make_comp(self, name, at=(0, 0, 0), at_ref=None,
+                   rotated=(0, 0, 0), rot_ref=None, rotated_specified=False,
+                   parameter_names=None, parameter_defaults=None, **attrs):
+        comp = MagicMock()
+        comp.name = name
+        comp.AT_data = list(at)
+        comp.AT_reference = at_ref
+        comp.ROTATED_data = list(rotated)
+        comp.ROTATED_reference = rot_ref
+        comp.ROTATED_specified = rotated_specified
+        comp.parameter_names = parameter_names or []
+        comp.parameter_defaults = parameter_defaults or {}
+        for k, v in attrs.items():
+            setattr(comp, k, v)
+        return comp
+
+    def _make_instr(self, components, parameters=None, declare_list=None, user_var_list=None):
+        instr = MagicMock()
+        instr.component_list = components
+        instr.parameters = parameters or []
+        instr.declare_list = declare_list or []
+        instr.user_var_list = user_var_list or []
+        return instr
+
+    def test_failed_transform_prints_component_and_dependents(self):
+        """Transform failure prints which component failed and which depend on it."""
+        # "MissingParent" doesn't exist; base, child1, child2 directly reference it.
+        # "orphan" has no dependency on MissingParent.
+        base = self._make_comp("base", at=(0, 0, 0), at_ref="MissingParent")
+        child1 = self._make_comp("child1", at=(1, 0, 0), at_ref="MissingParent")
+        child2 = self._make_comp("child2", at=(2, 0, 0), at_ref="MissingParent")
+        orphan = self._make_comp("orphan", at=(3, 0, 0))
+
+        instr = self._make_instr([base, child1, child2, orphan])
+
+        import io, sys
+        captured = io.StringIO()
+        old_stdout = sys.stdout
+        sys.stdout = captured
+        try:
+            with self.assertRaises(TransformResolutionError):
+                view_with_guess(instr, backend="matplotlib")
+        finally:
+            sys.stdout = old_stdout
+
+        output = captured.getvalue()
+        self.assertIn("MissingParent", output)
+        self.assertIn("base", output)
+        self.assertIn("child1", output)
+        self.assertIn("child2", output)
+        self.assertNotIn("orphan", output)
 
 
 if __name__ == '__main__':

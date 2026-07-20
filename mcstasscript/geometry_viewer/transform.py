@@ -1,8 +1,49 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
+
+
+def euler_to_rotation_matrix(angles, elevation=None, rotation=None) -> np.ndarray:
+    """Convert McStas ``ROTATED`` angles to an active rotation matrix.
+
+    McStas expresses component rotations as ``(x, y, z)`` in degrees. The
+    generated C code constructs a coordinate-system rotation; its transpose
+    is the active local-to-parent transform needed by the renderers.
+
+    Parameters
+    ----------
+    angles : sequence or float
+        Three angles in degrees, or the x angle when the other two arguments
+        are supplied.
+
+    Returns
+    -------
+    np.ndarray
+        3x3 rotation matrix.
+    """
+    if elevation is None and rotation is None:
+        angles = np.asarray(angles, dtype=float)
+        if angles.shape != (3,):
+            raise ValueError("Expected three Euler angles")
+        x, y, z = angles
+    else:
+        if elevation is None or rotation is None:
+            raise ValueError("Expected all three Euler angles")
+        x, y, z = angles, elevation, rotation
+
+    x, y, z = np.deg2rad([x, y, z])
+    cx, sx = np.cos(x), np.sin(x)
+    cy, sy = np.cos(y), np.sin(y)
+    cz, sz = np.cos(z), np.sin(z)
+
+    return np.array([
+        [cy * cz, sx * sy * cz - cx * sz, sx * sz + cx * sy * cz],
+        [cy * sz, sx * sy * sz + cx * cz, -sx * cz + cx * sy * sz],
+        [-sy, cy * sx, cy * cx],
+    ])
 
 
 def pos_rot_from_list(input_list):
@@ -141,3 +182,123 @@ class Transform:
         if self.position is not None:
             pts = pts + np.asarray(self.position, dtype=np.float64)
         return pts
+
+
+class TransformResolutionError(ValueError):
+    """Raised when component transforms cannot be resolved."""
+
+
+def resolve_transforms(
+    components: list[Any],
+    variables: dict[str, float] | None = None,
+) -> dict[str, Transform]:
+    """Resolve global transforms for all components in an instrument.
+
+    Recursively follows AT RELATIVE and ROTATED RELATIVE references,
+    composing parent-frame offsets and relative rotations.
+
+    Parameters
+    ----------
+    components : list
+        Ordered list of component objects (must have .name, .AT_data,
+        .AT_reference, .ROTATED_data, .ROTATED_reference, .ROTATED_specified).
+    variables : dict, optional
+        Variable name -> value mapping for expression evaluation.
+
+    Returns
+    -------
+    dict[str, Transform]
+        Mapping of component name -> global Transform.
+
+    Raises
+    ------
+    TransformResolutionError
+        On missing references, circular references, or unresolvable expressions.
+    """
+    from mcstasscript.geometry_viewer.expression import resolve_at_rotated_values
+
+    name_to_comp = {c.name: c for c in components}
+    resolved: dict[str, Transform] = {}
+    resolving: set[str] = set()
+
+    def _resolve(name: str) -> Transform:
+        if name in resolved:
+            return resolved[name]
+        if name in resolving:
+            raise TransformResolutionError(
+                f"Circular reference detected involving component '{name}'"
+            )
+        if name not in name_to_comp:
+            raise TransformResolutionError(
+                f"Unknown component reference: '{name}'"
+            )
+
+        resolving.add(name)
+        comp = name_to_comp[name]
+
+        # Resolve local AT
+        try:
+            at_data = getattr(comp, "AT_data", [0, 0, 0])
+            if not isinstance(at_data, (list, tuple, np.ndarray)):
+                at_data = [0, 0, 0]
+            local_pos = resolve_at_rotated_values(at_data, variables)
+        except Exception as exc:
+            raise TransformResolutionError(
+                f"Cannot resolve AT for component '{name}': {exc}"
+            ) from exc
+
+        # Resolve local ROTATED
+        local_rot = np.eye(3)
+        if getattr(comp, "ROTATED_specified", False) is True:
+            try:
+                rotated_data = getattr(comp, "ROTATED_data", [0, 0, 0])
+                if not isinstance(rotated_data, (list, tuple, np.ndarray)):
+                    rotated_data = [0, 0, 0]
+                rot_vals = resolve_at_rotated_values(rotated_data, variables)
+                local_rot = euler_to_rotation_matrix(rot_vals)
+            except Exception as exc:
+                raise TransformResolutionError(
+                    f"Cannot resolve ROTATED for component '{name}': {exc}"
+                ) from exc
+
+        # Determine parent frame
+        at_ref = getattr(comp, "AT_reference", None)
+        rot_ref = getattr(comp, "ROTATED_reference", None)
+
+        def resolve_reference(reference):
+            if not isinstance(reference, str) or reference == "ABSOLUTE":
+                return None
+            if reference == "PREVIOUS":
+                index = next(i for i, item in enumerate(components) if item.name == name)
+                return components[index - 1].name if index else None
+            return reference
+
+        at_ref = resolve_reference(at_ref)
+        rot_ref = resolve_reference(rot_ref)
+
+        # Use ROTATED_reference for rotation if specified, else AT_reference
+        rot_parent_name = rot_ref if comp.ROTATED_specified else at_ref
+
+        if at_ref is None:
+            global_pos = np.array(local_pos, dtype=np.float64)
+        else:
+            parent_transform = _resolve(at_ref)
+            parent_rot = parent_transform.rotation_matrix if parent_transform.rotation_matrix is not None else np.eye(3)
+            global_pos = parent_transform.position + parent_rot @ np.asarray(local_pos)
+
+        if rot_parent_name is None:
+            global_rot = local_rot
+        else:
+            parent_transform = _resolve(rot_parent_name)
+            parent_rot = parent_transform.rotation_matrix if parent_transform.rotation_matrix is not None else np.eye(3)
+            global_rot = parent_rot @ local_rot
+
+        result = Transform(position=global_pos, rotation_matrix=global_rot)
+        resolving.discard(name)
+        resolved[name] = result
+        return result
+
+    for comp in components:
+        _resolve(comp.name)
+
+    return resolved

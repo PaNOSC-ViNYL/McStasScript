@@ -1,18 +1,22 @@
 from mcstasscript.geometry_viewer.api import view, view_with_json, view_with_guess, view_with_analysis
 from mcstasscript.geometry_viewer.model import (
     Shape, BoxShape, CylinderShape, ConeShape, CircleShape,
-    LineSegmentsShape, PolyhedronShape, Style,
+    LineSegmentsShape, PolyhedronShape, SphereShape, Style,
     ComponentModel, InstrumentModel,
 )
 from mcstasscript.geometry_viewer.renderer import (
     RendererBackend, MatplotlibRenderer,
 )
-from mcstasscript.geometry_viewer.transform import Transform
+from mcstasscript.geometry_viewer.transform import (
+    Transform, euler_to_rotation_matrix, resolve_transforms, TransformResolutionError,
+)
 from mcstasscript.geometry_viewer.mcdisplay import (
     generate_json,
     run_mcdisplay,
     display_mcdisplay_html,
 )
+from mcstasscript.geometry_viewer.rules import GeometryRule, GeometryRuleRegistry
+from mcstasscript.geometry_viewer.expression import safe_eval, UnsafeExpressionError
 
 
 def __getattr__(name):
@@ -25,9 +29,12 @@ def __getattr__(name):
 __all__ = [
     "view", "view_with_json", "view_with_guess", "view_with_analysis",
     "Shape", "BoxShape", "CylinderShape", "ConeShape", "CircleShape",
-    "LineSegmentsShape", "PolyhedronShape", "Style",
+    "LineSegmentsShape", "PolyhedronShape", "SphereShape", "Style",
     "ComponentModel", "InstrumentModel",
     "RendererBackend", "PyThreejsRenderer", "MatplotlibRenderer",
     "Transform",
     "generate_json", "run_mcdisplay", "display_mcdisplay_html",
+    "GeometryRule", "GeometryRuleRegistry",
+    "safe_eval", "UnsafeExpressionError",
+    "euler_to_rotation_matrix", "resolve_transforms", "TransformResolutionError",
 ]
