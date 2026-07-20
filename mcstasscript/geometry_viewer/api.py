@@ -23,6 +23,8 @@ def _get_renderer(backend: str = "pythreejs", **kwargs):
         return PyThreejsRenderer(**kwargs)
     else:
         kwargs.pop("instrument_object", None)
+        kwargs.pop("component_colors", None)
+        kwargs.pop("component_opacity", None)
         if backend in ("matplotlib", "matplotlib_3d"):
             return MatplotlibRenderer(mode="3d", **kwargs)
         elif backend == "matplotlib_2d":
@@ -34,7 +36,7 @@ def _get_renderer(backend: str = "pythreejs", **kwargs):
 def _aggregate_intensity(mon_data, aggregation: str) -> float:
     """Extract a single scalar from monitor data using the chosen aggregation.
 
-    In 0D mode (dimension==0) returns total_I.
+    In 0D mode (dimension==0) returns total_I (or total_N for 'ncount').
     In 1D mode, aggregations operate on the axis values (e.g. wavelength)
     weighted by intensity:
       - 'total'    : sum of intensities
@@ -44,10 +46,18 @@ def _aggregate_intensity(mon_data, aggregation: str) -> float:
       - 'mean'     : intensity-weighted average of axis values
       - 'average'  : same as 'mean'
       - 'median'   : axis value at the median of the cumulative intensity
+      - 'ncount'   : sum of Ncount (number of rays) bins
     """
     import numpy as np
     if mon_data.metadata.dimension == 0:
+        if aggregation == "ncount":
+            total_n = getattr(mon_data.metadata, "total_N", None)
+            if total_n is not None:
+                return float(total_n)
+            return float(np.sum(np.asarray(mon_data.Ncount, dtype=float)))
         return mon_data.metadata.total_I
+    if aggregation == "ncount":
+        return float(np.sum(np.asarray(mon_data.Ncount, dtype=float)))
     intensity = np.asarray(mon_data.Intensity, dtype=float)
     axis = np.asarray(mon_data.xaxis, dtype=float)
     mask = intensity > 0
@@ -109,7 +119,8 @@ def view_with_analysis(instrument_object, backend: str = "pythreejs",
         - 'span': difference between max and min axis value with intensity
         - 'mean' / 'average': intensity-weighted average of axis values
         - 'median': axis value at the median of the cumulative intensity
-        Ignored when variable is None (0D mode always uses total_I).
+        - 'ncount': sum of Ncount (number of rays) bins; colorbar labeled 'N rays'
+        Ignored when variable is None (0D mode always uses total_I, or total_N for 'ncount').
     width : int
         Width of output widget/figure.
     height : int
@@ -118,9 +129,9 @@ def view_with_analysis(instrument_object, backend: str = "pythreejs",
     from mcstasscript.instrument_diagnostics.intensity_diagnostics import IntensityDiagnostics
     from mcstasscript.interface.functions import name_search
 
-    if aggregation not in ("total", "max", "min", "mean", "average", "median", "span"):
+    if aggregation not in ("total", "max", "min", "mean", "average", "median", "span", "ncount"):
         raise ValueError(
-            f"aggregation must be one of 'total', 'max', 'min', 'mean', 'average', 'median', 'span', got {aggregation!r}"
+            f"aggregation must be one of 'total', 'max', 'min', 'mean', 'average', 'median', 'span', 'ncount', got {aggregation!r}"
         )
 
     diag = IntensityDiagnostics(instrument_object)
@@ -144,7 +155,9 @@ def view_with_analysis(instrument_object, backend: str = "pythreejs",
             first_mon_data = name_search(first_mon_name, diag.data)
             source_name = instrument_object.component_list[0].name
             intensity_map[source_name] = _aggregate_intensity(first_mon_data, aggregation)
-            if diag.data_dim == 1 and first_mon_data.metadata.xlabel:
+            if aggregation == "ncount":
+                colorbar_label = "N rays"
+            elif diag.data_dim == 1 and first_mon_data.metadata.xlabel:
                 colorbar_label = first_mon_data.metadata.xlabel
             else:
                 colorbar_label = "Intensity [n/s]"
@@ -164,7 +177,9 @@ def view_with_analysis(instrument_object, backend: str = "pythreejs",
     )
 
 
-def view_with_guess(instrument_object, backend: str = "pythreejs", **kwargs):
+def view_with_guess(instrument_object, backend: str = "pythreejs",
+                      component_colors: dict[str, str] | None = None,
+                      component_opacity: dict[str, float] | None = None, **kwargs):
     """
     Plots instrument geometry with best guesses of geometry.
 
@@ -179,6 +194,7 @@ def view_with_guess(instrument_object, backend: str = "pythreejs", **kwargs):
     for component in instrument_object.component_list:
         component_model = ComponentModel(component)
         component_model.guess_geometry_from_comp_object()
+        instrument_model.add_model(component_model)
 
     num_components = len(instrument_model.component_models)
     kwargs.setdefault("num_components", num_components)
@@ -190,6 +206,8 @@ def view_with_guess(instrument_object, backend: str = "pythreejs", **kwargs):
 
     kwargs_for_renderer = dict(kwargs)
     kwargs_for_renderer["instrument_object"] = instrument_object
+    kwargs_for_renderer["component_colors"] = component_colors
+    kwargs_for_renderer["component_opacity"] = component_opacity
     renderer = _get_renderer(backend, **kwargs_for_renderer)
 
     from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
@@ -207,9 +225,17 @@ def view_with_guess(instrument_object, backend: str = "pythreejs", **kwargs):
         import ipywidgets as ipw
         navigator = renderer.create_component_navigator(scene)
         colormode_selector = renderer.create_colormode_selector()
+        custom_colors_checkbox = renderer.create_custom_colors_checkbox()
+        custom_opacities_checkbox = renderer.create_custom_opacities_checkbox()
         intensity_controls = renderer.create_intensity_controls()
         colorbar = renderer.create_colorbar()
-        return ipw.VBox([navigator, colormode_selector, intensity_controls, ipw.HBox([scene, colorbar])])
+        controls = [navigator, colormode_selector]
+        if custom_colors_checkbox is not None:
+            controls.append(custom_colors_checkbox)
+        if custom_opacities_checkbox is not None:
+            controls.append(custom_opacities_checkbox)
+        controls.extend([intensity_controls, ipw.HBox([scene, colorbar])])
+        return ipw.VBox(controls)
 
     if isinstance(renderer, MatplotlibRenderer):
         plt.show()
@@ -219,7 +245,9 @@ def view_with_guess(instrument_object, backend: str = "pythreejs", **kwargs):
 
 
 def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
-                   index_min: int | None = None, index_max: int | None = None, **kwargs):
+                     index_min: int | None = None, index_max: int | None = None,
+                     component_colors: dict[str, str] | None = None,
+                     component_opacity: dict[str, float] | None = None, **kwargs):
     """
     Plots instrument geometry with json input from mcdisplay-webgl.
     """
@@ -242,6 +270,8 @@ def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
 
     kwargs_for_renderer = dict(kwargs)
     kwargs_for_renderer["instrument_object"] = instrument_object
+    kwargs_for_renderer["component_colors"] = component_colors
+    kwargs_for_renderer["component_opacity"] = component_opacity
     renderer = _get_renderer(backend, **kwargs_for_renderer)
 
     from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
@@ -260,9 +290,17 @@ def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
         import ipywidgets as ipw
         navigator = renderer.create_component_navigator(scene)
         colormode_selector = renderer.create_colormode_selector()
+        custom_colors_checkbox = renderer.create_custom_colors_checkbox()
+        custom_opacities_checkbox = renderer.create_custom_opacities_checkbox()
         intensity_controls = renderer.create_intensity_controls()
         colorbar = renderer.create_colorbar()
-        return ipw.VBox([navigator, colormode_selector, intensity_controls, ipw.HBox([scene, colorbar])])
+        controls = [navigator, colormode_selector]
+        if custom_colors_checkbox is not None:
+            controls.append(custom_colors_checkbox)
+        if custom_opacities_checkbox is not None:
+            controls.append(custom_opacities_checkbox)
+        controls.extend([intensity_controls, ipw.HBox([scene, colorbar])])
+        return ipw.VBox(controls)
 
     if isinstance(renderer, MatplotlibRenderer):
         plt.show()
@@ -272,15 +310,17 @@ def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
 
 
 def view(instrument_object, backend: str = "pythreejs",
-         allow_guess: bool = False,
-         json_dict: dict | None = None, json_file: str | None = None,
-         index_min: int | None = None, index_max: int | None = None,
-         width: int = 900, height: int = 600,
-         intensity_map: dict | None = None,
-         cmap: str = "inferno",
-         log_scale: bool = True,
-         colorbar_label: str | None = None,
-         **kwargs):
+          allow_guess: bool = False,
+          json_dict: dict | None = None, json_file: str | None = None,
+          index_min: int | None = None, index_max: int | None = None,
+          width: int = 900, height: int = 600,
+          intensity_map: dict | None = None,
+          cmap: str = "inferno",
+          log_scale: bool = True,
+          colorbar_label: str | None = None,
+          component_colors: dict[str, str] | None = None,
+          component_opacity: dict[str, float] | None = None,
+          **kwargs):
     """
     Plots instrument geometry.
 
@@ -319,6 +359,16 @@ def view(instrument_object, backend: str = "pythreejs",
     log_scale : bool
         If True, use log-scale normalization for intensity coloring.
         Default True.
+    component_colors : dict, optional
+        Mapping of component name to hex color string. When provided with
+        the 'pythreejs' backend, adds a "Custom colors" checkbox to the
+        widget that, when checked, overrides the current colorscheme for
+        the specified components. Ignored for other backends.
+    component_opacity : dict, optional
+        Mapping of component name to opacity value (float in [0.0, 1.0]).
+        When provided with the 'pythreejs' backend, adds a "Custom opacity"
+        checkbox to the widget that, when checked, overrides the current
+        opacity for the specified components. Ignored for other backends.
     projection : str
         Axis projection for matplotlib_2d backend. One of 'xy', 'zx', 'zy'.
         Default 'zx' (matches McStas beam-layout convention). Ignored for 3D backends.
@@ -349,12 +399,16 @@ def view(instrument_object, backend: str = "pythreejs",
     # --- guess-only backend ---
     if backend == "guess":
         renderer = kwargs.pop("renderer", "pythreejs")
-        return view_with_guess(instrument_object, backend=renderer, width=width, height=height, **kwargs)
+        return view_with_guess(instrument_object, backend=renderer, width=width, height=height,
+                                component_colors=component_colors,
+                                component_opacity=component_opacity, **kwargs)
 
     # --- Python rendering backends (pythreejs, matplotlib, matplotlib_2d) ---
     if allow_guess:
         try:
-            return view_with_guess(instrument_object, backend=backend, width=width, height=height, **kwargs)
+            return view_with_guess(instrument_object, backend=backend, width=width, height=height,
+                                    component_colors=component_colors,
+                                    component_opacity=component_opacity, **kwargs)
         except Exception:
             pass
 
@@ -380,5 +434,7 @@ def view(instrument_object, backend: str = "pythreejs",
         cmap=cmap,
         log_scale=log_scale,
         colorbar_label=colorbar_label,
+        component_colors=component_colors,
+        component_opacity=component_opacity,
         **kwargs,
     )

@@ -39,7 +39,8 @@ class MatplotlibRenderer(RendererBackend):
         self.intensity_map = intensity_map
         self.cmap = cmap
         self.log_scale = log_scale
-        self.colorbar_label = colorbar_label
+        self._colorbar_label = colorbar_label
+        self._intensity_computed_label = None
         self._validate_projection()
         self.component_children: dict[int, list] = {}
         self.component_colors: dict[int, str] = {}
@@ -50,6 +51,27 @@ class MatplotlibRenderer(RendererBackend):
         else:
             self._min_I = 0.0
             self._max_I = 1.0
+
+    @property
+    def colorbar_label(self) -> str | None:
+        """Public accessor — returns the explicit API-supplied label."""
+        return self._colorbar_label
+
+    @colorbar_label.setter
+    def colorbar_label(self, value: str | None) -> None:
+        """Public setter — stores the explicit API-supplied label."""
+        self._colorbar_label = value
+
+    def _compute_colorbar_label(self) -> str:
+        """Compute the correct colorbar label for the current colormode."""
+        if self.colormode == "intensity":
+            if self._colorbar_label is not None:
+                return self._colorbar_label
+            if self._intensity_computed_label is not None:
+                return self._intensity_computed_label
+            return "Value"
+        else:
+            return "Component index"
 
     @property
     def current_color(self) -> str:
@@ -285,14 +307,14 @@ class MatplotlibRenderer(RendererBackend):
         if self.colormode == "default":
             return
         if self.colormode == "intensity" and self.intensity_map is not None:
-            label = self.colorbar_label or "Value"
+            label = self._compute_colorbar_label()
             if self.log_scale and self._max_I > 0 and self._min_I > 0:
                 norm = LogNorm(vmin=self._min_I, vmax=self._max_I)
             else:
                 norm = Normalize(vmin=max(self._min_I, 0), vmax=self._max_I)
             sm = ScalarMappable(cmap=self.cmap, norm=norm)
         else:
-            label = self.colorbar_label or "Component index"
+            label = self._compute_colorbar_label()
             norm = Normalize(vmin=0, vmax=max(self.num_components - 1, 1))
             sm = ScalarMappable(cmap="viridis", norm=norm)
         sm.set_array([])

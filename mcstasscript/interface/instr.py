@@ -2757,6 +2757,16 @@ class McCode_instr(BaseCalculator):
         new_tab : bool
             If True and backend is webgl/webgl-classic, fall back to pythreejs
             since HTML can't be embedded in a new tab from Python.
+        component_colors : dict, optional
+            Mapping of component name to hex color string (e.g. {"guide1": "#ff0000"}).
+            With the 'pythreejs' backend, adds a "Custom colors" checkbox to the
+            widget that, when checked, overrides the current colorscheme for the
+            specified components. Ignored for other backends.
+        component_opacity : dict, optional
+            Mapping of component name to opacity value (float in [0.0, 1.0]).
+            With the 'pythreejs' backend, adds a "Custom opacity" checkbox to the
+            widget that, when checked, overrides the current opacity for the
+            specified components. Ignored for other backends.
 
         Returns
         -------
