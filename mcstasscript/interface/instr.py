@@ -9,8 +9,6 @@ import copy
 import warnings
 import re
 
-from IPython.display import IFrame
-
 from libpyvinyl.BaseCalculator import BaseCalculator
 from libpyvinyl.Parameters.Collections import CalculatorParameters
 
@@ -2733,121 +2731,86 @@ class McCode_instr(BaseCalculator):
 
         return self.backengine()
 
-    def show_instrument(self, format="webgl-classic", width=800, height=450, new_tab=False):
+    def show_instrument(self, backend=None, format=None, width=800, height=450,
+                        new_tab=False, guess=False, verbose=False, **kwargs):
         """
-        Uses mcdisplay to show the instrument in web browser
+        Visualize the instrument geometry.
 
-        If this method is performed from a jupyter notebook and use the webgl
-        format the interface will be shown in the notebook using an IFrame.
+        Delegates to geometry_viewer.view() which supports multiple backends:
+        - 'pythreejs' (default): Python 3D widget from mcdisplay JSON
+        - 'matplotlib' / 'matplotlib_2d': matplotlib plot from mcdisplay JSON
+        - 'webgl': mcdisplay HTML viewer (IFrame in notebook, browser in terminal)
+        - 'webgl-classic': mcdisplay classic HTML viewer
+        - 'window': mcdisplay native pyqtgraph window
+        Geometry guessing is enabled separately with guess=True and uses the
+        selected Python renderer.
 
-        Keyword arguments
-        -----------------
-            format : str
-                'webgl' (currently broken), 'webgl-classic' or 'window' format for display
-            width : int
-                width of IFrame if used in notebook
-            height : int
-                height of IFrame if used in notebook
-            new_tab : bool
-                Open webgl/webgl-classic in new browser tab
+        Parameters
+        ----------
+        backend : str, optional
+            Rendering backend. Defaults to 'pythreejs'.
+        format : str, optional
+            Deprecated. Use backend instead. Maps to backend value.
+        width : int
+            Width of output widget/figure.
+        height : int
+            Height of output widget/figure.
+        new_tab : bool
+            If True and backend is webgl/webgl-classic, fall back to pythreejs
+            since HTML can't be embedded in a new tab from Python.
+        guess : bool
+            If True, attempt geometry guess first, then fall back to mcdisplay
+            JSON with a warning.  Default False.
+        verbose : bool
+            If True, print diagnostics from the geometry-guess branch. Default
+            False.
+        component_colors : dict, optional
+            Mapping of component name to hex color string (e.g. {"guide1": "#ff0000"}).
+            With the 'pythreejs' backend, adds a "Custom colors" checkbox to the
+            widget that, when checked, overrides the current colorscheme for the
+            specified components. Ignored for other backends.
+        component_opacity : dict, optional
+            Mapping of component name to opacity value (float in [0.0, 1.0]).
+            With the 'pythreejs' backend, adds a "Custom opacity" checkbox to the
+            widget that, when checked, overrides the current opacity for the
+            specified components. Ignored for other backends.
+
+        Returns
+        -------
+        Widget, figure, or None depending on backend.
         """
+        from mcstasscript.geometry_viewer import view
+        from mcstasscript.geometry_viewer.api import (
+            _missing_pythreejs_dependencies,
+            _pythreejs_dependency_message,
+        )
 
-        parameters = {}
-        for parameter in self.parameters:
-            if parameter.value is None:
-                raise RuntimeError("Unspecified parameter: '" + parameter.name
-                                   + "' set with set_parameters.")
+        if format is not None:
+            warnings.warn(
+                "The 'format' parameter is deprecated, use 'backend' instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            backend = format
 
-            parameters[parameter.name] = parameter.value
+        if new_tab and backend in ("webgl", "webgl-classic"):
+            backend = "pythreejs"
 
-        # add parameters to command
-        parameter_string = ""
-        for key, val in parameters.items():
-            parameter_string = (parameter_string + " "
-                                + str(key)  # parameter name
-                                + "="
-                                + str(val))  # parameter value
+        resolved_backend = backend or "pythreejs"
+        if resolved_backend == "pythreejs":
+            missing = _missing_pythreejs_dependencies()
+            if missing:
+                warnings.warn(
+                    _pythreejs_dependency_message(missing)
+                    + " Falling back to the 'webgl-classic' backend.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+                resolved_backend = "webgl-classic"
 
-        if self.package_name == "McXtrace":
-            executable = "mxdisplay"
-        else:
-            executable = "mcdisplay"
-
-        if format == "webgl":
-            executable = executable+"-webgl"
-        elif format == "webgl-classic":
-            executable = executable+"-webgl-classic"
-        elif format == "window":
-            executable = executable+"-pyqtgraph"
-        else:
-            raise ValueError(f"Did not recognize given format '{format}', "
-                             f"must be webgl-classic, webgl or window.")
-
-        # Platform dependent, check both package_path and bin
-        executable_path = self._run_settings["executable_path"]
-        bin_path = os.path.join(executable_path, executable)
-
-        # Append .bat on windows - or script will not be found...
-        if os.name == 'nt':
-            bin_path = bin_path + '.bat'
-
-        if not os.path.isfile(bin_path):
-            # Take bin in package path into account
-            package_path = self._run_settings["package_path"]
-            bin_path = os.path.join(package_path, "bin", executable)
-
-        dir_name_original = self.name + "_mcdisplay"
-        dir_name = dir_name_original
-        index = 0
-        while os.path.exists(os.path.join(self.input_path, dir_name)):
-            dir_name = dir_name_original + "_" + str(index)
-            index += 1
-
-        dir_control = "--dirname " + dir_name + " "
-
-        self.write_full_instrument()
-
-        instr_path = os.path.join(self.input_path, self.name + ".instr")
-        instr_path = os.path.abspath(instr_path)
-
-        try:
-            shell = get_ipython().__class__.__name__
-            is_notebook = shell == "ZMQInteractiveShell"
-        except:
-            is_notebook = False
-
-        options = ""
-        if is_notebook and "webgl" in executable and not new_tab:
-            options += "--nobrowse "
-
-        full_command = ('"' + bin_path + '" '
-                        + dir_control
-                        + options
-                        + instr_path
-                        + " " + parameter_string)
-
-        process = subprocess.run(full_command, shell=True,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 universal_newlines=True,
-                                 cwd=self.input_path)
-
-        if not is_notebook or "webgl" not in executable:
-            print(process.stderr)
-            print(process.stdout)
-            return
-
-        html_path = os.path.join(self.input_path, dir_name, "index.html")
-        if not os.path.exists(html_path):
-            print(process.stderr)
-            print(process.stdout)
-            print("")
-            print("mcdisplay run failed.")
-            return
-
-        # Create IFrame in ipython that shows instrument
-
-        return IFrame(src=html_path, width=width, height=height)
+        return view(self, backend=resolved_backend,
+                    width=width, height=height, guess=guess,
+                    verbose=verbose, **kwargs)
 
     def show_diagram(self, analysis=False, variable=None, limits=None):
         """
@@ -3086,12 +3049,17 @@ class McStas_instr(McCode_instr):
         else:
             self.line_limit = 85 # default value in case no configuration file is found
 
+        mcrun_path = shutil.which("mcrun")
         if "MCSTAS" in os.environ: # We are in a McStas environment, use that
-            self._run_settings["executable_path"] = os.path.dirname(shutil.which("mcrun"))
+            if mcrun_path:
+                self._run_settings["executable_path"] = os.path.dirname(mcrun_path)
+            elif type(config) is dict:
+                self._run_settings["executable_path"] = config["paths"]["mcrun_path"]
             self._run_settings["package_path"] = os.environ["MCSTAS"]
         else:
             try: # Otherwise, try to ask mcrun for the resourcedir
-                self._run_settings["executable_path"] = os.path.dirname(shutil.which("mcrun"))
+                if mcrun_path:
+                    self._run_settings["executable_path"] = os.path.dirname(mcrun_path)
                 self._run_settings["package_path"] = subprocess.check_output("mcrun --showcfg=resourcedir",shell=True).decode('utf-8').rstrip()
             except:
                 if type(config) is dict:
@@ -3324,12 +3292,17 @@ class McXtrace_instr(McCode_instr):
         if type(config) is dict:
             self.line_limit = config["other"]["characters_per_line"]
 
+        mxrun_path = shutil.which("mxrun")
         if "MCXTRACE" in os.environ: # We are in a McXtrace environment, use that
-            self._run_settings["executable_path"] = os.path.dirname(shutil.which("mxrun"))
+            if mxrun_path:
+                self._run_settings["executable_path"] = os.path.dirname(mxrun_path)
+            elif type(config) is dict:
+                self._run_settings["executable_path"] = config["paths"]["mxrun_path"]
             self._run_settings["package_path"] = os.environ["MCXTRACE"]
         else:
             try: # Otherwise, try to ask mxrun for the resourcedir
-                self._run_settings["executable_path"] = os.path.dirname(shutil.which("mxrun"))
+                if mxrun_path:
+                    self._run_settings["executable_path"] = os.path.dirname(mxrun_path)
                 self._run_settings["package_path"] = subprocess.check_output("mxrun --showcfg=resourcedir",shell=True).decode('utf-8').rstrip()
             except:
                 if type(config) is dict:

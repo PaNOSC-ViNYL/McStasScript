@@ -25,6 +25,9 @@ setup(
      long_description_content_type="text/markdown",
      url="https://github.com/PaNOSC-ViNYL/McStasScript",
      install_requires=['numpy', 'matplotlib', 'PyYAML', 'ipywidgets', 'libpyvinyl'],
+     extras_require={
+         "geometry-viewer": ['pythreejs', 'ipympl'],
+     },
      packages=find_packages(),
      classifiers=[
          "Programming Language :: Python :: 3",
