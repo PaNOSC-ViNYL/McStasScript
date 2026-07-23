@@ -229,7 +229,9 @@ class DiagramCanvas:
 
                 box.plot_box(ax)
 
-            fig.canvas.draw()
+            # Draw through the renderer directly; a notebook backend may not
+            # have a live figure manager when only layout measurements are needed.
+            fig.draw(fig.canvas.get_renderer())
             for box in batch:
                 box.calculate_bbox_dimensions(ax, self.graph_width)
 
@@ -360,7 +362,9 @@ class DiagramCanvas:
         for box in self.component_boxes:
             box.plot_box(ax)
 
-        fig.canvas.draw()
+        # Draw through the renderer directly; a notebook backend may not have
+        # a live figure manager when only layout measurements are needed.
+        fig.draw(fig.canvas.get_renderer())
         for box in self.component_boxes:
             # Calculate the box end position, requires they are already drawn
             box.calculate_bbox_dimensions(ax, self.graph_width)
