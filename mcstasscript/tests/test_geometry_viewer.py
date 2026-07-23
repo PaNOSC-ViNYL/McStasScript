@@ -2,7 +2,7 @@ import json
 import math
 import os
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 
@@ -55,7 +55,7 @@ from mcstasscript.geometry_viewer.config import (
     index_to_color,
     intensity_to_color,
 )
-from mcstasscript.geometry_viewer.api import _get_renderer, view_with_guess
+from mcstasscript.geometry_viewer.api import _get_renderer, view_with_guess, view_with_json
 from mcstasscript.geometry_viewer.expression import safe_eval, UnsafeExpressionError
 
 
@@ -302,6 +302,13 @@ class TestTransform(unittest.TestCase):
         result = t.transform_points(pts)
         np.testing.assert_array_almost_equal(result[0], [0, 1, 0])
 
+    def test_transform_points_quaternion_only(self):
+        """A quaternion-only transform should rotate points."""
+        t = Transform(quaternion=(0, 0, 0.70710678, 0.70710678))
+        pts = np.array([[1, 0, 0]])
+        result = t.transform_points(pts)
+        np.testing.assert_array_almost_equal(result[0], [0, 1, 0])
+
     def test_transform_points_both(self):
         """
         A Transform with both rotation and position should apply
@@ -368,6 +375,11 @@ class TestShapes(unittest.TestCase):
         """
         with self.assertRaises(ValueError):
             LineSegmentsShape(points=np.array([]))
+
+    def test_line_segments_single_point_raises(self):
+        """A line segment shape must contain at least two points."""
+        with self.assertRaises(ValueError):
+            LineSegmentsShape(points=np.array([[0, 0, 0]]))
 
     def test_circle_shape(self):
         """
@@ -778,6 +790,51 @@ class TestComponentModel(unittest.TestCase):
         self.assertAlmostEqual(np.max(pts[:, 1]), 2.0)
         self.assertAlmostEqual(np.min(pts[:, 1]), -2.0)
 
+    def test_bounds_are_world_space(self):
+        """Component bounds include the shape transform."""
+        comp = make_mock_component("translated")
+        model = ComponentModel(comp)
+        model.shape_list = [
+            BoxShape(
+                width=2.0, height=2.0, depth=2.0,
+                transform=Transform(position=np.array([10.0, 20.0, 30.0])),
+            ),
+        ]
+        model.refresh_metadata()
+
+        np.testing.assert_allclose(model.bounds.minimum, [9.0, 19.0, 29.0])
+        np.testing.assert_allclose(model.bounds.maximum, [11.0, 21.0, 31.0])
+        np.testing.assert_allclose(model.center, [10.0, 20.0, 30.0])
+        np.testing.assert_allclose(model.size, [2.0, 2.0, 2.0])
+
+    def test_bounds_account_for_rotation(self):
+        """World-space AABB changes when a non-square shape is rotated."""
+        comp = make_mock_component("rotated")
+        model = ComponentModel(comp)
+        model.shape_list = [
+            BoxShape(
+                width=2.0, height=1.0, depth=1.0,
+                transform=Transform(rotation_matrix=np.array([
+                    [0.0, -1.0, 0.0],
+                    [1.0, 0.0, 0.0],
+                    [0.0, 0.0, 1.0],
+                ])),
+            ),
+        ]
+        model.refresh_metadata()
+
+        np.testing.assert_allclose(model.size, [1.0, 2.0, 1.0])
+
+    def test_model_assigns_default_draw_style(self):
+        """Unstyled model shapes receive the central default style policy."""
+        comp = make_mock_component("styled")
+        model = ComponentModel(comp)
+        model.shape_list = [BoxShape(width=3.0, height=3.0, depth=3.0)]
+        model.refresh_metadata()
+
+        self.assertIsNotNone(model.shape_list[0].style)
+        self.assertEqual(model.shape_list[0].style.opacity, 0.4)
+
 
 class TestInstrumentModel(unittest.TestCase):
     """Tests for InstrumentModel class."""
@@ -825,6 +882,11 @@ class TestInstrumentModel(unittest.TestCase):
         InstrumentModel(instrument_object=instr, json_dict=fixture)
         self.assertEqual(instr.get_component.call_count, len(fixture["components"]))
 
+    def test_triangulate_faces_is_exported(self):
+        """The model package should expose its public triangulation helper."""
+        from mcstasscript.geometry_viewer.model import triangulate_faces as exported
+        self.assertIs(exported, triangulate_faces)
+
 
 class TestConfig(unittest.TestCase):
     """Verify config constants exist and have expected values."""
@@ -869,7 +931,7 @@ class TestConfig(unittest.TestCase):
         DEFAULT_NAVIGATOR_DISTANCE should be set to the expected
         value for the component navigator.
         """
-        self.assertEqual(DEFAULT_NAVIGATOR_DISTANCE, 2.0)
+        self.assertEqual(DEFAULT_NAVIGATOR_DISTANCE, 0.5)
 
 
 class TestApi(unittest.TestCase):
@@ -917,6 +979,115 @@ class TestApi(unittest.TestCase):
         """
         with self.assertRaises(ValueError):
             _get_renderer("unknown_backend")
+
+    def test_matplotlib_does_not_import_pythreejs(self):
+        """Matplotlib rendering should work when pythreejs is unavailable."""
+        instr = MagicMock()
+        instr.component_list = [make_mock_component("test_comp")]
+        instr._simulation_parameters = {}
+        instr._declared_variables = {}
+        with patch.dict("sys.modules", {"pythreejs": None}):
+            with patch("mcstasscript.geometry_viewer.api.plt.show"):
+                result = view_with_guess(instr, backend="matplotlib")
+        self.assertIsNone(result)
+
+    def test_json_subset_uses_dense_component_indices(self):
+        """A rendered component subset should use indices local to the subset."""
+        instr = MagicMock()
+        instr.get_component.side_effect = lambda name: make_mock_component(name)
+        json_dict = {
+            "components": [
+                {"name": "first", "m4": np.eye(4).reshape(-1).tolist(), "drawcalls": []},
+                {"name": "second", "m4": np.eye(4).reshape(-1).tolist(), "drawcalls": []},
+                {"name": "third", "m4": np.eye(4).reshape(-1).tolist(), "drawcalls": []},
+            ],
+        }
+        renderer = MagicMock()
+        renderer.render_component.return_value = []
+        renderer.make_scene.return_value = object()
+        with patch("mcstasscript.geometry_viewer.api._get_renderer", return_value=renderer):
+            with patch("mcstasscript.geometry_viewer.api.plt.show"):
+                view_with_json(instr, json_dict, backend="matplotlib",
+                               index_min=1, index_max=3)
+        indices = [call.kwargs["component_index"]
+                   for call in renderer.render_component.call_args_list]
+        self.assertEqual(indices, [0, 1])
+
+
+class TestPyThreejsComponentSelection(unittest.TestCase):
+    """Tests for picking a visual and showing its source component."""
+
+    def test_picker_maps_visual_to_component_details(self):
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        import ipywidgets as ipw
+
+        component = make_mock_component("selected")
+        component.component_name = "Box"
+        model = ComponentModel(component)
+        model.shape_list = [BoxShape(width=1, height=1, depth=1)]
+
+        renderer = PyThreejsRenderer()
+        renderer.register_component(model)
+        children = renderer.render_component(model, component_index=0)
+        scene = renderer.make_scene(children)
+        details = renderer.create_component_details(scene)
+
+        self.assertIsInstance(details, ipw.Textarea)
+        self.assertEqual(details.value, "Click a component in the scene.")
+        self.assertEqual(len(scene.controls), 2)
+        self.assertIs(renderer._component_picker.controlling, renderer._component_group)
+
+        renderer._on_component_pick({"new": children[0]})
+        self.assertEqual(details.value, str(component))
+
+        renderer._on_component_pick({"new": None})
+        self.assertEqual(details.value, "Click a component in the scene.")
+
+    def test_navigator_selection_updates_component_details(self):
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        import ipywidgets as ipw
+
+        component = make_mock_component("selected")
+        component.component_name = "Box"
+        model = ComponentModel(component)
+        model.shape_list = [BoxShape(width=1, height=1, depth=1)]
+
+        renderer = PyThreejsRenderer()
+        renderer.register_component(model)
+        children = renderer.render_component(model, component_index=0)
+        scene = renderer.make_scene(children)
+        details = renderer.create_component_details(scene)
+        navigator = renderer.create_component_navigator(scene)
+
+        self.assertIsInstance(navigator, ipw.Combobox)
+        navigator.value = "selected"
+        self.assertEqual(details.value, str(component))
+
+        previous_value = details.value
+        navigator.value = "does_not_exist"
+        self.assertEqual(details.value, previous_value)
+
+    def test_component_details_strip_terminal_formatting(self):
+        from mcstasscript.geometry_viewer.renderer.pythreejs import _plain_component_text
+
+        class ColoredComponent:
+            def __str__(self):
+                return "\033[1mCOMPONENT\033[0m"
+
+        self.assertEqual(_plain_component_text(ColoredComponent()), "COMPONENT")
+
+    def test_api_includes_component_details_widget(self):
+        import ipywidgets as ipw
+
+        instr = MagicMock()
+        instr.component_list = [make_mock_component("selected")]
+        instr._simulation_parameters = {}
+        instr._declared_variables = {}
+        result = view_with_guess(instr, backend="pythreejs")
+
+        details = [child for child in result.children if isinstance(child, ipw.Textarea)]
+        self.assertEqual(len(details), 1)
+        self.assertIs(result.children[-1], details[0])
 
 
 class TestQuaternionToRotationMatrix(unittest.TestCase):
@@ -1198,10 +1369,18 @@ class TestPyThreejsIntensity(unittest.TestCase):
         selector = self.renderer.create_colormode_selector()
         self.assertIn("Intensity", selector.options)
 
-    def test_colormode_selector_always_has_intensity(self):
-        """Intensity colormode is always available (runs simulation on-demand)."""
+    def test_colormode_selector_without_map_omits_intensity(self):
+        """Intensity is unavailable until a map or controls are provided."""
         from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
         renderer = PyThreejsRenderer()
+        selector = renderer.create_colormode_selector()
+        self.assertNotIn("Intensity", selector.options)
+
+    def test_colormode_selector_with_controls_has_intensity(self):
+        """Intensity is available when the renderer can run diagnostics."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        renderer = PyThreejsRenderer()
+        renderer.create_intensity_controls()
         selector = renderer.create_colormode_selector()
         self.assertIn("Intensity", selector.options)
 
@@ -1225,8 +1404,22 @@ class TestPyThreejsIntensity(unittest.TestCase):
     def test_intensity_widgets_populated(self):
         """After creating controls, _intensity_widgets dict is populated."""
         self.renderer.create_intensity_controls()
-        expected_keys = {"ncount", "variable", "limits_check", "limits_min", "limits_max", "aggregate", "run_button"}
+        expected_keys = {"ncount", "variable", "limits_check", "limits_min", "limits_max", "aggregate", "log_scale", "run_button"}
         self.assertEqual(set(self.renderer._intensity_widgets.keys()), expected_keys)
+
+    def test_run_failure_warns_and_marks_data_stale(self):
+        """Intensity failures should be visible and leave the widget stale."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        renderer = PyThreejsRenderer(instrument_object=MagicMock())
+        renderer.create_intensity_controls()
+        button = renderer._intensity_widgets["run_button"]
+        with patch(
+            "mcstasscript.instrument_diagnostics.intensity_diagnostics.IntensityDiagnostics",
+            side_effect=RuntimeError("simulation failed"),
+        ):
+            with self.assertWarnsRegex(RuntimeWarning, "simulation failed"):
+                renderer._on_run_click(button)
+        self.assertTrue(renderer._data_stale)
 
     def test_variable_dropdown_options(self):
         """Variable dropdown includes common McStas variables."""
@@ -1234,7 +1427,52 @@ class TestPyThreejsIntensity(unittest.TestCase):
         var_widget = self.renderer._intensity_widgets["variable"]
         self.assertIsNone(var_widget.value)
         self.assertIn(None, var_widget.options.values())
-        self.assertIn("l", var_widget.options.values())
+        self.assertIn("lambda", var_widget.options.values())
+        self.assertIn("kx", var_widget.options.values())
+        self.assertIn("energy", var_widget.options.values())
+        self.assertIn("user9", var_widget.options.values())
+        self.assertNotIn("px", var_widget.options.values())
+        self.assertNotIn("p4", var_widget.options.values())
+        self.assertNotIn("s1", var_widget.options.values())
+
+    def test_selecting_stale_intensity_mode_greys_components(self):
+        """Selecting intensity mode greys components until data is available."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+
+        renderer = PyThreejsRenderer()
+        comp_model = ComponentModel(make_mock_component("comp"))
+        comp_model.shape_list = [BoxShape(width=1, height=1, depth=1)]
+        renderer.register_component(comp_model)
+        renderer.render_component(comp_model, component_index=0)
+        renderer.create_intensity_controls()
+        renderer.create_colorbar()
+        selector = renderer.create_colormode_selector()
+
+        selector.value = "intensity"
+
+        self.assertEqual(renderer.component_colors[0], "#808080")
+
+    def test_log_scale_control_requires_nonnegative_data(self):
+        """Log scale is enabled only for nonnegative intensity data."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+
+        renderer = PyThreejsRenderer()
+        renderer.create_intensity_controls()
+        log_scale = renderer._intensity_widgets["log_scale"]
+        self.assertTrue(log_scale.disabled)
+
+        renderer.intensity_map = {"comp": 1.0, "other": 2.0}
+        renderer._data_stale = False
+        renderer._update_log_scale_control()
+        self.assertFalse(log_scale.disabled)
+
+        renderer.intensity_map = {"comp": -1.0, "other": 2.0}
+        renderer.log_scale = True
+        log_scale.value = True
+        renderer._update_log_scale_control()
+        self.assertTrue(log_scale.disabled)
+        self.assertFalse(log_scale.value)
+        self.assertFalse(renderer.log_scale)
 
     def test_aggregate_dropdown_options(self):
         """Aggregate dropdown includes all aggregation modes."""
@@ -2131,12 +2369,13 @@ class TestApiComponentColors(unittest.TestCase):
         result = view_with_guess(instr, backend="pythreejs")
         import ipywidgets as ipw
         self.assertIsInstance(result, ipw.VBox)
-        # First child is the component navigator dropdown
-        navigator = result.children[0]
-        self.assertIsInstance(navigator, ipw.Dropdown)
+        # The navigator is the first child of the top control row.
+        controls = result.children[0]
+        navigator = controls.children[0]
+        self.assertIsInstance(navigator, ipw.Combobox)
         self.assertEqual(len(navigator.options), 2)
-        self.assertIn("guide1", navigator.options[0][0])
-        self.assertIn("sample1", navigator.options[1][0])
+        self.assertIn("guide1", navigator.options[0])
+        self.assertIn("sample1", navigator.options[1])
 
     def test_view_with_guess_component_colors_checkbox_works(self):
         """Custom colors checkbox applies colors to rendered components."""
@@ -2154,7 +2393,8 @@ class TestApiComponentColors(unittest.TestCase):
         import ipywidgets as ipw
         # Locate the custom colors checkbox
         custom_cb = None
-        for child in result.children:
+        controls = result.children[0]
+        for child in controls.children:
             if isinstance(child, ipw.Checkbox) and child.description == "Custom colors":
                 custom_cb = child
                 break
@@ -2162,8 +2402,8 @@ class TestApiComponentColors(unittest.TestCase):
         self.assertFalse(custom_cb.value)
         # Check the checkbox — should apply custom color to guide1
         custom_cb.value = True
-        # The VBox's last child is HBox([scene, colorbar])
-        hbox = result.children[-1]
+        # The scene/colorbar HBox follows the top control row.
+        hbox = result.children[1]
         scene = hbox.children[0]
         # Verify scene has children (rendered geometry)
         self.assertGreater(len(scene.scene.children), 0)
@@ -2180,7 +2420,8 @@ class TestApiComponentColors(unittest.TestCase):
         self.assertIsInstance(result, ipw.VBox)
         children = result.children
         custom_cb = None
-        for child in children:
+        controls = children[0]
+        for child in controls.children:
             if isinstance(child, ipw.Checkbox) and child.description == "Custom colors":
                 custom_cb = child
                 break
@@ -2201,11 +2442,40 @@ class TestApiComponentColors(unittest.TestCase):
         import ipywidgets as ipw
         children = result.children
         custom_cb = None
-        for child in children:
+        controls = children[0]
+        for child in controls.children:
             if isinstance(child, ipw.Checkbox) and child.description == "Custom colors":
                 custom_cb = child
                 break
         self.assertIsNotNone(custom_cb)
+
+    def test_view_with_guess_omits_intensity_without_map(self):
+        """Guess geometry does not expose an unusable intensity mode."""
+        instr = MagicMock()
+        instr.component_list = [make_mock_component("test_comp")]
+        instr._simulation_parameters = {}
+        instr._declared_variables = {}
+
+        result = view_with_guess(instr, backend="pythreejs")
+        selector = result.children[0].children[1]
+
+        self.assertNotIn("Intensity", selector.options)
+
+    def test_view_with_guess_keeps_static_intensity_mode(self):
+        """Guess geometry can display a caller-supplied intensity map."""
+        instr = MagicMock()
+        instr.component_list = [make_mock_component("test_comp")]
+        instr._simulation_parameters = {}
+        instr._declared_variables = {}
+
+        result = view_with_guess(
+            instr,
+            backend="pythreejs",
+            intensity_map={"test_comp": 1.0},
+        )
+        selector = result.children[0].children[1]
+
+        self.assertIn("Intensity", selector.options)
 
 
 class TestMaterialIsolation(unittest.TestCase):
@@ -3068,6 +3338,25 @@ class TestPyThreejsCustomOpacities(unittest.TestCase):
         renderer._reset_to_base_opacities()
         self.assertAlmostEqual(renderer.component_opacity[0], 0.8)
 
+    def test_reset_restores_each_shape_opacity(self):
+        """A component with mixed shapes restores every base opacity."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+        renderer = PyThreejsRenderer(component_opacity={"test": 0.1})
+        comp = make_mock_component("test")
+        comp_model = ComponentModel(comp)
+        comp_model.shape_list = [
+            BoxShape(width=1.0, height=1.0, depth=1.0),
+            CylinderShape(radius=1.0, height=2.0),
+        ]
+        renderer.register_component(comp_model)
+        children = renderer.render_component(comp_model, component_index=0)
+        base = [child.material.opacity for child in children]
+
+        renderer._apply_custom_opacities()
+        self.assertEqual([child.material.opacity for child in children], [0.1, 0.1])
+        renderer._reset_to_base_opacities()
+        self.assertEqual([child.material.opacity for child in children], base)
+
     def test_cylinder_shape_specific_opacity(self):
         """Cylinder opacity is size-based and correctly captured."""
         from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
@@ -3142,14 +3431,15 @@ class TestApiComponentOpacities(unittest.TestCase):
         )
         import ipywidgets as ipw
         custom_cb = None
-        for child in result.children:
+        controls = result.children[0]
+        for child in controls.children:
             if isinstance(child, ipw.Checkbox) and child.description == "Custom opacity":
                 custom_cb = child
                 break
         self.assertIsNotNone(custom_cb)
         self.assertFalse(custom_cb.value)
         custom_cb.value = True
-        hbox = result.children[-1]
+        hbox = result.children[1]
         scene = hbox.children[0]
         self.assertGreater(len(scene.scene.children), 0)
 
@@ -3164,7 +3454,8 @@ class TestApiComponentOpacities(unittest.TestCase):
         import ipywidgets as ipw
         children = result.children
         custom_cb = None
-        for child in children:
+        controls = children[0]
+        for child in controls.children:
             if isinstance(child, ipw.Checkbox) and child.description == "Custom opacity":
                 custom_cb = child
                 break
@@ -3185,7 +3476,8 @@ class TestApiComponentOpacities(unittest.TestCase):
         import ipywidgets as ipw
         children = result.children
         custom_cb = None
-        for child in children:
+        controls = children[0]
+        for child in controls.children:
             if isinstance(child, ipw.Checkbox) and child.description == "Custom opacity":
                 custom_cb = child
                 break
@@ -3207,7 +3499,8 @@ class TestApiComponentOpacities(unittest.TestCase):
         import ipywidgets as ipw
         color_cb = None
         opacity_cb = None
-        for child in result.children:
+        controls = result.children[0]
+        for child in controls.children:
             if isinstance(child, ipw.Checkbox) and child.description == "Custom colors":
                 color_cb = child
             elif isinstance(child, ipw.Checkbox) and child.description == "Custom opacity":

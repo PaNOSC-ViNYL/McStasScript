@@ -2464,16 +2464,13 @@ class TestMcStas_instr(unittest.TestCase):
         os.chdir(current_work_dir)
 
         expected_path = os.path.join(executable_path, "bin", "mcdisplay-webgl-classic")
-        expected_path = '"' + expected_path + '"'
         expected_instr_path = os.path.join(THIS_DIR, "test_instrument.instr")
 
-        expected_call = (expected_path
-                         + " --dirname test_instrument_mcdisplay "
-                         + expected_instr_path
-                         + " theta=1.2 has_default=37")
+        expected_call = [expected_path, "--dirname", "test_instrument_mcdisplay",
+                         expected_instr_path, "theta=1.2", "has_default=37"]
 
         mock_sub.assert_called_with(expected_call,
-                                    shell=True,
+                                    shell=False,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE,
                                     universal_newlines=True,

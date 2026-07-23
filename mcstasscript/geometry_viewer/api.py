@@ -293,17 +293,22 @@ def view_with_guess(instrument_object, backend: str = "pythreejs",
         import ipywidgets as ipw
         component_details = renderer.create_component_details(scene)
         navigator = renderer.create_component_navigator(scene)
-        colormode_selector = renderer.create_colormode_selector()
+        colormode_selector = renderer.create_colormode_selector(
+            include_intensity=intensity_map is not None,
+        )
         custom_colors_checkbox = renderer.create_custom_colors_checkbox()
         custom_opacities_checkbox = renderer.create_custom_opacities_checkbox()
-        intensity_controls = renderer.create_intensity_controls()
-        colorbar = renderer.create_colorbar()
-        controls = [ipw.HBox([navigator, colormode_selector])]
+
+        checkboxes = []
         if custom_colors_checkbox is not None:
-            controls.append(custom_colors_checkbox)
+            checkboxes.append(custom_colors_checkbox)
         if custom_opacities_checkbox is not None:
-            controls.append(custom_opacities_checkbox)
-        controls.extend([intensity_controls, ipw.HBox([scene, colorbar]), component_details])
+            checkboxes.append(custom_opacities_checkbox)
+
+        colorbar = renderer.create_colorbar()
+        controls = [ipw.HBox([navigator, colormode_selector] + checkboxes)]
+        controls.extend([ipw.HBox([scene, colorbar]), component_details])
+
         return ipw.VBox(controls)
 
     if isinstance(renderer, MatplotlibRenderer):
@@ -360,17 +365,21 @@ def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
         import ipywidgets as ipw
         component_details = renderer.create_component_details(scene)
         navigator = renderer.create_component_navigator(scene)
-        colormode_selector = renderer.create_colormode_selector()
+        colormode_selector = renderer.create_colormode_selector(
+            include_intensity=True,
+        )
         custom_colors_checkbox = renderer.create_custom_colors_checkbox()
         custom_opacities_checkbox = renderer.create_custom_opacities_checkbox()
+
+        checkboxes = []
+        if custom_colors_checkbox is not None:
+            checkboxes.append(custom_colors_checkbox)
+        if custom_opacities_checkbox is not None:
+            checkboxes.append(custom_opacities_checkbox)
+
         intensity_controls = renderer.create_intensity_controls()
         colorbar = renderer.create_colorbar()
-        #controls = [navigator, colormode_selector]
-        controls = [ipw.HBox([navigator, colormode_selector])]
-        if custom_colors_checkbox is not None:
-            controls.append(custom_colors_checkbox)
-        if custom_opacities_checkbox is not None:
-            controls.append(custom_opacities_checkbox)
+        controls = [ipw.HBox([navigator, colormode_selector] + checkboxes)]
         controls.extend([intensity_controls, ipw.HBox([scene, colorbar]), component_details])
         return ipw.VBox(controls)
 

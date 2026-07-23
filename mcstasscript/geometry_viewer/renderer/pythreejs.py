@@ -31,6 +31,57 @@ from mcstasscript.geometry_viewer.config import (
 _ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
 
+INTENSITY_VARIABLE_OPTIONS = {
+    "None (0D total)": None,
+    "x (position)": "x",
+    "y (position)": "y",
+    "z (position)": "z",
+    "radius": "radius",
+    "xy (radial position)": "xy",
+    "yz (radial position)": "yz",
+    "xz (radial position)": "xz",
+    "kx (wavevector)": "kx",
+    "ky (wavevector)": "ky",
+    "kz (wavevector)": "kz",
+    "k (wavevector norm)": "k",
+    "kxy (radial wavevector)": "kxy",
+    "kyz (radial wavevector)": "kyz",
+    "kxz (radial wavevector)": "kxz",
+    "vx (velocity)": "vx",
+    "vy (velocity)": "vy",
+    "vz (velocity)": "vz",
+    "v (velocity norm)": "v",
+    "vxy (radial velocity)": "vxy",
+    "vyz (radial velocity)": "vyz",
+    "vxz (radial velocity)": "vxz",
+    "t (time of flight)": "t",
+    "energy": "energy",
+    "omega": "omega",
+    "lambda (wavelength)": "lambda",
+    "sx (spin)": "sx",
+    "sy (spin)": "sy",
+    "sz (spin)": "sz",
+    "hdiv (horizontal divergence)": "hdiv",
+    "vdiv (vertical divergence)": "vdiv",
+    "angle": "angle",
+    "theta (longitude)": "theta",
+    "phi (latitude)": "phi",
+    "p (intensity)": "p",
+    "n (neutron ID)": "n",
+    "id (pixel ID)": "id",
+    "user0": "user0",
+    "user1": "user1",
+    "user2": "user2",
+    "user3": "user3",
+    "user4": "user4",
+    "user5": "user5",
+    "user6": "user6",
+    "user7": "user7",
+    "user8": "user8",
+    "user9": "user9",
+}
+
+
 def _plain_component_text(component: Any) -> str:
     """Return the component's detailed text without terminal formatting."""
     return _ANSI_ESCAPE_RE.sub("", str(component))
@@ -193,10 +244,17 @@ class PyThreejsRenderer(RendererBackend):
     def render_component(self, component: Any, component_index: int = 0) -> list[Any]:
         self._current_component_index = component_index
         self.component_objects[component_index] = component.comp
-        if self.colormode == "intensity" and self.intensity_map is not None:
-            comp_name = component.comp.name
-            I = self.intensity_map.get(comp_name, 0.0)
-            self._temp_color = intensity_to_color(I, self._min_I, self._max_I, self.cmap, self.log_scale)
+        if self.colormode == "intensity":
+            if self.intensity_map is not None and not self._data_stale:
+                comp_name = component.comp.name
+                intensity = self.intensity_map.get(comp_name, 0.0)
+                self._temp_color = intensity_to_color(
+                    intensity, self._min_I, self._max_I, self.cmap, self.log_scale
+                )
+            elif self._data_stale:
+                self._temp_color = "#808080"
+            else:
+                self._temp_color = None
         elif self.colormode == "component" and self.num_components > 0:
             self._temp_color = index_to_color(component_index, self.num_components)
         else:
@@ -613,10 +671,23 @@ class PyThreejsRenderer(RendererBackend):
             vmin, vmax = 0, max(self.num_components - 1, 1)
             log_scale = False
 
-        use_log = log_scale and vmax > 0 and vmin > 0
+        intensity_values = [
+            float(value) for value in (self.intensity_map or {}).values()
+        ]
+        positive_values = [value for value in intensity_values if value > 0]
+        use_log = (
+            log_scale
+            and intensity_values
+            and all(value >= 0 for value in intensity_values)
+            and positive_values
+            and max(positive_values) > min(positive_values)
+        )
 
         if use_log:
-            norm = LogNorm(vmin=vmin, vmax=vmax)
+            norm = LogNorm(
+                vmin=min(positive_values),
+                vmax=max(positive_values),
+            )
         else:
             norm = Normalize(vmin=max(vmin, 0), vmax=vmax)
 
@@ -653,6 +724,44 @@ class PyThreejsRenderer(RendererBackend):
             self._overlay_custom_colors()
         if self._custom_opacities_active:
             self._overlay_custom_opacities()
+
+    def _can_use_log_scale(self):
+        """Return whether current intensity data supports logarithmic scaling."""
+        if self._data_stale or not self.intensity_map:
+            return False
+        values = [float(value) for value in self.intensity_map.values()]
+        return (
+            all(np.isfinite(value) and value >= 0 for value in values)
+            and any(value > 0 for value in values)
+        )
+
+    def _update_log_scale_control(self):
+        """Enable logarithmic scaling only when current data supports it."""
+        log_scale_widget = self._intensity_widgets.get("log_scale")
+        if log_scale_widget is None:
+            return
+
+        can_use_log_scale = self._can_use_log_scale()
+        log_scale_widget.disabled = not can_use_log_scale
+        if not can_use_log_scale and log_scale_widget.value:
+            log_scale_widget.value = False
+
+    def _apply_current_intensity_colors(self):
+        """Apply the current intensity map and color scale to all components."""
+        if self.intensity_map is None:
+            return
+        for idx in self.component_children:
+            comp_name = self.simple_components[idx]["name"]
+            intensity = self.intensity_map.get(comp_name, 0.0)
+            color = intensity_to_color(
+                intensity, self._min_I, self._max_I, self.cmap, self.log_scale
+            )
+            self.update_component_color(idx, color)
+        if self._custom_colors_active:
+            self._overlay_custom_colors()
+        if self._custom_opacities_active:
+            self._overlay_custom_opacities()
+        self._update_colorbar()
 
     def _apply_intensity_from_data(self, aggregation: str | None = None):
         """Build intensity_map from cached diagnostic data and re-color components."""
@@ -704,16 +813,8 @@ class PyThreejsRenderer(RendererBackend):
         except Exception:
             self._intensity_computed_label = "Intensity [n/s]"
 
-        for idx in self.component_children:
-            comp_name = self.simple_components[idx]["name"]
-            I = intensity_map.get(comp_name, 0.0)
-            color = intensity_to_color(I, self._min_I, self._max_I, self.cmap, self.log_scale)
-            self.update_component_color(idx, color)
-        if self._custom_colors_active:
-            self._overlay_custom_colors()
-        if self._custom_opacities_active:
-            self._overlay_custom_opacities()
-        self._update_colorbar()
+        self._update_log_scale_control()
+        self._apply_current_intensity_colors()
 
     def _disable_intensity_controls(self, disabled: bool):
         """Enable/disable all intensity control widgets."""
@@ -742,6 +843,7 @@ class PyThreejsRenderer(RendererBackend):
         self._data_stale = True
         self._diag_variable = change["new"]
         self._update_limits_visibility()
+        self._update_log_scale_control()
         if self.colormode == "intensity":
             self._grey_all_components()
 
@@ -799,6 +901,9 @@ class PyThreejsRenderer(RendererBackend):
 
         except Exception as exc:
             self._data_stale = True
+            self._update_log_scale_control()
+            if self.colormode == "intensity":
+                self._grey_all_components()
             warnings.warn(
                 f"Intensity simulation failed: {type(exc).__name__}: {exc}",
                 RuntimeWarning,
@@ -808,6 +913,7 @@ class PyThreejsRenderer(RendererBackend):
             btn.icon = "play"
             btn.description = "Run"
             self._disable_intensity_controls(False)
+            self._update_log_scale_control()
 
     def _on_aggregate_change(self, change):
         """Handle aggregate dropdown change — re-apply from cached data if not stale."""
@@ -815,6 +921,14 @@ class PyThreejsRenderer(RendererBackend):
             return
         if not self._data_stale and self._diag_data is not None:
             self._apply_intensity_from_data(change["new"])
+
+    def _on_log_scale_change(self, change):
+        """Apply a changed logarithmic color scale to current intensity data."""
+        if change["type"] != "change":
+            return
+        self.log_scale = bool(change["new"])
+        if self.colormode == "intensity" and not self._data_stale:
+            self._apply_current_intensity_colors()
 
     def create_intensity_controls(self):
         """Create the intensity simulation control widgets."""
@@ -831,22 +945,7 @@ class PyThreejsRenderer(RendererBackend):
             layout=ipw.Layout(width="160px"),
         )
 
-        variable_options = {
-            "None (0D total)": None,
-            "l (wavelength)": "l",
-            "x (position)": "x",
-            "y (position)": "y",
-            "z (position)": "z",
-            "t (time)": "t",
-            "px": "px",
-            "py": "py",
-            "pz": "pz",
-            "p4": "p4",
-            "e (energy)": "e",
-            "s1": "s1",
-            "s2": "s2",
-            "s3": "s3",
-        }
+        variable_options = dict(INTENSITY_VARIABLE_OPTIONS)
         variable_widget = ipw.Dropdown(
             options=variable_options,
             value=None,
@@ -893,6 +992,14 @@ class PyThreejsRenderer(RendererBackend):
             layout=ipw.Layout(width="140px"),
         )
 
+        log_scale_widget = ipw.Checkbox(
+            value=self.log_scale,
+            description="Log scale",
+            tooltip="Use logarithmic intensity colors when all values are non-negative",
+            style={"description_width": "initial"},
+        )
+        log_scale_widget.observe(self._on_log_scale_change, names="value")
+
         run_button = ipw.Button(
             description="Run",
             button_style="",
@@ -912,21 +1019,28 @@ class PyThreejsRenderer(RendererBackend):
             "limits_min": limits_min_widget,
             "limits_max": limits_max_widget,
             "aggregate": aggregate_widget,
+            "log_scale": log_scale_widget,
             "run_button": run_button,
         }
+        self._update_log_scale_control()
 
         row1 = ipw.HBox([ncount_widget, variable_widget, limits_check_widget, limits_min_widget, limits_max_widget, run_button])
-        row2 = ipw.HBox([aggregate_widget])
+        row2 = ipw.HBox([aggregate_widget, log_scale_widget])
         container = ipw.VBox([row1, row2], layout=ipw.Layout(display="none"))
         self._intensity_controls_container = container
         return container
 
     def _colormode_color_for_index(self, idx: int) -> str:
         """Compute the color for a component index based on the current colormode."""
-        if self.colormode == "intensity" and self.intensity_map is not None and not self._data_stale:
-            comp_name = self.simple_components[idx]["name"]
-            I = self.intensity_map.get(comp_name, 0.0)
-            return intensity_to_color(I, self._min_I, self._max_I, self.cmap, self.log_scale)
+        if self.colormode == "intensity":
+            if self.intensity_map is not None and not self._data_stale:
+                comp_name = self.simple_components[idx]["name"]
+                intensity = self.intensity_map.get(comp_name, 0.0)
+                return intensity_to_color(
+                    intensity, self._min_I, self._max_I, self.cmap, self.log_scale
+                )
+            if self._data_stale:
+                return "#808080"
         elif self.colormode == "component" and self.num_components > 0:
             return index_to_color(idx, self.num_components)
         else:
@@ -1064,10 +1178,18 @@ class PyThreejsRenderer(RendererBackend):
         self._custom_opacities_checkbox = checkbox
         return checkbox
 
-    def create_colormode_selector(self):
+    def create_colormode_selector(self, include_intensity: bool | None = None):
         import ipywidgets as ipw
 
-        options = {"Default": "default", "Component": "component", "Intensity": "intensity"}
+        if include_intensity is None:
+            include_intensity = (
+                self.intensity_map is not None
+                or self._intensity_controls_container is not None
+            )
+
+        options = {"Default": "default", "Component": "component"}
+        if include_intensity:
+            options["Intensity"] = "intensity"
         selector = ipw.Dropdown(
             options=options,
             value=self.colormode,

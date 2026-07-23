@@ -5,16 +5,27 @@ import warnings
 
 
 def _extract_params(instrument_object):
-    """Validate and collect instrument parameters as a dict."""
-    parameters = {}
+    """Validate and collect instrument parameters."""
+    parameters = []
     for parameter in instrument_object.parameters:
         if parameter.value is None:
             raise RuntimeError(
                 f"Parameter value not set for parameter: '{parameter.name}' "
                 f"set with set_parameters."
             )
-        parameters[parameter.name] = parameter.value
+        parameters.append(parameter)
     return parameters
+
+
+def _format_parameter(parameter):
+    """Format an instrument parameter for mcdisplay's argv interface."""
+    value = parameter.value
+    if (parameter.type == "string" and isinstance(value, str)
+            and len(value) >= 2 and value[0] == value[-1] == '"'):
+        # The quotes are needed in the generated C declaration, but are not
+        # shell syntax when the value is passed through an argv list.
+        value = value[1:-1]
+    return f"{parameter.name}={value}"
 
 
 def _find_executable(base_name, run_settings):
@@ -110,7 +121,7 @@ def run_mcdisplay(instrument_object, format="webgl-classic", nobrowse=None):
     if nobrowse:
         command.append("--nobrowse")
     command.append(instr_path)
-    command.extend(f"{k}={v}" for k, v in parameters.items())
+    command.extend(_format_parameter(parameter) for parameter in parameters)
 
     process = subprocess.run(
         command, shell=False,
