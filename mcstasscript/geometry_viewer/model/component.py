@@ -22,6 +22,8 @@ from mcstasscript.geometry_viewer.config import (
 )
 from mcstasscript.geometry_viewer.rules import GeometryRule, GeometryRuleRegistry
 from mcstasscript.geometry_viewer.expression import safe_eval
+from mcstasscript.geometry_viewer.model.bounds import Bounds, component_bounds
+from mcstasscript.geometry_viewer.model.style import default_style_for_shape
 
 
 def _make_axis_transform(pos, rot, offset, default_axis, normal):
@@ -166,7 +168,7 @@ def _factory_solid_box(comp, instr_parameters=None):
     return BoxShape(width=xwidth, height=yheight, depth=zdepth)
 
 
-def _factory_rectangle_outline(comp, instr_parameters=None):
+def _factory_rectangle_outline_xy(comp, instr_parameters=None):
     """Create a rectangle outline (LineSegmentsShape) from xwidth + yheight."""
     xwidth = _get_param(comp, "xwidth", instr_parameters)
     yheight = _get_param(comp, "yheight", instr_parameters)
@@ -178,6 +180,21 @@ def _factory_rectangle_outline(comp, instr_parameters=None):
         [hw, -hh, 0], [-hw, -hh, 0],
         [-hw, -hh, 0], [-hw, hh, 0],
         [-hw, hh, 0], [hw, hh, 0],
+    ], dtype=np.float32)
+    return LineSegmentsShape(points=points)
+    
+def _factory_rectangle_outline_zy(comp, instr_parameters=None):
+    """Create a rectangle outline (LineSegmentsShape) from xwidth + yheight."""
+    zdepth = _get_param(comp, "zdepth", instr_parameters)
+    yheight = _get_param(comp, "yheight", instr_parameters)
+    if zpdeth is None or zdepth <= 0 or yheight is None or yheight <= 0:
+        return None
+    hw, hh = zdepth / 2, yheight / 2
+    points = np.array([
+        [0, hh, hw], [0, -hh, hw],
+        [0, -hh, hw], [0, -hh, -hw],
+        [0, -hh, -hw], [0, hh, -hw],
+        [0, hh, -hw], [0, hh, hw],
     ], dtype=np.float32)
     return LineSegmentsShape(points=points)
 
@@ -233,10 +250,19 @@ def _make_builtin_registry() -> GeometryRuleRegistry:
         must_be_set={"xwidth": True, "yheight": True},
         must_not_be_set={"zdepth": False},
         priority=40,
-        factory=_factory_rectangle_outline,
+        factory=_factory_rectangle_outline_xy,
+    ))
+    
+    # 5. Rectangle outline: must have xwidth and yheight set, zdepth not set
+    reg.register(GeometryRule(
+        must_have={"zdepth": True, "yheight": True},
+        must_be_set={"zdepth": True, "yheight": True},
+        must_not_be_set={"xwidth": False},
+        priority=50,
+        factory=_factory_rectangle_outline_zy,
     ))
 
-    # 5. Axis triad: no parameters at all
+    # 6. Axis triad: no parameters at all
     reg.register(GeometryRule(
         require_empty_params=True,
         priority=900,
@@ -257,6 +283,21 @@ class ComponentModel:
         self.loaded = False
         self.global_position = None
         self.rotation_matrix = None
+        self.bounds = Bounds()
+        self.size = self.bounds.extents
+        self.center = self.bounds.center
+        self.bounding_radius = self.bounds.radius
+
+    def refresh_metadata(self):
+        """Finalize model-owned styles and world-space geometry metadata."""
+        for shape in self.shape_list:
+            if shape.style is None:
+                shape.style = default_style_for_shape(shape)
+
+        self.bounds = component_bounds(self.shape_list)
+        self.size = self.bounds.extents
+        self.center = self.bounds.center
+        self.bounding_radius = self.bounds.radius
 
     def load_geometry_from_mcdisplay_dict(self, json_dict):
         """
@@ -299,6 +340,7 @@ class ComponentModel:
         if line_points is not None:
             self.shape_list.append(LineSegmentsShape(transform=transform, points=line_points))
 
+        self.refresh_metadata()
         self.loaded = True
 
     def set_global_transform(self, transform):
@@ -307,6 +349,7 @@ class ComponentModel:
         self.rotation_matrix = transform.rotation_matrix
         for shape in self.shape_list:
             shape.transform = transform
+        self.refresh_metadata()
 
     def guess_geometry_from_comp_object(
         self,
@@ -357,6 +400,8 @@ class ComponentModel:
                         position=self.global_position,
                         rotation_matrix=self.rotation_matrix,
                     ))
+                else:
+                    self.refresh_metadata()
                 self.loaded = True
                 return True
 
@@ -378,5 +423,6 @@ class ComponentModel:
         ], dtype=np.float32)
         shape = LineSegmentsShape(points=points)
         self.shape_list.append(shape)
+        self.refresh_metadata()
         self.loaded = True
         return True

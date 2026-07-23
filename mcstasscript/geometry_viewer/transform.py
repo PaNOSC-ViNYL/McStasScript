@@ -177,8 +177,9 @@ class Transform:
     def transform_points(self, points: np.ndarray) -> np.ndarray:
         """Apply this transform to an (N, 3) array of points."""
         pts = np.asarray(points, dtype=np.float64)
-        if self.rotation_matrix is not None:
-            pts = pts @ self.rotation_matrix.T
+        quaternion = self.final_quaternion()
+        if quaternion is not None:
+            pts = pts @ quaternion_to_rotation_matrix(quaternion).T
         if self.position is not None:
             pts = pts + np.asarray(self.position, dtype=np.float64)
         return pts

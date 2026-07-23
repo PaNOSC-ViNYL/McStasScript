@@ -278,31 +278,32 @@ def view_with_guess(instrument_object, backend: str = "pythreejs",
     kwargs_for_renderer["component_opacity"] = component_opacity
     renderer = _get_renderer(backend, **kwargs_for_renderer)
 
-    from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+    is_pythreejs = backend == "pythreejs"
 
     all_children = []
     for index, component_model in enumerate(instrument_model.component_models):
-        if isinstance(renderer, PyThreejsRenderer):
+        if is_pythreejs:
             renderer.register_component(component_model)
         all_children.extend(renderer.render_component(component_model, component_index=index))
         renderer.next_component()
 
     scene = renderer.make_scene(all_children, width=width, height=height, **kwargs)
 
-    if isinstance(renderer, PyThreejsRenderer):
+    if is_pythreejs:
         import ipywidgets as ipw
+        component_details = renderer.create_component_details(scene)
         navigator = renderer.create_component_navigator(scene)
         colormode_selector = renderer.create_colormode_selector()
         custom_colors_checkbox = renderer.create_custom_colors_checkbox()
         custom_opacities_checkbox = renderer.create_custom_opacities_checkbox()
         intensity_controls = renderer.create_intensity_controls()
         colorbar = renderer.create_colorbar()
-        controls = [navigator, colormode_selector]
+        controls = [ipw.HBox([navigator, colormode_selector])]
         if custom_colors_checkbox is not None:
             controls.append(custom_colors_checkbox)
         if custom_opacities_checkbox is not None:
             controls.append(custom_opacities_checkbox)
-        controls.extend([intensity_controls, ipw.HBox([scene, colorbar])])
+        controls.extend([intensity_controls, ipw.HBox([scene, colorbar]), component_details])
         return ipw.VBox(controls)
 
     if isinstance(renderer, MatplotlibRenderer):
@@ -342,32 +343,35 @@ def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
     kwargs_for_renderer["component_opacity"] = component_opacity
     renderer = _get_renderer(backend, **kwargs_for_renderer)
 
-    from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+    is_pythreejs = backend == "pythreejs"
 
     all_children = []
     for index, component_model in enumerate(instrument_model.component_models):
         if index_min <= index < index_max:
-            if isinstance(renderer, PyThreejsRenderer):
+            component_index = index - index_min
+            if is_pythreejs:
                 renderer.register_component(component_model)
-            all_children.extend(renderer.render_component(component_model, component_index=index))
+            all_children.extend(renderer.render_component(component_model, component_index=component_index))
             renderer.next_component()
 
     scene = renderer.make_scene(all_children, width=width, height=height, **kwargs)
 
-    if isinstance(renderer, PyThreejsRenderer):
+    if is_pythreejs:
         import ipywidgets as ipw
+        component_details = renderer.create_component_details(scene)
         navigator = renderer.create_component_navigator(scene)
         colormode_selector = renderer.create_colormode_selector()
         custom_colors_checkbox = renderer.create_custom_colors_checkbox()
         custom_opacities_checkbox = renderer.create_custom_opacities_checkbox()
         intensity_controls = renderer.create_intensity_controls()
         colorbar = renderer.create_colorbar()
-        controls = [navigator, colormode_selector]
+        #controls = [navigator, colormode_selector]
+        controls = [ipw.HBox([navigator, colormode_selector])]
         if custom_colors_checkbox is not None:
             controls.append(custom_colors_checkbox)
         if custom_opacities_checkbox is not None:
             controls.append(custom_opacities_checkbox)
-        controls.extend([intensity_controls, ipw.HBox([scene, colorbar])])
+        controls.extend([intensity_controls, ipw.HBox([scene, colorbar]), component_details])
         return ipw.VBox(controls)
 
     if isinstance(renderer, MatplotlibRenderer):

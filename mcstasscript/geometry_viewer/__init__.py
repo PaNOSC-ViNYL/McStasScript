@@ -2,7 +2,7 @@ from mcstasscript.geometry_viewer.api import view, view_with_json, view_with_gue
 from mcstasscript.geometry_viewer.model import (
     Shape, BoxShape, CylinderShape, ConeShape, CircleShape,
     LineSegmentsShape, PolyhedronShape, SphereShape, Style,
-    ComponentModel, InstrumentModel,
+    ComponentModel, InstrumentModel, Bounds,
 )
 from mcstasscript.geometry_viewer.renderer import (
     RendererBackend, MatplotlibRenderer,
@@ -31,6 +31,7 @@ __all__ = [
     "Shape", "BoxShape", "CylinderShape", "ConeShape", "CircleShape",
     "LineSegmentsShape", "PolyhedronShape", "SphereShape", "Style",
     "ComponentModel", "InstrumentModel",
+    "Bounds",
     "RendererBackend", "PyThreejsRenderer", "MatplotlibRenderer",
     "Transform",
     "generate_json", "run_mcdisplay", "display_mcdisplay_html",

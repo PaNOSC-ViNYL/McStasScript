@@ -8,7 +8,7 @@ import numpy as np
 from mcstasscript.geometry_viewer.transform import Transform
 
 
-@dataclass
+@dataclass(frozen=True)
 class Style:
     opacity: float = 1.0
     color: str | None = None
@@ -40,7 +40,7 @@ class LineSegmentsShape(Shape):
 
     def __post_init__(self):
         self.points = np.asarray(self.points, dtype=np.float32)
-        if self.points.size == 0:
+        if self.points.ndim != 2 or self.points.shape[1] != 3 or len(self.points) < 2:
             raise ValueError("LineSegmentsShape needs at least two points")
 
     def __repr__(self):

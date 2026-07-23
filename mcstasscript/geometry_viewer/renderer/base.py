@@ -30,6 +30,8 @@ class RendererBackend(ABC):
 
     def render_component(self, component: Any, component_index: int = 0) -> list[Any]:
         """Render all shapes in a component's shape_list, annotating each child with component_index."""
+        if hasattr(component, "refresh_metadata"):
+            component.refresh_metadata()
         children = [self.render_shape(s) for s in component.shape_list]
         for child in children:
             child._component_index = component_index

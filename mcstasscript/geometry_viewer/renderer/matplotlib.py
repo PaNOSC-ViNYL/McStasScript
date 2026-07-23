@@ -23,6 +23,8 @@ from mcstasscript.geometry_viewer.config import DEFAULT_COLORS, index_to_color, 
 class LineDescriptor:
     points: np.ndarray
     color: str
+    alpha: float = 1.0
+    linewidth: float = 1.0
 
 
 class MatplotlibRenderer(RendererBackend):
@@ -132,12 +134,19 @@ class MatplotlibRenderer(RendererBackend):
     def create_material(self, style: Style | None, color: str, **kwargs) -> dict:
         props = {"color": color}
         if style:
-            if style.opacity != 1.0:
-                props["alpha"] = style.opacity
+            props["alpha"] = style.opacity
             if style.wireframe:
                 props["linewidths"] = 0.5
         props.update(kwargs)
         return props
+
+    def _material_properties(self, shape: Shape) -> dict:
+        color = self._temp_color
+        if color is None and self.colormode == "component":
+            color = self.current_color
+        if color is None and shape.style is not None:
+            color = shape.style.color
+        return self.create_material(shape.style, color or self.current_color)
 
     def render_shape(self, shape: Shape) -> Any:
         if isinstance(shape, BoxShape):
@@ -209,8 +218,13 @@ class MatplotlibRenderer(RendererBackend):
         else:
             faces = [self._remap_to_display(np.array(f)).tolist() for f in faces]
 
-        color = self.current_color
-        return self._make_collection(faces, color, 0.8, edge_color=color)
+        props = self._material_properties(shape)
+        color = props["color"]
+        face_color = "none" if shape.style and shape.style.wireframe else color
+        return self._make_collection(
+            faces, face_color, props.get("alpha", 1.0),
+            edge_color=color, lw=props.get("linewidths", 0.5),
+        )
 
     def _sample_cylinder_mesh(self, radius_top, radius_bottom, height, segments):
         verts = np.linspace(0, 2 * np.pi, segments + 1)
@@ -237,18 +251,13 @@ class MatplotlibRenderer(RendererBackend):
         else:
             mesh = [self._remap_to_display(np.array(f)).tolist() for f in mesh]
 
-        largest_dim = max(2 * shape.radius, shape.height)
-        if largest_dim <= 0.05:
-            alpha = 0.9
-        elif largest_dim <= 0.5:
-            alpha = 0.85
-        elif largest_dim <= 1.5:
-            alpha = 0.65
-        else:
-            alpha = 0.4
-
-        color = self.current_color
-        return self._make_collection(mesh, color, alpha, edge_color=color)
+        props = self._material_properties(shape)
+        color = props["color"]
+        face_color = "none" if shape.style and shape.style.wireframe else color
+        return self._make_collection(
+            mesh, face_color, props.get("alpha", 1.0),
+            edge_color=color, lw=props.get("linewidths", 0.5),
+        )
 
     def _render_cone(self, shape: ConeShape):
         mesh = self._sample_cylinder_mesh(0, shape.radius, shape.height, shape.radial_segments)
@@ -257,8 +266,13 @@ class MatplotlibRenderer(RendererBackend):
         else:
             mesh = [self._remap_to_display(np.array(f)).tolist() for f in mesh]
 
-        color = self.current_color
-        return self._make_collection(mesh, color, 0.8, edge_color=color)
+        props = self._material_properties(shape)
+        color = props["color"]
+        face_color = "none" if shape.style and shape.style.wireframe else color
+        return self._make_collection(
+            mesh, face_color, props.get("alpha", 1.0),
+            edge_color=color, lw=props.get("linewidths", 0.5),
+        )
 
     def _render_circle(self, shape: CircleShape):
         angles = np.linspace(0, 2 * np.pi, shape.segments + 1)
@@ -277,29 +291,36 @@ class MatplotlibRenderer(RendererBackend):
         else:
             tri_faces = [self._remap_to_display(np.array(f)).tolist() for f in tri_faces]
 
-        if shape.radius <= 0.05:
-            alpha = 0.9
-        elif shape.radius <= 0.5:
-            alpha = 0.7
-        elif shape.radius <= 1.5:
-            alpha = 0.4
-        else:
-            alpha = 0.2
-
-        color = self.current_color
-        return self._make_collection(tri_faces, color, alpha)
+        props = self._material_properties(shape)
+        color = props["color"]
+        face_color = "none" if shape.style and shape.style.wireframe else color
+        return self._make_collection(
+            tri_faces, face_color, props.get("alpha", 1.0),
+            edge_color=color if shape.style and shape.style.wireframe else "none",
+            lw=props.get("linewidths", 0.5),
+        )
 
     def _render_line_segments(self, shape: LineSegmentsShape) -> LineDescriptor:
         points = self._remap_to_display(self._transform_points(shape.points, shape.transform))
-        color = self.current_color
-        return LineDescriptor(points=points, color=color)
+        props = self._material_properties(shape)
+        return LineDescriptor(
+            points=points,
+            color=props["color"],
+            alpha=props.get("alpha", 1.0),
+            linewidth=props.get("linewidths", 1.0),
+        )
 
     def _render_polyhedron(self, shape: PolyhedronShape):
         vertices = self._remap_to_display(self._transform_points(shape.vertices, shape.transform))
         faces = vertices[shape.indices.reshape(-1, 3)]
 
-        color = self.current_color
-        return self._make_collection(faces, color, 0.8, edge_color=color)
+        props = self._material_properties(shape)
+        color = props["color"]
+        face_color = "none" if shape.style and shape.style.wireframe else color
+        return self._make_collection(
+            faces, face_color, props.get("alpha", 1.0),
+            edge_color=color, lw=props.get("linewidths", 0.5),
+        )
 
     def _render_sphere(self, shape: SphereShape):
         u = np.linspace(0, 2 * np.pi, shape.radial_segments + 1)
@@ -323,17 +344,13 @@ class MatplotlibRenderer(RendererBackend):
         else:
             faces = [self._remap_to_display(np.array(f)).tolist() for f in faces]
 
-        if shape.radius <= 0.05:
-            alpha = 0.9
-        elif shape.radius <= 0.5:
-            alpha = 0.85
-        elif shape.radius <= 1.5:
-            alpha = 0.65
-        else:
-            alpha = 0.4
-
-        color = self.current_color
-        return self._make_collection(faces, color, alpha, edge_color=color)
+        props = self._material_properties(shape)
+        color = props["color"]
+        face_color = "none" if shape.style and shape.style.wireframe else color
+        return self._make_collection(
+            faces, face_color, props.get("alpha", 1.0),
+            edge_color=color, lw=props.get("linewidths", 0.5),
+        )
 
     def apply_transform(self, visual_obj: Any, transform: Transform | None) -> Any:
         return visual_obj
@@ -380,7 +397,7 @@ class MatplotlibRenderer(RendererBackend):
             elif isinstance(child, LineDescriptor):
                 line, = ax.plot(
                     child.points[:, 0], child.points[:, 1], child.points[:, 2],
-                    c=child.color, linewidth=1,
+                    c=child.color, alpha=child.alpha, linewidth=child.linewidth,
                 )
                 all_verts.extend(child.points)
                 comp_idx = getattr(child, '_component_index', 0)
@@ -441,7 +458,7 @@ class MatplotlibRenderer(RendererBackend):
             elif isinstance(child, LineDescriptor):
                 line, = ax.plot(
                     child.points[:, 0], child.points[:, 1],
-                    c=child.color, linewidth=1,
+                    c=child.color, alpha=child.alpha, linewidth=child.linewidth,
                 )
                 all_verts.extend(child.points[:, :2])
                 comp_idx = getattr(child, '_component_index', 0)

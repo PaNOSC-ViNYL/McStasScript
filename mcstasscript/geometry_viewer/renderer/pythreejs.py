@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import warnings
+import re
 from dataclasses import dataclass, field
 from typing import Any, Hashable
 
@@ -12,7 +14,26 @@ from mcstasscript.geometry_viewer.model.shapes import (
     LineSegmentsShape, PolyhedronShape, SphereShape, Style,
 )
 from mcstasscript.geometry_viewer.transform import Transform
-from mcstasscript.geometry_viewer.config import DEFAULT_COLORS, index_to_color, intensity_to_color
+from mcstasscript.geometry_viewer.config import (
+    DEFAULT_COLORS,
+    DEFAULT_CAMERA_POSITION,
+    DEFAULT_CAMERA_TARGET,
+    DEFAULT_FAR,
+    DEFAULT_FOV,
+    DEFAULT_NEAR,
+    DEFAULT_NAVIGATOR_DISTANCE,
+    DEFAULT_RENDERER_SIZE,
+    index_to_color,
+    intensity_to_color,
+)
+
+
+_ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+
+
+def _plain_component_text(component: Any) -> str:
+    """Return the component's detailed text without terminal formatting."""
+    return _ANSI_ESCAPE_RE.sub("", str(component))
 
 
 @dataclass
@@ -60,18 +81,6 @@ class MaterialLibrary:
         return cls, kwargs["color"], frozen_kwargs, component_index
 
 
-def _compute_opacity_for_size(largest_dim: float, base_opacities: tuple = (0.9, 0.85, 0.65, 0.4)) -> float:
-    """Compute opacity based on object size — smaller objects are more opaque."""
-    if largest_dim <= 0.05:
-        return base_opacities[0]
-    elif largest_dim <= 0.5:
-        return base_opacities[1]
-    elif largest_dim <= 1.5:
-        return base_opacities[2]
-    else:
-        return base_opacities[3]
-
-
 class PyThreejsRenderer(RendererBackend):
     def __init__(self, colors: list[str] | None = None, colormode: str = "default", num_components: int = 0,
                   intensity_map: dict | None = None, cmap: str = "inferno", log_scale: bool = True,
@@ -89,13 +98,19 @@ class PyThreejsRenderer(RendererBackend):
         self._intensity_computed_label = None
         self.simple_components = []
         self.component_children: dict[int, list] = {}
+        self.component_objects: dict[int, Any] = {}
+        self._visual_to_component: dict[int, int] = {}
+        self._component_group = None
+        self._component_picker = None
+        self._component_details = None
         self.component_colors: dict[int, str] = {}
-        self.component_colors_map = component_colors or {}
+        self.component_colors_map = dict(component_colors or {})
         self._custom_colors_active = False
         self._custom_colors_checkbox = None
         self.component_opacity: dict[int, float] = {}
-        self._base_opacities: dict[int, float] = {}
-        self.component_opacity_map = component_opacity or {}
+        self._base_opacities: dict[int, list[float | None]] = {}
+        self._base_colors: dict[int, list[str | None]] = {}
+        self.component_opacity_map = dict(component_opacity or {})
         self._custom_opacities_active = False
         self._custom_opacities_checkbox = None
         if self.component_opacity_map:
@@ -153,12 +168,23 @@ class PyThreejsRenderer(RendererBackend):
             return "Component index"
 
     def register_component(self, component_model):
+        if hasattr(component_model, "refresh_metadata"):
+            component_model.refresh_metadata()
         self.simple_components.append({
             "pos": component_model.global_position,
             "rotation": component_model.rotation_matrix,
             "name": component_model.comp.name,
             "component_name": component_model.comp.component_name,
+            "center": component_model.center,
+            "size": component_model.size,
+            "radius": component_model.bounding_radius,
+            "has_explicit_color": any(
+                shape.style is not None and shape.style.color is not None
+                for shape in component_model.shape_list
+            ),
         })
+        component_index = len(self.simple_components) - 1
+        self.component_objects[component_index] = component_model.comp
 
     def next_component(self) -> None:
         if self.colormode != "component":
@@ -166,6 +192,7 @@ class PyThreejsRenderer(RendererBackend):
 
     def render_component(self, component: Any, component_index: int = 0) -> list[Any]:
         self._current_component_index = component_index
+        self.component_objects[component_index] = component.comp
         if self.colormode == "intensity" and self.intensity_map is not None:
             comp_name = component.comp.name
             I = self.intensity_map.get(comp_name, 0.0)
@@ -176,61 +203,107 @@ class PyThreejsRenderer(RendererBackend):
             self._temp_color = None
         children = super().render_component(component, component_index)
         self.component_children[component_index] = children
-        self.component_colors[component_index] = self._temp_color or self.material_library.color
-        # Capture original opacity from the first mesh child (all shapes in a component
-        # typically share the same opacity; we store one representative value per component)
-        orig_opacity = 1.0
         for child in children:
-            if hasattr(child, 'material') and hasattr(child.material, 'opacity'):
-                orig_opacity = child.material.opacity
-                break
+            self._visual_to_component[id(child)] = component_index
+        base_opacities = [
+            getattr(getattr(child, "material", None), "opacity", None)
+            for child in children
+        ]
+        base_colors = [
+            getattr(getattr(child, "material", None), "color", None)
+            for child in children
+        ]
+        orig_opacity = next((value for value in base_opacities if value is not None), 1.0)
+        self.component_colors[component_index] = next(
+            (color for color in base_colors if color is not None),
+            self._temp_color or self.material_library.color,
+        )
         self.component_opacity[component_index] = orig_opacity
-        self._base_opacities[component_index] = orig_opacity
+        self._base_opacities[component_index] = base_opacities
+        self._base_colors[component_index] = base_colors
         return children
 
-    def _get_material(self, material_class: type | None = None, **kwargs: Any):
+    def _get_material(self, style: Style | None = None,
+                      material_class: type | None = None, **kwargs: Any):
         """Get a material, using temp_color if in component colormode.
 
         Materials are scoped by component_index so that mutating one
         component's material color does not affect another component.
         """
         ci = getattr(self, '_current_component_index', None)
-        if self._temp_color is not None:
-            return self.material_library.get_material_for_color(
-                self._temp_color, material_class=material_class,
-                component_index=ci, **kwargs,
-            )
-        return self.material_library.get_material(
-            material_class=material_class, component_index=ci, **kwargs,
+        color = self._temp_color
+        if color is None and style is not None:
+            color = style.color
+        if color is None:
+            color = self.material_library.color
+        return self.create_material(
+            style,
+            color,
+            material_class=material_class,
+            component_index=ci,
+            **kwargs,
         )
 
-    def update_component_color(self, component_index: int, color: str) -> None:
+    def _set_component_child_colors(self, component_index: int,
+                                    colors: list[str | None]) -> None:
+        for child, color in zip(self.component_children[component_index], colors):
+            if color is None:
+                continue
+            if hasattr(child, "material") and hasattr(child.material, "color"):
+                child.material.color = color
+
+    def update_component_color(self, component_index: int, color: str,
+                               update_base: bool = True) -> None:
         """Update the color of all meshes belonging to a component."""
         if component_index not in self.component_children:
             return
         self.component_colors[component_index] = color
-        for child in self.component_children[component_index]:
-            if hasattr(child, 'material') and hasattr(child.material, 'color'):
-                child.material.color = color
+        if update_base:
+            self._base_colors[component_index] = [color] * len(self.component_children[component_index])
+        self._set_component_child_colors(
+            component_index,
+            [color] * len(self.component_children[component_index]),
+        )
 
-    def update_component_opacity(self, component_index: int, opacity: float) -> None:
+    def _set_component_child_opacities(self, component_index: int,
+                                       opacities: list[float | None]) -> None:
+        for child, opacity in zip(self.component_children[component_index], opacities):
+            if opacity is None:
+                continue
+            if hasattr(child, "material") and hasattr(child.material, "opacity"):
+                child.material.opacity = opacity
+                child.material.transparent = opacity < 1.0
+
+    def update_component_opacity(self, component_index: int, opacity: float,
+                                 update_base: bool = True) -> None:
         """Update the opacity of all meshes belonging to a component."""
         if component_index not in self.component_children:
             return
         self.component_opacity[component_index] = opacity
-        for child in self.component_children[component_index]:
-            if hasattr(child, 'material') and hasattr(child.material, 'opacity'):
-                child.material.opacity = opacity
-                child.material.transparent = opacity < 1.0
+        if update_base:
+            self._base_opacities[component_index] = [opacity] * len(self.component_children[component_index])
+        self._set_component_child_opacities(
+            component_index,
+            [opacity] * len(self.component_children[component_index]),
+        )
 
     def create_material(self, style: Style | None, color: str, **kwargs) -> Any:
-        mat_kwargs = {}
-        if style and style.opacity != 1.0:
-            mat_kwargs["transparent"] = True
-            mat_kwargs["opacity"] = style.opacity
-            mat_kwargs["depthWrite"] = False
-            mat_kwargs["side"] = "DoubleSide"
-        return self.material_library.get_material(**mat_kwargs, **kwargs)
+        material_class = kwargs.pop("material_class", None)
+        component_index = kwargs.pop("component_index", None)
+        mat_kwargs = dict(kwargs)
+        if style is not None:
+            mat_kwargs.setdefault("opacity", style.opacity)
+            mat_kwargs.setdefault("transparent", style.opacity < 1.0)
+            if style.wireframe and material_class is not p3.LineBasicMaterial:
+                mat_kwargs.setdefault("wireframe", True)
+        if mat_kwargs.get("opacity", 1.0) < 1.0:
+            mat_kwargs.setdefault("transparent", True)
+        return self.material_library.get_material_for_color(
+            color,
+            material_class=material_class,
+            component_index=component_index,
+            **mat_kwargs,
+        )
 
     def render_shape(self, shape: Shape) -> Any:
         if isinstance(shape, BoxShape):
@@ -252,9 +325,8 @@ class PyThreejsRenderer(RendererBackend):
     def _render_box(self, shape: BoxShape) -> p3.Mesh:
         geometry = p3.BoxGeometry(width=shape.width, height=shape.height, depth=shape.depth)
         material = self._get_material(
+            style=shape.style,
             material_class=p3.MeshLambertMaterial,
-            transparent=True,
-            opacity=0.8,
             depthWrite=False,
             side="DoubleSide",
         )
@@ -263,8 +335,6 @@ class PyThreejsRenderer(RendererBackend):
         return mesh
 
     def _render_cylinder(self, shape: CylinderShape) -> p3.Mesh:
-        largest_dim = max(2 * shape.radius, shape.height)
-        opacity = _compute_opacity_for_size(largest_dim)
         geometry = p3.CylinderGeometry(
             radiusTop=shape.radius,
             radiusBottom=shape.radius,
@@ -272,9 +342,8 @@ class PyThreejsRenderer(RendererBackend):
             radialSegments=shape.radial_segments,
         )
         material = self._get_material(
+            style=shape.style,
             material_class=p3.MeshLambertMaterial,
-            transparent=True,
-            opacity=opacity,
             depthWrite=True,
             side="DoubleSide",
         )
@@ -290,9 +359,8 @@ class PyThreejsRenderer(RendererBackend):
             radialSegments=shape.radial_segments,
         )
         material = self._get_material(
+            style=shape.style,
             material_class=p3.MeshLambertMaterial,
-            transparent=True,
-            opacity=0.80,
             depthWrite=True,
             side="DoubleSide",
         )
@@ -301,19 +369,10 @@ class PyThreejsRenderer(RendererBackend):
         return mesh
 
     def _render_circle(self, shape: CircleShape) -> p3.Mesh:
-        if shape.radius <= 0.05:
-            opacity = 0.9
-        elif shape.radius <= 0.5:
-            opacity = 0.7
-        elif shape.radius <= 1.5:
-            opacity = 0.4
-        else:
-            opacity = 0.2
         geometry = p3.CircleGeometry(radius=shape.radius, segments=shape.segments)
         material = self._get_material(
+            style=shape.style,
             material_class=p3.MeshLambertMaterial,
-            transparent=True,
-            opacity=opacity,
             depthWrite=False,
             side="DoubleSide",
         )
@@ -326,7 +385,7 @@ class PyThreejsRenderer(RendererBackend):
         geometry = p3.BufferGeometry(
             attributes={"position": p3.BufferAttribute(points)}
         )
-        material = self._get_material(material_class=p3.LineBasicMaterial)
+        material = self._get_material(style=shape.style, material_class=p3.LineBasicMaterial)
         line = p3.LineSegments(geometry=geometry, material=material)
         self.apply_transform(line, shape.transform)
         return line
@@ -338,9 +397,8 @@ class PyThreejsRenderer(RendererBackend):
         )
         geometry.exec_three_obj_method("computeVertexNormals")
         material = self._get_material(
+            style=shape.style,
             material_class=p3.MeshBasicMaterial,
-            transparent=True,
-            opacity=0.8,
             depthWrite=False,
             side="DoubleSide",
         )
@@ -349,17 +407,14 @@ class PyThreejsRenderer(RendererBackend):
         return mesh
 
     def _render_sphere(self, shape: SphereShape) -> p3.Mesh:
-        largest_dim = 2 * shape.radius
-        opacity = _compute_opacity_for_size(largest_dim)
         geometry = p3.SphereGeometry(
             radius=shape.radius,
             widthSegments=shape.radial_segments,
             heightSegments=shape.vertical_segments,
         )
         material = self._get_material(
+            style=shape.style,
             material_class=p3.MeshLambertMaterial,
-            transparent=True,
-            opacity=opacity,
             depthWrite=True,
             side="DoubleSide",
         )
@@ -378,7 +433,8 @@ class PyThreejsRenderer(RendererBackend):
         return visual_obj
 
     def make_scene(self, children: list[Any], show_axes: bool = True,
-                    width: int = 900, height: int = 600, **kwargs) -> p3.Renderer:
+                   width: int = DEFAULT_RENDERER_SIZE[0],
+                   height: int = DEFAULT_RENDERER_SIZE[1], **kwargs) -> p3.Renderer:
         scene = p3.Scene(children=[])
         ambient = p3.AmbientLight(intensity=1.0)
         scene.add(ambient)
@@ -386,16 +442,17 @@ class PyThreejsRenderer(RendererBackend):
         if show_axes:
             scene.add(p3.AxesHelper(size=1))
 
-        scene.add(p3.Group(children=children))
+        self._component_group = p3.Group(children=children)
+        scene.add(self._component_group)
 
         camera = p3.PerspectiveCamera(
-            position=[5, 3, 10],
+            position=DEFAULT_CAMERA_POSITION,
             aspect=width / height,
-            fov=50,
-            near=0.01,
-            far=2000,
+            fov=DEFAULT_FOV,
+            near=DEFAULT_NEAR,
+            far=DEFAULT_FAR,
         )
-        camera.lookAt([0, 0, 2])
+        camera.lookAt(DEFAULT_CAMERA_TARGET)
 
         controls = p3.OrbitControls(controlling=camera)
         renderer = p3.Renderer(
@@ -404,35 +461,96 @@ class PyThreejsRenderer(RendererBackend):
         )
         return renderer
 
+    def _on_component_pick(self, change):
+        if self._component_details is None:
+            return
+        picked = change.get("new")
+        if picked is None:
+            self._component_details.value = "Click a component in the scene."
+            return
+
+        component_index = self._visual_to_component.get(id(picked))
+        self._show_component_details(component_index)
+
+    def _show_component_details(self, component_index: int | None) -> None:
+        if self._component_details is None:
+            return
+        component = self.component_objects.get(component_index)
+        if component is None:
+            self._component_details.value = "The selected object is not a component."
+            return
+        self._component_details.value = _plain_component_text(component)
+
+    def create_component_details(self, renderer):
+        """Create a click picker and read-only widget for component details."""
+        import ipywidgets as ipw
+
+        if self._component_group is None:
+            raise RuntimeError("make_scene() must be called before creating component details")
+
+        self._component_picker = p3.Picker(
+            controlling=self._component_group,
+            event="click",
+        )
+        renderer.controls = list(renderer.controls) + [self._component_picker]
+
+        self._component_details = ipw.Textarea(
+            value="Click a component in the scene.",
+            description="Component:",
+            disabled=True,
+            rows=8,
+            layout=ipw.Layout(width="100%"),
+            style={"description_width": "initial"},
+        )
+        self._component_picker.observe(self._on_component_pick, names="object")
+        return self._component_details
+
     def create_component_navigator(self, renderer):
         import ipywidgets as ipw
 
         SKIP_TYPES = []
         component_options = [
-            (f"{comp['name']} ({comp['component_name']})", i)
+            comp["name"]
             for i, comp in enumerate(self.simple_components)
             if comp["component_name"].lower() not in SKIP_TYPES
         ]
+        component_indices = {
+            comp["name"]: i
+            for i, comp in enumerate(self.simple_components)
+            if comp["component_name"].lower() not in SKIP_TYPES
+        }
 
-        dropdown = ipw.Dropdown(
+        dropdown = ipw.Combobox(
             options=component_options,
+            ensure_option=False,
             description="Take me to: ",
+            placeholder="Enter a component name",
             style={"description_width": "initial"},
         )
 
         def on_component_select(change):
             if change["type"] != "change":
                 return
-            idx = change["new"]
+            idx = component_indices.get(change["new"])
+            if idx is None:
+                return
+            self._show_component_details(idx)
             component = self.simple_components[idx]
-            pos = np.asarray(component["pos"], dtype=float)
-            distance = 2.0
+            target = np.asarray(
+                component.get("center", component.get("pos", [0, 0, 0])),
+                dtype=float,
+            )
+            radius = float(component.get("radius", 0.0) or 0.0)
+            distance = max(
+                DEFAULT_NAVIGATOR_DISTANCE,
+                radius / np.tan(np.deg2rad(DEFAULT_FOV) / 2.0) * 1.25,
+            )
             camera_pos = [
-                float(pos[0] - distance * 0.5),
-                float(pos[1] + distance * 0.7),
-                float(pos[2] + distance * 0.5),
+                float(target[0] - distance * 0.5),
+                float(target[1] + distance * 0.7),
+                float(target[2] + distance * 0.5),
             ]
-            target = [float(pos[0]), float(pos[1]), float(pos[2])]
+            target = [float(value) for value in target]
 
             camera = renderer.camera
             controls = renderer.controls[0]
@@ -679,8 +797,13 @@ class PyThreejsRenderer(RendererBackend):
             aggregation = agg.value if hasattr(agg, "value") else "total"
             self._apply_intensity_from_data(aggregation)
 
-        except Exception:
-            pass
+        except Exception as exc:
+            self._data_stale = True
+            warnings.warn(
+                f"Intensity simulation failed: {type(exc).__name__}: {exc}",
+                RuntimeWarning,
+                stacklevel=2,
+            )
         finally:
             btn.icon = "play"
             btn.description = "Run"
@@ -821,7 +944,9 @@ class PyThreejsRenderer(RendererBackend):
         for idx, comp_info in enumerate(self.simple_components):
             comp_name = comp_info["name"]
             if comp_name in self.component_colors_map:
-                self.update_component_color(idx, self.component_colors_map[comp_name])
+                self.update_component_color(
+                    idx, self.component_colors_map[comp_name], update_base=False
+                )
 
     def _apply_custom_colors(self):
         """Apply custom colors to mapped components only; leave others untouched."""
@@ -834,7 +959,18 @@ class PyThreejsRenderer(RendererBackend):
         """Reset all components to colors determined by the current colormode."""
         self._custom_colors_active = False
         for idx in self.component_children:
-            self.update_component_color(idx, self._colormode_color_for_index(idx))
+            base_colors = self._base_colors.get(idx)
+            has_explicit_color = (
+                idx < len(self.simple_components)
+                and self.simple_components[idx].get("has_explicit_color", False)
+            )
+            if has_explicit_color and base_colors and any(color is not None for color in base_colors):
+                self._set_component_child_colors(idx, base_colors)
+                self.component_colors[idx] = next(
+                    color for color in base_colors if color is not None
+                )
+            else:
+                self.update_component_color(idx, self._colormode_color_for_index(idx))
 
     def _on_custom_colors_toggle(self, change):
         """Handle custom colors checkbox toggle."""
@@ -877,7 +1013,9 @@ class PyThreejsRenderer(RendererBackend):
         for idx, comp_info in enumerate(self.simple_components):
             comp_name = comp_info["name"]
             if comp_name in self.component_opacity_map:
-                self.update_component_opacity(idx, self.component_opacity_map[comp_name])
+                self.update_component_opacity(
+                    idx, self.component_opacity_map[comp_name], update_base=False
+                )
 
     def _apply_custom_opacities(self):
         """Apply custom opacities to mapped components only; leave others untouched."""
@@ -890,8 +1028,12 @@ class PyThreejsRenderer(RendererBackend):
         """Reset all components to their original/base opacity captured at render time."""
         self._custom_opacities_active = False
         for idx in self.component_children:
-            if idx in self._base_opacities:
-                self.update_component_opacity(idx, self._base_opacities[idx])
+            base_opacities = self._base_opacities.get(idx)
+            if base_opacities is not None:
+                self._set_component_child_opacities(idx, base_opacities)
+                self.component_opacity[idx] = next(
+                    (value for value in base_opacities if value is not None), 1.0
+                )
 
     def _on_custom_opacities_toggle(self, change):
         """Handle custom opacities checkbox toggle."""

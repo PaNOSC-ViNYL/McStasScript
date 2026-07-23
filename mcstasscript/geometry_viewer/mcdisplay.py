@@ -87,8 +87,6 @@ def run_mcdisplay(instrument_object, format="webgl-classic", nobrowse=None):
         Path to generated index.html (for webgl formats), or None for 'window'.
     """
     parameters = _extract_params(instrument_object)
-    parameter_string = " ".join(f"{k}={v}" for k, v in parameters.items())
-
     base_executable = _get_format_executable(
         instrument_object.package_name, format
     )
@@ -108,21 +106,14 @@ def run_mcdisplay(instrument_object, format="webgl-classic", nobrowse=None):
         # itself since it knows the correct URL (http://localhost:5173).
         nobrowse = notebook and format not in ("window", "webgl")
 
-    options = ""
+    command = [bin_path, "--dirname", dir_name]
     if nobrowse:
-        options = "--nobrowse "
-
-    dir_control = "--dirname " + dir_name + " "
-    full_command = (
-        '"' + bin_path + '" '
-        + dir_control
-        + options
-        + instr_path
-        + " " + parameter_string
-    )
+        command.append("--nobrowse")
+    command.append(instr_path)
+    command.extend(f"{k}={v}" for k, v in parameters.items())
 
     process = subprocess.run(
-        full_command, shell=True,
+        command, shell=False,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True,
