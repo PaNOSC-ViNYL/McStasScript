@@ -134,16 +134,19 @@ class MaterialLibrary:
 
 class PyThreejsRenderer(RendererBackend):
     def __init__(self, colors: list[str] | None = None, colormode: str = "default", num_components: int = 0,
-                  intensity_map: dict | None = None, cmap: str = "inferno", log_scale: bool = True,
-                  colorbar_label: str | None = None, instrument_object=None,
-                  component_colors: dict[str, str] | None = None,
-                  component_opacity: dict[str, float] | None = None):
+                   intensity_map: dict | None = None, cmap: str = "inferno", log_scale: bool = True,
+                   orders_of_mag: float = 300, colorbar_label: str | None = None, instrument_object=None,
+                   component_colors: dict[str, str] | None = None,
+                   component_opacity: dict[str, float] | None = None):
         self.material_library = MaterialLibrary(colors=colors or DEFAULT_COLORS)
         self.colormode = colormode
         self.num_components = num_components
         self.intensity_map = intensity_map
         self.cmap = cmap
         self.log_scale = log_scale
+        if not isinstance(orders_of_mag, (int, float)) or orders_of_mag <= 0:
+            raise ValueError("orders_of_mag must be a positive number")
+        self.orders_of_mag = float(orders_of_mag)
         self._colorbar_label = colorbar_label
         self._colorbar_widget = None
         self._intensity_computed_label = None
@@ -248,8 +251,13 @@ class PyThreejsRenderer(RendererBackend):
             if self.intensity_map is not None and not self._data_stale:
                 comp_name = component.comp.name
                 intensity = self.intensity_map.get(comp_name, 0.0)
+                min_intensity, max_intensity = self._intensity_color_limits()
                 self._temp_color = intensity_to_color(
-                    intensity, self._min_I, self._max_I, self.cmap, self.log_scale
+                    intensity,
+                    min_intensity,
+                    max_intensity,
+                    self.cmap,
+                    self.log_scale and self._can_use_log_scale(),
                 )
             elif self._data_stale:
                 self._temp_color = "#808080"
@@ -684,12 +692,20 @@ class PyThreejsRenderer(RendererBackend):
         )
 
         if use_log:
+            max_positive = max(positive_values)
+            min_positive = max(
+                min(positive_values),
+                max_positive / (10.0 ** self.orders_of_mag),
+            )
             norm = LogNorm(
-                vmin=min(positive_values),
-                vmax=max(positive_values),
+                vmin=min_positive,
+                vmax=max_positive,
             )
         else:
-            norm = Normalize(vmin=max(vmin, 0), vmax=vmax)
+            if self.colormode == "intensity":
+                norm = Normalize(vmin=vmin, vmax=vmax)
+            else:
+                norm = Normalize(vmin=max(vmin, 0), vmax=vmax)
 
         sm = ScalarMappable(cmap=cmap_name, norm=norm)
         sm.set_array([])
@@ -710,6 +726,8 @@ class PyThreejsRenderer(RendererBackend):
 
     def _update_colorbar(self):
         """Update the colorbar widget in-place after a colormode change."""
+        if not hasattr(self, "_colorbar_ax"):
+            return
         self._update_colorbar_figure()
 
     def _grey_all_components(self):
@@ -735,6 +753,14 @@ class PyThreejsRenderer(RendererBackend):
             and any(value > 0 for value in values)
         )
 
+    def _intensity_color_limits(self):
+        """Return intensity limits after applying the logarithmic range cap."""
+        if not self.log_scale or not self._can_use_log_scale():
+            return self._min_I, self._max_I
+
+        min_intensity = self._max_I / (10.0 ** self.orders_of_mag)
+        return max(self._min_I, min_intensity), self._max_I
+
     def _update_log_scale_control(self):
         """Enable logarithmic scaling only when current data supports it."""
         log_scale_widget = self._intensity_widgets.get("log_scale")
@@ -753,8 +779,13 @@ class PyThreejsRenderer(RendererBackend):
         for idx in self.component_children:
             comp_name = self.simple_components[idx]["name"]
             intensity = self.intensity_map.get(comp_name, 0.0)
+            min_intensity, max_intensity = self._intensity_color_limits()
             color = intensity_to_color(
-                intensity, self._min_I, self._max_I, self.cmap, self.log_scale
+                intensity,
+                min_intensity,
+                max_intensity,
+                self.cmap,
+                self.log_scale and self._can_use_log_scale(),
             )
             self.update_component_color(idx, color)
         if self._custom_colors_active:
@@ -930,6 +961,21 @@ class PyThreejsRenderer(RendererBackend):
         if self.colormode == "intensity" and not self._data_stale:
             self._apply_current_intensity_colors()
 
+    def _on_orders_of_mag_change(self, change):
+        """Apply a valid orders-of-magnitude range to current intensity data."""
+        if change["type"] != "change":
+            return
+        try:
+            orders_of_mag = float(change["new"])
+        except (TypeError, ValueError):
+            return
+        if orders_of_mag <= 0:
+            return
+
+        self.orders_of_mag = orders_of_mag
+        if self.colormode == "intensity" and not self._data_stale:
+            self._apply_current_intensity_colors()
+
     def create_intensity_controls(self):
         """Create the intensity simulation control widgets."""
         import ipywidgets as ipw
@@ -1000,6 +1046,15 @@ class PyThreejsRenderer(RendererBackend):
         )
         log_scale_widget.observe(self._on_log_scale_change, names="value")
 
+        orders_of_mag_widget = ipw.Text(
+            value=str(self.orders_of_mag),
+            description="Orders of magnitude:",
+            tooltip="Limit logarithmic colors below the maximum",
+            style={"description_width": "initial"},
+            layout=ipw.Layout(width="210px"),
+        )
+        orders_of_mag_widget.observe(self._on_orders_of_mag_change, names="value")
+
         run_button = ipw.Button(
             description="Run",
             button_style="",
@@ -1020,12 +1075,13 @@ class PyThreejsRenderer(RendererBackend):
             "limits_max": limits_max_widget,
             "aggregate": aggregate_widget,
             "log_scale": log_scale_widget,
+            "orders_of_mag": orders_of_mag_widget,
             "run_button": run_button,
         }
         self._update_log_scale_control()
 
         row1 = ipw.HBox([ncount_widget, variable_widget, limits_check_widget, limits_min_widget, limits_max_widget, run_button])
-        row2 = ipw.HBox([aggregate_widget, log_scale_widget])
+        row2 = ipw.HBox([aggregate_widget, log_scale_widget, orders_of_mag_widget])
         container = ipw.VBox([row1, row2], layout=ipw.Layout(display="none"))
         self._intensity_controls_container = container
         return container
@@ -1036,8 +1092,13 @@ class PyThreejsRenderer(RendererBackend):
             if self.intensity_map is not None and not self._data_stale:
                 comp_name = self.simple_components[idx]["name"]
                 intensity = self.intensity_map.get(comp_name, 0.0)
+                min_intensity, max_intensity = self._intensity_color_limits()
                 return intensity_to_color(
-                    intensity, self._min_I, self._max_I, self.cmap, self.log_scale
+                    intensity,
+                    min_intensity,
+                    max_intensity,
+                    self.cmap,
+                    self.log_scale and self._can_use_log_scale(),
                 )
             if self._data_stale:
                 return "#808080"

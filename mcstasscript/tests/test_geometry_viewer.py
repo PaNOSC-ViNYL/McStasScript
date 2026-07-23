@@ -1404,8 +1404,45 @@ class TestPyThreejsIntensity(unittest.TestCase):
     def test_intensity_widgets_populated(self):
         """After creating controls, _intensity_widgets dict is populated."""
         self.renderer.create_intensity_controls()
-        expected_keys = {"ncount", "variable", "limits_check", "limits_min", "limits_max", "aggregate", "log_scale", "run_button"}
+        expected_keys = {"ncount", "variable", "limits_check", "limits_min", "limits_max", "aggregate", "log_scale", "orders_of_mag", "run_button"}
         self.assertEqual(set(self.renderer._intensity_widgets.keys()), expected_keys)
+
+    def test_orders_of_mag_control_updates_renderer(self):
+        """Changing orders of magnitude updates the renderer range setting."""
+        self.renderer.create_intensity_controls()
+        orders_widget = self.renderer._intensity_widgets["orders_of_mag"]
+
+        orders_widget.value = "4.5"
+
+        self.assertEqual(self.renderer.orders_of_mag, 4.5)
+
+    def test_orders_of_mag_limits_log_colorbar(self):
+        """Log colorbar keeps the maximum and limits its lower decade range."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+
+        renderer = PyThreejsRenderer(
+            intensity_map={"low": 1e-9, "high": 1.0},
+            colormode="intensity",
+            orders_of_mag=3,
+        )
+        renderer.create_colorbar()
+
+        self.assertAlmostEqual(renderer._colorbar_cbar.norm.vmin, 1e-3)
+        self.assertAlmostEqual(renderer._colorbar_cbar.norm.vmax, 1.0)
+
+    def test_negative_intensity_data_uses_linear_colorbar(self):
+        """Negative values disable logarithmic scaling and remain visible."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+
+        renderer = PyThreejsRenderer(
+            intensity_map={"low": -2.0, "high": 1.0},
+            colormode="intensity",
+            log_scale=True,
+        )
+        renderer.create_colorbar()
+
+        self.assertEqual(renderer._colorbar_cbar.norm.vmin, -2.0)
+        self.assertEqual(renderer._colorbar_cbar.norm.vmax, 1.0)
 
     def test_run_failure_warns_and_marks_data_stale(self):
         """Intensity failures should be visible and leave the widget stale."""
