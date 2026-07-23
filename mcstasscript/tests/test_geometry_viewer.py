@@ -1458,6 +1458,28 @@ class TestPyThreejsIntensity(unittest.TestCase):
                 renderer._on_run_click(button)
         self.assertTrue(renderer._data_stale)
 
+    def test_run_uses_diagnostic_ncount_setting(self):
+        """The ncount widget value persists through the diagnostic reset."""
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+
+        renderer = PyThreejsRenderer(instrument_object=MagicMock())
+        renderer.create_intensity_controls()
+        renderer._intensity_widgets["ncount"].value = 12345
+        button = renderer._intensity_widgets["run_button"]
+
+        diagnostic = MagicMock()
+        diagnostic.data = object()
+        diagnostic.monitors = []
+        diagnostic.data_dim = 0
+        with patch(
+            "mcstasscript.instrument_diagnostics.intensity_diagnostics.IntensityDiagnostics",
+            return_value=diagnostic,
+        ):
+            renderer._on_run_click(button)
+
+        diagnostic.settings.assert_called_once_with(ncount=12345)
+        diagnostic.instr.settings.assert_not_called()
+
     def test_variable_dropdown_options(self):
         """Variable dropdown includes common McStas variables."""
         self.renderer.create_intensity_controls()

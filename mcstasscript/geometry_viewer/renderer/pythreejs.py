@@ -914,7 +914,7 @@ class PyThreejsRenderer(RendererBackend):
 
             diag = IntensityDiagnostics(self.instrument_object)
             if ncount:
-                diag.instr.settings(ncount=ncount)
+                diag.settings(ncount=ncount)
             if variable is not None:
                 diag.run_general(variable=variable, limits=limits)
             else:
