@@ -425,7 +425,6 @@ def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
 
 
 def view(instrument_object, backend: str = "pythreejs",
-           allow_guess: bool = False,
            guess: bool = False,
            json_dict: dict | None = None, json_file: str | None = None,
            index_min: int | None = None, index_max: int | None = None,
@@ -452,14 +451,11 @@ def view(instrument_object, backend: str = "pythreejs",
         - 'webgl': generate HTML via mcdisplay-webgl, display as IFrame or browser
         - 'webgl-classic': generate HTML via mcdisplay-webgl-classic, display as IFrame or browser
         - 'window': launch mcdisplay-pyqtgraph native window
-        - 'guess': skip mcdisplay, guess geometry from component parameters
-    allow_guess : bool
-        If True, try geometry guess first, fall back to mcdisplay JSON on error.
-        Default False.
+        Guessing is enabled separately with ``guess=True`` and uses the
+        selected Python renderer.
     guess : bool
         If True, explicitly attempt geometry guess first, then fall back to
-        mcdisplay JSON with a warning.  Equivalent to allow_guess=True but
-        emits a warning on fallback.
+        mcdisplay JSON with a warning.
     json_dict : dict, optional
         Pre-loaded instrument.json dict (skips mcdisplay generation).
     json_file : str, optional
@@ -520,24 +516,8 @@ def view(instrument_object, backend: str = "pythreejs",
             return None
         return display_mcdisplay_html(html_path, width=width, height=height)
 
-    # --- guess-only backend ---
-    if backend == "guess":
-        renderer = kwargs.pop("renderer", "pythreejs")
-        try:
-            return view_with_guess(instrument_object, backend=renderer, width=width, height=height,
-                                   component_colors=component_colors,
-                                   component_opacity=component_opacity, verbose=verbose, **kwargs)
-        except Exception as exc:
-            warnings.warn(
-                f"Geometry guess failed ({exc}); falling back to mcdisplay JSON.",
-                UserWarning,
-                stacklevel=2,
-            )
-            backend = renderer
-            guess = False
-
     # --- Python rendering backends (pythreejs, matplotlib, matplotlib_2d) ---
-    if guess or allow_guess:
+    if guess:
         try:
             return view_with_guess(instrument_object, backend=backend, width=width, height=height,
                                     component_colors=component_colors,

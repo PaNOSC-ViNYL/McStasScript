@@ -2742,7 +2742,8 @@ class McCode_instr(BaseCalculator):
         - 'webgl': mcdisplay HTML viewer (IFrame in notebook, browser in terminal)
         - 'webgl-classic': mcdisplay classic HTML viewer
         - 'window': mcdisplay native pyqtgraph window
-        - 'guess': guess geometry from component parameters (no mcdisplay)
+        Geometry guessing is enabled separately with guess=True and uses the
+        selected Python renderer.
 
         Parameters
         ----------

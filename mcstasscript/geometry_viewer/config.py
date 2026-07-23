@@ -1,9 +1,4 @@
-import io
-
 import matplotlib.pyplot as plt
-from matplotlib.cm import ScalarMappable
-from matplotlib.colors import Normalize, LogNorm
-from matplotlib.ticker import MaxNLocator
 import numpy as np
 
 DEFAULT_COLORS = [
@@ -59,35 +54,3 @@ def intensity_to_color(intensity: float, min_I: float, max_I: float,
     rgba = plt.get_cmap(cmap)(t)
     r, g, b = int(round(rgba[0] * 255)), int(round(rgba[1] * 255)), int(round(rgba[2] * 255))
     return f"#{r:02x}{g:02x}{b:02x}"
-
-
-def create_colorbar_image(cmap: str, vmin: float, vmax: float,
-                          label: str, log_scale: bool = True,
-                          num_ticks: int = 5) -> bytes:
-    """Create a colorbar as a PNG image.
-
-    Renders a small matplotlib figure with a vertical colorbar using the
-    given colormap, limits, label, and normalization. Returns PNG bytes.
-    """
-    if log_scale and vmax > 0 and vmin > 0:
-        norm = LogNorm(vmin=vmin, vmax=vmax)
-    else:
-        norm = Normalize(vmin=max(vmin, 0), vmax=vmax)
-
-    sm = ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])
-
-    fig = plt.figure(figsize=(1.2, 4.0))
-    ax = fig.add_axes([0.3, 0.1, 0.4, 0.65])
-    cbar = fig.colorbar(sm, cax=ax, label=label)
-    cbar.locator = MaxNLocator(nbins=num_ticks)
-    cbar.update_ticks()
-    cbar.ax.tick_params(labelsize=11)
-    cbar.ax.set_ylabel(label, fontsize=11, rotation=90, labelpad=12)
-
-    buf = io.BytesIO()
-    fig.savefig(buf, format='png', dpi=150, bbox_inches='tight', pad_inches=0.15)
-    buf.seek(0)
-    png_bytes = buf.getvalue()
-    plt.close(fig)
-    return png_bytes

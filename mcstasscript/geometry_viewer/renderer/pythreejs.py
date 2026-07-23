@@ -28,6 +28,7 @@ from mcstasscript.geometry_viewer.config import (
 )
 
 
+# Component details inherit terminal colors; strip ANSI codes before widget display.
 _ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
 
@@ -260,6 +261,7 @@ class PyThreejsRenderer(RendererBackend):
                     self.log_scale and self._can_use_log_scale(),
                 )
             elif self._data_stale:
+                # Grey indicates that the selected variable has not been run yet.
                 self._temp_color = "#808080"
             else:
                 self._temp_color = None

@@ -1628,37 +1628,6 @@ class TestMatplotlibIntensity(unittest.TestCase):
         self.assertEqual(renderer.component_colors[0], renderer.colors[0])
 
 
-class TestColorbarImage(unittest.TestCase):
-    """Tests for create_colorbar_image: generates a PNG colorbar."""
-
-    def test_returns_png_bytes(self):
-        """Should return valid PNG bytes."""
-        from mcstasscript.geometry_viewer.config import create_colorbar_image
-        result = create_colorbar_image("inferno", 0.1, 10.0, "Test", log_scale=True)
-        self.assertIsInstance(result, bytes)
-        self.assertTrue(result.startswith(b'\x89PNG'))
-
-    def test_linear_scale(self):
-        """Linear scale should produce valid PNG."""
-        from mcstasscript.geometry_viewer.config import create_colorbar_image
-        result = create_colorbar_image("viridis", 0, 100, "Index", log_scale=False)
-        self.assertIsInstance(result, bytes)
-        self.assertTrue(result.startswith(b'\x89PNG'))
-
-    def test_different_colormaps(self):
-        """Different colormaps should produce different images."""
-        from mcstasscript.geometry_viewer.config import create_colorbar_image
-        img1 = create_colorbar_image("inferno", 1.0, 100.0, "Test", log_scale=True)
-        img2 = create_colorbar_image("viridis", 1.0, 100.0, "Test", log_scale=True)
-        self.assertNotEqual(img1, img2)
-
-    def test_zero_min(self):
-        """Zero min with log scale should fall back to linear."""
-        from mcstasscript.geometry_viewer.config import create_colorbar_image
-        result = create_colorbar_image("inferno", 0.0, 10.0, "Test", log_scale=True)
-        self.assertIsInstance(result, bytes)
-
-
 class TestPyThreejsColorbar(unittest.TestCase):
     """Tests for PyThreejsRenderer colorbar widget."""
 
@@ -3777,15 +3746,28 @@ class TestSafeEval(unittest.TestCase):
         self.assertAlmostEqual(safe_eval("10 / 4"), 2.5)
 
     def test_constants(self):
-        """Built-in constants PI and DEG2RAD resolve."""
+        """Built-in constants PI, DEG2RAD, and RAD2DEG resolve."""
         self.assertAlmostEqual(safe_eval("PI"), math.pi)
         self.assertAlmostEqual(safe_eval("45 * DEG2RAD"), math.pi / 4)
+        self.assertAlmostEqual(safe_eval("180 * RAD2DEG"), 180 * 180 / math.pi)
+
+    def test_energy_is_an_instrument_variable_not_a_constant(self):
+        """E resolves only when supplied as an instrument variable."""
+        with self.assertRaises(UnsafeExpressionError):
+            safe_eval("E")
+        self.assertAlmostEqual(safe_eval("E", {"E": 12.5}), 12.5)
 
     def test_math_functions(self):
         """Whitelisted math functions work."""
         self.assertAlmostEqual(safe_eval("sin(PI/2)"), 1.0)
         self.assertAlmostEqual(safe_eval("sqrt(16)"), 4.0)
         self.assertAlmostEqual(safe_eval("abs(-5)"), 5.0)
+        self.assertAlmostEqual(safe_eval("pow(2, 3)"), 8.0)
+
+    def test_caret_is_not_power_operator(self):
+        """McStas expressions use pow() rather than Python-style caret power."""
+        with self.assertRaisesRegex(UnsafeExpressionError, "use pow"):
+            safe_eval("2 ^ 3")
 
     def test_variables(self):
         """Instrument variables are resolved."""

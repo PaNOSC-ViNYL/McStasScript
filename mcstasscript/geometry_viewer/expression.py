@@ -36,7 +36,6 @@ SAFE_CONSTANTS = {
     "PI": math.pi,
     "DEG2RAD": math.pi / 180.0,
     "RAD2DEG": 180.0 / math.pi,
-    "E": math.e,
 }
 
 # Token pattern for the expression parser
@@ -45,7 +44,7 @@ _IDENT = r"[A-Za-z_]\w*"
 _TOKEN_RE = re.compile(
     rf"(?P<number>{_NUMBER})"
     rf"|(?P<ident>{_IDENT})"
-    rf"|(?P<op>[+\-*/%^(){{}}<>=!,])"
+    rf"|(?P<op>[+\-*/%(){{}}<>=!,])"
     rf"|(?P<ws>\s+)"
 )
 
@@ -60,9 +59,9 @@ def safe_eval(expression: str, variables: dict[str, float] | None = None) -> flo
     Supports:
     - Numeric literals (int, float, scientific notation)
     - Instrument variables (resolved from *variables* dict)
-    - Built-in constants: PI, DEG2RAD, RAD2DEG, E
+    - Built-in constants: PI, DEG2RAD, RAD2DEG
     - Whitelisted math functions: sin, cos, tan, sqrt, exp, log, abs, etc.
-    - Arithmetic operators: +, -, *, /, %, ^ (power), parentheses
+    - Arithmetic operators: +, -, *, /, %, parentheses; use pow() for powers
 
     Parameters
     ----------
@@ -89,6 +88,11 @@ def safe_eval(expression: str, variables: dict[str, float] | None = None) -> flo
     expr = str(expression).strip()
     if not expr:
         raise ValueError("Empty expression")
+
+    if "^" in expr:
+        raise UnsafeExpressionError(
+            "The '^' operator is not supported in McStas expressions; use pow() for exponentiation."
+        )
 
     # Try direct numeric conversion first
     try:
@@ -121,12 +125,9 @@ def safe_eval(expression: str, variables: dict[str, float] | None = None) -> flo
                     f"Unresolved or unsafe identifier '{name}' in expression: {expr!r}"
                 )
 
-    # Build a safe expression by replacing ^ with **
-    safe_expr = expr.replace("^", "**")
-
     # Use Python's eval with restricted namespace
     try:
-        result = eval(safe_expr, {"__builtins__": {}}, namespace)
+        result = eval(expr, {"__builtins__": {}}, namespace)
         return float(result)
     except Exception as exc:
         raise UnsafeExpressionError(

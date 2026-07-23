@@ -388,6 +388,7 @@ class ComponentModel:
             registry = _builtin_registry
 
         self.shape_list = []
+        # Some component proxies expose parameter_names as None.
         parameter_names = getattr(self.comp, "parameter_names", []) or []
 
         # Try to find a matching rule
