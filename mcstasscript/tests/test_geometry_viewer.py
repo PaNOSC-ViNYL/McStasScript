@@ -980,6 +980,12 @@ class TestApi(unittest.TestCase):
         with self.assertRaises(ValueError):
             _get_renderer("unknown_backend")
 
+    def test_get_renderer_pythreejs_reports_missing_optional_module(self):
+        """The pythreejs backend gives an actionable missing-dependency error."""
+        with patch.dict("sys.modules", {"pythreejs": None}):
+            with self.assertRaisesRegex(ImportError, "pythreejs.*geometry-viewer"):
+                _get_renderer("pythreejs")
+
     def test_matplotlib_does_not_import_pythreejs(self):
         """Matplotlib rendering should work when pythreejs is unavailable."""
         instr = MagicMock()
@@ -3999,6 +4005,20 @@ class TestGuessGeometryBuiltins(unittest.TestCase):
         self.assertIsInstance(model.shape_list[0], LineSegmentsShape)
         self.assertEqual(model.shape_list[0].points.shape, (8, 3))
 
+    def test_rectangle_outline_zy_only(self):
+        """Component with zdepth+yheight (no xwidth) produces rectangle outline."""
+        comp = self._make_comp(
+            parameter_names=["zdepth", "yheight"],
+            parameter_defaults={"zdepth": 0.0, "yheight": 0.0},
+            zdepth=2.0,
+            yheight=4.0,
+        )
+        model = ComponentModel(comp)
+        result = model.guess_geometry_from_comp_object()
+        self.assertTrue(result)
+        self.assertIsInstance(model.shape_list[0], LineSegmentsShape)
+        self.assertEqual(model.shape_list[0].points.shape, (8, 3))
+
     def test_axis_triad_no_params(self):
         """Component with no parameters produces axis triad."""
         comp = self._make_comp()
@@ -4101,12 +4121,14 @@ class TestGeometryGuessFailureSkip(unittest.TestCase):
             old_stdout = sys.stdout
             sys.stdout = captured
             try:
-                result = view_with_guess(instr, backend="matplotlib")
+                result = view_with_guess(instr, backend="matplotlib", verbose=True)
             finally:
                 sys.stdout = old_stdout
 
         output = captured.getvalue()
         self.assertIn("Skipping component 'bad_comp'", output)
+        self.assertIn("Geometry guess could not recognize 1 component", output)
+        self.assertIn("verbose=True", output)
         self.assertIn("good_box", rendered_names)
         self.assertIn("another_good", rendered_names)
         self.assertNotIn("bad_comp", rendered_names)
@@ -4166,6 +4188,23 @@ class TestTransformFailureDiagnostics(unittest.TestCase):
         self.assertIn("child1", output)
         self.assertIn("child2", output)
         self.assertNotIn("orphan", output)
+
+    def test_failed_transform_can_be_quiet(self):
+        """Verbose=False suppresses geometry-guess diagnostics on stdout."""
+        base = self._make_comp("base", at=(0, 0, 0), at_ref="MissingParent")
+        instr = self._make_instr([base])
+
+        import io, sys
+        captured = io.StringIO()
+        old_stdout = sys.stdout
+        sys.stdout = captured
+        try:
+            with self.assertRaises(TransformResolutionError):
+                view_with_guess(instr, backend="matplotlib", verbose=False)
+        finally:
+            sys.stdout = old_stdout
+
+        self.assertEqual(captured.getvalue(), "")
 
 
 if __name__ == '__main__':

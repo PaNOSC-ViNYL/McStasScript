@@ -21,8 +21,31 @@ from mcstasscript.geometry_viewer.transform import resolve_transforms, Transform
 from mcstasscript.geometry_viewer.expression import safe_eval
 
 
+def _missing_pythreejs_dependencies():
+    """Return optional modules required by the pythreejs backend that are missing."""
+    missing = []
+    for module_name in ("pythreejs", "ipympl"):
+        try:
+            __import__(module_name)
+        except ImportError:
+            missing.append(module_name)
+    return missing
+
+
+def _pythreejs_dependency_message(missing):
+    modules = ", ".join(missing)
+    return (
+        "The 'pythreejs' backend requires the optional module(s) "
+        f"{modules}. Install them with "
+        "`pip install McStasScript[geometry-viewer]`."
+    )
+
+
 def _get_renderer(backend: str = "pythreejs", **kwargs):
     if backend == "pythreejs":
+        missing = _missing_pythreejs_dependencies()
+        if missing:
+            raise ImportError(_pythreejs_dependency_message(missing))
         from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
         return PyThreejsRenderer(**kwargs)
     else:
@@ -182,8 +205,9 @@ def view_with_analysis(instrument_object, backend: str = "pythreejs",
 
 
 def view_with_guess(instrument_object, backend: str = "pythreejs",
-                       component_colors: dict[str, str] | None = None,
-                       component_opacity: dict[str, float] | None = None, **kwargs):
+                        component_colors: dict[str, str] | None = None,
+                        component_opacity: dict[str, float] | None = None,
+                        verbose: bool = True, **kwargs):
     """
     Plots instrument geometry with best guesses of geometry.
 
@@ -246,12 +270,14 @@ def view_with_guess(instrument_object, backend: str = "pythreejs",
                     break
                 dependents.extend(new_dependents)
                 affected.update(new_dependents)
-        print(f"Geometry guess ABORTED: cannot resolve location of component '{failed_name}'.")
-        if dependents:
-            print(f"  Dependent components that rely on it: {', '.join(dependents)}")
+        if verbose:
+            print(f"Geometry guess ABORTED: cannot resolve location of component '{failed_name}'.")
+            if dependents:
+                print(f"  Dependent components that rely on it: {', '.join(dependents)}")
         raise
 
     instrument_model = InstrumentModel()
+    skipped_components = 0
     for component in instrument_object.component_list:
         try:
             component_model = ComponentModel(component)
@@ -261,10 +287,18 @@ def view_with_guess(instrument_object, backend: str = "pythreejs",
             component_model.set_global_transform(global_transforms[component.name])
             instrument_model.add_model(component_model)
         except Exception as exc:
-            print(f"Skipping component '{component.name}': geometry guess failed ({exc})")
+            skipped_components += 1
+            if verbose:
+                print(f"Skipping component '{component.name}': geometry guess failed ({exc})")
             continue
 
     num_components = len(instrument_model.component_models)
+    if skipped_components:
+        component_word = "component" if skipped_components == 1 else "components"
+        print(
+            f"Geometry guess could not recognize {skipped_components} {component_word}. "
+            "Use verbose=True for details."
+        )
     kwargs.setdefault("num_components", num_components)
     intensity_map = kwargs.get("intensity_map")
     if intensity_map is not None:
@@ -402,6 +436,7 @@ def view(instrument_object, backend: str = "pythreejs",
            colorbar_label: str | None = None,
            component_colors: dict[str, str] | None = None,
            component_opacity: dict[str, float] | None = None,
+           verbose: bool = True,
            **kwargs):
     """
     Plots instrument geometry.
@@ -455,6 +490,9 @@ def view(instrument_object, backend: str = "pythreejs",
         When provided with the 'pythreejs' backend, adds a "Custom opacity"
         checkbox to the widget that, when checked, overrides the current
         opacity for the specified components. Ignored for other backends.
+    verbose : bool
+        If True, print diagnostics from the geometry-guess branch. Default True
+        for backwards compatibility; ``show_instrument`` defaults to False.
     projection : str
         Axis projection for matplotlib_2d backend. One of 'xy', 'zx', 'zy'.
         Default 'zx' (matches McStas beam-layout convention). Ignored for 3D backends.
@@ -488,7 +526,7 @@ def view(instrument_object, backend: str = "pythreejs",
         try:
             return view_with_guess(instrument_object, backend=renderer, width=width, height=height,
                                    component_colors=component_colors,
-                                   component_opacity=component_opacity, **kwargs)
+                                   component_opacity=component_opacity, verbose=verbose, **kwargs)
         except Exception as exc:
             warnings.warn(
                 f"Geometry guess failed ({exc}); falling back to mcdisplay JSON.",
@@ -503,7 +541,7 @@ def view(instrument_object, backend: str = "pythreejs",
         try:
             return view_with_guess(instrument_object, backend=backend, width=width, height=height,
                                     component_colors=component_colors,
-                                    component_opacity=component_opacity, **kwargs)
+                                    component_opacity=component_opacity, verbose=verbose, **kwargs)
         except Exception:
             if guess:
                 warnings.warn(

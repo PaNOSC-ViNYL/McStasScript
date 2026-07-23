@@ -2732,7 +2732,7 @@ class McCode_instr(BaseCalculator):
         return self.backengine()
 
     def show_instrument(self, backend=None, format=None, width=800, height=450,
-                        new_tab=False, guess=False, **kwargs):
+                        new_tab=False, guess=False, verbose=False, **kwargs):
         """
         Visualize the instrument geometry.
 
@@ -2760,6 +2760,9 @@ class McCode_instr(BaseCalculator):
         guess : bool
             If True, attempt geometry guess first, then fall back to mcdisplay
             JSON with a warning.  Default False.
+        verbose : bool
+            If True, print diagnostics from the geometry-guess branch. Default
+            False.
         component_colors : dict, optional
             Mapping of component name to hex color string (e.g. {"guide1": "#ff0000"}).
             With the 'pythreejs' backend, adds a "Custom colors" checkbox to the
@@ -2776,6 +2779,10 @@ class McCode_instr(BaseCalculator):
         Widget, figure, or None depending on backend.
         """
         from mcstasscript.geometry_viewer import view
+        from mcstasscript.geometry_viewer.api import (
+            _missing_pythreejs_dependencies,
+            _pythreejs_dependency_message,
+        )
 
         if format is not None:
             warnings.warn(
@@ -2790,16 +2797,19 @@ class McCode_instr(BaseCalculator):
 
         resolved_backend = backend or "pythreejs"
         if resolved_backend == "pythreejs":
-            try:
-                import pythreejs  # noqa: F401
-            except ImportError:
-                raise ImportError(
-                    "pythreejs is required for the 'pythreejs' backend. "
-                    "Install it with: pip install pythreejs"
+            missing = _missing_pythreejs_dependencies()
+            if missing:
+                warnings.warn(
+                    _pythreejs_dependency_message(missing)
+                    + " Falling back to the 'webgl-classic' backend.",
+                    UserWarning,
+                    stacklevel=2,
                 )
+                resolved_backend = "webgl-classic"
 
         return view(self, backend=resolved_backend,
-                    width=width, height=height, guess=guess, **kwargs)
+                    width=width, height=height, guess=guess,
+                    verbose=verbose, **kwargs)
 
     def show_diagram(self, analysis=False, variable=None, limits=None):
         """

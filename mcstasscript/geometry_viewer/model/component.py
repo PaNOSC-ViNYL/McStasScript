@@ -184,10 +184,10 @@ def _factory_rectangle_outline_xy(comp, instr_parameters=None):
     return LineSegmentsShape(points=points)
     
 def _factory_rectangle_outline_zy(comp, instr_parameters=None):
-    """Create a rectangle outline (LineSegmentsShape) from xwidth + yheight."""
+    """Create a rectangle outline (LineSegmentsShape) from zdepth + yheight."""
     zdepth = _get_param(comp, "zdepth", instr_parameters)
     yheight = _get_param(comp, "yheight", instr_parameters)
-    if zpdeth is None or zdepth <= 0 or yheight is None or yheight <= 0:
+    if zdepth is None or zdepth <= 0 or yheight is None or yheight <= 0:
         return None
     hw, hh = zdepth / 2, yheight / 2
     points = np.array([

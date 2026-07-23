@@ -2476,6 +2476,40 @@ class TestMcStas_instr(unittest.TestCase):
                                     universal_newlines=True,
                                     cwd=".")
 
+    @unittest.mock.patch.dict("sys.modules", {"pythreejs": None, "ipympl": None})
+    @unittest.mock.patch("mcstasscript.geometry_viewer.view")
+    def test_show_instrument_falls_back_when_widget_dependencies_are_missing(self, mock_view):
+        """Missing pythreejs widgets should fall back to the classic HTML viewer."""
+        instr = setup_populated_instr_with_dummy_path()
+
+        with self.assertWarnsRegex(UserWarning, "pythreejs.*ipympl.*webgl-classic"):
+            instr.show_instrument()
+
+        mock_view.assert_called_once_with(
+            instr,
+            backend="webgl-classic",
+            width=800,
+            height=450,
+            guess=False,
+            verbose=False,
+        )
+
+    @unittest.mock.patch("mcstasscript.geometry_viewer.view")
+    def test_show_instrument_forwards_verbose(self, mock_view):
+        """show_instrument exposes the geometry-guess verbosity control."""
+        instr = setup_populated_instr_with_dummy_path()
+
+        instr.show_instrument(backend="matplotlib", guess=True, verbose=True)
+
+        mock_view.assert_called_once_with(
+            instr,
+            backend="matplotlib",
+            width=800,
+            height=450,
+            guess=True,
+            verbose=True,
+        )
+
     def test_show_dumps_works(self):
         """
         Ensures show_dumps runs
