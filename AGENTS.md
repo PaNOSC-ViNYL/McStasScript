@@ -48,24 +48,6 @@ Integration tests require a McStas installation. Run with:
 python -m unittest discover -s mcstasscript/integration_tests -v
 ```
 
-## GitHub CLI
-
-Use the authenticated `gh` CLI for GitHub-hosted operations such as pull
-requests, issues, reviews, checks, and releases. Verify the active
-authentication before performing those operations:
-
-```bash
-gh auth status
-gh api user --jq '.login'
-```
-
-If Git transport authentication is unavailable, configure Git to use the
-authenticated `gh` token with:
-
-```bash
-gh auth setup-git
-```
-
 ## GitHub PR Review Comments (via gh CLI)
 
 ### Replying to a review comment
