@@ -2444,6 +2444,7 @@ class McCode_instr(BaseCalculator):
 
         if output_path is not None:
             self.output_path = output_path
+            settings["output_path"] = output_path
 
         if openacc is not None:
             settings["openacc"] = bool(openacc)
@@ -2732,15 +2733,16 @@ class McCode_instr(BaseCalculator):
         return self.backengine()
 
     def show_instrument(self, backend=None, format=None, width=800, height=450,
-                        new_tab=False, guess=False, verbose=False, **kwargs):
+                        new_tab=False, guess=False, verbose=False,
+                        index_min=None, index_max=None, cmap="inferno", **kwargs):
         """
         Visualize the instrument geometry.
 
         Delegates to geometry_viewer.view() which supports multiple backends:
-        - 'pythreejs' (default): Python 3D widget from mcdisplay JSON
+        - 'webgl-classic' (default): mcdisplay classic HTML viewer
+        - 'pythreejs': Python 3D widget from mcdisplay JSON
         - 'matplotlib' / 'matplotlib_2d': matplotlib plot from mcdisplay JSON
         - 'webgl': mcdisplay HTML viewer (IFrame in notebook, browser in terminal)
-        - 'webgl-classic': mcdisplay classic HTML viewer
         - 'window': mcdisplay native pyqtgraph window
         Geometry guessing is enabled separately with guess=True and uses the
         selected Python renderer.
@@ -2748,7 +2750,7 @@ class McCode_instr(BaseCalculator):
         Parameters
         ----------
         backend : str, optional
-            Rendering backend. Defaults to 'pythreejs'.
+            Rendering backend. Defaults to 'webgl-classic'.
         format : str, optional
             Deprecated. Use backend instead. Maps to backend value.
         width : int
@@ -2764,6 +2766,16 @@ class McCode_instr(BaseCalculator):
         verbose : bool
             If True, print diagnostics from the geometry-guess branch. Default
             False.
+        index_min : int, optional
+            First component index to visualize. Earlier components are still
+            loaded to preserve the instrument coordinate context.
+        index_max : int, optional
+            Exclusive upper component index to visualize and build. Components
+            before this index are loaded even when ``index_min`` is larger.
+            Applies to the Python/JSON geometry backends.
+        cmap : str
+            Matplotlib colormap used for intensity coloring. Default
+            ``"inferno"``.
         component_colors : dict, optional
             Mapping of component name to hex color string (e.g. {"guide1": "#ff0000"}).
             With the 'pythreejs' backend, adds a "Custom colors" checkbox to the
@@ -2793,10 +2805,10 @@ class McCode_instr(BaseCalculator):
             )
             backend = format
 
-        if new_tab and backend in ("webgl", "webgl-classic"):
-            backend = "pythreejs"
+        resolved_backend = backend or "webgl-classic"
+        if new_tab and resolved_backend in ("webgl", "webgl-classic"):
+            resolved_backend = "pythreejs"
 
-        resolved_backend = backend or "pythreejs"
         if resolved_backend == "pythreejs":
             missing = _missing_pythreejs_dependencies()
             if missing:
@@ -2808,9 +2820,20 @@ class McCode_instr(BaseCalculator):
                 )
                 resolved_backend = "webgl-classic"
 
-        return view(self, backend=resolved_backend,
-                    width=width, height=height, guess=guess,
-                    verbose=verbose, **kwargs)
+        view_kwargs = {
+            "width": width,
+            "height": height,
+            "guess": guess,
+            "verbose": verbose,
+        }
+        if index_min is not None:
+            view_kwargs["index_min"] = index_min
+        if index_max is not None:
+            view_kwargs["index_max"] = index_max
+        if cmap != "inferno":
+            view_kwargs["cmap"] = cmap
+        view_kwargs.update(kwargs)
+        return view(self, backend=resolved_backend, **view_kwargs)
 
     def show_diagram(self, analysis=False, variable=None, limits=None):
         """

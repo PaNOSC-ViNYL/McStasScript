@@ -183,6 +183,26 @@ class MatplotlibRenderer(RendererBackend):
         mapping = {"xy": [0, 1, 2], "zx": [2, 0, 1], "zy": [2, 1, 0]}
         return pts[:, mapping[self.projection]]
 
+    @staticmethod
+    def _line_points_with_breaks(points: np.ndarray) -> np.ndarray:
+        """Insert NaN rows so matplotlib does not join separate segments."""
+        separated = []
+        for start in range(0, len(points) - 1, 2):
+            separated.extend((points[start], points[start + 1]))
+            if start + 2 < len(points):
+                separated.append((np.nan, np.nan, np.nan))
+        return np.asarray(separated, dtype=float)
+
+    @staticmethod
+    def _bounds_with_margin(all_verts: list) -> tuple[np.ndarray, np.ndarray]:
+        """Return bounds with a margin relative to the rendered geometry scale."""
+        vertices = np.asarray(all_verts)
+        mins = vertices.min(axis=0)
+        maxs = vertices.max(axis=0)
+        extent = np.max(maxs - mins)
+        margin = extent * 0.05 if extent > 0 else np.finfo(float).eps
+        return mins - margin, maxs + margin
+
     def _make_collection(self, faces, color, alpha, edge_color="none", lw=0.5):
         """Create a PolyCollection (2D) or Poly3DCollection (3D) from face data."""
         if self.mode == "2d":
@@ -395,8 +415,9 @@ class MatplotlibRenderer(RendererBackend):
                 for paths in child.get_paths():
                     all_verts.extend(paths.vertices)
             elif isinstance(child, LineDescriptor):
+                points = self._line_points_with_breaks(child.points)
                 line, = ax.plot(
-                    child.points[:, 0], child.points[:, 1], child.points[:, 2],
+                    points[:, 0], points[:, 1], points[:, 2],
                     c=child.color, alpha=child.alpha, linewidth=child.linewidth,
                 )
                 all_verts.extend(child.points)
@@ -413,10 +434,7 @@ class MatplotlibRenderer(RendererBackend):
             ax.set_zlabel("Y")
 
         if all_verts:
-            all_verts = np.array(all_verts)
-            margin = 0.5
-            mins = all_verts.min(axis=0) - margin
-            maxs = all_verts.max(axis=0) + margin
+            mins, maxs = self._bounds_with_margin(all_verts)
             ax.set_xlim(mins[0], maxs[0])
             ax.set_ylim(mins[1], maxs[1])
             ax.set_zlim(mins[2], maxs[2])
@@ -456,8 +474,9 @@ class MatplotlibRenderer(RendererBackend):
                     )
                     ax.add_collection(collection)
             elif isinstance(child, LineDescriptor):
+                points = self._line_points_with_breaks(child.points)
                 line, = ax.plot(
-                    child.points[:, 0], child.points[:, 1],
+                    points[:, 0], points[:, 1],
                     c=child.color, alpha=child.alpha, linewidth=child.linewidth,
                 )
                 all_verts.extend(child.points[:, :2])
@@ -474,10 +493,7 @@ class MatplotlibRenderer(RendererBackend):
             ax.set_ylabel(label_map[self.projection][1])
 
         if all_verts:
-            all_verts = np.array(all_verts)
-            margin = 0.5
-            mins = all_verts.min(axis=0) - margin
-            maxs = all_verts.max(axis=0) + margin
+            mins, maxs = self._bounds_with_margin(all_verts)
             ax.set_xlim(mins[0], maxs[0])
             ax.set_ylim(mins[1], maxs[1])
         else:

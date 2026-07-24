@@ -3,6 +3,7 @@ import io
 import unittest
 import unittest.mock
 import ipywidgets as widgets
+from unittest.mock import MagicMock
 
 import matplotlib
 matplotlib.use('Agg')  # Set the backend to Agg
@@ -129,6 +130,22 @@ class TestSimulationInterface(unittest.TestCase):
 
         self.assertIsInstance(widget, widgets.widgets.widget_box.VBox)
 
+    def test_simulation_failure_is_visible_and_resets_run_button(self):
+        instrument = MagicMock()
+        instrument.parameters = []
+        instrument.backengine.side_effect = RuntimeError("compile failed")
+        sim_interface = SimInterface(instrument)
+        sim_interface.live_widget = widgets.Checkbox(value=False)
+        sim_interface.progress_bar = widgets.IntProgress(value=0, min=0, max=1)
+        sim_interface.run_button = widgets.Button()
+        sim_interface.simulation_status = widgets.HTML(value="Ready.")
+
+        sim_interface.run_simulation_live(None)
+
+        self.assertEqual(sim_interface.run_button.icon, "calculator")
+        self.assertFalse(sim_interface.run_button.disabled)
+        self.assertIn("Simulation failed: compile failed", sim_interface.simulation_status.value)
+
     def test_update_ncount(self):
         """
         Check ncount can be set correctly
@@ -208,4 +225,3 @@ class TestSimulationInterface(unittest.TestCase):
         change = FakeChange(new="test")
         parameterwidget_objects[2].update(change) # Should add necessary extra quotation marks
         self.assertEqual(parameters[parameterwidget_objects[2].name], "\"test\"")
-

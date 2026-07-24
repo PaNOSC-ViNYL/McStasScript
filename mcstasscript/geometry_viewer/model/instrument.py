@@ -3,12 +3,15 @@ from mcstasscript.geometry_viewer.model.bounds import Bounds
 
 
 class InstrumentModel:
-    def __init__(self, instrument_object=None, json_dict=None):
+    def __init__(self, instrument_object=None, json_dict=None, index_max=None):
         self.component_models = []
         self.bounds = Bounds()
 
         if json_dict is not None and instrument_object is not None:
-            for json_component in json_dict["components"]:
+            components = json_dict["components"]
+            if index_max is not None:
+                components = components[:index_max]
+            for json_component in components:
                 name = json_component["name"]
                 component_object = instrument_object.get_component(name)
                 component_model = ComponentModel(component_object)

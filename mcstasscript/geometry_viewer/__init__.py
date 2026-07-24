@@ -11,6 +11,7 @@ from mcstasscript.geometry_viewer.transform import (
     Transform, euler_to_rotation_matrix, resolve_transforms, TransformResolutionError,
 )
 from mcstasscript.geometry_viewer.mcdisplay import (
+    McdisplayError,
     generate_json,
     run_mcdisplay,
     display_mcdisplay_html,
@@ -34,7 +35,7 @@ __all__ = [
     "Bounds",
     "RendererBackend", "PyThreejsRenderer", "MatplotlibRenderer",
     "Transform",
-    "generate_json", "run_mcdisplay", "display_mcdisplay_html",
+    "generate_json", "run_mcdisplay", "display_mcdisplay_html", "McdisplayError",
     "GeometryRule", "GeometryRuleRegistry",
     "safe_eval", "UnsafeExpressionError",
     "euler_to_rotation_matrix", "resolve_transforms", "TransformResolutionError",

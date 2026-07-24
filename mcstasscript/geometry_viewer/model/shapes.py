@@ -42,6 +42,8 @@ class LineSegmentsShape(Shape):
         self.points = np.asarray(self.points, dtype=np.float32)
         if self.points.ndim != 2 or self.points.shape[1] != 3 or len(self.points) < 2:
             raise ValueError("LineSegmentsShape needs at least two points")
+        if len(self.points) % 2:
+            raise ValueError("LineSegmentsShape needs an even number of points")
 
     def __repr__(self):
         return f"LineSegmentsShape points={self.points.shape}"

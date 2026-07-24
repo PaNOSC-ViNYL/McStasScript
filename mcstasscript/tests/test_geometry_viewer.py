@@ -52,6 +52,7 @@ from mcstasscript.geometry_viewer.config import (
     DEFAULT_RADIAL_SEGMENTS,
     DEFAULT_CIRCLE_SEGMENTS,
     DEFAULT_NAVIGATOR_DISTANCE,
+    DEFAULT_PICK_TOLERANCE,
     index_to_color,
     intensity_to_color,
 )
@@ -380,6 +381,11 @@ class TestShapes(unittest.TestCase):
         """A line segment shape must contain at least two points."""
         with self.assertRaises(ValueError):
             LineSegmentsShape(points=np.array([[0, 0, 0]]))
+
+    def test_line_segments_odd_point_count_raises(self):
+        """Line segments must contain complete endpoint pairs."""
+        with self.assertRaises(ValueError):
+            LineSegmentsShape(points=np.zeros((3, 3)))
 
     def test_circle_shape(self):
         """
@@ -933,6 +939,10 @@ class TestConfig(unittest.TestCase):
         """
         self.assertEqual(DEFAULT_NAVIGATOR_DISTANCE, 0.5)
 
+    def test_picker_tolerance(self):
+        """Picker tolerance is a fixed world-space configuration value."""
+        self.assertEqual(DEFAULT_PICK_TOLERANCE, 0.005)
+
 
 class TestApi(unittest.TestCase):
     """Tests for the public API functions (without heavy rendering)."""
@@ -1019,6 +1029,82 @@ class TestApi(unittest.TestCase):
                    for call in renderer.render_component.call_args_list]
         self.assertEqual(indices, [0, 1])
 
+    def test_json_model_builds_from_first_component_to_index_max(self):
+        """index_min filters rendering without skipping early model components."""
+        instr = MagicMock()
+        instr.get_component.side_effect = lambda name: make_mock_component(name)
+        json_dict = {
+            "components": [
+                {"name": "first", "m4": np.eye(4).reshape(-1).tolist(), "drawcalls": []},
+                {"name": "second", "m4": np.eye(4).reshape(-1).tolist(), "drawcalls": []},
+                {"name": "third", "m4": np.eye(4).reshape(-1).tolist(), "drawcalls": []},
+                {"name": "fourth", "m4": np.eye(4).reshape(-1).tolist(), "drawcalls": []},
+            ],
+        }
+        renderer = MagicMock()
+        renderer.render_component.return_value = []
+        renderer.make_scene.return_value = object()
+        with patch("mcstasscript.geometry_viewer.api._get_renderer", return_value=renderer):
+            with patch("mcstasscript.geometry_viewer.api.plt.show"):
+                view_with_json(
+                    instr,
+                    json_dict,
+                    backend="matplotlib",
+                    index_min=2,
+                    index_max=3,
+                )
+
+        self.assertEqual(
+            [call.args[0] for call in instr.get_component.call_args_list],
+            ["first", "second", "third"],
+        )
+        self.assertEqual(
+            [call.kwargs["component_index"] for call in renderer.render_component.call_args_list],
+            [0],
+        )
+
+    def test_json_rejects_reversed_component_range(self):
+        """A component range must have index_min at or before index_max."""
+        instr = MagicMock()
+        json_dict = {
+            "components": [
+                {"name": "first", "m4": np.eye(4).reshape(-1).tolist(), "drawcalls": []},
+                {"name": "second", "m4": np.eye(4).reshape(-1).tolist(), "drawcalls": []},
+                {"name": "third", "m4": np.eye(4).reshape(-1).tolist(), "drawcalls": []},
+            ],
+        }
+
+        with self.assertRaises(ValueError):
+            view_with_json(instr, json_dict, backend="matplotlib", index_min=2, index_max=1)
+
+    def test_guess_component_range_filters_rendering(self):
+        """Geometry guessing applies the same component range semantics."""
+        instr = MagicMock()
+        instr.component_list = [
+            make_mock_component("first"),
+            make_mock_component("second"),
+            make_mock_component("third"),
+        ]
+        instr._simulation_parameters = {}
+        instr._declared_variables = {}
+        renderer = MagicMock()
+        renderer.render_component.return_value = []
+        renderer.make_scene.return_value = object()
+
+        with patch("mcstasscript.geometry_viewer.api._get_renderer", return_value=renderer):
+            with patch("mcstasscript.geometry_viewer.api.plt.show"):
+                view_with_guess(
+                    instr,
+                    backend="matplotlib",
+                    index_min=1,
+                    index_max=2,
+                )
+
+        self.assertEqual(
+            [call.kwargs["component_index"] for call in renderer.render_component.call_args_list],
+            [0],
+        )
+
 
 class TestPyThreejsComponentSelection(unittest.TestCase):
     """Tests for picking a visual and showing its source component."""
@@ -1042,12 +1128,36 @@ class TestPyThreejsComponentSelection(unittest.TestCase):
         self.assertEqual(details.value, "Click a component in the scene.")
         self.assertEqual(len(scene.controls), 2)
         self.assertIs(renderer._component_picker.controlling, renderer._component_group)
+        self.assertEqual(renderer._component_picker.lineThreshold, DEFAULT_PICK_TOLERANCE)
+        self.assertEqual(
+            renderer._component_picker.lineThreshold,
+            renderer._component_picker.pointThreshold,
+        )
 
         renderer._on_component_pick({"new": children[0]})
         self.assertEqual(details.value, str(component))
 
         renderer._on_component_pick({"new": None})
         self.assertEqual(details.value, "Click a component in the scene.")
+
+    def test_picker_maps_line_visual_to_component_details(self):
+        from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
+
+        component = make_mock_component("line_selected")
+        component.component_name = "Line"
+        model = ComponentModel(component)
+        model.shape_list = [LineSegmentsShape(points=[
+            [0, 0, 0], [1, 0, 0],
+        ])]
+
+        renderer = PyThreejsRenderer()
+        renderer.register_component(model)
+        children = renderer.render_component(model, component_index=0)
+        scene = renderer.make_scene(children)
+        details = renderer.create_component_details(scene)
+
+        renderer._on_component_pick({"new": children[0]})
+        self.assertEqual(details.value, str(component))
 
     def test_navigator_selection_updates_component_details(self):
         from mcstasscript.geometry_viewer.renderer.pythreejs import PyThreejsRenderer
@@ -1164,6 +1274,41 @@ class TestMatplotlibTransformPoints(unittest.TestCase):
         pts = np.array([[1, 2, 3]])
         result = self.renderer._transform_points(pts, None)
         np.testing.assert_array_almost_equal(result, pts)
+
+
+class TestMatplotlibLineSegments(unittest.TestCase):
+    """Tests for disconnected LineSegmentsShape rendering."""
+
+    def test_line_points_include_breaks(self):
+        from mcstasscript.geometry_viewer.renderer.matplotlib import MatplotlibRenderer
+
+        points = np.array([
+            [0.0, 0.0, 0.0], [0.01, 0.0, 0.0],
+            [0.1, 0.0, 0.0], [0.11, 0.0, 0.0],
+        ])
+        separated = MatplotlibRenderer._line_points_with_breaks(points)
+
+        self.assertEqual(separated.shape, (5, 3))
+        self.assertTrue(np.isnan(separated[2]).all())
+
+    def test_matplotlib_does_not_join_disconnected_segments(self):
+        from matplotlib import pyplot as plt
+        from mcstasscript.geometry_viewer.renderer.matplotlib import MatplotlibRenderer
+
+        model = ComponentModel(make_mock_component("lines"))
+        model.shape_list = [LineSegmentsShape(points=[
+            [0.0, 0.0, 0.0], [0.01, 0.0, 0.0],
+            [0.1, 0.0, 0.0], [0.11, 0.0, 0.0],
+        ])]
+        renderer = MatplotlibRenderer(mode="2d")
+        children = renderer.render_component(model, component_index=0)
+        figure = renderer.make_scene(children)
+
+        line = figure.axes[0].lines[0]
+        self.assertTrue(np.isnan(line.get_xdata()[2]))
+        self.assertIs(renderer.component_children[0][0], line)
+        self.assertLess(figure.axes[0].get_xlim()[1] - figure.axes[0].get_xlim()[0], 1.0)
+        plt.close(figure)
 
 
 class TestIntensityToColor(unittest.TestCase):
