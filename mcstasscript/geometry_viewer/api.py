@@ -35,9 +35,7 @@ def _missing_pythreejs_dependencies():
 def _pythreejs_dependency_message(missing):
     modules = ", ".join(missing)
     return (
-        "The 'pythreejs' backend requires the optional module(s) "
-        f"{modules}. Install them with "
-        "`pip install McStasScript[geometry-viewer]`."
+        f"The 'pythreejs' backend requires the optional module(s) {modules}."
     )
 
 
