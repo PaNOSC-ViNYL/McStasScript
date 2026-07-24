@@ -737,6 +737,33 @@ class TestComponentModel(unittest.TestCase):
         line_shapes = [s for s in model.shape_list if isinstance(s, LineSegmentsShape)]
         self.assertGreater(len(line_shapes), 0)
 
+    def test_unknown_drawclass_respects_verbose_for_empty_args(self):
+        """Empty unknown drawcalls are quiet unless verbose is enabled."""
+        json_dict = {
+            "m4": np.eye(4).reshape(-1).tolist(),
+            "drawcalls": [{"key": "unknown_type", "args": []}],
+        }
+        model = ComponentModel(make_mock_component())
+        with patch("builtins.print") as mock_print:
+            model.load_geometry_from_mcdisplay_dict(json_dict, verbose=False)
+        mock_print.assert_not_called()
+
+        model = ComponentModel(make_mock_component())
+        with patch("builtins.print") as mock_print:
+            model.load_geometry_from_mcdisplay_dict(json_dict, verbose=True)
+        mock_print.assert_called_once_with("didn't know this drawclass: unknown_type")
+
+    def test_unknown_drawclass_with_args_is_always_reported(self):
+        """Unknown drawcalls with arguments are reported even when quiet."""
+        json_dict = {
+            "m4": np.eye(4).reshape(-1).tolist(),
+            "drawcalls": [{"key": "unknown_type", "args": [1.0]}],
+        }
+        model = ComponentModel(make_mock_component())
+        with patch("builtins.print") as mock_print:
+            model.load_geometry_from_mcdisplay_dict(json_dict, verbose=False)
+        mock_print.assert_called_once_with("didn't know this drawclass: unknown_type")
+
     def test_load_geometry_position_extracted(self):
         """
         After loading geometry from JSON, the component's global

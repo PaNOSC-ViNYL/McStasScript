@@ -375,7 +375,8 @@ def view_with_guess(instrument_object, backend: str = "pythreejs",
 def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
                       index_min: int | None = None, index_max: int | None = None,
                       component_colors: dict[str, str] | None = None,
-                      component_opacity: dict[str, float] | None = None, **kwargs):
+                      component_opacity: dict[str, float] | None = None,
+                      verbose: bool = True, **kwargs):
     """
     Plots instrument geometry with json input from mcdisplay-webgl.
     """
@@ -400,6 +401,7 @@ def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
         instrument_object=instrument_object,
         json_dict=json_dict,
         index_max=index_max,
+        verbose=verbose,
     )
 
     num_components = max(index_max - index_min, 0)
@@ -592,5 +594,6 @@ def view(instrument_object, backend: str = "pythreejs",
         colorbar_label=colorbar_label,
         component_colors=component_colors,
         component_opacity=component_opacity,
+        verbose=verbose,
         **kwargs,
     )
