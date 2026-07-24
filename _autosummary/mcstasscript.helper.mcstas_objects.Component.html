@@ -1,0 +1,1516 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>mcstasscript.helper.mcstas_objects.Component &#8212; McStasScript  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=4418a689" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_autosummary/mcstasscript.helper.mcstas_objects.Component';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">McStasScript  documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/version_history.html">Version history</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quick_start.html">Quick start</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/instrument_object.html">Instrument object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/component_object.html">Component object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/parameters_and_variables.html">Parameters and variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/plotting.html">Plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/functions.html">Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/widgets.html">Widgets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/instrument_reader.html">Instrument reader</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">McStasScript Tutorial</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/McStasScript_tutorial_1_the_basics.html">McStasScript introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/McStasScript_tutorial_2_SPLIT.html">Advanced McStas features:  SPLIT</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/McStasScript_tutorial_3_EXTEND_and_WHEN.html">Advanced McStas features: EXTEND and WHEN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/McStasScript_tutorial_4_JUMP.html">Advanced McStas features: JUMP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/McStasScript_tutorial_5_MCPL_bridges.html">Dynamic instrument cuts with MCPL bridges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/McStasScript_tutorial_6_Diagnostics.html">Diagnostics</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">McStas Union Tutorial</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/Union_tutorial_1_processes_and_materials.html">The Union components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/Union_tutorial_2_geometry.html">Advanced geometry using the Union components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/Union_tutorial_3_loggers.html">Visualizing what happens in Union master</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/Union_tutorial_4_conditionals.html">Using conditional component to modify loggers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/Union_tutorial_5_masks.html">Union tutorial on masks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/Union_tutorial_6_Exit_and_number_of_activations.html">Advanced geometry component concepts: Exit geometry and number of activations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/Union_tutorial_7_Tagging_history.html">Union tagging system</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="mcstasscript.html">mcstasscript</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="mcstasscript.data.html">mcstasscript.data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.data.MCPLDataFormat.html">mcstasscript.data.MCPLDataFormat</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.data.MCPLDataFormat.MCPLDataFormat.html">mcstasscript.data.MCPLDataFormat.MCPLDataFormat</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.data.McStasDataFormat.html">mcstasscript.data.McStasDataFormat</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.data.McStasDataFormat.McStasFormat.html">mcstasscript.data.McStasDataFormat.McStasFormat</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.data.data.html">mcstasscript.data.data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.data.data.parse_coordinates.html">mcstasscript.data.data.parse_coordinates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.data.data.ComponentData.html">mcstasscript.data.data.ComponentData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.data.data.McStasData.html">mcstasscript.data.data.McStasData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.data.data.McStasDataBinned.html">mcstasscript.data.data.McStasDataBinned</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.data.data.McStasDataEvent.html">mcstasscript.data.data.McStasDataEvent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.data.data.McStasMetaData.html">mcstasscript.data.data.McStasMetaData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.data.data.McStasPlotOptions.html">mcstasscript.data.data.McStasPlotOptions</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.data.pyvinylData.html">mcstasscript.data.pyvinylData</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.data.pyvinylData.pyvinylMCPLData.html">mcstasscript.data.pyvinylData.pyvinylMCPLData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.data.pyvinylData.pyvinylMcStasData.html">mcstasscript.data.pyvinylData.pyvinylMcStasData</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="mcstasscript.instr_reader.html">mcstasscript.instr_reader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.instr_reader.control.html">mcstasscript.instr_reader.control</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.instr_reader.control.InstrumentReader.html">mcstasscript.instr_reader.control.InstrumentReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.instr_reader.read_declare.html">mcstasscript.instr_reader.read_declare</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.instr_reader.read_declare.DeclareReader.html">mcstasscript.instr_reader.read_declare.DeclareReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.instr_reader.read_definition.html">mcstasscript.instr_reader.read_definition</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.instr_reader.read_definition.DefinitionReader.html">mcstasscript.instr_reader.read_definition.DefinitionReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.instr_reader.read_finally.html">mcstasscript.instr_reader.read_finally</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.instr_reader.read_finally.FinallyReader.html">mcstasscript.instr_reader.read_finally.FinallyReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.instr_reader.read_initialize.html">mcstasscript.instr_reader.read_initialize</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.instr_reader.read_initialize.InitializeReader.html">mcstasscript.instr_reader.read_initialize.InitializeReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.instr_reader.read_trace.html">mcstasscript.instr_reader.read_trace</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.instr_reader.read_trace.TraceReader.html">mcstasscript.instr_reader.read_trace.TraceReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.instr_reader.read_uservars.html">mcstasscript.instr_reader.read_uservars</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.instr_reader.read_uservars.UservarsReader.html">mcstasscript.instr_reader.read_uservars.UservarsReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.instr_reader.util.html">mcstasscript.instr_reader.util</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.instr_reader.util.SectionReader.html">mcstasscript.instr_reader.util.SectionReader</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="mcstasscript.interface.html">mcstasscript.interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.interface.functions.html">mcstasscript.interface.functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.interface.functions.load_data.html">mcstasscript.interface.functions.load_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.interface.functions.load_metadata.html">mcstasscript.interface.functions.load_metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.interface.functions.load_monitor.html">mcstasscript.interface.functions.load_monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.interface.functions.name_plot_options.html">mcstasscript.interface.functions.name_plot_options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.interface.functions.name_search.html">mcstasscript.interface.functions.name_search</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.interface.functions.Configurator.html">mcstasscript.interface.functions.Configurator</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.interface.instr.html">mcstasscript.interface.instr</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.interface.instr.McCode_instr.html">mcstasscript.interface.instr.McCode_instr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.interface.instr.McStas_instr.html">mcstasscript.interface.instr.McStas_instr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.interface.instr.McXtrace_instr.html">mcstasscript.interface.instr.McXtrace_instr</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.interface.plotter.html">mcstasscript.interface.plotter</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.interface.plotter.make_animation.html">mcstasscript.interface.plotter.make_animation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.interface.plotter.make_plot.html">mcstasscript.interface.plotter.make_plot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.interface.plotter.make_sub_plot.html">mcstasscript.interface.plotter.make_sub_plot</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.interface.reader.html">mcstasscript.interface.reader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.interface.reader.McStas_file.html">mcstasscript.interface.reader.McStas_file</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="mcstasscript.jb_interface.html">mcstasscript.jb_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.jb_interface.plot_interface.html">mcstasscript.jb_interface.plot_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.jb_interface.plot_interface.ColormapDropdown.html">mcstasscript.jb_interface.plot_interface.ColormapDropdown</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.jb_interface.plot_interface.LogCheckbox.html">mcstasscript.jb_interface.plot_interface.LogCheckbox</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.jb_interface.plot_interface.MonitorDropdown.html">mcstasscript.jb_interface.plot_interface.MonitorDropdown</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.jb_interface.plot_interface.OrdersOfMagField.html">mcstasscript.jb_interface.plot_interface.OrdersOfMagField</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.jb_interface.plot_interface.PlotInterface.html">mcstasscript.jb_interface.plot_interface.PlotInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.jb_interface.show_interface.html">mcstasscript.jb_interface.show_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.jb_interface.show_interface.show.html">mcstasscript.jb_interface.show_interface.show</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.jb_interface.show_interface.show_instrunent.html">mcstasscript.jb_interface.show_interface.show_instrunent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.jb_interface.show_interface.show_plot.html">mcstasscript.jb_interface.show_interface.show_plot</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.jb_interface.simulation_interface.html">mcstasscript.jb_interface.simulation_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.jb_interface.simulation_interface.add_data.html">mcstasscript.jb_interface.simulation_interface.add_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.jb_interface.simulation_interface.ParameterWidget.html">mcstasscript.jb_interface.simulation_interface.ParameterWidget</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.jb_interface.simulation_interface.SimInterface.html">mcstasscript.jb_interface.simulation_interface.SimInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="mcstasscript.jb_interface.widget_helpers.html">mcstasscript.jb_interface.widget_helpers</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.jb_interface.widget_helpers.get_parameter_default.html">mcstasscript.jb_interface.widget_helpers.get_parameter_default</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.jb_interface.widget_helpers.parameter_has_default.html">mcstasscript.jb_interface.widget_helpers.parameter_has_default</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcstasscript.jb_interface.widget_helpers.HiddenPrints.html">mcstasscript.jb_interface.widget_helpers.HiddenPrints</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="mcstasscript.tools.html">mcstasscript.tools</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference (libpyvinyl)</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="libpyvinyl.html">libpyvinyl</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/PaNOSC-ViNYL/McStasScript" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/PaNOSC-ViNYL/McStasScript/edit/master/docs/_autosummary/mcstasscript.helper.mcstas_objects.Component.rst" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/PaNOSC-ViNYL/McStasScript/issues/new?title=Issue%20on%20page%20%2F_autosummary/mcstasscript.helper.mcstas_objects.Component.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/_autosummary/mcstasscript.helper.mcstas_objects.Component.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>mcstasscript.helper.mcstas_objects.Component</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component"><code class="docutils literal notranslate"><span class="pre">Component</span></code></a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.name"><code class="docutils literal notranslate"><span class="pre">Component.name</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.component_name"><code class="docutils literal notranslate"><span class="pre">Component.component_name</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.AT_data"><code class="docutils literal notranslate"><span class="pre">Component.AT_data</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.AT_relative"><code class="docutils literal notranslate"><span class="pre">Component.AT_relative</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.ROTATED_data"><code class="docutils literal notranslate"><span class="pre">Component.ROTATED_data</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.ROTATED_relative"><code class="docutils literal notranslate"><span class="pre">Component.ROTATED_relative</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.WHEN"><code class="docutils literal notranslate"><span class="pre">Component.WHEN</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.EXTEND"><code class="docutils literal notranslate"><span class="pre">Component.EXTEND</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.GROUP"><code class="docutils literal notranslate"><span class="pre">Component.GROUP</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.JUMP"><code class="docutils literal notranslate"><span class="pre">Component.JUMP</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.SPLIT"><code class="docutils literal notranslate"><span class="pre">Component.SPLIT</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.c_code_before"><code class="docutils literal notranslate"><span class="pre">Component.c_code_before</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.c_code_after"><code class="docutils literal notranslate"><span class="pre">Component.c_code_after</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.component_parameters"><code class="docutils literal notranslate"><span class="pre">Component.component_parameters</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.comment"><code class="docutils literal notranslate"><span class="pre">Component.comment</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.__isfrozen"><code class="docutils literal notranslate"><span class="pre">Component.__isfrozen</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_AT"><code class="docutils literal notranslate"><span class="pre">Component.set_AT()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_AT_RELATIVE"><code class="docutils literal notranslate"><span class="pre">Component.set_AT_RELATIVE()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_ROTATED"><code class="docutils literal notranslate"><span class="pre">Component.set_ROTATED()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_ROTATED_RELATIVE"><code class="docutils literal notranslate"><span class="pre">Component.set_ROTATED_RELATIVE()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_RELATIVE"><code class="docutils literal notranslate"><span class="pre">Component.set_RELATIVE()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_parameters"><code class="docutils literal notranslate"><span class="pre">Component.set_parameters()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_WHEN"><code class="docutils literal notranslate"><span class="pre">Component.set_WHEN()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_SPLIT"><code class="docutils literal notranslate"><span class="pre">Component.set_SPLIT()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_GROUP"><code class="docutils literal notranslate"><span class="pre">Component.set_GROUP()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_JUMP"><code class="docutils literal notranslate"><span class="pre">Component.set_JUMP()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.append_EXTEND"><code class="docutils literal notranslate"><span class="pre">Component.append_EXTEND()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_c_code_before"><code class="docutils literal notranslate"><span class="pre">Component.set_c_code_before()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id0"><code class="docutils literal notranslate"><span class="pre">Component.set_c_code_before()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_comment"><code class="docutils literal notranslate"><span class="pre">Component.set_comment()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.write_component"><code class="docutils literal notranslate"><span class="pre">Component.write_component()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.show_parameters"><code class="docutils literal notranslate"><span class="pre">Component.show_parameters()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.print_long"><code class="docutils literal notranslate"><span class="pre">Component.print_long()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.print_long_deprecated"><code class="docutils literal notranslate"><span class="pre">Component.print_long_deprecated()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.print_short"><code class="docutils literal notranslate"><span class="pre">Component.print_short()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_keyword_input"><code class="docutils literal notranslate"><span class="pre">Component.set_keyword_input()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.__setattr__"><code class="docutils literal notranslate"><span class="pre">Component.__setattr__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component._freeze"><code class="docutils literal notranslate"><span class="pre">Component._freeze()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component._unfreeze"><code class="docutils literal notranslate"><span class="pre">Component._unfreeze()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.__init__"><code class="docutils literal notranslate"><span class="pre">Component.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.add_search"><code class="docutils literal notranslate"><span class="pre">Component.add_search()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1"><code class="docutils literal notranslate"><span class="pre">Component.append_EXTEND()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.check_parameters"><code class="docutils literal notranslate"><span class="pre">Component.check_parameters()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.clear_search"><code class="docutils literal notranslate"><span class="pre">Component.clear_search()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2"><code class="docutils literal notranslate"><span class="pre">Component.print_long()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3"><code class="docutils literal notranslate"><span class="pre">Component.print_short()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4"><code class="docutils literal notranslate"><span class="pre">Component.set_AT()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5"><code class="docutils literal notranslate"><span class="pre">Component.set_AT_RELATIVE()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6"><code class="docutils literal notranslate"><span class="pre">Component.set_GROUP()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7"><code class="docutils literal notranslate"><span class="pre">Component.set_JUMP()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8"><code class="docutils literal notranslate"><span class="pre">Component.set_RELATIVE()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9"><code class="docutils literal notranslate"><span class="pre">Component.set_ROTATED()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id10"><code class="docutils literal notranslate"><span class="pre">Component.set_ROTATED_RELATIVE()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id11"><code class="docutils literal notranslate"><span class="pre">Component.set_SPLIT()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id12"><code class="docutils literal notranslate"><span class="pre">Component.set_WHEN()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_c_code_after"><code class="docutils literal notranslate"><span class="pre">Component.set_c_code_after()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id13"><code class="docutils literal notranslate"><span class="pre">Component.set_c_code_before()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id14"><code class="docutils literal notranslate"><span class="pre">Component.set_comment()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id15"><code class="docutils literal notranslate"><span class="pre">Component.show_parameters()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.show_parameters_simple"><code class="docutils literal notranslate"><span class="pre">Component.show_parameters_simple()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.show_search"><code class="docutils literal notranslate"><span class="pre">Component.show_search()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id16"><code class="docutils literal notranslate"><span class="pre">Component.write_component()</span></code></a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="mcstasscript-helper-mcstas-objects-component">
+<h1>mcstasscript.helper.mcstas_objects.Component<a class="headerlink" href="#mcstasscript-helper-mcstas-objects-component" title="Link to this heading">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mcstasscript.helper.mcstas_objects.</span></span><span class="sig-name descname"><span class="pre">Component</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">component_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">AT</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">AT_RELATIVE</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ROTATED</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ROTATED_RELATIVE</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">RELATIVE</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">WHEN</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">EXTEND</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">GROUP</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">JUMP</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SPLIT</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_code_before</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_code_after</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component" title="Link to this definition">#</a></dt>
+<dd><p>A class describing a McStas component to be written to an instrument</p>
+<p>This class is used by the instrument class when setting up
+components as dynamic subclasses to this class.  Most information
+can be given on initialize using keyword arguments, but there are
+methods for setting the attributes describing the component. The
+class contains both methods to write the component to an instrument
+file and methods for printing to the python terminal for checking
+the information. The McStas_Instr class creates subclasses from
+this class that have attributes for all parameters for the given
+component. The component information is read directly from the
+component files in the McStas installation.  This class is frozen
+after __init__ so that no new attributes can be created, which
+allows direct feedback to the user if a parameter name is
+misspelled.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.name" title="Link to this definition">#</a></dt>
+<dd><p>Name of the component instance in McStas (must be unique)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.component_name">
+<span class="sig-name descname"><span class="pre">component_name</span></span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.component_name" title="Link to this definition">#</a></dt>
+<dd><p>Name of the component code to use, e.g. Arm, Guide_gravity, …</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.AT_data">
+<span class="sig-name descname"><span class="pre">AT_data</span></span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.AT_data" title="Link to this definition">#</a></dt>
+<dd><p>Position data of the component</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of 3 floats, default [0, 0, 0]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.AT_relative">
+<span class="sig-name descname"><span class="pre">AT_relative</span></span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.AT_relative" title="Link to this definition">#</a></dt>
+<dd><p>Name of former component to use as reference for position</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str, default “ABSOLUTE”</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.ROTATED_data">
+<span class="sig-name descname"><span class="pre">ROTATED_data</span></span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.ROTATED_data" title="Link to this definition">#</a></dt>
+<dd><p>Rotation data of the component</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of 3 floats, default [0, 0, 0]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.ROTATED_relative">
+<span class="sig-name descname"><span class="pre">ROTATED_relative</span></span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.ROTATED_relative" title="Link to this definition">#</a></dt>
+<dd><p>Name of former component to use as reference for position</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str, default “ABSOLUTE”</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.WHEN">
+<span class="sig-name descname"><span class="pre">WHEN</span></span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.WHEN" title="Link to this definition">#</a></dt>
+<dd><p>String with logical c expression x for when component is active</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str, default “”</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.EXTEND">
+<span class="sig-name descname"><span class="pre">EXTEND</span></span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.EXTEND" title="Link to this definition">#</a></dt>
+<dd><p>c code for McStas EXTEND section</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str, default “”</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.GROUP">
+<span class="sig-name descname"><span class="pre">GROUP</span></span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.GROUP" title="Link to this definition">#</a></dt>
+<dd><p>Name of group the component should belong to</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str, default “”</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.JUMP">
+<span class="sig-name descname"><span class="pre">JUMP</span></span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.JUMP" title="Link to this definition">#</a></dt>
+<dd><p>String describing use of JUMP, need to contain all after “JUMP”</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str, default “”</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.SPLIT">
+<span class="sig-name descname"><span class="pre">SPLIT</span></span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.SPLIT" title="Link to this definition">#</a></dt>
+<dd><p>Integer setting SPLIT, splitting the neutron before this component</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int, default 0 (disabled)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.c_code_before">
+<span class="sig-name descname"><span class="pre">c_code_before</span></span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.c_code_before" title="Link to this definition">#</a></dt>
+<dd><p>C code inserted before the component</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str, default “”</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.c_code_after">
+<span class="sig-name descname"><span class="pre">c_code_after</span></span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.c_code_after" title="Link to this definition">#</a></dt>
+<dd><p>C code inserted after the component</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str, default “”</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.component_parameters">
+<span class="sig-name descname"><span class="pre">component_parameters</span></span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.component_parameters" title="Link to this definition">#</a></dt>
+<dd><p>Parameters to be used with component in dictionary</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.comment">
+<span class="sig-name descname"><span class="pre">comment</span></span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.comment" title="Link to this definition">#</a></dt>
+<dd><p>Comment inserted before the component as an explanation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str, default “”</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.__isfrozen">
+<span class="sig-name descname"><span class="pre">__isfrozen</span></span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.__isfrozen" title="Link to this definition">#</a></dt>
+<dd><p>If true no new attributes can be created, when false they can</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.set_AT">
+<span class="sig-name descname"><span class="pre">set_AT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">at_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">RELATIVE</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.set_AT" title="Link to this definition">#</a></dt>
+<dd><p>Sets AT_data, can set AT_relative using keyword</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.set_AT_RELATIVE">
+<span class="sig-name descname"><span class="pre">set_AT_RELATIVE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relative</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.set_AT_RELATIVE" title="Link to this definition">#</a></dt>
+<dd><p>Can set RELATIVE for position</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.set_ROTATED">
+<span class="sig-name descname"><span class="pre">set_ROTATED</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rotated_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">RELATIVE</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.set_ROTATED" title="Link to this definition">#</a></dt>
+<dd><p>Sets ROTATED_data, can set ROTATED_relative using keyword</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.set_ROTATED_RELATIVE">
+<span class="sig-name descname"><span class="pre">set_ROTATED_RELATIVE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relative</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.set_ROTATED_RELATIVE" title="Link to this definition">#</a></dt>
+<dd><p>Can set RELATIVE for rotation</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.set_RELATIVE">
+<span class="sig-name descname"><span class="pre">set_RELATIVE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relative_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.set_RELATIVE" title="Link to this definition">#</a></dt>
+<dd><p>Set both AT_relative and ROTATED_relative to relative_name</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.set_parameters">
+<span class="sig-name descname"><span class="pre">set_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dict_input</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.set_parameters" title="Link to this definition">#</a></dt>
+<dd><p>Adds dictionary entries to parameter dictionary</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.set_WHEN">
+<span class="sig-name descname"><span class="pre">set_WHEN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.set_WHEN" title="Link to this definition">#</a></dt>
+<dd><p>Sets WHEN string</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.set_SPLIT">
+<span class="sig-name descname"><span class="pre">set_SPLIT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.set_SPLIT" title="Link to this definition">#</a></dt>
+<dd><p>Sets SPLIT value, a value of 0 disables SPLIT</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.set_GROUP">
+<span class="sig-name descname"><span class="pre">set_GROUP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.set_GROUP" title="Link to this definition">#</a></dt>
+<dd><p>Sets GROUP name</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.set_JUMP">
+<span class="sig-name descname"><span class="pre">set_JUMP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.set_JUMP" title="Link to this definition">#</a></dt>
+<dd><p>Sets JUMP string</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.append_EXTEND">
+<span class="sig-name descname"><span class="pre">append_EXTEND</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.append_EXTEND" title="Link to this definition">#</a></dt>
+<dd><p>Append string to EXTEND string</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.set_c_code_before">
+<span class="sig-name descname"><span class="pre">set_c_code_before</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.set_c_code_before" title="Link to this definition">#</a></dt>
+<dd><p>Sets c code to be inserted before component</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">set_c_code_before</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id0" title="Link to this definition">#</a></dt>
+<dd><p>Sets c code to be inserted after component</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.set_comment">
+<span class="sig-name descname"><span class="pre">set_comment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.set_comment" title="Link to this definition">#</a></dt>
+<dd><p>Sets comment for component</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.write_component">
+<span class="sig-name descname"><span class="pre">write_component</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.write_component" title="Link to this definition">#</a></dt>
+<dd><p>Writes component code to instrument file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.show_parameters">
+<span class="sig-name descname"><span class="pre">show_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.show_parameters" title="Link to this definition">#</a></dt>
+<dd><p>Prints current component state with all parameters</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.print_long">
+<span class="sig-name descname"><span class="pre">print_long</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.print_long" title="Link to this definition">#</a></dt>
+<dd><p>Prints basic view of component code (not correct syntax)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.print_long_deprecated">
+<span class="sig-name descname"><span class="pre">print_long_deprecated</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.print_long_deprecated" title="Link to this definition">#</a></dt>
+<dd><p>Prints basic view of component code (obsolete)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.print_short">
+<span class="sig-name descname"><span class="pre">print_short</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.print_short" title="Link to this definition">#</a></dt>
+<dd><p>Prints short description, used in print_components</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.set_keyword_input">
+<span class="sig-name descname"><span class="pre">set_keyword_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.set_keyword_input" title="Link to this definition">#</a></dt>
+<dd><p>Handle keyword arguments during initialize</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.__setattr__" title="Link to this definition">#</a></dt>
+<dd><p>Overwriting __setattr__ to implement ability to freeze</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component._freeze">
+<span class="sig-name descname"><span class="pre">_freeze</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component._freeze" title="Link to this definition">#</a></dt>
+<dd><p>Freeze the class so no new attributes can be defined</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component._unfreeze">
+<span class="sig-name descname"><span class="pre">_unfreeze</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component._unfreeze" title="Link to this definition">#</a></dt>
+<dd><p>Unfreeze the class so new attributes can be defined again</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">component_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">AT</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">AT_RELATIVE</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ROTATED</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ROTATED_RELATIVE</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">RELATIVE</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">WHEN</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">EXTEND</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">GROUP</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">JUMP</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SPLIT</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_code_before</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_code_after</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.__init__" title="Link to this definition">#</a></dt>
+<dd><p>Initializes McStas component with specified name and component</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>instance_name</strong> (<em>str</em>) – name of the instance of the component</p></li>
+<li><p><strong>component_name</strong> (<em>str</em>) – name of the component type e.g. Arm, Guide_gravity, …</p></li>
+<li><p><strong>arguments</strong> (<em>keyword</em>) – <dl class="simple">
+<dt>AT<span class="classifier">list of 3 floats, default [0, 0, 0]</span></dt><dd><p>Sets AT_data describing position of component</p>
+</dd>
+<dt>AT_RELATIVE<span class="classifier">str, default “ABSOLUTE”</span></dt><dd><p>sets AT_relative, describing position reference</p>
+</dd>
+<dt>ROTATED<span class="classifier">list of 3 floats, default [0, 0, 0]</span></dt><dd><p>Sets ROTATED_data, describing rotation of component</p>
+</dd>
+<dt>ROTATED_RELATIVE<span class="classifier">str, default “ABSOLUTE”</span></dt><dd><p>Sets ROTATED_relative, sets reference for rotation</p>
+</dd>
+<dt>RELATIVE<span class="classifier">str</span></dt><dd><p>Sets both AT_relative and ROTATED_relative</p>
+</dd>
+<dt>WHEN<span class="classifier">str, default “”</span></dt><dd><p>Sets WHEN string, should contain logical c expression</p>
+</dd>
+<dt>EXTEND<span class="classifier">str, default “”</span></dt><dd><p>Sets initial EXTEND string, should contain c code</p>
+</dd>
+<dt>GROUP<span class="classifier">str, default “”</span></dt><dd><p>Sets name of group the component should belong to</p>
+</dd>
+<dt>JUMP<span class="classifier">str, default “”</span></dt><dd><p>Sets JUMP str</p>
+</dd>
+<dt>SPLIT<span class="classifier">int, default 0 (disabled)</span></dt><dd><p>Sets SPLIT value</p>
+</dd>
+<dt>comment: str, default “”</dt><dd><p>Sets comment string</p>
+</dd>
+<dt>c_code_before: str, default “”</dt><dd><p>Sets c code before component</p>
+</dd>
+<dt>c_code_after: str, default “”</dt><dd><p>Sets c code after component</p>
+</dd>
+</dl>
+</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#mcstasscript.helper.mcstas_objects.Component.__init__" title="mcstasscript.helper.mcstas_objects.Component.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(instance_name, component_name[, ...])</p></td>
+<td><p>Initializes McStas component with specified name and component</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#mcstasscript.helper.mcstas_objects.Component.add_search" title="mcstasscript.helper.mcstas_objects.Component.add_search"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_search</span></code></a>(statement[, SHELL])</p></td>
+<td><p>Adds a search statement to the component</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#id1" title="mcstasscript.helper.mcstas_objects.Component.append_EXTEND"><code class="xref py py-obj docutils literal notranslate"><span class="pre">append_EXTEND</span></code></a>(string)</p></td>
+<td><p>Method for adding line of c to EXTEND section of this component</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#mcstasscript.helper.mcstas_objects.Component.check_parameters" title="mcstasscript.helper.mcstas_objects.Component.check_parameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_parameters</span></code></a>(instrument_variables)</p></td>
+<td><p>Checks the current component parameters are in given name list</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#mcstasscript.helper.mcstas_objects.Component.clear_search" title="mcstasscript.helper.mcstas_objects.Component.clear_search"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clear_search</span></code></a>()</p></td>
+<td><p>Clears the component of all search statements</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parameter_names</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_write_string</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#id2" title="mcstasscript.helper.mcstas_objects.Component.print_long"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_long</span></code></a>()</p></td>
+<td><p>Prints information about the component</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#id3" title="mcstasscript.helper.mcstas_objects.Component.print_short"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_short</span></code></a>([longest_name])</p></td>
+<td><p>Prints short description of component to list print</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#id4" title="mcstasscript.helper.mcstas_objects.Component.set_AT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_AT</span></code></a>(at_list[, RELATIVE])</p></td>
+<td><p>Method for setting position of component</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#id5" title="mcstasscript.helper.mcstas_objects.Component.set_AT_RELATIVE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_AT_RELATIVE</span></code></a>(relative)</p></td>
+<td><p>Sets AT RELATIVE with string or Component instance</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#id6" title="mcstasscript.helper.mcstas_objects.Component.set_GROUP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_GROUP</span></code></a>(string)</p></td>
+<td><p>Method for setting GROUP keyword of this component</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#id7" title="mcstasscript.helper.mcstas_objects.Component.set_JUMP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_JUMP</span></code></a>(string)</p></td>
+<td><p>Method for setting JUMP expression of this component</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#id8" title="mcstasscript.helper.mcstas_objects.Component.set_RELATIVE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_RELATIVE</span></code></a>(relative)</p></td>
+<td><p>Method for setting reference of component position and rotation</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#id9" title="mcstasscript.helper.mcstas_objects.Component.set_ROTATED"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_ROTATED</span></code></a>(rotated_list[, RELATIVE])</p></td>
+<td><p>Method for setting rotation of component</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#id10" title="mcstasscript.helper.mcstas_objects.Component.set_ROTATED_RELATIVE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_ROTATED_RELATIVE</span></code></a>(relative)</p></td>
+<td><p>Sets ROTATED RELATIVE with string or Component instance</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#id11" title="mcstasscript.helper.mcstas_objects.Component.set_SPLIT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_SPLIT</span></code></a>(value)</p></td>
+<td><p>Method for setting SPLIT value of this component</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#id12" title="mcstasscript.helper.mcstas_objects.Component.set_WHEN"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_WHEN</span></code></a>(string)</p></td>
+<td><p>Method for setting WHEN c expression of this component</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#mcstasscript.helper.mcstas_objects.Component.set_c_code_after" title="mcstasscript.helper.mcstas_objects.Component.set_c_code_after"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_c_code_after</span></code></a>(string)</p></td>
+<td><p>Method for setting c code after this component</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#id13" title="mcstasscript.helper.mcstas_objects.Component.set_c_code_before"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_c_code_before</span></code></a>(string)</p></td>
+<td><p>Method for setting c code before this component</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#id14" title="mcstasscript.helper.mcstas_objects.Component.set_comment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_comment</span></code></a>(string)</p></td>
+<td><p>Sets a comment displayed before the component in written files</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#mcstasscript.helper.mcstas_objects.Component.set_keyword_input" title="mcstasscript.helper.mcstas_objects.Component.set_keyword_input"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_keyword_input</span></code></a>([AT, AT_RELATIVE, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_save_parameters</span></code>(value)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#id15" title="mcstasscript.helper.mcstas_objects.Component.show_parameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">show_parameters</span></code></a>([line_length])</p></td>
+<td><p>Shows available parameters and their defaults for the component</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#mcstasscript.helper.mcstas_objects.Component.show_parameters_simple" title="mcstasscript.helper.mcstas_objects.Component.show_parameters_simple"><code class="xref py py-obj docutils literal notranslate"><span class="pre">show_parameters_simple</span></code></a>()</p></td>
+<td><p>Shows available parameters and their defaults for the component</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#mcstasscript.helper.mcstas_objects.Component.show_search" title="mcstasscript.helper.mcstas_objects.Component.show_search"><code class="xref py py-obj docutils literal notranslate"><span class="pre">show_search</span></code></a>()</p></td>
+<td><p>Shows all search statements of component</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#id16" title="mcstasscript.helper.mcstas_objects.Component.write_component"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_component</span></code></a>(fo[, instrument_search])</p></td>
+<td><p>Method that writes component to file</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.add_search">
+<span class="sig-name descname"><span class="pre">add_search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">statement</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SHELL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.add_search" title="Link to this definition">#</a></dt>
+<dd><p>Adds a search statement to the component</p>
+<p>The search line can be used to tell McStas to search for files in
+additional locations. Double quotes are added.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>statement</strong> (<em>str</em>) – The search statement</p></li>
+<li><p><strong>SHELL</strong> (<em>bool</em><em> (</em><em>default False</em><em>)</em>) – if True, shell keyword is added</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">append_EXTEND</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id1" title="Link to this definition">#</a></dt>
+<dd><p>Method for adding line of c to EXTEND section of this component</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>EXTEND</strong> (<em>str</em>) – Line of c code added to EXTEND section of named component</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.check_parameters">
+<span class="sig-name descname"><span class="pre">check_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instrument_variables</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.check_parameters" title="Link to this definition">#</a></dt>
+<dd><p>Checks the current component parameters are in given name list</p>
+<p>The name list will typically be a list of instrument parameters and
+declared variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>instrument_variables</strong> (<em>list</em><em> of </em><em>str</em>) – List of instrument variable names</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.clear_search">
+<span class="sig-name descname"><span class="pre">clear_search</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.clear_search" title="Link to this definition">#</a></dt>
+<dd><p>Clears the component of all search statements</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-name descname"><span class="pre">print_long</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#id2" title="Link to this definition">#</a></dt>
+<dd><p>Prints information about the component</p>
+<p>Includes information on required parameters if they are not yet
+specified. Information on the components are added when the
+class is used as a superclass for classes describing each
+McStas component.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">print_short</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">longest_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id3" title="Link to this definition">#</a></dt>
+<dd><p>Prints short description of component to list print</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">set_AT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">at_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">RELATIVE</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id4" title="Link to this definition">#</a></dt>
+<dd><p>Method for setting position of component</p>
+<p>Sets the position of the component using provided length 3 list as a
+vector. If only a float is given, it is considered along the beam
+direction, [0, 0, z]. The RELATIVE keyword is used to specify in
+relation to what the position is given, and can take either a string
+with a component name or a Component object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>at_list</strong> (<em>List</em><em> of </em><em>3 floats</em><em> or </em><em>float</em>) – Position of component relative to reference component</p></li>
+<li><p><strong>arguments</strong> (<em>keyword</em>) – <dl class="simple">
+<dt>RELATIVE<span class="classifier">str</span></dt><dd><p>Sets reference component for position</p>
+</dd>
+</dl>
+</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id5">
+<span class="sig-name descname"><span class="pre">set_AT_RELATIVE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relative</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id5" title="Link to this definition">#</a></dt>
+<dd><p>Sets AT RELATIVE with string or Component instance</p>
+<p>Set relative which becomes the reference for this components position,
+it is possible to use a string that match another component name or
+use a Component object where the name is used as the reference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>relative</strong> (<em>str</em><em> or </em><em>Component object</em>) – Used as reference for component position</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id6">
+<span class="sig-name descname"><span class="pre">set_GROUP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id6" title="Link to this definition">#</a></dt>
+<dd><p>Method for setting GROUP keyword of this component</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>GROUP</strong> (<em>str</em>) – Sets GROUP name for named McStas component</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id7">
+<span class="sig-name descname"><span class="pre">set_JUMP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id7" title="Link to this definition">#</a></dt>
+<dd><p>Method for setting JUMP expression of this component</p>
+<p>Should contain all code needed after JUMP</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>JUMP</strong> (<em>str</em>) – Sets JUMP expression for named McStas component</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id8">
+<span class="sig-name descname"><span class="pre">set_RELATIVE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relative</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id8" title="Link to this definition">#</a></dt>
+<dd><p>Method for setting reference of component position and rotation</p>
+<p>Input can be either a string matching an earlier component or a
+Component object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>relative</strong> (<em>str</em>) – Reference component for position and rotation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id9">
+<span class="sig-name descname"><span class="pre">set_ROTATED</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rotated_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">RELATIVE</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id9" title="Link to this definition">#</a></dt>
+<dd><p>Method for setting rotation of component</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rotated_list</strong> (<em>List</em><em> of </em><em>3 floats</em>) – Rotation of component relative to reference component</p></li>
+<li><p><strong>arguments</strong> (<em>keyword</em>) – <dl class="simple">
+<dt>RELATIVE<span class="classifier">str</span></dt><dd><p>Sets reference component for rotation</p>
+</dd>
+</dl>
+</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id10">
+<span class="sig-name descname"><span class="pre">set_ROTATED_RELATIVE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relative</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id10" title="Link to this definition">#</a></dt>
+<dd><p>Sets ROTATED RELATIVE with string or Component instance</p>
+<p>Set relative which becomes the reference for this components rotation,
+it is possible to use a string that match another component name or
+use a Component object where the name is used as the reference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>relative</strong> (<em>str</em><em> or </em><em>Component object</em>) – Used as reference for component rotation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id11">
+<span class="sig-name descname"><span class="pre">set_SPLIT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id11" title="Link to this definition">#</a></dt>
+<dd><p>Method for setting SPLIT value of this component</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>SPLIT</strong> (<em>int</em><em> or </em><em>str</em>) – Sets SPLIT value for named McStas component</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id12">
+<span class="sig-name descname"><span class="pre">set_WHEN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id12" title="Link to this definition">#</a></dt>
+<dd><p>Method for setting WHEN c expression of this component</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>WHEN</strong> (<em>str</em>) – Sets WHEN c expression for named McStas component</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.set_c_code_after">
+<span class="sig-name descname"><span class="pre">set_c_code_after</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.set_c_code_after" title="Link to this definition">#</a></dt>
+<dd><p>Method for setting c code after this component</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>code</strong> (<em>str</em>) – Code to be pasted after component</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id13">
+<span class="sig-name descname"><span class="pre">set_c_code_before</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id13" title="Link to this definition">#</a></dt>
+<dd><p>Method for setting c code before this component</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>code</strong> (<em>str</em>) – Code to be pasted before component</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id14">
+<span class="sig-name descname"><span class="pre">set_comment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id14" title="Link to this definition">#</a></dt>
+<dd><p>Sets a comment displayed before the component in written files</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>string</strong> (<em>str</em>) – Comment string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id15">
+<span class="sig-name descname"><span class="pre">show_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id15" title="Link to this definition">#</a></dt>
+<dd><p>Shows available parameters and their defaults for the component</p>
+<p>Any value specified is not reflected in this view. The
+additional attributes defined when McStas_Instr creates
+subclasses for the individual components are required to run
+this method.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.show_parameters_simple">
+<span class="sig-name descname"><span class="pre">show_parameters_simple</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.show_parameters_simple" title="Link to this definition">#</a></dt>
+<dd><p>Shows available parameters and their defaults for the component</p>
+<p>Any value specified is not reflected in this view. The
+additional attributes defined when McStas_Instr creates
+subclasses for the individual components are required to run
+this method.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcstasscript.helper.mcstas_objects.Component.show_search">
+<span class="sig-name descname"><span class="pre">show_search</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mcstasscript.helper.mcstas_objects.Component.show_search" title="Link to this definition">#</a></dt>
+<dd><p>Shows all search statements of component</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id16">
+<span class="sig-name descname"><span class="pre">write_component</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instrument_search</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id16" title="Link to this definition">#</a></dt>
+<dd><p>Method that writes component to file</p>
+<p>Relies on attributes added when McStas_Instr creates a subclass
+based on the component class.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component"><code class="docutils literal notranslate"><span class="pre">Component</span></code></a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.name"><code class="docutils literal notranslate"><span class="pre">Component.name</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.component_name"><code class="docutils literal notranslate"><span class="pre">Component.component_name</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.AT_data"><code class="docutils literal notranslate"><span class="pre">Component.AT_data</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.AT_relative"><code class="docutils literal notranslate"><span class="pre">Component.AT_relative</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.ROTATED_data"><code class="docutils literal notranslate"><span class="pre">Component.ROTATED_data</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.ROTATED_relative"><code class="docutils literal notranslate"><span class="pre">Component.ROTATED_relative</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.WHEN"><code class="docutils literal notranslate"><span class="pre">Component.WHEN</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.EXTEND"><code class="docutils literal notranslate"><span class="pre">Component.EXTEND</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.GROUP"><code class="docutils literal notranslate"><span class="pre">Component.GROUP</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.JUMP"><code class="docutils literal notranslate"><span class="pre">Component.JUMP</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.SPLIT"><code class="docutils literal notranslate"><span class="pre">Component.SPLIT</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.c_code_before"><code class="docutils literal notranslate"><span class="pre">Component.c_code_before</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.c_code_after"><code class="docutils literal notranslate"><span class="pre">Component.c_code_after</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.component_parameters"><code class="docutils literal notranslate"><span class="pre">Component.component_parameters</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.comment"><code class="docutils literal notranslate"><span class="pre">Component.comment</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.__isfrozen"><code class="docutils literal notranslate"><span class="pre">Component.__isfrozen</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_AT"><code class="docutils literal notranslate"><span class="pre">Component.set_AT()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_AT_RELATIVE"><code class="docutils literal notranslate"><span class="pre">Component.set_AT_RELATIVE()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_ROTATED"><code class="docutils literal notranslate"><span class="pre">Component.set_ROTATED()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_ROTATED_RELATIVE"><code class="docutils literal notranslate"><span class="pre">Component.set_ROTATED_RELATIVE()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_RELATIVE"><code class="docutils literal notranslate"><span class="pre">Component.set_RELATIVE()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_parameters"><code class="docutils literal notranslate"><span class="pre">Component.set_parameters()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_WHEN"><code class="docutils literal notranslate"><span class="pre">Component.set_WHEN()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_SPLIT"><code class="docutils literal notranslate"><span class="pre">Component.set_SPLIT()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_GROUP"><code class="docutils literal notranslate"><span class="pre">Component.set_GROUP()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_JUMP"><code class="docutils literal notranslate"><span class="pre">Component.set_JUMP()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.append_EXTEND"><code class="docutils literal notranslate"><span class="pre">Component.append_EXTEND()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_c_code_before"><code class="docutils literal notranslate"><span class="pre">Component.set_c_code_before()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id0"><code class="docutils literal notranslate"><span class="pre">Component.set_c_code_before()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_comment"><code class="docutils literal notranslate"><span class="pre">Component.set_comment()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.write_component"><code class="docutils literal notranslate"><span class="pre">Component.write_component()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.show_parameters"><code class="docutils literal notranslate"><span class="pre">Component.show_parameters()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.print_long"><code class="docutils literal notranslate"><span class="pre">Component.print_long()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.print_long_deprecated"><code class="docutils literal notranslate"><span class="pre">Component.print_long_deprecated()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.print_short"><code class="docutils literal notranslate"><span class="pre">Component.print_short()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_keyword_input"><code class="docutils literal notranslate"><span class="pre">Component.set_keyword_input()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.__setattr__"><code class="docutils literal notranslate"><span class="pre">Component.__setattr__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component._freeze"><code class="docutils literal notranslate"><span class="pre">Component._freeze()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component._unfreeze"><code class="docutils literal notranslate"><span class="pre">Component._unfreeze()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.__init__"><code class="docutils literal notranslate"><span class="pre">Component.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.add_search"><code class="docutils literal notranslate"><span class="pre">Component.add_search()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1"><code class="docutils literal notranslate"><span class="pre">Component.append_EXTEND()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.check_parameters"><code class="docutils literal notranslate"><span class="pre">Component.check_parameters()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.clear_search"><code class="docutils literal notranslate"><span class="pre">Component.clear_search()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2"><code class="docutils literal notranslate"><span class="pre">Component.print_long()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3"><code class="docutils literal notranslate"><span class="pre">Component.print_short()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4"><code class="docutils literal notranslate"><span class="pre">Component.set_AT()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5"><code class="docutils literal notranslate"><span class="pre">Component.set_AT_RELATIVE()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6"><code class="docutils literal notranslate"><span class="pre">Component.set_GROUP()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7"><code class="docutils literal notranslate"><span class="pre">Component.set_JUMP()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8"><code class="docutils literal notranslate"><span class="pre">Component.set_RELATIVE()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9"><code class="docutils literal notranslate"><span class="pre">Component.set_ROTATED()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id10"><code class="docutils literal notranslate"><span class="pre">Component.set_ROTATED_RELATIVE()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id11"><code class="docutils literal notranslate"><span class="pre">Component.set_SPLIT()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id12"><code class="docutils literal notranslate"><span class="pre">Component.set_WHEN()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.set_c_code_after"><code class="docutils literal notranslate"><span class="pre">Component.set_c_code_after()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id13"><code class="docutils literal notranslate"><span class="pre">Component.set_c_code_before()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id14"><code class="docutils literal notranslate"><span class="pre">Component.set_comment()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id15"><code class="docutils literal notranslate"><span class="pre">Component.show_parameters()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.show_parameters_simple"><code class="docutils literal notranslate"><span class="pre">Component.show_parameters_simple()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstasscript.helper.mcstas_objects.Component.show_search"><code class="docutils literal notranslate"><span class="pre">Component.show_search()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id16"><code class="docutils literal notranslate"><span class="pre">Component.write_component()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Mads Bertelsen
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2022, Mads Bertelsen.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

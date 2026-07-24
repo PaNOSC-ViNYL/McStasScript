@@ -1,0 +1,1053 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Advanced McStas features: EXTEND and WHEN &#8212; McStasScript  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=4418a689" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorial/McStasScript_tutorial_3_EXTEND_and_WHEN';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Advanced McStas features: JUMP" href="McStasScript_tutorial_4_JUMP.html" />
+    <link rel="prev" title="Advanced McStas features: SPLIT" href="McStasScript_tutorial_2_SPLIT.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">McStasScript  documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/version_history.html">Version history</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quick_start.html">Quick start</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/instrument_object.html">Instrument object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/component_object.html">Component object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/parameters_and_variables.html">Parameters and variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/plotting.html">Plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/functions.html">Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/widgets.html">Widgets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/instrument_reader.html">Instrument reader</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">McStasScript Tutorial</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="McStasScript_tutorial_1_the_basics.html">McStasScript introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="McStasScript_tutorial_2_SPLIT.html">Advanced McStas features:  SPLIT</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Advanced McStas features: EXTEND and WHEN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="McStasScript_tutorial_4_JUMP.html">Advanced McStas features: JUMP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="McStasScript_tutorial_5_MCPL_bridges.html">Dynamic instrument cuts with MCPL bridges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="McStasScript_tutorial_6_Diagnostics.html">Diagnostics</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">McStas Union Tutorial</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_1_processes_and_materials.html">The Union components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_2_geometry.html">Advanced geometry using the Union components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_3_loggers.html">Visualizing what happens in Union master</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_4_conditionals.html">Using conditional component to modify loggers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_5_masks.html">Union tutorial on masks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_6_Exit_and_number_of_activations.html">Advanced geometry component concepts: Exit geometry and number of activations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_7_Tagging_history.html">Union tagging system</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../_autosummary/mcstasscript.html">mcstasscript</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.html">mcstasscript.data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.MCPLDataFormat.html">mcstasscript.data.MCPLDataFormat</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.MCPLDataFormat.MCPLDataFormat.html">mcstasscript.data.MCPLDataFormat.MCPLDataFormat</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.McStasDataFormat.html">mcstasscript.data.McStasDataFormat</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.McStasDataFormat.McStasFormat.html">mcstasscript.data.McStasDataFormat.McStasFormat</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.html">mcstasscript.data.data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.parse_coordinates.html">mcstasscript.data.data.parse_coordinates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.ComponentData.html">mcstasscript.data.data.ComponentData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasData.html">mcstasscript.data.data.McStasData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasDataBinned.html">mcstasscript.data.data.McStasDataBinned</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasDataEvent.html">mcstasscript.data.data.McStasDataEvent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasMetaData.html">mcstasscript.data.data.McStasMetaData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasPlotOptions.html">mcstasscript.data.data.McStasPlotOptions</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.pyvinylData.html">mcstasscript.data.pyvinylData</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.pyvinylData.pyvinylMCPLData.html">mcstasscript.data.pyvinylData.pyvinylMCPLData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.pyvinylData.pyvinylMcStasData.html">mcstasscript.data.pyvinylData.pyvinylMcStasData</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.html">mcstasscript.instr_reader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.control.html">mcstasscript.instr_reader.control</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.control.InstrumentReader.html">mcstasscript.instr_reader.control.InstrumentReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_declare.html">mcstasscript.instr_reader.read_declare</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_declare.DeclareReader.html">mcstasscript.instr_reader.read_declare.DeclareReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_definition.html">mcstasscript.instr_reader.read_definition</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_definition.DefinitionReader.html">mcstasscript.instr_reader.read_definition.DefinitionReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_finally.html">mcstasscript.instr_reader.read_finally</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_finally.FinallyReader.html">mcstasscript.instr_reader.read_finally.FinallyReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_initialize.html">mcstasscript.instr_reader.read_initialize</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_initialize.InitializeReader.html">mcstasscript.instr_reader.read_initialize.InitializeReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_trace.html">mcstasscript.instr_reader.read_trace</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_trace.TraceReader.html">mcstasscript.instr_reader.read_trace.TraceReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_uservars.html">mcstasscript.instr_reader.read_uservars</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_uservars.UservarsReader.html">mcstasscript.instr_reader.read_uservars.UservarsReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.util.html">mcstasscript.instr_reader.util</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.util.SectionReader.html">mcstasscript.instr_reader.util.SectionReader</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.html">mcstasscript.interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.html">mcstasscript.interface.functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.load_data.html">mcstasscript.interface.functions.load_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.load_metadata.html">mcstasscript.interface.functions.load_metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.load_monitor.html">mcstasscript.interface.functions.load_monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.name_plot_options.html">mcstasscript.interface.functions.name_plot_options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.name_search.html">mcstasscript.interface.functions.name_search</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.Configurator.html">mcstasscript.interface.functions.Configurator</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.instr.html">mcstasscript.interface.instr</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.instr.McCode_instr.html">mcstasscript.interface.instr.McCode_instr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.instr.McStas_instr.html">mcstasscript.interface.instr.McStas_instr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.instr.McXtrace_instr.html">mcstasscript.interface.instr.McXtrace_instr</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.plotter.html">mcstasscript.interface.plotter</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.plotter.make_animation.html">mcstasscript.interface.plotter.make_animation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.plotter.make_plot.html">mcstasscript.interface.plotter.make_plot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.plotter.make_sub_plot.html">mcstasscript.interface.plotter.make_sub_plot</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.reader.html">mcstasscript.interface.reader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.reader.McStas_file.html">mcstasscript.interface.reader.McStas_file</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.html">mcstasscript.jb_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.html">mcstasscript.jb_interface.plot_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.ColormapDropdown.html">mcstasscript.jb_interface.plot_interface.ColormapDropdown</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.LogCheckbox.html">mcstasscript.jb_interface.plot_interface.LogCheckbox</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.MonitorDropdown.html">mcstasscript.jb_interface.plot_interface.MonitorDropdown</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.OrdersOfMagField.html">mcstasscript.jb_interface.plot_interface.OrdersOfMagField</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.PlotInterface.html">mcstasscript.jb_interface.plot_interface.PlotInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.show_interface.html">mcstasscript.jb_interface.show_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.show_interface.show.html">mcstasscript.jb_interface.show_interface.show</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.show_interface.show_instrunent.html">mcstasscript.jb_interface.show_interface.show_instrunent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.show_interface.show_plot.html">mcstasscript.jb_interface.show_interface.show_plot</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.simulation_interface.html">mcstasscript.jb_interface.simulation_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.simulation_interface.add_data.html">mcstasscript.jb_interface.simulation_interface.add_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.simulation_interface.ParameterWidget.html">mcstasscript.jb_interface.simulation_interface.ParameterWidget</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.simulation_interface.SimInterface.html">mcstasscript.jb_interface.simulation_interface.SimInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.widget_helpers.html">mcstasscript.jb_interface.widget_helpers</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.widget_helpers.get_parameter_default.html">mcstasscript.jb_interface.widget_helpers.get_parameter_default</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.widget_helpers.parameter_has_default.html">mcstasscript.jb_interface.widget_helpers.parameter_has_default</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.widget_helpers.HiddenPrints.html">mcstasscript.jb_interface.widget_helpers.HiddenPrints</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../_autosummary/mcstasscript.tools.html">mcstasscript.tools</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference (libpyvinyl)</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../_autosummary/libpyvinyl.html">libpyvinyl</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/PaNOSC-ViNYL/McStasScript" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/PaNOSC-ViNYL/McStasScript/edit/master/docs/tutorial/McStasScript_tutorial_3_EXTEND_and_WHEN.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/PaNOSC-ViNYL/McStasScript/issues/new?title=Issue%20on%20page%20%2Ftutorial/McStasScript_tutorial_3_EXTEND_and_WHEN.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/tutorial/McStasScript_tutorial_3_EXTEND_and_WHEN.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Advanced McStas features: EXTEND and WHEN</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#set-up-an-example-mcstas-instrument">Set up an example McStas instrument</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interpreting-the-data">Interpreting the data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#add-an-flag">Add an flag</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#use-the-flag-to-limit-what-is-recorded-in-a-monitor">Use the flag to limit what is recorded in a monitor</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-the-simulation">Running the simulation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interpretation-of-the-data">Interpretation of the data</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-mcstas-instrument-file">The McStas instrument file</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="advanced-mcstas-features-extend-and-when">
+<h1>Advanced McStas features: EXTEND and WHEN<a class="headerlink" href="#advanced-mcstas-features-extend-and-when" title="Link to this heading">#</a></h1>
+<p>In this tutorial we will look at two advanced features in McStas, the EXTEND block and WHEN condition. Here we will use them to flag certain neutrons with EXTEND, and only record them in monitors when the flag is set using a WHEN condition.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">mcstasscript</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ms</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span> <span class="o">=</span> <span class="n">ms</span><span class="o">.</span><span class="n">McStas_instr</span><span class="p">(</span><span class="s2">&quot;python_tutorial&quot;</span><span class="p">,</span> <span class="n">input_path</span><span class="o">=</span><span class="s2">&quot;run_folder&quot;</span><span class="p">,</span>
+                             <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;data_folder/mcstas_EXTEND_WHEN&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="set-up-an-example-mcstas-instrument">
+<h2>Set up an example McStas instrument<a class="headerlink" href="#set-up-an-example-mcstas-instrument" title="Link to this heading">#</a></h2>
+<p>First we set up an example instrument conisiting of a source, a guide and a position/divergence monitor. The guide is set up such that it only has mirrors on the left and right side, and absorbs neutrons if they hit the top or bottom. This is done to look at the horizontal behavior independently from the vertical, as this is easier to analyze.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">src</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;source&quot;</span><span class="p">,</span> <span class="s2">&quot;Source_simple&quot;</span><span class="p">)</span>
+<span class="n">src</span><span class="o">.</span><span class="n">focus_xw</span> <span class="o">=</span> <span class="n">guide_opening_w</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">src</span><span class="o">.</span><span class="n">focus_yh</span> <span class="o">=</span> <span class="n">guide_opening_h</span> <span class="o">=</span> <span class="mf">0.06</span>
+<span class="n">src</span><span class="o">.</span><span class="n">dist</span> <span class="o">=</span> <span class="n">source_guide_distance</span> <span class="o">=</span> <span class="mf">1.5</span>
+
+<span class="n">wavelength</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_parameter</span><span class="p">(</span><span class="s2">&quot;wavelength&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Wavelength in [Ang]&quot;</span><span class="p">)</span>
+<span class="n">src</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">xwidth</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span> <span class="n">yheight</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span> <span class="n">flux</span><span class="o">=</span><span class="mf">1E13</span><span class="p">,</span> <span class="n">lambda0</span><span class="o">=</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">dlambda</span><span class="o">=</span><span class="s2">&quot;0.001*wavelength&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">guide</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;guide&quot;</span><span class="p">,</span> <span class="s2">&quot;Guide_gravity&quot;</span><span class="p">)</span>
+<span class="n">guide</span><span class="o">.</span><span class="n">set_AT</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">source_guide_distance</span><span class="p">],</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">src</span><span class="p">)</span>
+<span class="n">guide</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">w1</span><span class="o">=</span><span class="n">guide_opening_w</span><span class="p">,</span> <span class="n">w2</span><span class="o">=</span><span class="n">guide_opening_w</span><span class="p">,</span>
+                     <span class="n">h1</span><span class="o">=</span><span class="n">guide_opening_h</span><span class="p">,</span> <span class="n">h2</span><span class="o">=</span><span class="n">guide_opening_h</span><span class="p">,</span>
+                     <span class="n">l</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">G</span><span class="o">=-</span><span class="mf">9.82</span><span class="p">,</span> <span class="n">mleft</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">mright</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">mtop</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">mbottom</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">acceptance</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;acceptance&quot;</span><span class="p">,</span> <span class="s2">&quot;DivPos_monitor&quot;</span><span class="p">)</span>
+<span class="n">acceptance</span><span class="o">.</span><span class="n">set_AT</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span> <span class="n">guide</span><span class="o">.</span><span class="n">l</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">],</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">guide</span><span class="p">)</span>
+<span class="n">acceptance</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">xwidth</span><span class="o">=</span><span class="mf">0.08</span><span class="p">,</span> <span class="n">yheight</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">nb</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">maxdiv</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">ndiv</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+                          <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;&quot;acceptance.dat&quot;&#39;</span><span class="p">,</span> <span class="n">restore_neutron</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell tag_scroll-output docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="mf">2.8</span><span class="p">)</span>
+<span class="n">instrument</span><span class="o">.</span><span class="n">settings</span><span class="p">(</span><span class="n">ncount</span><span class="o">=</span><span class="mf">5E6</span><span class="p">,</span> <span class="n">suppress_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mpi</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">backengine</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ms</span><span class="o">.</span><span class="n">make_sub_plot</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/824255429928b9feb6ae38dff4f2eb6fa8e1f94f3d9e2fe0ce5aa3c2ca481db5.png" src="../_images/824255429928b9feb6ae38dff4f2eb6fa8e1f94f3d9e2fe0ce5aa3c2ca481db5.png" />
+</div>
+</div>
+</section>
+<section id="interpreting-the-data">
+<h2>Interpreting the data<a class="headerlink" href="#interpreting-the-data" title="Link to this heading">#</a></h2>
+<p>Here we see an acceptance monitor, with position along the x-axis and divergence along the y-axis. The guide is under illuminated by the small source, so there are gaps in the acceptance diagram. We see the position and divergence of the beam consist of a large number of stripes, the ones with lowest divergence has the largest intensity.</p>
+</section>
+<section id="add-an-flag">
+<h2>Add an flag<a class="headerlink" href="#add-an-flag" title="Link to this heading">#</a></h2>
+<p>A flag is just a name for a variable that records some information on the neutron during the simulation, and can be used later to make a decision. Here we could check how many times the ray was reflected in the guide.</p>
+<p>We use an EXTEND block after a component to access variables internal to the component in the instrument scope. We declare a variable in the instrument scope called <em>n_reflections</em>. In the component scope, one can use the SCATTERED variable which contains the number of times the ray has encountered the SCATTER keyword within the component. Usually this is done when entering and leaving, and under each scattering / reflection, so the number of reflections is SCATTERED - 2.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">add_declare_var</span><span class="p">(</span><span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="s2">&quot;n_reflections&quot;</span><span class="p">)</span>
+<span class="n">guide</span><span class="o">.</span><span class="n">append_EXTEND</span><span class="p">(</span><span class="s2">&quot;n_reflections = SCATTERED - 2;&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">guide</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>COMPONENT guide = Guide_gravity(
+  <span class=" -Color -Color-Bold">w1</span> = <span class=" -Color -Color-Bold">0.05</span>, // [m]
+  <span class=" -Color -Color-Bold">h1</span> = <span class=" -Color -Color-Bold">0.06</span>, // [m]
+  <span class=" -Color -Color-Bold">w2</span> = <span class=" -Color -Color-Bold">0.05</span>, // [m]
+  <span class=" -Color -Color-Bold">h2</span> = <span class=" -Color -Color-Bold">0.06</span>, // [m]
+  <span class=" -Color -Color-Bold">l</span> = <span class=" -Color -Color-Bold">15</span>, // [m]
+  <span class=" -Color -Color-Bold">mleft</span> = <span class=" -Color -Color-Bold">4.0</span>, // [1]
+  <span class=" -Color -Color-Bold">mright</span> = <span class=" -Color -Color-Bold">4.0</span>, // [1]
+  <span class=" -Color -Color-Bold">mtop</span> = <span class=" -Color -Color-Bold">0.0</span>, // [1]
+  <span class=" -Color -Color-Bold">mbottom</span> = <span class=" -Color -Color-Bold">0.0</span>, // [1]
+  <span class=" -Color -Color-Bold">G</span> = <span class=" -Color -Color-Bold">-9.82</span> // [m/s2]
+)
+AT (0, 0, 1.5) RELATIVE source
+EXTEND %{
+n_reflections = SCATTERED - 2;
+%}
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="use-the-flag-to-limit-what-is-recorded-in-a-monitor">
+<h2>Use the flag to limit what is recorded in a monitor<a class="headerlink" href="#use-the-flag-to-limit-what-is-recorded-in-a-monitor" title="Link to this heading">#</a></h2>
+<p>A WHEN statement can be used to activate / deactivate a component when some condition is true / false. For example we could require 0 reflection in our guide. We add a few monitors similar to the original, with the only difference being WHEN statements requiring 0, 1 or 2 reflections in the guide for the component to be active. We use a for loop to add the similar components, only changing the component instance name, filename and WHEN statement between each.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">reflection_numbers</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+
+<span class="k">for</span> <span class="n">reflections</span> <span class="ow">in</span> <span class="n">reflection_numbers</span><span class="p">:</span>
+    <span class="n">reflections_string</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">reflections</span><span class="p">)</span>
+    
+    <span class="n">component_name</span> <span class="o">=</span> <span class="s2">&quot;acceptance_&quot;</span> <span class="o">+</span> <span class="n">reflections_string</span>
+    <span class="n">acceptance</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="n">component_name</span><span class="p">,</span> <span class="s2">&quot;DivPos_monitor&quot;</span><span class="p">)</span>
+    <span class="n">acceptance</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;&quot;acceptance_&#39;</span> <span class="o">+</span> <span class="n">reflections_string</span> <span class="o">+</span> <span class="s1">&#39;.dat&quot;&#39;</span>
+    <span class="n">acceptance</span><span class="o">.</span><span class="n">set_WHEN</span><span class="p">(</span><span class="s2">&quot;n_reflections == &quot;</span> <span class="o">+</span> <span class="n">reflections_string</span><span class="p">)</span>
+    
+    <span class="n">acceptance</span><span class="o">.</span><span class="n">set_AT</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span> <span class="n">guide</span><span class="o">.</span><span class="n">l</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">],</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">guide</span><span class="p">)</span>
+    <span class="n">acceptance</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">xwidth</span><span class="o">=</span><span class="mf">0.08</span><span class="p">,</span> <span class="n">yheight</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">nb</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">maxdiv</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">ndiv</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">restore_neutron</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="n">acceptance</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>COMPONENT acceptance_0 = DivPos_monitor(
+  <span class=" -Color -Color-Bold">nb</span> = <span class=" -Color -Color-Bold">200</span>, // [1]
+  <span class=" -Color -Color-Bold">ndiv</span> = <span class=" -Color -Color-Bold">200</span>, // [1]
+  <span class=" -Color -Color-Bold">filename</span> = <span class=" -Color -Color-Bold">&quot;acceptance_0.dat&quot;</span>, // [string]
+  <span class=" -Color -Color-Bold">xwidth</span> = <span class=" -Color -Color-Bold">0.08</span>, // [m]
+  <span class=" -Color -Color-Bold">yheight</span> = <span class=" -Color -Color-Bold">0.05</span>, // [m]
+  <span class=" -Color -Color-Bold">maxdiv</span> = <span class=" -Color -Color-Bold">1.5</span>, // [degrees]
+  <span class=" -Color -Color-Bold">restore_neutron</span> = <span class=" -Color -Color-Bold">1</span> // [1]
+) WHEN (n_reflections == 0)
+AT (0, 0, 15.1) RELATIVE guide
+
+COMPONENT acceptance_1 = DivPos_monitor(
+  <span class=" -Color -Color-Bold">nb</span> = <span class=" -Color -Color-Bold">200</span>, // [1]
+  <span class=" -Color -Color-Bold">ndiv</span> = <span class=" -Color -Color-Bold">200</span>, // [1]
+  <span class=" -Color -Color-Bold">filename</span> = <span class=" -Color -Color-Bold">&quot;acceptance_1.dat&quot;</span>, // [string]
+  <span class=" -Color -Color-Bold">xwidth</span> = <span class=" -Color -Color-Bold">0.08</span>, // [m]
+  <span class=" -Color -Color-Bold">yheight</span> = <span class=" -Color -Color-Bold">0.05</span>, // [m]
+  <span class=" -Color -Color-Bold">maxdiv</span> = <span class=" -Color -Color-Bold">1.5</span>, // [degrees]
+  <span class=" -Color -Color-Bold">restore_neutron</span> = <span class=" -Color -Color-Bold">1</span> // [1]
+) WHEN (n_reflections == 1)
+AT (0, 0, 15.1) RELATIVE guide
+
+COMPONENT acceptance_2 = DivPos_monitor(
+  <span class=" -Color -Color-Bold">nb</span> = <span class=" -Color -Color-Bold">200</span>, // [1]
+  <span class=" -Color -Color-Bold">ndiv</span> = <span class=" -Color -Color-Bold">200</span>, // [1]
+  <span class=" -Color -Color-Bold">filename</span> = <span class=" -Color -Color-Bold">&quot;acceptance_2.dat&quot;</span>, // [string]
+  <span class=" -Color -Color-Bold">xwidth</span> = <span class=" -Color -Color-Bold">0.08</span>, // [m]
+  <span class=" -Color -Color-Bold">yheight</span> = <span class=" -Color -Color-Bold">0.05</span>, // [m]
+  <span class=" -Color -Color-Bold">maxdiv</span> = <span class=" -Color -Color-Bold">1.5</span>, // [degrees]
+  <span class=" -Color -Color-Bold">restore_neutron</span> = <span class=" -Color -Color-Bold">1</span> // [1]
+) WHEN (n_reflections == 2)
+AT (0, 0, 15.1) RELATIVE guide
+</pre></div>
+</div>
+</div>
+</div>
+<p>The instrument diagram shows the use of <em>EXTEND</em> and <em>WHEN</em> keywords by decorating the corresponding component boxes with a heavier outline or dashed outline respectively.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">show_diagram</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/5b9d74d8aad674f1ec5a51bd83da79dcd69b5ec090a2a0955c7e7caba11a9d70.png" src="../_images/5b9d74d8aad674f1ec5a51bd83da79dcd69b5ec090a2a0955c7e7caba11a9d70.png" />
+<img alt="../_images/fbef2c84aed79ec8f41251fe2baafaa450a7c62a2a9a63680c7d2f876e473393.png" src="../_images/fbef2c84aed79ec8f41251fe2baafaa450a7c62a2a9a63680c7d2f876e473393.png" />
+</div>
+</div>
+<section id="running-the-simulation">
+<h3>Running the simulation<a class="headerlink" href="#running-the-simulation" title="Link to this heading">#</a></h3>
+<p>We now run the simulation with the new monitors to see how they differ from the original version.</p>
+<div class="cell tag_scroll-output docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="mf">2.8</span><span class="p">)</span>
+<span class="n">instrument</span><span class="o">.</span><span class="n">settings</span><span class="p">(</span><span class="n">ncount</span><span class="o">=</span><span class="mf">5E6</span><span class="p">)</span>
+<span class="n">instrument</span><span class="o">.</span><span class="n">show_settings</span><span class="p">()</span>
+
+<span class="n">new_data</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">backengine</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Instrument settings:
+  ncount:           5.00e+06
+  mpi:              auto 
+  output_path:      data_folder/mcstas_EXTEND_WHEN
+  run_path:         run_folder
+  package_path:     /home/runner/micromamba/envs/mcstasscript-docs/share/mcstas/resources
+  executable_path:  /home/runner/micromamba/envs/mcstasscript-docs/bin
+  executable:       mcrun
+  force_compile:    True
+  NeXus:            False
+  save_comp_pars:   False
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ms</span><span class="o">.</span><span class="n">make_sub_plot</span><span class="p">(</span><span class="n">new_data</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/79cc3e5fa94709ee50b17e398d361e04a62de00d6640362268e415c6ef30ce51.png" src="../_images/79cc3e5fa94709ee50b17e398d361e04a62de00d6640362268e415c6ef30ce51.png" />
+</div>
+</div>
+</section>
+<section id="interpretation-of-the-data">
+<h3>Interpretation of the data<a class="headerlink" href="#interpretation-of-the-data" title="Link to this heading">#</a></h3>
+<p>The original monitor is unchanged as it was not modified. On the monitors with different numbers of reflections, we see the middle line correspond to zero reflections, the two lines around those are for one reflection and so forth. This explains why the lines further from the center has lower intensity, as they underwent more reflections while also having a larger angle of incidence on the mirrors.</p>
+</section>
+<section id="the-mcstas-instrument-file">
+<h3>The McStas instrument file<a class="headerlink" href="#the-mcstas-instrument-file" title="Link to this heading">#</a></h3>
+<p>We here show the generated McStas instrument file in order to clarify how this would be accomplished without the McStasScript API.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">show_instrument_file</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/********************************************************************************
+* 
+* McStas, neutron ray-tracing package
+*         Copyright (C) 1997-2008, All rights reserved
+*         Risoe National Laboratory, Roskilde, Denmark
+*         Institut Laue Langevin, Grenoble, France
+* 
+* This file was written by McStasScript, which is a 
+* python based McStas instrument generator written by 
+* Mads Bertelsen in 2019 while employed at the 
+* European Spallation Source Data Management and 
+* Software Centre
+* 
+* Instrument: python_tutorial
+* 
+* %Identification
+* Written by: Python McStas Instrument Generator
+* Date: 13:54:51 on July 24, 2026
+* Origin: ESS DMSC
+* %INSTRUMENT_SITE: Generated_instruments
+* 
+* !!Please write a short instrument description (1 line) here!!
+* 
+* %Description
+* Please write a longer instrument description here!
+* 
+* 
+* %Parameters
+* wavelength: [unit] Wavelength in [Ang]
+* 
+* %Link 
+* 
+* %End 
+********************************************************************************/
+
+DEFINE INSTRUMENT python_tutorial (
+wavelength = 2.8 // Wavelength in [Ang]
+)
+
+DECLARE 
+%{
+int n_reflections;
+%}
+
+INITIALIZE 
+%{
+// Start of initialize for generated python_tutorial
+%}
+
+TRACE 
+COMPONENT source = Source_simple(
+ yheight = 0.02, xwidth = 0.02,
+ dist = 1.5, focus_xw = 0.05,
+ focus_yh = 0.06, lambda0 = wavelength,
+ dlambda = 0.001*wavelength, flux = 10000000000000.0)
+AT (0, 0, 0) ABSOLUTE
+
+COMPONENT guide = Guide_gravity(
+ w1 = 0.05, h1 = 0.06,
+ w2 = 0.05, h2 = 0.06,
+ l = 15, mleft = 4.0,
+ mright = 4.0, mtop = 0.0,
+ mbottom = 0.0, G = -9.82)
+AT (0, 0, 1.5) RELATIVE source
+EXTEND %{
+n_reflections = SCATTERED - 2;
+%}
+
+COMPONENT acceptance = DivPos_monitor(
+ nb = 200, ndiv = 200,
+ filename = &quot;acceptance.dat&quot;, xwidth = 0.08,
+ yheight = 0.05, maxdiv = 1.5,
+ restore_neutron = 1)
+AT (0, 0, 15.1) RELATIVE guide
+
+COMPONENT acceptance_0 = DivPos_monitor(
+ nb = 200, ndiv = 200,
+ filename = &quot;acceptance_0.dat&quot;, xwidth = 0.08,
+ yheight = 0.05, maxdiv = 1.5,
+ restore_neutron = 1)
+WHEN (n_reflections == 0)
+AT (0, 0, 15.1) RELATIVE guide
+
+COMPONENT acceptance_1 = DivPos_monitor(
+ nb = 200, ndiv = 200,
+ filename = &quot;acceptance_1.dat&quot;, xwidth = 0.08,
+ yheight = 0.05, maxdiv = 1.5,
+ restore_neutron = 1)
+WHEN (n_reflections == 1)
+AT (0, 0, 15.1) RELATIVE guide
+
+COMPONENT acceptance_2 = DivPos_monitor(
+ nb = 200, ndiv = 200,
+ filename = &quot;acceptance_2.dat&quot;, xwidth = 0.08,
+ yheight = 0.05, maxdiv = 1.5,
+ restore_neutron = 1)
+WHEN (n_reflections == 2)
+AT (0, 0, 15.1) RELATIVE guide
+
+FINALLY 
+%{
+// Start of finally for generated python_tutorial
+%}
+
+END
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="McStasScript_tutorial_2_SPLIT.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Advanced McStas features:  SPLIT</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="McStasScript_tutorial_4_JUMP.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Advanced McStas features: JUMP</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#set-up-an-example-mcstas-instrument">Set up an example McStas instrument</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interpreting-the-data">Interpreting the data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#add-an-flag">Add an flag</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#use-the-flag-to-limit-what-is-recorded-in-a-monitor">Use the flag to limit what is recorded in a monitor</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-the-simulation">Running the simulation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interpretation-of-the-data">Interpretation of the data</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-mcstas-instrument-file">The McStas instrument file</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Mads Bertelsen
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2022, Mads Bertelsen.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

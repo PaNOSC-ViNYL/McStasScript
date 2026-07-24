@@ -1,0 +1,1030 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Parameters and variables &#8212; McStasScript  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=4418a689" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'user_guide/parameters_and_variables';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Data" href="data.html" />
+    <link rel="prev" title="Component object" href="component_object.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">McStasScript  documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/version_history.html">Version history</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quick_start.html">Quick start</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="instrument_object.html">Instrument object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="component_object.html">Component object</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Parameters and variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="functions.html">Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="widgets.html">Widgets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="instrument_reader.html">Instrument reader</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">McStasScript Tutorial</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/McStasScript_tutorial_1_the_basics.html">McStasScript introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/McStasScript_tutorial_2_SPLIT.html">Advanced McStas features:  SPLIT</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/McStasScript_tutorial_3_EXTEND_and_WHEN.html">Advanced McStas features: EXTEND and WHEN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/McStasScript_tutorial_4_JUMP.html">Advanced McStas features: JUMP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/McStasScript_tutorial_5_MCPL_bridges.html">Dynamic instrument cuts with MCPL bridges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/McStasScript_tutorial_6_Diagnostics.html">Diagnostics</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">McStas Union Tutorial</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/Union_tutorial_1_processes_and_materials.html">The Union components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/Union_tutorial_2_geometry.html">Advanced geometry using the Union components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/Union_tutorial_3_loggers.html">Visualizing what happens in Union master</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/Union_tutorial_4_conditionals.html">Using conditional component to modify loggers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/Union_tutorial_5_masks.html">Union tutorial on masks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/Union_tutorial_6_Exit_and_number_of_activations.html">Advanced geometry component concepts: Exit geometry and number of activations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/Union_tutorial_7_Tagging_history.html">Union tagging system</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../_autosummary/mcstasscript.html">mcstasscript</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.html">mcstasscript.data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.MCPLDataFormat.html">mcstasscript.data.MCPLDataFormat</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.MCPLDataFormat.MCPLDataFormat.html">mcstasscript.data.MCPLDataFormat.MCPLDataFormat</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.McStasDataFormat.html">mcstasscript.data.McStasDataFormat</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.McStasDataFormat.McStasFormat.html">mcstasscript.data.McStasDataFormat.McStasFormat</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.html">mcstasscript.data.data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.parse_coordinates.html">mcstasscript.data.data.parse_coordinates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.ComponentData.html">mcstasscript.data.data.ComponentData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasData.html">mcstasscript.data.data.McStasData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasDataBinned.html">mcstasscript.data.data.McStasDataBinned</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasDataEvent.html">mcstasscript.data.data.McStasDataEvent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasMetaData.html">mcstasscript.data.data.McStasMetaData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasPlotOptions.html">mcstasscript.data.data.McStasPlotOptions</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.pyvinylData.html">mcstasscript.data.pyvinylData</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.pyvinylData.pyvinylMCPLData.html">mcstasscript.data.pyvinylData.pyvinylMCPLData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.pyvinylData.pyvinylMcStasData.html">mcstasscript.data.pyvinylData.pyvinylMcStasData</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.html">mcstasscript.instr_reader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.control.html">mcstasscript.instr_reader.control</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.control.InstrumentReader.html">mcstasscript.instr_reader.control.InstrumentReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_declare.html">mcstasscript.instr_reader.read_declare</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_declare.DeclareReader.html">mcstasscript.instr_reader.read_declare.DeclareReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_definition.html">mcstasscript.instr_reader.read_definition</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_definition.DefinitionReader.html">mcstasscript.instr_reader.read_definition.DefinitionReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_finally.html">mcstasscript.instr_reader.read_finally</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_finally.FinallyReader.html">mcstasscript.instr_reader.read_finally.FinallyReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_initialize.html">mcstasscript.instr_reader.read_initialize</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_initialize.InitializeReader.html">mcstasscript.instr_reader.read_initialize.InitializeReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_trace.html">mcstasscript.instr_reader.read_trace</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_trace.TraceReader.html">mcstasscript.instr_reader.read_trace.TraceReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_uservars.html">mcstasscript.instr_reader.read_uservars</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_uservars.UservarsReader.html">mcstasscript.instr_reader.read_uservars.UservarsReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.util.html">mcstasscript.instr_reader.util</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.util.SectionReader.html">mcstasscript.instr_reader.util.SectionReader</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.html">mcstasscript.interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.html">mcstasscript.interface.functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.load_data.html">mcstasscript.interface.functions.load_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.load_metadata.html">mcstasscript.interface.functions.load_metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.load_monitor.html">mcstasscript.interface.functions.load_monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.name_plot_options.html">mcstasscript.interface.functions.name_plot_options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.name_search.html">mcstasscript.interface.functions.name_search</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.Configurator.html">mcstasscript.interface.functions.Configurator</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.instr.html">mcstasscript.interface.instr</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.instr.McCode_instr.html">mcstasscript.interface.instr.McCode_instr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.instr.McStas_instr.html">mcstasscript.interface.instr.McStas_instr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.instr.McXtrace_instr.html">mcstasscript.interface.instr.McXtrace_instr</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.plotter.html">mcstasscript.interface.plotter</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.plotter.make_animation.html">mcstasscript.interface.plotter.make_animation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.plotter.make_plot.html">mcstasscript.interface.plotter.make_plot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.plotter.make_sub_plot.html">mcstasscript.interface.plotter.make_sub_plot</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.reader.html">mcstasscript.interface.reader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.reader.McStas_file.html">mcstasscript.interface.reader.McStas_file</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.html">mcstasscript.jb_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.html">mcstasscript.jb_interface.plot_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.ColormapDropdown.html">mcstasscript.jb_interface.plot_interface.ColormapDropdown</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.LogCheckbox.html">mcstasscript.jb_interface.plot_interface.LogCheckbox</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.MonitorDropdown.html">mcstasscript.jb_interface.plot_interface.MonitorDropdown</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.OrdersOfMagField.html">mcstasscript.jb_interface.plot_interface.OrdersOfMagField</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.PlotInterface.html">mcstasscript.jb_interface.plot_interface.PlotInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.show_interface.html">mcstasscript.jb_interface.show_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.show_interface.show.html">mcstasscript.jb_interface.show_interface.show</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.show_interface.show_instrunent.html">mcstasscript.jb_interface.show_interface.show_instrunent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.show_interface.show_plot.html">mcstasscript.jb_interface.show_interface.show_plot</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.simulation_interface.html">mcstasscript.jb_interface.simulation_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.simulation_interface.add_data.html">mcstasscript.jb_interface.simulation_interface.add_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.simulation_interface.ParameterWidget.html">mcstasscript.jb_interface.simulation_interface.ParameterWidget</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.simulation_interface.SimInterface.html">mcstasscript.jb_interface.simulation_interface.SimInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.widget_helpers.html">mcstasscript.jb_interface.widget_helpers</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.widget_helpers.get_parameter_default.html">mcstasscript.jb_interface.widget_helpers.get_parameter_default</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.widget_helpers.parameter_has_default.html">mcstasscript.jb_interface.widget_helpers.parameter_has_default</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.widget_helpers.HiddenPrints.html">mcstasscript.jb_interface.widget_helpers.HiddenPrints</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../_autosummary/mcstasscript.tools.html">mcstasscript.tools</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference (libpyvinyl)</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../_autosummary/libpyvinyl.html">libpyvinyl</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/PaNOSC-ViNYL/McStasScript" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/PaNOSC-ViNYL/McStasScript/edit/master/docs/user_guide/parameters_and_variables.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/PaNOSC-ViNYL/McStasScript/issues/new?title=Issue%20on%20page%20%2Fuser_guide/parameters_and_variables.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/user_guide/parameters_and_variables.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Parameters and variables</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters">Parameters</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#types">Types</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#value">Value</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parameter-restrictions">Parameter restrictions</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#declared-variables">Declared variables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#user-variables">User variables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#using-parameters-and-variables">Using parameters and variables</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="parameters-and-variables">
+<h1>Parameters and variables<a class="headerlink" href="#parameters-and-variables" title="Link to this heading">#</a></h1>
+<p>At the instrument level there is a distinction between parameters and variables. Parameters are inputs to the instrument that can be changed at run time, while variables are defined internally within the instrument. This section of the documentation covers these two as they have some similarities.</p>
+<section id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h2>
+<p>Instrument parameters are built on the libpyvinyl parameters, and have some interesting features. First a simple parameter is added.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">mcstasscript</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ms</span>
+<span class="n">instrument</span> <span class="o">=</span> <span class="n">ms</span><span class="o">.</span><span class="n">McStas_instr</span><span class="p">(</span><span class="s2">&quot;parameters_and_variables&quot;</span><span class="p">)</span>
+
+<span class="n">first_par</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_parameter</span><span class="p">(</span><span class="s2">&quot;first_par&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">first_par</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Parameter named: &#39;first_par&#39; without set value.
+ [dimensionless]
+ 
+</pre></div>
+</div>
+</div>
+</div>
+<p>It is a good habit to add a comment to each parameter when creating it.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">second_parameter</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_parameter</span><span class="p">(</span><span class="s2">&quot;second_par&quot;</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;My first parameter!&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="types">
+<h3>Types<a class="headerlink" href="#types" title="Link to this heading">#</a></h3>
+<p>If only one argument is given, it is assumed the type is a C <em>double</em>, so a floating point number. It is also allowed to have integers and strings. No other types are supported by McStas / McXtrace.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">double_par</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_parameter</span><span class="p">(</span><span class="s2">&quot;double&quot;</span><span class="p">,</span> <span class="s2">&quot;double_par&quot;</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Typed double&quot;</span><span class="p">)</span>
+<span class="n">int_par</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_parameter</span><span class="p">(</span><span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="s2">&quot;int_par&quot;</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Typed int&quot;</span><span class="p">)</span>
+<span class="n">string_par</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_parameter</span><span class="p">(</span><span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="s2">&quot;string_par&quot;</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Typed string&quot;</span><span class="p">)</span>
+
+<span class="n">instrument</span><span class="o">.</span><span class="n">show_parameters</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>       first_par           // 
+       second_par          // My first parameter!
+double double_par          // Typed double
+int    int_par             // Typed int
+string string_par          // Typed string
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="value">
+<h3>Value<a class="headerlink" href="#value" title="Link to this heading">#</a></h3>
+<p>It is common to set the value of a parameter when it is created.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">add_parameter</span><span class="p">(</span><span class="s2">&quot;par_with_value&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">5.2</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Added value at creation&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Parameter named: &#39;par_with_value&#39; with value: 5.2
+ [dimensionless]
+ Added value at creation
+</pre></div>
+</div>
+</div>
+</div>
+<p>The value can always be changed, either directly or through the instrument object. When using the instrument object, use the name in the instrument file as the keyword argument.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">double_par</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="mf">1.2</span>
+<span class="n">instrument</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">int_par</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">show_parameters</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>       first_par               // 
+       second_par              // My first parameter!
+double double_par      = 1.2   // Typed double
+int    int_par         = 3     // Typed int
+string string_par              // Typed string
+       par_with_value  = 5.2   // Added value at creation
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="parameter-restrictions">
+<h3>Parameter restrictions<a class="headerlink" href="#parameter-restrictions" title="Link to this heading">#</a></h3>
+<p>Since the parameter object in McStasScript is derived from libpyvinyl, some functionality is inherited in terms of setting parameter restrictions. This comes in the forms of intervals and options, which can both be legal and illegal.</p>
+<p>Here is an example of adding legal intervals to the <em>double_par</em> parameter. None can be used if the interval should extend to infinity in the given direction.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">double_par</span><span class="o">.</span><span class="n">add_interval</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">intervals_are_legal</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">double_par</span><span class="o">.</span><span class="n">add_interval</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">intervals_are_legal</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">double_par</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Parameter named: &#39;double_par&#39; with value: 1.2
+ [dimensionless]
+ Typed double
+  Legal intervals:
+    [0,5]
+    [7,inf]
+</pre></div>
+</div>
+</div>
+</div>
+<p>Now only values between 0 and 5 or from 7 to 8 are accepted. Trying to set a different value will raise a ValueError.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">double_par</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="mf">1.8</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">double_par</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Parameter named: &#39;double_par&#39; with value: 1.8
+ [dimensionless]
+ Typed double
+  Legal intervals:
+    [0,5]
+    [7,inf]
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="n">double_par</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Failed to set value!&quot;</span><span class="p">)</span>
+    
+<span class="nb">print</span><span class="p">(</span><span class="n">double_par</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Parameter named: &#39;double_par&#39; with value: 10
+ [dimensionless]
+ Typed double
+  Legal intervals:
+    [0,5]
+    [7,inf]
+</pre></div>
+</div>
+</div>
+</div>
+<p>Setting <em>intervals_are_legal</em> to False means that only values outside the defined intervals are allowed.</p>
+<p>Options work in a similar way, but for specific values.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">int_par</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">options_are_legal</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">int_par</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">options_are_legal</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">int_par</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">options_are_legal</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">int_par</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Failed to set value!&quot;</span><span class="p">)</span>
+    
+<span class="nb">print</span><span class="p">(</span><span class="n">int_par</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Failed to set value!
+Parameter named: &#39;int_par&#39; with value: 3
+ [dimensionless]
+ Typed int
+  Allowed values:
+    3
+    2
+    1
+</pre></div>
+</div>
+</div>
+</div>
+<p>Adding restrictions to parameters is a healthy habit that can make the produced instrument more resilient to errors. Ensure the given wavelength is a positive number to catch errors early instead of trying to understand what happened when a simulation fails.</p>
+</section>
+</section>
+<section id="declared-variables">
+<h2>Declared variables<a class="headerlink" href="#declared-variables" title="Link to this heading">#</a></h2>
+<p>It is possible to declare variables that are used internally in the instrument and as such not exposed to the user. This is done through the instrument objects <em>add_declare_var</em> method. It returns a <a class="reference internal" href="../_autosummary/mcstasscript.helper.mcstas_objects.DeclareVariable.html"><span class="std std-doc">DeclareVariable</span></a> object that can be used to refer to this variable.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">declared_var</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_declare_var</span><span class="p">(</span><span class="s2">&quot;double&quot;</span><span class="p">,</span> <span class="s2">&quot;declared_var&quot;</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Declared variable&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">declared_var</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Declare variable: &#39;declared_var&#39; of type double
+</pre></div>
+</div>
+</div>
+</div>
+<p>There are no restrictions on the type for declared variables, typically double and int is used. Declared variables have no methods for additional input, all information must be given at initialization.</p>
+<p>The declared variable can be initialized to a given value by using the <em>value</em> keyword.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">declared_var</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_declare_var</span><span class="p">(</span><span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Declared integer&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">declared_var</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Declare variable: &#39;integer&#39; of type int with value: 5
+</pre></div>
+</div>
+</div>
+</div>
+<p>Declared variables can also be one dimensional arrays using the <em>array</em> keyword. In the full McStas / McXtrace its possible to make arrays of any dimensionality but only one dimensional is supported in McStasScript. If a value of array is smaller than the length of the given value, the simulation will fail as it would write outside of the declared memory.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_declare_var</span><span class="p">(</span><span class="s2">&quot;double&quot;</span><span class="p">,</span> <span class="s2">&quot;declared_array&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="n">array</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Declare variable: &#39;declared_array&#39; of type double with value: [2, 3, 4]. Array with length 3
+</pre></div>
+</div>
+</div>
+</div>
+<p>The declared variables of the instrument can be displayed with <em>show_variables</em>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">show_variables</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DECLARE VARIABLES 
+type    variable name   array length  value      
+-----------------------------------------------
+double  declared_var                             
+int     integer                       5          
+double  declared_array  3             [2, 3, 4]  
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="user-variables">
+<h2>User variables<a class="headerlink" href="#user-variables" title="Link to this heading">#</a></h2>
+<p>McStas 3.0 introduced USERVARS next to declare variables, these differ in that they are specific to the neutron and can thus be used in EXTEND blocks on McStas 3.0, which is not allowed for normal declare variables. In McStasScript user variables act like declared variables, the only difference being they do not accept a initial value and will show up in a different section of show variables.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">user_var</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_user_var</span><span class="p">(</span><span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="s2">&quot;flag&quot;</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Example of USERVAR&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">user_var</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Declare variable: &#39;flag&#39; of type int
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">show_variables</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DECLARE VARIABLES 
+type    variable name   array length  value      
+-----------------------------------------------
+double  declared_var                             
+int     integer                       5          
+double  declared_array  3             [2, 3, 4]  
+
+USER VARIABLES (per neutron, only use in EXTEND)
+type    variable name   array length  value      
+-----------------------------------------------
+int     flag                                     
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="using-parameters-and-variables">
+<h2>Using parameters and variables<a class="headerlink" href="#using-parameters-and-variables" title="Link to this heading">#</a></h2>
+<p>Instrument parameters and declare variables are can both be used when setting component attributes. One can use either the name in a string, or the object directly. When using a string, it is allowed to do basic math and use several parameter / variables. It is also possible to select a certain element from an array.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;source&quot;</span><span class="p">,</span> <span class="s2">&quot;Source_simple&quot;</span><span class="p">)</span>
+<span class="n">source</span><span class="o">.</span><span class="n">xwidth</span> <span class="o">=</span> <span class="n">double_par</span>
+<span class="n">source</span><span class="o">.</span><span class="n">yheight</span> <span class="o">=</span> <span class="n">declared_var</span>
+<span class="n">source</span><span class="o">.</span><span class="n">dist</span> <span class="o">=</span> <span class="s2">&quot;5.0*first_par + 0.1*double_par&quot;</span>
+<span class="n">source</span><span class="o">.</span><span class="n">focus_xw</span> <span class="o">=</span> <span class="s2">&quot;declared_array[0]&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>COMPONENT source = Source_simple(
+  <span class=" -Color -Color-Bold">yheight</span> = <span class=" -Color -Color-Bold">integer</span>, // [m]
+  <span class=" -Color -Color-Bold">xwidth</span> = <span class=" -Color -Color-Bold">double_par</span>, // [m]
+  <span class=" -Color -Color-Bold">dist</span> = <span class=" -Color -Color-Bold">5.0*first_par + 0.1*double_par</span>, // [m]
+  <span class=" -Color -Color-Bold">focus_xw</span> = <span class=" -Color -Color-Bold">declared_array[0]</span> // [m]
+)
+AT (0, 0, 0) ABSOLUTE
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="component_object.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Component object</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="data.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Data</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters">Parameters</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#types">Types</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#value">Value</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parameter-restrictions">Parameter restrictions</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#declared-variables">Declared variables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#user-variables">User variables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#using-parameters-and-variables">Using parameters and variables</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Mads Bertelsen
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2022, Mads Bertelsen.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

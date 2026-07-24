@@ -1,0 +1,115 @@
+Traceback (most recent call last):
+  File "/home/runner/micromamba/envs/mcstasscript-docs/lib/python3.11/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+    executenb(
+  File "/home/runner/micromamba/envs/mcstasscript-docs/lib/python3.11/site-packages/nbclient/client.py", line 1323, in execute
+    return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/micromamba/envs/mcstasscript-docs/lib/python3.11/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
+    return loop.run_until_complete(inner)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/micromamba/envs/mcstasscript-docs/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/runner/micromamba/envs/mcstasscript-docs/lib/python3.11/site-packages/nbclient/client.py", line 709, in async_execute
+    await self.async_execute_cell(
+  File "/home/runner/micromamba/envs/mcstasscript-docs/lib/python3.11/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/home/runner/micromamba/envs/mcstasscript-docs/lib/python3.11/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+data = instrument.backengine()
+------------------
+
+----- stdout -----
+Simulation signaled that it failed by non-zero return code
+---- Found 2 places in McStas output with keyword 'error'. 
+
+    raise CalledProcess[91mError[0m(retcode, process.args,
+----------------------------------------------------------------------
+subprocess.CalledProcess[91mError[0m: Command 'mpirun -np 4 ./instr_name.out --trace=0 --seed=300 --ncount=1000000.0 --dir=/home/runner/work/McStasScript/McStasScript/docs/source/user_guide/instr_name --format=McCode --bufsiz=10000000 wavelength=5' returned non-zero exit status 1.
+
+----------------------------------------------------------------------
+
+INFO: Using directory: "/home/runner/work/McStasScript/McStasScript/docs/source/user_guide/instr_name"
+INFO: Regenerating c-file: instr_name.c
+CFLAGS=
+
+-----------------------------------------------------------
+
+Generating single GPU kernel or single CPU section layout: 
+
+-----------------------------------------------------------
+
+Generating GPU/CPU -DFUNNEL layout:
+
+-----------------------------------------------------------
+INFO: Recompiling: ./instr_name.out
+INFO: ===
+--------------------------------------------------------------------------
+There are not enough slots available in the system to satisfy the 4
+slots that were requested by the application:
+
+  ./instr_name.out
+
+Either request fewer slots for your application, or make more slots
+available for use.
+
+A "slot" is the Open MPI term for an allocatable unit where we can
+launch a process.  The number of slots available are defined by the
+environment in which Open MPI processes are run:
+
+  1. Hostfile, via "slots=N" clauses (N defaults to number of
+     processor cores if not provided)
+  2. The --host command line parameter, via a ":N" suffix on the
+     hostname (N defaults to 1 if not provided)
+  3. Resource manager (e.g., SLURM, PBS/Torque, LSF, etc.)
+  4. If none of a hostfile, the --host command line parameter, or an
+     RM is present, Open MPI defaults to the number of processor cores
+
+In all the above cases, if you want Open MPI to default to the number
+of hardware threads instead of the number of processor cores, use the
+--use-hwthread-cpus option.
+
+Alternatively, you can use the --oversubscribe option to ignore the
+number of available slots when deciding the number of processes to
+launch.
+--------------------------------------------------------------------------
+INFO: call to mpirun failed with Command 'mpirun -np 4 ./instr_name.out --trace=0 --seed=300 --ncount=1000000.0 --dir=/home/runner/work/McStasScript/McStasScript/docs/source/user_guide/instr_name --format=McCode --bufsiz=10000000 wavelength=5' returned non-zero exit status 1.
+Traceback (most recent call last):
+  File "/home/runner/micromamba/envs/mcstasscript-docs/share/mcstas/tools/Python/mcrun/mcrun.py", line 685, in <module>
+    main()
+  File "/home/runner/micromamba/envs/mcstasscript-docs/share/mcstas/tools/Python/mcrun/mcrun.py", line 657, in main
+    mcstas.run()  # in mccode.py
+    ^^^^^^^^^^^^
+  File "/home/runner/micromamba/envs/mcstasscript-docs/share/mcstas/tools/Python/mcrun/mccode.py", line 406, in run
+    return self.runMPI(args, pipe, override_mpi)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/micromamba/envs/mcstasscript-docs/share/mcstas/tools/Python/mcrun/mccode.py", line 461, in runMPI
+    return Process(binpath).run(args, pipe=pipe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/micromamba/envs/mcstasscript-docs/share/mcstas/tools/Python/mcrun/mccode.py", line 78, in run
+    raise err
+  File "/home/runner/micromamba/envs/mcstasscript-docs/share/mcstas/tools/Python/mcrun/mccode.py", line 74, in run
+    proc = run(command, shell=True, check=True, text=True, capture_output=pipe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/micromamba/envs/mcstasscript-docs/lib/python3.11/subprocess.py", line 571, in run
+    raise CalledProcess[91mError[0m(retcode, process.args,
+subprocess.CalledProcess[91mError[0m: Command 'mpirun -np 4 ./instr_name.out --trace=0 --seed=300 --ncount=1000000.0 --dir=/home/runner/work/McStasScript/McStasScript/docs/source/user_guide/instr_name --format=McCode --bufsiz=10000000 wavelength=5' returned non-zero exit status 1.
+----- stderr -----
+/home/runner/work/McStasScript/McStasScript/mcstasscript/helper/managed_mcrun.py:313: UserWarning: Simulation did not create data folder, most likely failed.
+  warnings.warn("Simulation did not create data folder, most likely failed.")
+------------------
+
+[31m---------------------------------------------------------------------------[39m
+[31mValueError[39m                                Traceback (most recent call last)
+[36mCell[39m[36m [39m[32mIn[30][39m[32m, line 1[39m
+[32m----> [39m[32m1[39m data = instrument.backengine()
+
+[36mFile [39m[32m~/work/McStasScript/McStasScript/mcstasscript/interface/instr.py:2594[39m, in [36mMcCode_instr.backengine[39m[34m(self)[39m
+[32m   2592[39m         [38;5;28;01mraise[39;00m [38;5;167;01mValueError[39;00m([33m"[39m[33mSimulation failed and it was not possible to read results[39m[33m"[39m)
+[32m   2593[39m [38;5;28;01melse[39;00m:
+[32m-> [39m[32m2594[39m     [38;5;28;01mraise[39;00m [38;5;167;01mValueError[39;00m([33m"[39m[33mSimulation failed and no data was written to disk[39m[33m"[39m)
+
+[31mValueError[39m: Simulation failed and no data was written to disk
+

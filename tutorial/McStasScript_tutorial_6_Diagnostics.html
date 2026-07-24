@@ -1,0 +1,1214 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Diagnostics &#8212; McStasScript  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=4418a689" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorial/McStasScript_tutorial_6_Diagnostics';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The Union components" href="Union_tutorial_1_processes_and_materials.html" />
+    <link rel="prev" title="Dynamic instrument cuts with MCPL bridges" href="McStasScript_tutorial_5_MCPL_bridges.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">McStasScript  documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/version_history.html">Version history</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quick_start.html">Quick start</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/instrument_object.html">Instrument object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/component_object.html">Component object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/parameters_and_variables.html">Parameters and variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/plotting.html">Plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/functions.html">Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/widgets.html">Widgets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/instrument_reader.html">Instrument reader</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">McStasScript Tutorial</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="McStasScript_tutorial_1_the_basics.html">McStasScript introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="McStasScript_tutorial_2_SPLIT.html">Advanced McStas features:  SPLIT</a></li>
+<li class="toctree-l1"><a class="reference internal" href="McStasScript_tutorial_3_EXTEND_and_WHEN.html">Advanced McStas features: EXTEND and WHEN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="McStasScript_tutorial_4_JUMP.html">Advanced McStas features: JUMP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="McStasScript_tutorial_5_MCPL_bridges.html">Dynamic instrument cuts with MCPL bridges</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Diagnostics</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">McStas Union Tutorial</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_1_processes_and_materials.html">The Union components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_2_geometry.html">Advanced geometry using the Union components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_3_loggers.html">Visualizing what happens in Union master</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_4_conditionals.html">Using conditional component to modify loggers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_5_masks.html">Union tutorial on masks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_6_Exit_and_number_of_activations.html">Advanced geometry component concepts: Exit geometry and number of activations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_7_Tagging_history.html">Union tagging system</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../_autosummary/mcstasscript.html">mcstasscript</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.html">mcstasscript.data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.MCPLDataFormat.html">mcstasscript.data.MCPLDataFormat</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.MCPLDataFormat.MCPLDataFormat.html">mcstasscript.data.MCPLDataFormat.MCPLDataFormat</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.McStasDataFormat.html">mcstasscript.data.McStasDataFormat</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.McStasDataFormat.McStasFormat.html">mcstasscript.data.McStasDataFormat.McStasFormat</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.html">mcstasscript.data.data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.parse_coordinates.html">mcstasscript.data.data.parse_coordinates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.ComponentData.html">mcstasscript.data.data.ComponentData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasData.html">mcstasscript.data.data.McStasData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasDataBinned.html">mcstasscript.data.data.McStasDataBinned</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasDataEvent.html">mcstasscript.data.data.McStasDataEvent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasMetaData.html">mcstasscript.data.data.McStasMetaData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasPlotOptions.html">mcstasscript.data.data.McStasPlotOptions</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.pyvinylData.html">mcstasscript.data.pyvinylData</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.pyvinylData.pyvinylMCPLData.html">mcstasscript.data.pyvinylData.pyvinylMCPLData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.pyvinylData.pyvinylMcStasData.html">mcstasscript.data.pyvinylData.pyvinylMcStasData</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.html">mcstasscript.instr_reader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.control.html">mcstasscript.instr_reader.control</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.control.InstrumentReader.html">mcstasscript.instr_reader.control.InstrumentReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_declare.html">mcstasscript.instr_reader.read_declare</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_declare.DeclareReader.html">mcstasscript.instr_reader.read_declare.DeclareReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_definition.html">mcstasscript.instr_reader.read_definition</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_definition.DefinitionReader.html">mcstasscript.instr_reader.read_definition.DefinitionReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_finally.html">mcstasscript.instr_reader.read_finally</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_finally.FinallyReader.html">mcstasscript.instr_reader.read_finally.FinallyReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_initialize.html">mcstasscript.instr_reader.read_initialize</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_initialize.InitializeReader.html">mcstasscript.instr_reader.read_initialize.InitializeReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_trace.html">mcstasscript.instr_reader.read_trace</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_trace.TraceReader.html">mcstasscript.instr_reader.read_trace.TraceReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_uservars.html">mcstasscript.instr_reader.read_uservars</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_uservars.UservarsReader.html">mcstasscript.instr_reader.read_uservars.UservarsReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.util.html">mcstasscript.instr_reader.util</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.util.SectionReader.html">mcstasscript.instr_reader.util.SectionReader</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.html">mcstasscript.interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.html">mcstasscript.interface.functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.load_data.html">mcstasscript.interface.functions.load_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.load_metadata.html">mcstasscript.interface.functions.load_metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.load_monitor.html">mcstasscript.interface.functions.load_monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.name_plot_options.html">mcstasscript.interface.functions.name_plot_options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.name_search.html">mcstasscript.interface.functions.name_search</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.Configurator.html">mcstasscript.interface.functions.Configurator</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.instr.html">mcstasscript.interface.instr</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.instr.McCode_instr.html">mcstasscript.interface.instr.McCode_instr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.instr.McStas_instr.html">mcstasscript.interface.instr.McStas_instr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.instr.McXtrace_instr.html">mcstasscript.interface.instr.McXtrace_instr</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.plotter.html">mcstasscript.interface.plotter</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.plotter.make_animation.html">mcstasscript.interface.plotter.make_animation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.plotter.make_plot.html">mcstasscript.interface.plotter.make_plot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.plotter.make_sub_plot.html">mcstasscript.interface.plotter.make_sub_plot</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.reader.html">mcstasscript.interface.reader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.reader.McStas_file.html">mcstasscript.interface.reader.McStas_file</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.html">mcstasscript.jb_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.html">mcstasscript.jb_interface.plot_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.ColormapDropdown.html">mcstasscript.jb_interface.plot_interface.ColormapDropdown</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.LogCheckbox.html">mcstasscript.jb_interface.plot_interface.LogCheckbox</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.MonitorDropdown.html">mcstasscript.jb_interface.plot_interface.MonitorDropdown</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.OrdersOfMagField.html">mcstasscript.jb_interface.plot_interface.OrdersOfMagField</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.PlotInterface.html">mcstasscript.jb_interface.plot_interface.PlotInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.show_interface.html">mcstasscript.jb_interface.show_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.show_interface.show.html">mcstasscript.jb_interface.show_interface.show</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.show_interface.show_instrunent.html">mcstasscript.jb_interface.show_interface.show_instrunent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.show_interface.show_plot.html">mcstasscript.jb_interface.show_interface.show_plot</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.simulation_interface.html">mcstasscript.jb_interface.simulation_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.simulation_interface.add_data.html">mcstasscript.jb_interface.simulation_interface.add_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.simulation_interface.ParameterWidget.html">mcstasscript.jb_interface.simulation_interface.ParameterWidget</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.simulation_interface.SimInterface.html">mcstasscript.jb_interface.simulation_interface.SimInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.widget_helpers.html">mcstasscript.jb_interface.widget_helpers</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.widget_helpers.get_parameter_default.html">mcstasscript.jb_interface.widget_helpers.get_parameter_default</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.widget_helpers.parameter_has_default.html">mcstasscript.jb_interface.widget_helpers.parameter_has_default</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.widget_helpers.HiddenPrints.html">mcstasscript.jb_interface.widget_helpers.HiddenPrints</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../_autosummary/mcstasscript.tools.html">mcstasscript.tools</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference (libpyvinyl)</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../_autosummary/libpyvinyl.html">libpyvinyl</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/PaNOSC-ViNYL/McStasScript" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/PaNOSC-ViNYL/McStasScript/edit/master/docs/tutorial/McStasScript_tutorial_6_Diagnostics.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/PaNOSC-ViNYL/McStasScript/issues/new?title=Issue%20on%20page%20%2Ftutorial/McStasScript_tutorial_6_Diagnostics.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/tutorial/McStasScript_tutorial_6_Diagnostics.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Diagnostics</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#diagram-in-analysis-mode">Diagram in analysis mode</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analyzing-a-variable">Analyzing a variable</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#beam-analysis">Beam analysis</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#diagnostics-points">Diagnostics points</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-diagnostics">Running diagnostics</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#views">Views</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#view-keyword-arguments">View keyword arguments</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="diagnostics">
+<h1>Diagnostics<a class="headerlink" href="#diagnostics" title="Link to this heading">#</a></h1>
+<p>When working with a McStas instrument it is possible to record what is happening not only at the detector, but along the entire instrument. It is tempting to add many monitors along the instrument to investigate all this for every run of the instrument, but this can result in confusing instrument output with many monitors where only few are important.</p>
+<p>McStasScript has a diagnostics tool that allows inserting monitors temporarily to understand the instrument, and in this way they do not pollute the results of every run. For our examples we will need an example instrument, so here we have a source with a guide that contains a velocity selector followed by a monochromator and sample.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">mcstasscript</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ms</span>
+
+<span class="n">instr</span> <span class="o">=</span> <span class="n">ms</span><span class="o">.</span><span class="n">McStas_instr</span><span class="p">(</span><span class="s2">&quot;demo_instr&quot;</span><span class="p">,</span> <span class="n">input_path</span><span class="o">=</span><span class="s2">&quot;run_folder&quot;</span><span class="p">)</span>
+
+<span class="c1"># McStas 2.X</span>
+<span class="c1">#instr.add_declare_var(&quot;double&quot;, &quot;x_at_source&quot;)</span>
+<span class="c1">#instr.add_declare_var(&quot;double&quot;, &quot;x_after_guide&quot;)</span>
+<span class="c1"># McStas 3.X</span>
+<span class="n">instr</span><span class="o">.</span><span class="n">add_user_var</span><span class="p">(</span><span class="s2">&quot;double&quot;</span><span class="p">,</span> <span class="s2">&quot;x_at_source&quot;</span><span class="p">)</span>
+<span class="n">instr</span><span class="o">.</span><span class="n">add_user_var</span><span class="p">(</span><span class="s2">&quot;double&quot;</span><span class="p">,</span> <span class="s2">&quot;x_after_guide&quot;</span><span class="p">)</span>
+
+<span class="n">wavelength</span> <span class="o">=</span> <span class="n">instr</span><span class="o">.</span><span class="n">add_parameter</span><span class="p">(</span><span class="s2">&quot;wavelength&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Wavelength for mono in [AA]&quot;</span><span class="p">)</span>
+<span class="n">w_min</span> <span class="o">=</span> <span class="n">instr</span><span class="o">.</span><span class="n">add_parameter</span><span class="p">(</span><span class="s2">&quot;w_min&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Minimum wavelength from source[AA]&quot;</span><span class="p">)</span>
+<span class="n">w_max</span> <span class="o">=</span> <span class="n">instr</span><span class="o">.</span><span class="n">add_parameter</span><span class="p">(</span><span class="s2">&quot;w_max&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Maximum wavelength from source[AA]&quot;</span><span class="p">)</span>
+
+<span class="n">src</span> <span class="o">=</span> <span class="n">instr</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;Source&quot;</span><span class="p">,</span> <span class="s2">&quot;Source_simple&quot;</span><span class="p">)</span>
+<span class="n">src</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">xwidth</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">yheight</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">focus_xw</span><span class="o">=</span><span class="mf">0.04</span><span class="p">,</span> <span class="n">focus_yh</span><span class="o">=</span><span class="mf">0.06</span><span class="p">,</span> <span class="n">dist</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">flux</span><span class="o">=</span><span class="mf">1E7</span><span class="p">)</span>
+<span class="n">src</span><span class="o">.</span><span class="n">lambda0</span> <span class="o">=</span> <span class="s2">&quot;(w_max+w_min)/2&quot;</span>
+<span class="n">src</span><span class="o">.</span><span class="n">dlambda</span> <span class="o">=</span> <span class="s2">&quot;(w_max-w_min)/2&quot;</span>
+<span class="n">src</span><span class="o">.</span><span class="n">append_EXTEND</span><span class="p">(</span><span class="s2">&quot;x_at_source=x;&quot;</span><span class="p">)</span>
+<span class="n">src</span><span class="o">.</span><span class="n">append_EXTEND</span><span class="p">(</span><span class="s2">&quot;x_after_guide=0;&quot;</span><span class="p">)</span>
+
+<span class="n">guide1</span> <span class="o">=</span> <span class="n">instr</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;guide1&quot;</span><span class="p">,</span> <span class="s2">&quot;Guide_gravity&quot;</span><span class="p">)</span>
+<span class="n">guide1</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">w1</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">focus_xw</span><span class="p">,</span> <span class="n">h1</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">focus_yh</span><span class="p">,</span>
+                     <span class="n">m</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">G</span><span class="o">=-</span><span class="mf">9.82</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">guide1</span><span class="o">.</span><span class="n">set_AT</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">dist</span><span class="p">,</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">src</span><span class="p">)</span>
+
+<span class="n">v_sel</span> <span class="o">=</span> <span class="n">instr</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;V_sel&quot;</span><span class="p">,</span> <span class="s2">&quot;V_selector&quot;</span><span class="p">)</span>
+<span class="n">v_sel</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">xwidth</span><span class="o">=</span><span class="n">guide1</span><span class="o">.</span><span class="n">w1</span><span class="p">,</span> <span class="n">yheight</span><span class="o">=</span><span class="n">guide1</span><span class="o">.</span><span class="n">h1</span><span class="p">,</span> <span class="n">zdepth</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+                     <span class="n">radius</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">nu</span><span class="o">=</span><span class="mi">370</span><span class="p">)</span>
+<span class="n">v_sel</span><span class="o">.</span><span class="n">set_AT</span><span class="p">(</span><span class="n">guide1</span><span class="o">.</span><span class="n">l</span> <span class="o">+</span> <span class="mf">0.5</span><span class="o">*</span><span class="n">v_sel</span><span class="o">.</span><span class="n">zdepth</span> <span class="o">+</span> <span class="mf">1E-6</span><span class="p">,</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">guide1</span><span class="p">)</span>
+
+<span class="n">guide2</span> <span class="o">=</span> <span class="n">instr</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;guide2&quot;</span><span class="p">,</span> <span class="s2">&quot;Guide_gravity&quot;</span><span class="p">)</span>
+<span class="n">guide2</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">w1</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">focus_xw</span><span class="p">,</span> <span class="n">h1</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">focus_yh</span><span class="p">,</span>
+                     <span class="n">m</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">G</span><span class="o">=-</span><span class="mf">9.82</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+<span class="n">guide2</span><span class="o">.</span><span class="n">set_AT</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="n">v_sel</span><span class="o">.</span><span class="n">zdepth</span> <span class="o">+</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">v_sel</span><span class="p">)</span>
+<span class="n">guide2</span><span class="o">.</span><span class="n">set_ROTATED</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">v_sel</span><span class="p">)</span>
+
+<span class="n">guide3</span> <span class="o">=</span> <span class="n">instr</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;guide3&quot;</span><span class="p">,</span> <span class="s2">&quot;Guide_gravity&quot;</span><span class="p">)</span>
+<span class="n">guide3</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">w1</span><span class="o">=</span><span class="n">guide2</span><span class="o">.</span><span class="n">w1</span><span class="p">,</span> <span class="n">h1</span><span class="o">=</span><span class="n">guide2</span><span class="o">.</span><span class="n">h1</span><span class="p">,</span>
+                     <span class="n">w2</span><span class="o">=</span><span class="n">guide2</span><span class="o">.</span><span class="n">w1</span><span class="o">*</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">h2</span><span class="o">=</span><span class="n">guide2</span><span class="o">.</span><span class="n">h1</span><span class="o">*</span><span class="mf">0.8</span><span class="p">,</span>
+                     <span class="n">m</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">G</span><span class="o">=-</span><span class="mf">9.82</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">guide3</span><span class="o">.</span><span class="n">set_AT</span><span class="p">(</span><span class="n">guide2</span><span class="o">.</span><span class="n">l</span> <span class="o">+</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">guide2</span><span class="p">)</span>
+<span class="n">guide3</span><span class="o">.</span><span class="n">set_ROTATED</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">guide2</span><span class="p">)</span>
+<span class="n">guide3</span><span class="o">.</span><span class="n">append_EXTEND</span><span class="p">(</span><span class="s2">&quot;x_after_guide = x;&quot;</span><span class="p">)</span>
+
+<span class="n">mono_Q</span> <span class="o">=</span> <span class="n">instr</span><span class="o">.</span><span class="n">add_declare_var</span><span class="p">(</span><span class="s2">&quot;double&quot;</span><span class="p">,</span> <span class="s2">&quot;mono_Q&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">1.714</span><span class="p">)</span> <span class="c1"># Q for Ge 311</span>
+<span class="n">instr</span><span class="o">.</span><span class="n">add_declare_var</span><span class="p">(</span><span class="s2">&quot;double&quot;</span><span class="p">,</span> <span class="s2">&quot;wavevector&quot;</span><span class="p">)</span>
+<span class="n">instr</span><span class="o">.</span><span class="n">append_initialize</span><span class="p">(</span><span class="s2">&quot;wavevector = 2.0*PI/wavelength;&quot;</span><span class="p">)</span>
+
+<span class="n">mono_rotation</span> <span class="o">=</span> <span class="n">instr</span><span class="o">.</span><span class="n">add_declare_var</span><span class="p">(</span><span class="s2">&quot;double&quot;</span><span class="p">,</span> <span class="s2">&quot;mono_rotation&quot;</span><span class="p">)</span>
+<span class="n">instr</span><span class="o">.</span><span class="n">append_initialize</span><span class="p">(</span><span class="s2">&quot;mono_rotation = asin(mono_Q/(2.0*wavevector))*RAD2DEG;&quot;</span><span class="p">)</span>
+<span class="n">instr</span><span class="o">.</span><span class="n">append_initialize</span><span class="p">(</span><span class="s1">&#39;printf(&quot;monochromator rotation = </span><span class="si">%g</span><span class="s1"> deg</span><span class="se">\\</span><span class="s1">n&quot;, mono_rotation);&#39;</span><span class="p">)</span>
+
+<span class="n">mono</span> <span class="o">=</span> <span class="n">instr</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;mono&quot;</span><span class="p">,</span> <span class="s2">&quot;Monochromator_flat&quot;</span><span class="p">)</span>
+<span class="n">mono</span><span class="o">.</span><span class="n">zwidth</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">mono</span><span class="o">.</span><span class="n">yheight</span> <span class="o">=</span> <span class="mf">0.08</span>
+<span class="n">mono</span><span class="o">.</span><span class="n">Q</span> <span class="o">=</span> <span class="n">mono_Q</span>
+<span class="n">mono</span><span class="o">.</span><span class="n">set_AT</span><span class="p">(</span><span class="n">guide3</span><span class="o">.</span><span class="n">l</span> <span class="o">+</span> <span class="mf">0.3</span><span class="p">,</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">guide3</span><span class="p">)</span>
+<span class="n">mono</span><span class="o">.</span><span class="n">set_ROTATED</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="n">mono_rotation</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">guide3</span><span class="p">)</span>
+
+<span class="n">beam_direction</span> <span class="o">=</span> <span class="n">instr</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;beam_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;Arm&quot;</span><span class="p">,</span> <span class="n">AT_RELATIVE</span><span class="o">=</span><span class="n">mono</span><span class="p">)</span>
+<span class="n">beam_direction</span><span class="o">.</span><span class="n">set_ROTATED</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="n">mono_rotation</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">mono</span><span class="p">)</span>
+
+<span class="n">slit</span> <span class="o">=</span> <span class="n">instr</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;slit&quot;</span><span class="p">,</span> <span class="s2">&quot;Slit&quot;</span><span class="p">)</span>
+<span class="n">slit</span><span class="o">.</span><span class="n">radius</span> <span class="o">=</span> <span class="mf">0.03</span>
+<span class="n">slit</span><span class="o">.</span><span class="n">set_AT</span><span class="p">(</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">beam_direction</span><span class="p">)</span>
+
+<span class="n">sample</span> <span class="o">=</span> <span class="n">instr</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;sample&quot;</span><span class="p">,</span> <span class="s2">&quot;PowderN&quot;</span><span class="p">)</span>
+<span class="n">sample</span><span class="o">.</span><span class="n">set_AT</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">slit</span><span class="p">)</span>
+<span class="n">sample</span><span class="o">.</span><span class="n">radius</span> <span class="o">=</span> <span class="mf">0.015</span>
+<span class="n">sample</span><span class="o">.</span><span class="n">yheight</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">sample</span><span class="o">.</span><span class="n">reflections</span> <span class="o">=</span> <span class="s1">&#39;&quot;Na2Ca3Al2F14.laz&quot;&#39;</span>
+
+<span class="n">banana</span> <span class="o">=</span> <span class="n">instr</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;banana&quot;</span><span class="p">,</span> <span class="s2">&quot;Monitor_nD&quot;</span><span class="p">,</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">sample</span><span class="p">)</span>
+<span class="n">banana</span><span class="o">.</span><span class="n">xwidth</span> <span class="o">=</span> <span class="mf">1.2</span>
+<span class="n">banana</span><span class="o">.</span><span class="n">yheight</span> <span class="o">=</span> <span class="mf">0.3</span>
+<span class="n">banana</span><span class="o">.</span><span class="n">restore_neutron</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">banana</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;&quot;banana.dat&quot;&#39;</span>
+<span class="n">banana</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="s1">&#39;&quot;theta limits=[20 175] bins=150, banana&quot;&#39;</span>
+
+<span class="n">Lam</span> <span class="o">=</span> <span class="n">instr</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;Lam&quot;</span><span class="p">,</span> <span class="s2">&quot;L_monitor&quot;</span><span class="p">)</span>
+<span class="n">Lam</span><span class="o">.</span><span class="n">nL</span> <span class="o">=</span> <span class="mi">160</span>
+<span class="n">Lam</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;&quot;Lambda.dat&quot;&#39;</span>
+<span class="n">Lam</span><span class="o">.</span><span class="n">xwidth</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">Lam</span><span class="o">.</span><span class="n">yheight</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">Lam</span><span class="o">.</span><span class="n">Lmin</span> <span class="o">=</span> <span class="s2">&quot;wavelength*0.3&quot;</span>
+<span class="n">Lam</span><span class="o">.</span><span class="n">Lmax</span> <span class="o">=</span> <span class="s2">&quot;wavelength*1.7&quot;</span>
+<span class="n">Lam</span><span class="o">.</span><span class="n">restore_neutron</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">Lam</span><span class="o">.</span><span class="n">set_AT</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">],</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">sample</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="diagram-in-analysis-mode">
+<h2>Diagram in analysis mode<a class="headerlink" href="#diagram-in-analysis-mode" title="Link to this heading">#</a></h2>
+<p>One important aspect of a McStas simulation is how the intensity and number of rays evolves over the course of the instrument. To investigate this, analysis can be enabled in the diagram.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instr</span><span class="o">.</span><span class="n">show_diagram</span><span class="p">(</span><span class="n">analysis</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/70ed3228c2eb8706ce05ceef5d6b1fbf5a3126d9b178db09548aa39360c7f815.png" src="../_images/70ed3228c2eb8706ce05ceef5d6b1fbf5a3126d9b178db09548aa39360c7f815.png" />
+<img alt="../_images/bd3fef39c6bcbbf86d767724af3d50ef677ba68ce07318590819747403843fd6.png" src="../_images/bd3fef39c6bcbbf86d767724af3d50ef677ba68ce07318590819747403843fd6.png" />
+</div>
+</div>
+<p>Such a graph shows the intensity measured just before each component in the instrument. There are some circumstances that can be difficult to interpret correctly, for example here we see the intensity and number of rays rise after the banana detector, how can this be? This is because the banana detector is placed at the sample position, inside the sample, and some rays are already past that point and are thus not recorded.</p>
+</section>
+<section id="analyzing-a-variable">
+<h2>Analyzing a variable<a class="headerlink" href="#analyzing-a-variable" title="Link to this heading">#</a></h2>
+<p>Furthermore one can investigate any variable from the table below with the variable keyword.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Axis string</p></th>
+<th class="head"><p>Full name</p></th>
+<th class="head"><p>Unit</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>t</p></td>
+<td><p>time</p></td>
+<td><p>s</p></td>
+<td><p>Particle time</p></td>
+</tr>
+<tr class="row-odd"><td><p>x</p></td>
+<td><p>x position</p></td>
+<td><p>m</p></td>
+<td><p>Coordinate x of particle</p></td>
+</tr>
+<tr class="row-even"><td><p>y</p></td>
+<td><p>y position</p></td>
+<td><p>m</p></td>
+<td><p>Coordinate y of particle</p></td>
+</tr>
+<tr class="row-odd"><td><p>z</p></td>
+<td><p>z position</p></td>
+<td><p>m</p></td>
+<td><p>Coordinate z of particle</p></td>
+</tr>
+<tr class="row-even"><td><p>vx</p></td>
+<td><p>x velocity</p></td>
+<td><p>m/s</p></td>
+<td><p>Velocity projected onto x</p></td>
+</tr>
+<tr class="row-odd"><td><p>vy</p></td>
+<td><p>y velocity</p></td>
+<td><p>m/s</p></td>
+<td><p>Velocity projected onto y</p></td>
+</tr>
+<tr class="row-even"><td><p>vz</p></td>
+<td><p>z velocity</p></td>
+<td><p>m/s</p></td>
+<td><p>Velocity projected onto z</p></td>
+</tr>
+<tr class="row-odd"><td><p>p</p></td>
+<td><p>weight</p></td>
+<td><p>intensity</p></td>
+<td><p>Particle weight McStas n/s</p></td>
+</tr>
+<tr class="row-even"><td><p>l</p></td>
+<td><p>lambda</p></td>
+<td><p>AA</p></td>
+<td><p>Particle wavelength</p></td>
+</tr>
+<tr class="row-odd"><td><p>e</p></td>
+<td><p>energy</p></td>
+<td><p>meV</p></td>
+<td><p>Particle energy</p></td>
+</tr>
+<tr class="row-even"><td><p>speed</p></td>
+<td><p>speed</p></td>
+<td><p>m/s</p></td>
+<td><p>Speed (length of velocity vector)</p></td>
+</tr>
+<tr class="row-odd"><td><p>dx</p></td>
+<td><p>x divergence</p></td>
+<td><p>deg</p></td>
+<td><p>Divergence from z axis along x axis</p></td>
+</tr>
+<tr class="row-even"><td><p>dy</p></td>
+<td><p>y divergence</p></td>
+<td><p>deg</p></td>
+<td><p>Divergence from z axis along y axis</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instr</span><span class="o">.</span><span class="n">show_diagram</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="s2">&quot;l&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/70ed3228c2eb8706ce05ceef5d6b1fbf5a3126d9b178db09548aa39360c7f815.png" src="../_images/70ed3228c2eb8706ce05ceef5d6b1fbf5a3126d9b178db09548aa39360c7f815.png" />
+<img alt="../_images/45cdc77e34bfcd92d5f364bdf72f4c88408a17f6c93692bdf1b61a26d503108d.png" src="../_images/45cdc77e34bfcd92d5f364bdf72f4c88408a17f6c93692bdf1b61a26d503108d.png" />
+</div>
+</div>
+<p>Above we see the wavelength distribution along the instrument.</p>
+<ul class="simple">
+<li><p>Before guide1: Uniform distribution from source</p></li>
+<li><p>After guide1: Some transmission losses, especially at lower wavelength</p></li>
+<li><p>After V_sel: Chooses a limited wavelength range</p></li>
+<li><p>After guide2 and guide3: further transmission losses</p></li>
+<li><p>After mono: No change (neutrons are either transmitted or scattered)</p></li>
+<li><p>After slit: Only rays scattered by mononchromator continue</p></li>
+</ul>
+<p>This tool is useful for quickly understanding what is going on in an instrument. Below we set up a situation where the wavelength selected by the monochromator is on the edge of what is transmitted by the velocity selector. The limit keyword can be used to zoom into an important area of the plot.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instr</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="mf">4.3</span><span class="p">,</span> <span class="n">w_min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">w_max</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+<span class="n">instr</span><span class="o">.</span><span class="n">show_diagram</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="s2">&quot;l&quot;</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">[</span><span class="mf">3.5</span><span class="p">,</span> <span class="mi">6</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/70ed3228c2eb8706ce05ceef5d6b1fbf5a3126d9b178db09548aa39360c7f815.png" src="../_images/70ed3228c2eb8706ce05ceef5d6b1fbf5a3126d9b178db09548aa39360c7f815.png" />
+<img alt="../_images/153e43706d8fe4db975ff49442da97d5dede2ea436ef0a13a1f23d7a12decc3f.png" src="../_images/153e43706d8fe4db975ff49442da97d5dede2ea436ef0a13a1f23d7a12decc3f.png" />
+</div>
+</div>
+</section>
+<section id="beam-analysis">
+<h2>Beam analysis<a class="headerlink" href="#beam-analysis" title="Link to this heading">#</a></h2>
+<p>In addition to an overview of the instrument, McStasScript can view detailed beam characteristics at user selected points along the instrument. In order to access these features, the user has to create a diagnostics object from the instrument.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">diag</span> <span class="o">=</span> <span class="n">ms</span><span class="o">.</span><span class="n">Diagnostics</span><span class="p">(</span><span class="n">instr</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>The diagnostics object contains a copy of the instrument as it was when the diagnostics object was created, so if the instrument is updated, a new diagnostics object should be made. The diagnostics object will also take a copy of the parameters and settings of the instrument, but these can be modified with the usual methods, without impacting the original instrument.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">diag</span><span class="o">.</span><span class="n">settings</span><span class="p">(</span><span class="n">ncount</span><span class="o">=</span><span class="mf">1E7</span><span class="p">,</span> <span class="n">suppress_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mpi</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;data_folder/diagnostics&quot;</span><span class="p">)</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">show_settings</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Instrument settings:
+  ncount:           1.00e+07
+  mpi:              auto 
+  output_path:      data_folder/diagnostics
+  run_path:         run_folder
+  package_path:     /home/runner/micromamba/envs/mcstasscript-docs/share/mcstas/resources
+  executable_path:  /home/runner/micromamba/envs/mcstasscript-docs/bin
+  executable:       mcrun
+  force_compile:    True
+  NeXus:            False
+  save_comp_pars:   False
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">diag</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">w_min</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">w_max</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">show_parameters</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> wavelength  = 5  // Wavelength for mono in [AA]
+ w_min       = 4  // Minimum wavelength from source[AA]
+ w_max       = 6  // Maximum wavelength from source[AA]
+</pre></div>
+</div>
+</div>
+</div>
+<p>The diagnostics object can hold two additional kinds of information that will help with diagnostics, <em>points</em> and <em>views</em>.</p>
+<section id="diagnostics-points">
+<h3>Diagnostics points<a class="headerlink" href="#diagnostics-points" title="Link to this heading">#</a></h3>
+<p>The <em>points</em> are points in the instrument where the beam is analyzed. Such a point is given as either <em>before</em> or <em>after</em> a component in the instrument.</p>
+<p>If one inserts a point <em>before</em> a component, the beam will be analyzed by a flat monitor at the position of the component, this monitor will be before the chosen component in the instrument component sequence. The particles are restored, so it is as if the monitor was not there at all.</p>
+<p>Selecting <em>after</em> would place the monitor after the chosen component in the component sequence, and the monitor will record the particles as they leave the chosen component.</p>
+<p>In both cases the monitor will record events at those points, and as default it will record 50000 rays. This can be changed with the <em>rays</em> keyword argument. Notice that the full intensity will not be shown in these diagnostics results as only part of the rays are recorded to save drive space, but it is possible to set rays to “all” if full intensities are required, at the cost of some large data files especially at higher ncounts.</p>
+<p>We add some points to the diagnostics object with the <em>add_point</em> method. We start by focusing on the guide system.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">diag</span><span class="o">.</span><span class="n">clear_points</span><span class="p">()</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_point</span><span class="p">(</span><span class="n">before</span><span class="o">=</span><span class="s2">&quot;guide1&quot;</span><span class="p">)</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_point</span><span class="p">(</span><span class="n">after</span><span class="o">=</span><span class="s2">&quot;V_sel&quot;</span><span class="p">)</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_point</span><span class="p">(</span><span class="n">after</span><span class="o">=</span><span class="s2">&quot;guide3&quot;</span><span class="p">)</span>
+
+<span class="n">diag</span><span class="o">.</span><span class="n">show_points</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Diagnostics point before: guide1                    - rays: 50000
+Diagnostics point after:  V_sel                     - rays: 50000
+Diagnostics point after:  guide3                    - rays: 50000
+</pre></div>
+</div>
+</div>
+</div>
+<p>It is possible to remove points with the <em>remove_point</em> method, it uses the same syntax. It is also possible to clear all points with <em>clear_points</em>.</p>
+<p>User variables or flags in the instrument can be included in the event information recorded at each point, to tell the diagnostics object which of these should be recorded, use the <em>add_flag</em> method. A maximum of three flags can be investigated and the current flags can be cleared with <em>clear_flags</em>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">diag</span><span class="o">.</span><span class="n">clear_flags</span><span class="p">()</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_flag</span><span class="p">(</span><span class="s2">&quot;x_at_source&quot;</span><span class="p">)</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_flag</span><span class="p">(</span><span class="s2">&quot;x_after_guide&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">diag</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Instrument diagnostics for: demo_instr
+Diagnostics points: 
+  Diagnostics point before: guide1                    - rays: 50000
+  Diagnostics point after:  V_sel                     - rays: 50000
+  Diagnostics point after:  guide3                    - rays: 50000
+Views: 
+  No views yet
+Recording following user variables:
+  x_at_source
+  x_after_guide
+Does not yet contain simulated data
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="running-diagnostics">
+<h3>Running diagnostics<a class="headerlink" href="#running-diagnostics" title="Link to this heading">#</a></h3>
+<p>We can now run the diagnostics instrument using the run method. This will insert the monitors at the requested positions within the instrument and perform a simulation with the current settings and parameters. It can now be seen in the print of the diagnostics object that it contains simulated data, and the number of rays recorded at each point.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">diag</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">diag</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Instrument diagnostics for: demo_instr
+Diagnostics points: 
+  Diagnostics point before: guide1                    - rays: 100002 / 50000
+  Diagnostics point after:  V_sel                     - rays: 100002 / 50000
+  Diagnostics point after:  guide3                    - rays: 100002 / 50000
+Views: 
+  No views yet
+Recording following user variables:
+  x_at_source
+  x_after_guide
+Does contain simulated data
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="views">
+<h3>Views<a class="headerlink" href="#views" title="Link to this heading">#</a></h3>
+<p>Since the data recorded at the points is event data, we can choose how to view this data after the simulation. This is done by adding <em>views</em>.</p>
+<p>All views need to define at least one axis the events should be binned into, and can optionally choose a second for a 2D histogram. The axis keyword takes all the same inputs as the variable for diagrams and any flags defined.</p>
+<p>Here we define a few views and plot the information. The plot will contain all views at all points, but remember they only record up to the number of specified rays, so the intensities are not accurate.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">diag</span><span class="o">.</span><span class="n">clear_views</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">diag</span><span class="o">.</span><span class="n">clear_views</span><span class="p">()</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_view</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_view</span><span class="p">(</span><span class="s2">&quot;x_at_source&quot;</span><span class="p">)</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_view</span><span class="p">(</span><span class="s2">&quot;l&quot;</span><span class="p">,</span> <span class="s2">&quot;dx&quot;</span><span class="p">)</span>
+
+<span class="n">diag</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/d8362b859513956d34fccb6f366ad0acce41db2e0541092f7021fcc903555ad9.png" src="../_images/d8362b859513956d34fccb6f366ad0acce41db2e0541092f7021fcc903555ad9.png" />
+</div>
+</div>
+<p>From this data we see the spatial distribution before the first guide element is uniform as expected.</p>
+<p>When we look at the beam after the velocity selector we see a slightly narrower spatial distribution, and can see that rays that make it to this point were most likely to be from the center of the source. We also see the velocity selector limits the wavelength range as expected, but also introduces some correlation between wavelength and divergence due to the direction of rotation.</p>
+<p>After the last guide element we see the final beam, it is homogeneous spatially, but there are issues with the divergence distribution and a surprising correlation with the wavelength. The gaps in divergence arise from the compression by the guide which is done in a problematic way.</p>
+</section>
+<section id="view-keyword-arguments">
+<h3>View keyword arguments<a class="headerlink" href="#view-keyword-arguments" title="Link to this heading">#</a></h3>
+<p>Views have two keyword arguments that can alter how they behave, and in addition to these they can take all keyword arguments <em>set_plot_options</em> would allow.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Keyword</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>same_scale</p></td>
+<td><p>False</p></td>
+<td><p>Ensures all views are plotted on the same scale</p></td>
+</tr>
+<tr class="row-odd"><td><p>bins</p></td>
+<td><p>100</p></td>
+<td><p>Number of bins, for 2D plot can be a list of 2, one for each axis</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Below we demonstrate how the same scale keyword argument changes a view.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">diag</span><span class="o">.</span><span class="n">clear_views</span><span class="p">()</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_view</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">)</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_view</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="n">same_scale</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_view</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;l&quot;</span><span class="p">)</span>
+
+<span class="n">diag</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/497cb6c4516e8cba9d354a1e3c2ac51a6a79ac3fc3b6ce05e66d8bd0d6c8906d.png" src="../_images/497cb6c4516e8cba9d354a1e3c2ac51a6a79ac3fc3b6ce05e66d8bd0d6c8906d.png" />
+</div>
+</div>
+<p>Without <em>same_scale</em> enabled we see the tof distribution at each point, while the one with <em>same_scale</em> enabled draws attention to how the distribution widens as the beam propagates.</p>
+<p>We can now analyze the backend of the instrument by defining a new range of points.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">diag</span><span class="o">.</span><span class="n">clear_points</span><span class="p">()</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_point</span><span class="p">(</span><span class="n">after</span><span class="o">=</span><span class="s2">&quot;guide3&quot;</span><span class="p">)</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_point</span><span class="p">(</span><span class="n">after</span><span class="o">=</span><span class="s2">&quot;mono&quot;</span><span class="p">,</span> <span class="n">rays</span><span class="o">=</span><span class="mf">8E4</span><span class="p">)</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_point</span><span class="p">(</span><span class="n">before</span><span class="o">=</span><span class="s2">&quot;sample&quot;</span><span class="p">,</span> <span class="n">rays</span><span class="o">=</span><span class="mf">8E4</span><span class="p">)</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_point</span><span class="p">(</span><span class="n">after</span><span class="o">=</span><span class="s2">&quot;sample&quot;</span><span class="p">,</span> <span class="n">rays</span><span class="o">=</span><span class="mf">8E4</span><span class="p">)</span>
+
+<span class="n">diag</span><span class="o">.</span><span class="n">settings</span><span class="p">(</span><span class="n">ncount</span><span class="o">=</span><span class="mf">3E7</span><span class="p">)</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">diag</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Instrument diagnostics for: demo_instr
+Diagnostics points: 
+  Diagnostics point after:  guide3                    - rays: 100002 / 50000
+  Diagnostics point after:  mono                      - rays: 160002 / 80000
+  Diagnostics point before: sample                    - rays: 147570 / 80000
+  Diagnostics point after:  sample                    - rays: 147570 / 80000
+Views: 
+  View (t)                  bins: 100
+  View (t)                  bins: 100
+  View (t, l)               bins: 100
+Recording following user variables:
+  x_at_source
+  x_after_guide
+Does contain simulated data
+</pre></div>
+</div>
+</div>
+</div>
+<p>We set up a new list of views to investigate the backend of the instrument.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">diag</span><span class="o">.</span><span class="n">clear_views</span><span class="p">()</span>
+
+<span class="n">diag</span><span class="o">.</span><span class="n">add_view</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_view</span><span class="p">(</span><span class="s2">&quot;l&quot;</span><span class="p">,</span> <span class="n">same_scale</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_view</span><span class="p">(</span><span class="s2">&quot;l&quot;</span><span class="p">,</span> <span class="s2">&quot;dx&quot;</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">orders_of_mag</span><span class="o">=</span><span class="mf">4.5</span><span class="p">)</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_view</span><span class="p">(</span><span class="s2">&quot;dx&quot;</span><span class="p">,</span> <span class="s2">&quot;dy&quot;</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">orders_of_mag</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+
+<span class="n">diag</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/496c2d6e28587411e304fd98ff9a3b73ae28618011910536a85d7d7e64ead7aa.png" src="../_images/496c2d6e28587411e304fd98ff9a3b73ae28618011910536a85d7d7e64ead7aa.png" />
+</div>
+</div>
+<p>From this data we see the expected distributions after the guide which we already considered. The data after the monochromator is however unexpected. This is because it shows both rays that scattered on the monochromator and rays that didn’t, those that did are near x=0 while those that did not are near x=0.2, which is the exit of the guide in the rotated coordinate system of the monochromator. The remaining views after the monochromator shows that the total wavelength distribution is unchanged, but now a its divided into the direct beam at -42 deg, and the scattered beam at 42 deg.
+Before the sample we see the wavelength distribution reduced to that which made it through the slit, so the transmitted beam is no longer included.
+After the sample we see how the center of the beam was attenuated and the Debye-Scherrer rings can be seen in both 2D plots.</p>
+<p>The diagnostics system can be used to investigate many interesting aspects of the instrument, here we will look at one final aspect using the defined user variables that record position at the source and after the guide, as we can look at the correlations between the two. When looking at such data over the different points in the instrument, only events that made it to that point is included, so the correlation may change slightly.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">diag</span><span class="o">.</span><span class="n">clear_views</span><span class="p">()</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_view</span><span class="p">(</span><span class="s2">&quot;x_at_source&quot;</span><span class="p">)</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_view</span><span class="p">(</span><span class="s2">&quot;x_after_guide&quot;</span><span class="p">)</span>
+<span class="n">diag</span><span class="o">.</span><span class="n">add_view</span><span class="p">(</span><span class="s2">&quot;x_at_source&quot;</span><span class="p">,</span> <span class="s2">&quot;x_after_guide&quot;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="p">[</span><span class="mi">40</span><span class="p">,</span> <span class="mi">40</span><span class="p">])</span>
+
+<span class="n">diag</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/bdf289d59ae8c53cf772969813e8e699067cf72777c2e4ebb6754f6b2ed7c5de.png" src="../_images/bdf289d59ae8c53cf772969813e8e699067cf72777c2e4ebb6754f6b2ed7c5de.png" />
+</div>
+</div>
+<p>Here we see that if the ray originated at the positive x side of the source, it is also likely to be on the positive x side after the guide. Mainly the center 4 cm of the source is used in this configuration of the instrument, which could change depending on wavelength and coating of the guide.</p>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="McStasScript_tutorial_5_MCPL_bridges.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Dynamic instrument cuts with MCPL bridges</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="Union_tutorial_1_processes_and_materials.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">The Union components</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#diagram-in-analysis-mode">Diagram in analysis mode</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analyzing-a-variable">Analyzing a variable</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#beam-analysis">Beam analysis</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#diagnostics-points">Diagnostics points</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-diagnostics">Running diagnostics</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#views">Views</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#view-keyword-arguments">View keyword arguments</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Mads Bertelsen
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2022, Mads Bertelsen.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

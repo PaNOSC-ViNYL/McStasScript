@@ -1,0 +1,1252 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>The Union components &#8212; McStasScript  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=4418a689" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorial/Union_tutorial_1_processes_and_materials';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Advanced geometry using the Union components" href="Union_tutorial_2_geometry.html" />
+    <link rel="prev" title="Diagnostics" href="McStasScript_tutorial_6_Diagnostics.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">McStasScript  documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/version_history.html">Version history</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quick_start.html">Quick start</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/instrument_object.html">Instrument object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/component_object.html">Component object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/parameters_and_variables.html">Parameters and variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/plotting.html">Plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/functions.html">Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/widgets.html">Widgets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/instrument_reader.html">Instrument reader</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">McStasScript Tutorial</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="McStasScript_tutorial_1_the_basics.html">McStasScript introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="McStasScript_tutorial_2_SPLIT.html">Advanced McStas features:  SPLIT</a></li>
+<li class="toctree-l1"><a class="reference internal" href="McStasScript_tutorial_3_EXTEND_and_WHEN.html">Advanced McStas features: EXTEND and WHEN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="McStasScript_tutorial_4_JUMP.html">Advanced McStas features: JUMP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="McStasScript_tutorial_5_MCPL_bridges.html">Dynamic instrument cuts with MCPL bridges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="McStasScript_tutorial_6_Diagnostics.html">Diagnostics</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">McStas Union Tutorial</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">The Union components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_2_geometry.html">Advanced geometry using the Union components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_3_loggers.html">Visualizing what happens in Union master</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_4_conditionals.html">Using conditional component to modify loggers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_5_masks.html">Union tutorial on masks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_6_Exit_and_number_of_activations.html">Advanced geometry component concepts: Exit geometry and number of activations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Union_tutorial_7_Tagging_history.html">Union tagging system</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../_autosummary/mcstasscript.html">mcstasscript</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.html">mcstasscript.data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.MCPLDataFormat.html">mcstasscript.data.MCPLDataFormat</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.MCPLDataFormat.MCPLDataFormat.html">mcstasscript.data.MCPLDataFormat.MCPLDataFormat</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.McStasDataFormat.html">mcstasscript.data.McStasDataFormat</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.McStasDataFormat.McStasFormat.html">mcstasscript.data.McStasDataFormat.McStasFormat</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.html">mcstasscript.data.data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.parse_coordinates.html">mcstasscript.data.data.parse_coordinates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.ComponentData.html">mcstasscript.data.data.ComponentData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasData.html">mcstasscript.data.data.McStasData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasDataBinned.html">mcstasscript.data.data.McStasDataBinned</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasDataEvent.html">mcstasscript.data.data.McStasDataEvent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasMetaData.html">mcstasscript.data.data.McStasMetaData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.data.McStasPlotOptions.html">mcstasscript.data.data.McStasPlotOptions</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.data.pyvinylData.html">mcstasscript.data.pyvinylData</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.pyvinylData.pyvinylMCPLData.html">mcstasscript.data.pyvinylData.pyvinylMCPLData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.data.pyvinylData.pyvinylMcStasData.html">mcstasscript.data.pyvinylData.pyvinylMcStasData</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.html">mcstasscript.instr_reader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.control.html">mcstasscript.instr_reader.control</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.control.InstrumentReader.html">mcstasscript.instr_reader.control.InstrumentReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_declare.html">mcstasscript.instr_reader.read_declare</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_declare.DeclareReader.html">mcstasscript.instr_reader.read_declare.DeclareReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_definition.html">mcstasscript.instr_reader.read_definition</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_definition.DefinitionReader.html">mcstasscript.instr_reader.read_definition.DefinitionReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_finally.html">mcstasscript.instr_reader.read_finally</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_finally.FinallyReader.html">mcstasscript.instr_reader.read_finally.FinallyReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_initialize.html">mcstasscript.instr_reader.read_initialize</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_initialize.InitializeReader.html">mcstasscript.instr_reader.read_initialize.InitializeReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_trace.html">mcstasscript.instr_reader.read_trace</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_trace.TraceReader.html">mcstasscript.instr_reader.read_trace.TraceReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_uservars.html">mcstasscript.instr_reader.read_uservars</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.read_uservars.UservarsReader.html">mcstasscript.instr_reader.read_uservars.UservarsReader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.util.html">mcstasscript.instr_reader.util</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.instr_reader.util.SectionReader.html">mcstasscript.instr_reader.util.SectionReader</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.html">mcstasscript.interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.html">mcstasscript.interface.functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.load_data.html">mcstasscript.interface.functions.load_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.load_metadata.html">mcstasscript.interface.functions.load_metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.load_monitor.html">mcstasscript.interface.functions.load_monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.name_plot_options.html">mcstasscript.interface.functions.name_plot_options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.name_search.html">mcstasscript.interface.functions.name_search</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.functions.Configurator.html">mcstasscript.interface.functions.Configurator</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.instr.html">mcstasscript.interface.instr</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.instr.McCode_instr.html">mcstasscript.interface.instr.McCode_instr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.instr.McStas_instr.html">mcstasscript.interface.instr.McStas_instr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.instr.McXtrace_instr.html">mcstasscript.interface.instr.McXtrace_instr</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.plotter.html">mcstasscript.interface.plotter</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.plotter.make_animation.html">mcstasscript.interface.plotter.make_animation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.plotter.make_plot.html">mcstasscript.interface.plotter.make_plot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.plotter.make_sub_plot.html">mcstasscript.interface.plotter.make_sub_plot</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.interface.reader.html">mcstasscript.interface.reader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.interface.reader.McStas_file.html">mcstasscript.interface.reader.McStas_file</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.html">mcstasscript.jb_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.html">mcstasscript.jb_interface.plot_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.ColormapDropdown.html">mcstasscript.jb_interface.plot_interface.ColormapDropdown</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.LogCheckbox.html">mcstasscript.jb_interface.plot_interface.LogCheckbox</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.MonitorDropdown.html">mcstasscript.jb_interface.plot_interface.MonitorDropdown</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.OrdersOfMagField.html">mcstasscript.jb_interface.plot_interface.OrdersOfMagField</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.plot_interface.PlotInterface.html">mcstasscript.jb_interface.plot_interface.PlotInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.show_interface.html">mcstasscript.jb_interface.show_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.show_interface.show.html">mcstasscript.jb_interface.show_interface.show</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.show_interface.show_instrunent.html">mcstasscript.jb_interface.show_interface.show_instrunent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.show_interface.show_plot.html">mcstasscript.jb_interface.show_interface.show_plot</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.simulation_interface.html">mcstasscript.jb_interface.simulation_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.simulation_interface.add_data.html">mcstasscript.jb_interface.simulation_interface.add_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.simulation_interface.ParameterWidget.html">mcstasscript.jb_interface.simulation_interface.ParameterWidget</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.simulation_interface.SimInterface.html">mcstasscript.jb_interface.simulation_interface.SimInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.widget_helpers.html">mcstasscript.jb_interface.widget_helpers</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.widget_helpers.get_parameter_default.html">mcstasscript.jb_interface.widget_helpers.get_parameter_default</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.widget_helpers.parameter_has_default.html">mcstasscript.jb_interface.widget_helpers.parameter_has_default</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/mcstasscript.jb_interface.widget_helpers.HiddenPrints.html">mcstasscript.jb_interface.widget_helpers.HiddenPrints</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../_autosummary/mcstasscript.tools.html">mcstasscript.tools</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference (libpyvinyl)</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../_autosummary/libpyvinyl.html">libpyvinyl</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/PaNOSC-ViNYL/McStasScript" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/PaNOSC-ViNYL/McStasScript/edit/master/docs/tutorial/Union_tutorial_1_processes_and_materials.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/PaNOSC-ViNYL/McStasScript/issues/new?title=Issue%20on%20page%20%2Ftutorial/Union_tutorial_1_processes_and_materials.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/tutorial/Union_tutorial_1_processes_and_materials.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>The Union components</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differences-between-mcstas-versions">Differences between McStas versions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#process-components">Process components</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#making-a-material">Making a material</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-geometries-that-use-the-material-definitions">Adding geometries that use the material definitions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-loggers-that-show-scattering-and-absorption">Adding loggers that show scattering and absorption</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-the-union-master-component">Adding the Union master component</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstas-3-x-compatability">McStas 3.X compatability</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-the-simulation">Running the simulation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interpreting-the-results">Interpreting the results</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#alternative-run-to-show-powder-properties">Alternative run to show powder properties</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interpretation-of-the-data">Interpretation of the data</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="the-union-components">
+<h1>The Union components<a class="headerlink" href="#the-union-components" title="Link to this heading">#</a></h1>
+<p>This tutorial is the first in a series showing how the Union components are used. This notebook focuses on setting up material definitions that are used to provide scattering physics to geometries. There are several kinds of Union components, and they need to be used in conjunction with one another to function.</p>
+<ul class="simple">
+<li><p>Process components: Describe individual scattering phenomena, such as incoherent, powder, single crystal scattering</p></li>
+<li><p>Make_material component: Joins several processes into a material definition</p></li>
+<li><p>Geometry components: Describe geometry, each is assigned a material definition</p></li>
+<li><p>Union logger components: Records information for each scattering event and plots it</p></li>
+<li><p>Union abs logger components: Records information for each absorption event and plots it</p></li>
+<li><p>Union conditional components: Modifies a logger or abs logger so it only records when certain final condition met</p></li>
+<li><p>Union master component: Performs simulation described by previous Union components</p></li>
+</ul>
+<p>In this notebook we will focus on setting up materials using process components and the <em>Union_make_material</em> component, but the Union components can not work individually, so it will also be necessary to add a geometry and the <em>Union_master</em>. First we import McStasScript and create a new instrument object.</p>
+<p>In case of any issues with running the tutorial notebooks there is troubleshooting at the end of this notebook.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">mcstasscript</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ms</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span> <span class="o">=</span> <span class="n">ms</span><span class="o">.</span><span class="n">McStas_instr</span><span class="p">(</span><span class="s2">&quot;python_tutorial&quot;</span><span class="p">,</span> <span class="n">input_path</span><span class="o">=</span><span class="s2">&quot;run_folder&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="differences-between-mcstas-versions">
+<h2>Differences between McStas versions<a class="headerlink" href="#differences-between-mcstas-versions" title="Link to this heading">#</a></h2>
+<p>The Union components can be used in both McStas 2.X and McStas 3.X, but when used in McStas 3.X it is necessary to add an <em>Union_init</em> component named init before any other Union component and a <em>Union_stop</em> component after all other Union components. To make the notebooks compatible with both, the init and stop component can be added inside an if-statement that checks what version of McStas is used.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">instrument</span><span class="o">.</span><span class="n">mccode_version</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+    <span class="n">init</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;Union_init&quot;</span><span class="p">)</span> <span class="c1"># This component has to be called init</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="process-components">
+<h2>Process components<a class="headerlink" href="#process-components" title="Link to this heading">#</a></h2>
+<p>In this notebook we will focus on exploring how to build different physical descriptions of materials, and checking that they behave as expected. We start by looking at the process component for incoherent scattering, Incoherent_process.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">available_components</span><span class="p">(</span><span class="s2">&quot;union&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Here are all components in the union category.
+ AF_HB_1D_process                          Union_abs_logger_nD
+ IncoherentPhonon_process                  Union_box
+ Incoherent_process                        Union_conditional_PSD
+ Inhomogenous_incoherent_process           Union_conditional_standard
+ Mirror_surface                            Union_cone
+ NCrystal_process                          Union_cylinder
+ Non_process                               Union_init
+ PhononSimple_process                      Union_logger_1D
+ Powder_process                            Union_logger_2DQ
+ Single_crystal_process                    Union_logger_2D_kf
+ Template_process                          Union_logger_2D_kf_time
+ Template_surface                          Union_logger_2D_space
+ Texture_process                           Union_logger_2D_space_time
+ Union_abs_logger_1D_space                 Union_logger_3D_space
+ Union_abs_logger_1D_space_event           Union_make_material
+ Union_abs_logger_1D_space_tof             Union_master
+ Union_abs_logger_1D_space_tof_to_lambda   Union_master_GPU
+ Union_abs_logger_1D_time                  Union_mesh
+ Union_abs_logger_2D_space                 Union_sphere
+ Union_abs_logger_event                    Union_stop
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">component_help</span><span class="p">(</span><span class="s2">&quot;Incoherent_process&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> ___ Help Incoherent_process ________________________________________________________
+|<span class=" -Color -Color-Bold">optional parameter</span>|<span class=" -Color -Color-Bold">required parameter</span>|<span class=" -Color -Color-Bold">default value</span>|<span class=" -Color -Color-Bold">user specified value</span>|
+<span class=" -Color -Color-Bold">sigma</span> = <span class=" -Color -Color-Bold">5.08</span> [barns] // Incoherent scattering cross section
+<span class=" -Color -Color-Bold">f_QE</span> = <span class=" -Color -Color-Bold">0.0</span> [1] // Fraction of quasielastic scattering (rest is elastic) [1]
+<span class=" -Color -Color-Bold">gamma</span> = <span class=" -Color -Color-Bold">0.0</span> [meV] // Lorentzian width of quasielastic broadening (HWHM) [1]
+<span class=" -Color -Color-Bold">packing_factor</span> = <span class=" -Color -Color-Bold">1.0</span> [1] // How dense is the material compared to optimal 0-1
+<span class=" -Color -Color-Bold">unit_cell_volume</span> = <span class=" -Color -Color-Bold">13.8</span> [AA^3] // Unit cell volume
+<span class=" -Color -Color-Bold">interact_fraction</span> = <span class=" -Color -Color-Bold">-1.0</span> [1] // How large a part of the scattering events 
+                                should use this process 0-1 (sum of all processes 
+                                in material = 1) 
+<span class=" -Color -Color-Bold">init</span> = <span class=" -Color -Color-Bold">&quot;init&quot;</span> [string] // name of Union_init component (typically &quot;init&quot;, 
+                          default) 
+-------------------------------------------------------------------------------------
+</pre></div>
+</div>
+</div>
+</div>
+<p>The process components in general have few parameters as they just describe a single physical phenomena. The incoherent process here is described adequately by just the cross section <em>sigma</em> and volume of the unit cell, <em>unit_cell_volume</em>.</p>
+<p>Two parameters are available for all processes, <em>packing_factor</em> and <em>interact_fraction</em>. The packing factor describes how dense the material is, and can make it easier to mix for example different powders. It is implemented as a simple factor on the scattering strength. The interact fraction is used to balance many processes when they are used in one material. Normally processes are sampled according to they natural probability for scattering, but this can be overwritten using the <em>interact_fraction</em>, which provides the sampling probability directly, they just have to sum to 1 within a material.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">incoherent</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;incoherent&quot;</span><span class="p">,</span> <span class="s2">&quot;Incoherent_process&quot;</span><span class="p">)</span>
+<span class="n">incoherent</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="mf">2.5</span>
+<span class="n">incoherent</span><span class="o">.</span><span class="n">unit_cell_volume</span> <span class="o">=</span> <span class="mf">13.8</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="making-a-material">
+<h2>Making a material<a class="headerlink" href="#making-a-material" title="Link to this heading">#</a></h2>
+<p>In order to collect processes into a material, one uses the <em>Union_make_material</em> component. Here are the parameters.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">component_help</span><span class="p">(</span><span class="s2">&quot;Union_make_material&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> ___ Help Union_make_material _______________________________________________________
+|<span class=" -Color -Color-Bold">optional parameter</span>|<span class=" -Color -Color-Bold">required parameter</span>|<span class=" -Color -Color-Bold">default value</span>|<span class=" -Color -Color-Bold">user specified value</span>|
+<span class=" -Color -Color-Bold">process_string</span> = <span class=" -Color -Color-Bold">&quot;NULL&quot;</span> [string] // Comma seperated names of physical processes
+<span class=" -Color -Color-Bold">my_absorption</span> [1/m] // Inverse penetration depth from absorption at standard 
+                       energy 
+<span class=" -Color -Color-Bold">absorber</span> = <span class=" -Color -Color-Bold">0.0</span> [0/1] // Control parameter, if set to 1 the material will have 
+                        no scattering processes 
+<span class=" -Color -Color-Bold">refraction_density</span> = <span class=" -Color -Color-Bold">0.0</span> [g/cm3] // Density of the refracting material. density 
+                                    &lt; 0 means the material is outside/before the 
+                                    shape. 
+<span class=" -Color -Color-Bold">refraction_sigma_coh</span> = <span class=" -Color -Color-Bold">0.0</span> [barn] // Coherent cross section of refracting 
+                                     material. Use negative value to indicate a 
+                                     negative coherent scattering length 
+<span class=" -Color -Color-Bold">refraction_weight</span> = <span class=" -Color -Color-Bold">0.0</span> [g/mol] // Molar mass of the refracting material
+<span class=" -Color -Color-Bold">refraction_SLD</span> = <span class=" -Color -Color-Bold">-1500.0</span> [AA^-2] // Scattering length density of material 
+                                    (overwrites sigma_coh, density and weight) 
+<span class=" -Color -Color-Bold">init</span> = <span class=" -Color -Color-Bold">&quot;init&quot;</span> [string] // Name of Union_init component (typically &quot;init&quot;, 
+                          default) 
+-------------------------------------------------------------------------------------
+</pre></div>
+</div>
+</div>
+</div>
+<p>A material definition thus consists of a number of processes given with the <em>process_string</em> parameter, and a description of the absorption in the material given with the inverse penetration depth at the standard neutron speed of 2200 m/s. For our first test material, lets just set absorption to zero and set our process_string to incoherent, referring to the process we created above.</p>
+<p>The name of the material is now inc_material, which will be used in the future to refer to this material.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">inc_material</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;inc_material&quot;</span><span class="p">,</span> <span class="s2">&quot;Union_make_material&quot;</span><span class="p">)</span>
+<span class="n">inc_material</span><span class="o">.</span><span class="n">my_absorption</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="n">inc_material</span><span class="o">.</span><span class="n">process_string</span> <span class="o">=</span> <span class="s1">&#39;&quot;incoherent&quot;&#39;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>If the material contains no physical processes, it is necessary to set the <em>absorber</em> parameter to 1, as it will just have an absorption description. Here we make a material called abs_material.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">absorber</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;abs_material&quot;</span><span class="p">,</span> <span class="s2">&quot;Union_make_material&quot;</span><span class="p">)</span>
+<span class="n">absorber</span><span class="o">.</span><span class="n">absorber</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">absorber</span><span class="o">.</span><span class="n">my_absorption</span> <span class="o">=</span> <span class="mf">3.0</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>The primary reason for having both process components and a make_material component is that it is possible to add as many processes in one material as necessary. Here we create a powder process, and then make a material using the powder and previously defined incoherent processes.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">powder</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;powder&quot;</span><span class="p">,</span> <span class="s2">&quot;Powder_process&quot;</span><span class="p">)</span>
+<span class="n">powder</span><span class="o">.</span><span class="n">reflections</span> <span class="o">=</span> <span class="s1">&#39;&quot;Cu.laz&quot;&#39;</span>
+
+<span class="n">inc_material</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;powder_material&quot;</span><span class="p">,</span> <span class="s2">&quot;Union_make_material&quot;</span><span class="p">)</span>
+<span class="n">inc_material</span><span class="o">.</span><span class="n">my_absorption</span> <span class="o">=</span> <span class="mf">1.2</span>
+<span class="n">inc_material</span><span class="o">.</span><span class="n">process_string</span> <span class="o">=</span> <span class="s1">&#39;&quot;incoherent,powder&quot;&#39;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>At this point we have three materials defined</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Material name</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>inc_material</p></td>
+<td><p>Has one incoherent process and no absorption</p></td>
+</tr>
+<tr class="row-odd"><td><p>abs_material</p></td>
+<td><p>Only has absorption</p></td>
+</tr>
+<tr class="row-even"><td><p>powder_material</p></td>
+<td><p>Has both incoherent and powder process in addition to absorption</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The instrument diagram can show the components and their underlying connections. Connections between Union components are shown on the right side. From the diagram it is clear the same incoherent process is used in both inc_material and powder_material. In most cases a user would make individual incoherent processes for each material to set independent incoherent cross sections. It is also visible that powder_material contains two processes and abs_material contains none.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">show_diagram</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/0e23037b7f2088f09e3fa7b250582c7a3a2f3af105ca5009d0e08eda73b04a12.png" src="../_images/0e23037b7f2088f09e3fa7b250582c7a3a2f3af105ca5009d0e08eda73b04a12.png" />
+<img alt="../_images/dd73b1ccb74600b0cbd6909cdd8435e82a7c05ad3c516052bbdfdd86e1df76ac.png" src="../_images/dd73b1ccb74600b0cbd6909cdd8435e82a7c05ad3c516052bbdfdd86e1df76ac.png" />
+</div>
+</div>
+<p>Let us define a quick test instrument to see these materials are behaving as expected. First we add a source.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">src</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;source&quot;</span><span class="p">,</span> <span class="s2">&quot;Source_div&quot;</span><span class="p">)</span>
+
+<span class="n">source_width</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_parameter</span><span class="p">(</span><span class="s2">&quot;source_width&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span>
+                                        <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Width of source in [m]&quot;</span><span class="p">)</span>
+<span class="n">src</span><span class="o">.</span><span class="n">xwidth</span> <span class="o">=</span> <span class="n">source_width</span>
+<span class="n">src</span><span class="o">.</span><span class="n">yheight</span> <span class="o">=</span> <span class="mf">0.03</span>
+<span class="n">src</span><span class="o">.</span><span class="n">focus_aw</span> <span class="o">=</span> <span class="mf">0.01</span>
+<span class="n">src</span><span class="o">.</span><span class="n">focus_ah</span> <span class="o">=</span> <span class="mf">0.01</span>
+
+<span class="n">src</span><span class="o">.</span><span class="n">lambda0</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_parameter</span><span class="p">(</span><span class="s2">&quot;wavelength&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>
+                                       <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Wavelength in [Ang]&quot;</span><span class="p">)</span>
+<span class="n">src</span><span class="o">.</span><span class="n">dlambda</span> <span class="o">=</span> <span class="s2">&quot;0.001*wavelength&quot;</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="adding-geometries-that-use-the-material-definitions">
+<h2>Adding geometries that use the material definitions<a class="headerlink" href="#adding-geometries-that-use-the-material-definitions" title="Link to this heading">#</a></h2>
+<p>Here we add three boxes, each using a different material definition and placed next to one another. The <em>material_string</em> parameter is used to specify the material name. The <em>priority</em> parameter will be explained later, as it is only important when geometries overlap, here they are spatially separated, yet the priorities must still be unique.</p>
+<p>It is important to note that these three boxes will be simulated simultaneously in the McStas simulation flow, so no need for GROUP statements to have these in parallel. Because they are simulated simultaneously, a ray can go from one to another, which would not be possible with a standard GROUP.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">box_inc</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;box_inc&quot;</span><span class="p">,</span> <span class="s2">&quot;Union_box&quot;</span><span class="p">,</span> <span class="n">AT</span><span class="o">=</span><span class="p">[</span><span class="mf">0.04</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">src</span><span class="p">)</span>
+<span class="n">box_inc</span><span class="o">.</span><span class="n">xwidth</span> <span class="o">=</span> <span class="mf">0.03</span>
+<span class="n">box_inc</span><span class="o">.</span><span class="n">yheight</span> <span class="o">=</span> <span class="mf">0.03</span>
+<span class="n">box_inc</span><span class="o">.</span><span class="n">zdepth</span> <span class="o">=</span> <span class="mf">0.03</span>
+<span class="n">box_inc</span><span class="o">.</span><span class="n">material_string</span> <span class="o">=</span> <span class="s1">&#39;&quot;inc_material&quot;&#39;</span>
+<span class="n">box_inc</span><span class="o">.</span><span class="n">priority</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="n">box_inc</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;box_powder&quot;</span><span class="p">,</span> <span class="s2">&quot;Union_box&quot;</span><span class="p">,</span> <span class="n">AT</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">src</span><span class="p">)</span>
+<span class="n">box_inc</span><span class="o">.</span><span class="n">xwidth</span> <span class="o">=</span> <span class="mf">0.03</span>
+<span class="n">box_inc</span><span class="o">.</span><span class="n">yheight</span> <span class="o">=</span> <span class="mf">0.03</span>
+<span class="n">box_inc</span><span class="o">.</span><span class="n">zdepth</span> <span class="o">=</span> <span class="mf">0.01</span>
+<span class="n">box_inc</span><span class="o">.</span><span class="n">material_string</span> <span class="o">=</span> <span class="s1">&#39;&quot;powder_material&quot;&#39;</span>
+<span class="n">box_inc</span><span class="o">.</span><span class="n">priority</span> <span class="o">=</span> <span class="mi">11</span>
+
+<span class="n">box_inc</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;box_abs&quot;</span><span class="p">,</span> <span class="s2">&quot;Union_box&quot;</span><span class="p">,</span> <span class="n">AT</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mf">0.04</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">RELATIVE</span><span class="o">=</span><span class="n">src</span><span class="p">)</span>
+<span class="n">box_inc</span><span class="o">.</span><span class="n">xwidth</span> <span class="o">=</span> <span class="mf">0.03</span>
+<span class="n">box_inc</span><span class="o">.</span><span class="n">yheight</span> <span class="o">=</span> <span class="mf">0.03</span>
+<span class="n">box_inc</span><span class="o">.</span><span class="n">zdepth</span> <span class="o">=</span> <span class="mf">0.03</span>
+<span class="n">box_inc</span><span class="o">.</span><span class="n">material_string</span> <span class="o">=</span> <span class="s1">&#39;&quot;abs_material&quot;&#39;</span>
+<span class="n">box_inc</span><span class="o">.</span><span class="n">priority</span> <span class="o">=</span> <span class="mi">12</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Let us take another look at how this changed the instrument diagram. The three geometries have been added, and each have a line to their material component.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">show_diagram</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/0e23037b7f2088f09e3fa7b250582c7a3a2f3af105ca5009d0e08eda73b04a12.png" src="../_images/0e23037b7f2088f09e3fa7b250582c7a3a2f3af105ca5009d0e08eda73b04a12.png" />
+<img alt="../_images/cabd40e21e982d7d6f3a22faa58c2b0abf8c1506fedf3953cbffba3ba7f8d378.png" src="../_images/cabd40e21e982d7d6f3a22faa58c2b0abf8c1506fedf3953cbffba3ba7f8d378.png" />
+</div>
+</div>
+</section>
+<section id="adding-loggers-that-show-scattering-and-absorption">
+<h2>Adding loggers that show scattering and absorption<a class="headerlink" href="#adding-loggers-that-show-scattering-and-absorption" title="Link to this heading">#</a></h2>
+<p>In order to check the three materials behave as expected, we add spatial loggers for scattering and absorption. These are called loggers and abs_loggers, here are the parameters for a logger.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">component_help</span><span class="p">(</span><span class="s2">&quot;Union_logger_2D_space&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> ___ Help Union_logger_2D_space _____________________________________________________
+|<span class=" -Color -Color-Bold">optional parameter</span>|<span class=" -Color -Color-Bold">required parameter</span>|<span class=" -Color -Color-Bold">default value</span>|<span class=" -Color -Color-Bold">user specified value</span>|
+<span class=" -Color -Color-Bold">target_geometry</span> = <span class=" -Color -Color-Bold">&quot;NULL&quot;</span> [string] // Comma seperated list of geometry names 
+                                     that will be logged, leave empty for all 
+                                     volumes (even not defined yet) 
+<span class=" -Color -Color-Bold">target_process</span> = <span class=" -Color -Color-Bold">&quot;NULL&quot;</span> [string] // Comma seperated names of physical 
+                                    processes, if volumes are selected, one can 
+                                    select Union_process names 
+<span class=" -Color -Color-Bold">D_direction_1</span> = <span class=" -Color -Color-Bold">&quot;x&quot;</span> [string] // Direction for first axis (&quot;x&quot;, &quot;y&quot; or &quot;z&quot;)
+<span class=" -Color -Color-Bold">D1_min</span> = <span class=" -Color -Color-Bold">-5.0</span> [m] // Histogram boundery, min position value for first axis
+<span class=" -Color -Color-Bold">D1_max</span> = <span class=" -Color -Color-Bold">5.0</span> [m] // Histogram boundery, max position value for first axis
+<span class=" -Color -Color-Bold">n1</span> = <span class=" -Color -Color-Bold">90.0</span> [1] // Number of bins for first axis
+<span class=" -Color -Color-Bold">D_direction_2</span> = <span class=" -Color -Color-Bold">&quot;z&quot;</span> [string] // Direction for second axis (&quot;x&quot;, &quot;y&quot; or &quot;z&quot;)
+<span class=" -Color -Color-Bold">D2_min</span> = <span class=" -Color -Color-Bold">-5.0</span> [m] // Histogram boundery, min position value for second axis
+<span class=" -Color -Color-Bold">D2_max</span> = <span class=" -Color -Color-Bold">5.0</span> [m] // Histogram boundery, max position value for second axis
+<span class=" -Color -Color-Bold">n2</span> = <span class=" -Color -Color-Bold">90.0</span> [1] // Number of bins for second axis
+<span class=" -Color -Color-Bold">filename</span> = <span class=" -Color -Color-Bold">&quot;NULL&quot;</span> [string] // Filename of produced data file
+<span class=" -Color -Color-Bold">order_total</span> = <span class=" -Color -Color-Bold">0.0</span> [1] // Only log rays that scatter for the n&#39;th time, 0 for 
+                         all orders 
+<span class=" -Color -Color-Bold">order_volume</span> = <span class=" -Color -Color-Bold">0.0</span> [1] // Only log rays that scatter for the n&#39;th time in the 
+                          same geometry 
+<span class=" -Color -Color-Bold">order_volume_process</span> = <span class=" -Color -Color-Bold">0.0</span> [1] // Only log rays that scatter for the n&#39;th time 
+                                  in the same geometry, using the same process 
+<span class=" -Color -Color-Bold">logger_conditional_extend_index</span> = <span class=" -Color -Color-Bold">-1.0</span> [1] // If a conditional is used with 
+                                              this logger, the result of each 
+                                              conditional calculation can be made 
+                                              available in extend as a array called 
+                                              &quot;logger_conditional_extend&quot;, and one 
+                                              would then acces 
+                                              logger_conditional_extend[n] if 
+                                              logger_conditional_extend_index is 
+                                              set to n 
+<span class=" -Color -Color-Bold">init</span> = <span class=" -Color -Color-Bold">&quot;init&quot;</span> [string] // Name of Union_init component (typically &quot;init&quot;, 
+                          default) 
+-------------------------------------------------------------------------------------
+</pre></div>
+</div>
+</div>
+</div>
+<p>The parameters for the abs_logger are very similar, so the two are added here.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">logger</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;logger_space&quot;</span><span class="p">,</span> <span class="s2">&quot;Union_logger_2D_space&quot;</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">set_RELATIVE</span><span class="p">(</span><span class="s2">&quot;box_powder&quot;</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">D_direction_1</span> <span class="o">=</span> <span class="s1">&#39;&quot;z&quot;&#39;</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">D1_min</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.04</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">D1_max</span> <span class="o">=</span> <span class="mf">0.04</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">n1</span> <span class="o">=</span> <span class="mi">250</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">D_direction_2</span> <span class="o">=</span> <span class="s1">&#39;&quot;x&quot;&#39;</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">D2_min</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.075</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">D2_max</span> <span class="o">=</span> <span class="mf">0.075</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">n2</span> <span class="o">=</span> <span class="mi">400</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;&quot;logger.dat&quot;&#39;</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;abs_logger_space&quot;</span><span class="p">,</span> <span class="s2">&quot;Union_abs_logger_2D_space&quot;</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">set_RELATIVE</span><span class="p">(</span><span class="s2">&quot;box_powder&quot;</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">D_direction_1</span> <span class="o">=</span> <span class="s1">&#39;&quot;z&quot;&#39;</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">D1_min</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.04</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">D1_max</span> <span class="o">=</span> <span class="mf">0.04</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">n1</span> <span class="o">=</span> <span class="mi">250</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">D_direction_2</span> <span class="o">=</span> <span class="s1">&#39;&quot;x&quot;&#39;</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">D2_min</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.075</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">D2_max</span> <span class="o">=</span> <span class="mf">0.075</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">n2</span> <span class="o">=</span> <span class="mi">400</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;&quot;abs_logger.dat&quot;&#39;</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="adding-the-union-master-component">
+<h2>Adding the Union master component<a class="headerlink" href="#adding-the-union-master-component" title="Link to this heading">#</a></h2>
+<p>The Union master component is what actually executes the simulation, and so it takes information from all Union components defined before and performs the described simulation. This is the component that matters in terms of order of execution within the sequence of McStas components. As all the previous components have described what the master component should simulate, it has no required parameters. It also does not matter where it is located in space, as it will grab the locations described by all previous Union components that need a spatial location, such as the geometries and loggers.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">component_help</span><span class="p">(</span><span class="s2">&quot;Union_master&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> ___ Help Union_master ______________________________________________________________
+|<span class=" -Color -Color-Bold">optional parameter</span>|<span class=" -Color -Color-Bold">required parameter</span>|<span class=" -Color -Color-Bold">default value</span>|<span class=" -Color -Color-Bold">user specified value</span>|
+<span class=" -Color -Color-Bold">enable_refraction</span> = <span class=" -Color -Color-Bold">1</span> [0/1] // Toggles refraction effects, simulated for all 
+                               materials that have refraction parameters set 
+<span class=" -Color -Color-Bold">enable_reflection</span> = <span class=" -Color -Color-Bold">1</span> [0/1] // Toggles reflection effects, simulated for all 
+                               materials that have refraction parameters set 
+<span class=" -Color -Color-Bold">verbal</span> = <span class=" -Color -Color-Bold">0.0</span> [0/1] // Toogles printing information loaded during initialize
+<span class=" -Color -Color-Bold">list_verbal</span> = <span class=" -Color -Color-Bold">0.0</span> [0/1] // Toogles information of all internal lists in 
+                           intersection network 
+<span class=" -Color -Color-Bold">finally_verbal</span> = <span class=" -Color -Color-Bold">0.0</span> [0/1] // Toogles information about cleanup performed in 
+                              finally section 
+<span class=" -Color -Color-Bold">allow_inside_start</span> = <span class=" -Color -Color-Bold">0.0</span> [0/1] // Set to 1 if rays are expected to start inside 
+                                  a volume in this master 
+<span class=" -Color -Color-Bold">enable_tagging</span> = <span class=" -Color -Color-Bold">0.0</span> [0/1] // Enable tagging of ray history (geometry, 
+                              scattering process) 
+<span class=" -Color -Color-Bold">history_limit</span> = <span class=" -Color -Color-Bold">300000.0</span> [1] // Limit the number of unique histories that are 
+                                saved 
+<span class=" -Color -Color-Bold">enable_conditionals</span> = <span class=" -Color -Color-Bold">1.0</span> [0/1] // Use conditionals with this master
+<span class=" -Color -Color-Bold">inherit_number_of_scattering_events</span> = <span class=" -Color -Color-Bold">0.0</span> [0/1] // Inherit the number of 
+                                                   scattering events from last 
+                                                   master 
+<span class=" -Color -Color-Bold">weight_ratio_limit</span> = <span class=" -Color -Color-Bold">1e-90</span> [1] // Limit on the ratio between initial weight and 
+                                  current, ray absorbed if ratio becomes lower than 
+                                  limit 
+<span class=" -Color -Color-Bold">init</span> = <span class=" -Color -Color-Bold">&quot;init&quot;</span> [string] // Name of Union_init component (typically &quot;init&quot;, 
+                          default) 
+-------------------------------------------------------------------------------------
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">master</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;master&quot;</span><span class="p">,</span> <span class="s2">&quot;Union_master&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="mcstas-3-x-compatability">
+<h3>McStas 3.X compatability<a class="headerlink" href="#mcstas-3-x-compatability" title="Link to this heading">#</a></h3>
+<p>As mentioned at the start of the notebook it is necessary to add a <em>Union_stop</em> component after all Union coponents in the instrument, this is typically after the last master.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">instrument</span><span class="o">.</span><span class="n">mccode_version</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+    <span class="n">stop</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">add_component</span><span class="p">(</span><span class="s2">&quot;stop&quot;</span><span class="p">,</span> <span class="s2">&quot;Union_stop&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Although the Union_master component is not told specifically what geometry components to simulate, it picks up the relevant information from the components added before it. The instrument diagram shows these hidden connections.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">show_diagram</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/a98b6ee40c9bede0e1d8ae3eb66bf296761784ca3bec85c6850a580f05e78e13.png" src="../_images/a98b6ee40c9bede0e1d8ae3eb66bf296761784ca3bec85c6850a580f05e78e13.png" />
+<img alt="../_images/23755c51fd01b18eacdea947e15ba4ef2f74302b43a88da02c5c31ba0911e3c1.png" src="../_images/23755c51fd01b18eacdea947e15ba4ef2f74302b43a88da02c5c31ba0911e3c1.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="running-the-simulation">
+<h2>Running the simulation<a class="headerlink" href="#running-the-simulation" title="Link to this heading">#</a></h2>
+<p>Here the McStas simulation is executed as normal.</p>
+<div class="cell tag_scroll-output docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="mf">8.0</span><span class="p">)</span>
+<span class="n">instrument</span><span class="o">.</span><span class="n">settings</span><span class="p">(</span><span class="n">ncount</span><span class="o">=</span><span class="mf">3E6</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;data_folder/union_materials&quot;</span><span class="p">,</span> <span class="n">suppress_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mpi</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+<span class="n">instrument</span><span class="o">.</span><span class="n">show_settings</span><span class="p">()</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">backengine</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Instrument settings:
+  ncount:           3.00e+06
+  mpi:              auto 
+  output_path:      data_folder/union_materials
+  run_path:         run_folder
+  package_path:     /home/runner/micromamba/envs/mcstasscript-docs/share/mcstas/resources
+  executable_path:  /home/runner/micromamba/envs/mcstasscript-docs/bin
+  executable:       mcrun
+  force_compile:    True
+  NeXus:            False
+  save_comp_pars:   False
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="interpreting-the-results">
+<h2>Interpreting the results<a class="headerlink" href="#interpreting-the-results" title="Link to this heading">#</a></h2>
+<p>The first logger shows scattering, and since the top box has incoherent, and the middle both powder and incoherent, we expect those to show up. We can see the beam attenuation, as the beam originates from the left side.</p>
+<p>The second logger shows absorption, and here the top box is absent as it has no absorption cross section. The bottom box is however visible now, as it has absorption but no scattering. As the absorber is quite strong, we see the attenuation here as well.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ms</span><span class="o">.</span><span class="n">make_sub_plot</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/248402aad18b06b5db511b9fb3ad2cf73d79e5d3401d628277b5c1c15ccfd246.png" src="../_images/248402aad18b06b5db511b9fb3ad2cf73d79e5d3401d628277b5c1c15ccfd246.png" />
+</div>
+</div>
+<section id="alternative-run-to-show-powder-properties">
+<h3>Alternative run to show powder properties<a class="headerlink" href="#alternative-run-to-show-powder-properties" title="Link to this heading">#</a></h3>
+<p>In order to see the scattering from the powder sample, we restrict the source size to only illuminate the center box with a powder material. A wavelength with powder lines close to 90 deg is selected to ensure the scattering from the center box hits the surrounding boxes.</p>
+<p>We choose to show the data with logarithmic colorscale using the <em>name_plot_options</em> method on functions.</p>
+<div class="cell tag_scroll-output docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="mf">2.8</span><span class="p">,</span> <span class="n">source_width</span><span class="o">=</span><span class="mf">0.03</span><span class="p">)</span>
+<span class="n">instrument</span><span class="o">.</span><span class="n">settings</span><span class="p">(</span><span class="n">ncount</span><span class="o">=</span><span class="mf">5E6</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;data_folder/union_materials&quot;</span><span class="p">)</span>
+<span class="n">instrument</span><span class="o">.</span><span class="n">show_settings</span><span class="p">()</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">backengine</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Instrument settings:
+  ncount:           5.00e+06
+  mpi:              auto 
+  output_path:      data_folder/union_materials
+  run_path:         run_folder
+  package_path:     /home/runner/micromamba/envs/mcstasscript-docs/share/mcstas/resources
+  executable_path:  /home/runner/micromamba/envs/mcstasscript-docs/bin
+  executable:       mcrun
+  force_compile:    True
+  NeXus:            False
+  save_comp_pars:   False
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ms</span><span class="o">.</span><span class="n">name_plot_options</span><span class="p">(</span><span class="s2">&quot;logger_space&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">ms</span><span class="o">.</span><span class="n">name_plot_options</span><span class="p">(</span><span class="s2">&quot;abs_logger_space&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">ms</span><span class="o">.</span><span class="n">make_sub_plot</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/d58e395ec6b990fddfb21df38df5d7d224c00dc8a2010c373f6e1ec6e44614d0.png" src="../_images/d58e395ec6b990fddfb21df38df5d7d224c00dc8a2010c373f6e1ec6e44614d0.png" />
+</div>
+</div>
+</section>
+<section id="interpretation-of-the-data">
+<h3>Interpretation of the data<a class="headerlink" href="#interpretation-of-the-data" title="Link to this heading">#</a></h3>
+<p>Now that the direct beam only hits the center box, all rays that enter the surrounding boxes are scattered from that center box. Since the center box contains a powder, the scattered beam is not homogeneous and most of it is in the form of Bragg peaks with certain scattering angles, and we can see two of these intersecting the surrounding geometries.</p>
+</section>
+<section id="troubleshooting">
+<h3>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">#</a></h3>
+<p>In case of issues with the notebooks concerning the Union components or McStasScript it is recommended to:</p>
+<ul class="simple">
+<li><p>Update McStasScript with python -m pip install –upgrade mcstasscript</p></li>
+<li><p>Get newest version of Union components (Both library files and components themselves)</p></li>
+</ul>
+<p>Since the Union components need to collaborate, it is important to have the same version of the libraries and components. The newest version of the components can be found here: https://github.com/McStasMcXtrace/McCode/tree/master/mcstas-comps/contrib/union
+All libraries for McStas are found here: https://github.com/McStasMcXtrace/McCode/tree/master/mcstas-comps/share but only a few are needed for the Union components:</p>
+<ul class="simple">
+<li><p>Union_initialization.c</p></li>
+<li><p>Union_functions.c</p></li>
+<li><p>Geometry_functions.c</p></li>
+<li><p>Union_last_functions.c (if on McStas 3.X)</p></li>
+</ul>
+<p>If using McStas 3.X, it could be that the Union_init component and Union_stop component was not added.</p>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="McStasScript_tutorial_6_Diagnostics.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Diagnostics</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="Union_tutorial_2_geometry.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Advanced geometry using the Union components</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differences-between-mcstas-versions">Differences between McStas versions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#process-components">Process components</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#making-a-material">Making a material</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-geometries-that-use-the-material-definitions">Adding geometries that use the material definitions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-loggers-that-show-scattering-and-absorption">Adding loggers that show scattering and absorption</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-the-union-master-component">Adding the Union master component</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mcstas-3-x-compatability">McStas 3.X compatability</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-the-simulation">Running the simulation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interpreting-the-results">Interpreting the results</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#alternative-run-to-show-powder-properties">Alternative run to show powder properties</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interpretation-of-the-data">Interpretation of the data</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Mads Bertelsen
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2022, Mads Bertelsen.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
