@@ -3,7 +3,6 @@ import os
 import numpy as np
 import threading
 import copy
-import html
 
 import ipywidgets as widgets
 from IPython.display import display
@@ -49,7 +48,6 @@ class SimInterface:
         self.plot_interface = None
 
         self.run_button = None
-        self.simulation_status = None
         self.live_widget = None
         self.progress_bar = None
         self.sim_steps = 5
@@ -140,8 +138,6 @@ class SimInterface:
         self.last_mpi_on = mpi_on
 
         self.run_button.icon = "hourglass"
-        self.run_button.disabled = True
-        self._set_simulation_status("Running simulation...", error=False)
         #print("Running with:", run_arguments)
 
         if self.live_widget.value:
@@ -151,49 +147,31 @@ class SimInterface:
 
         self.progress_bar.value = 0
         plot_data = None
-        try:
-            for index in range(sim_parts):
-                self.instrument.settings(**run_arguments)
-                self.instrument.set_parameters(self.parameters)
+        for index in range(sim_parts):
+            self.instrument.settings(**run_arguments)
+            self.instrument.set_parameters(self.parameters)
+            try:
                 with HiddenPrints():
                     self.instrument.backengine()
+            except NameError:
+                print("McStas run failed.")
+                data = []
 
-                with lock:
-                    self.progress_bar.value = index + 1
-                    data = self.instrument.output.get_data()["data"]
+            with lock:
+                self.progress_bar.value = index + 1
+                data = self.instrument.output.get_data()["data"]
 
-                    if data is not None:
-                        if plot_data is None:
-                            plot_data = data
-                        else:
-                            add_data(plot_data, data)
+                if data is not None:
+                    if plot_data is None:
+                        plot_data = data
+                    else:
+                        add_data(plot_data, data)
 
-                        sent_data = copy.deepcopy(plot_data)
-                        # This happens in a thread, maybe it should be in Main?
-                        self.plot_interface.set_data(sent_data)
-        except Exception as exc:
-            message = str(exc).splitlines()[0] or type(exc).__name__
-            if len(message) > 180:
-                message = message[:177] + "..."
-            print(f"McStas run failed: {message}")
-            self._set_simulation_status(f"Simulation failed: {message}", error=True)
-        else:
-            if plot_data is None or len(plot_data) == 0:
-                self._set_simulation_status("Simulation finished without data.", error=True)
-            else:
-                self._set_simulation_status("Simulation finished; results updated.", error=False)
-        finally:
-            self.run_button.icon = "calculator"
-            self.run_button.disabled = False
+                    sent_data = copy.deepcopy(plot_data)
+                    # This happens in a thread, maybe it should be in Main?
+                    self.plot_interface.set_data(sent_data)
 
-    def _set_simulation_status(self, message, error=False):
-        """Update the compact status indicator below the run controls."""
-        if self.simulation_status is None:
-            return
-        color = "#b00020" if error else "#333333"
-        self.simulation_status.value = (
-            f'<span style="color: {color};">{html.escape(message)}</span>'
-        )
+        self.run_button.icon = "calculator"
 
     def make_run_button(self):
         """
@@ -321,7 +299,6 @@ class SimInterface:
         self.progress_bar = self.make_progress_bar()
         self.progress_bar.layout.visibility = "hidden"
         self.run_button = self.make_run_button()
-        self.simulation_status = widgets.HTML(value="Ready.")
         ncount_field = self.make_ncount_field()
         mpi_field = self.make_mpi_field()
 
@@ -332,8 +309,7 @@ class SimInterface:
         self.plot_interface = plot_interface.PlotInterface()
         plot_widget = self.plot_interface.show_interface()
 
-        return widgets.VBox([parameter_widgets, simulation_widget,
-                             self.simulation_status, plot_widget])
+        return widgets.VBox([parameter_widgets, simulation_widget, plot_widget])
 
 
 class ParameterWidget:
