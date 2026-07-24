@@ -4346,7 +4346,8 @@ class TestGeometryGuessFailureSkip(unittest.TestCase):
 
         output = captured.getvalue()
         self.assertIn("bad_comp", output)
-        self.assertIn("weird_param", output)
+        self.assertNotIn("weird_param", output)
+        self.assertIn("Use verbose=True for details", output)
 
 
 class TestTransformFailureDiagnostics(unittest.TestCase):

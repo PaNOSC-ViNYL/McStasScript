@@ -304,7 +304,7 @@ def view_with_guess(instrument_object, backend: str = "pythreejs",
             model_indices.append(index)
         except Exception as exc:
             skipped_components += 1
-            failed_components.append(f"'{component.name}': {exc}")
+            failed_components.append(component.name)
             if verbose:
                 print(f"Skipping component '{component.name}': geometry guess failed ({exc})")
             continue
@@ -312,9 +312,11 @@ def view_with_guess(instrument_object, backend: str = "pythreejs",
     num_components = max(index_max - index_min, 0)
     if skipped_components:
         component_word = "component" if skipped_components == 1 else "components"
+        failed_component_names = ", ".join(f"'{name}'" for name in failed_components)
         print(
             f"Geometry guess could not recognize {skipped_components} {component_word}. "
-            f"Failed: {'; '.join(failed_components)}. Use verbose=True for details."
+            f"Failed: {failed_component_names}. "
+            "Use verbose=True for details."
         )
     kwargs.setdefault("num_components", num_components)
     intensity_map = kwargs.get("intensity_map")
