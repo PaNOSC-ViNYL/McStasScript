@@ -2750,7 +2750,8 @@ class McCode_instr(BaseCalculator):
         Parameters
         ----------
         backend : str, optional
-            Rendering backend. Defaults to 'webgl-classic'.
+            Rendering backend. Defaults to 'pythreejs' when ``guess=True``;
+            otherwise defaults to 'webgl-classic'.
         format : str, optional
             Deprecated. Use backend instead. Maps to backend value.
         width : int
@@ -2805,7 +2806,7 @@ class McCode_instr(BaseCalculator):
             )
             backend = format
 
-        resolved_backend = backend or "webgl-classic"
+        resolved_backend = backend or ("pythreejs" if guess else "webgl-classic")
         if new_tab and resolved_backend in ("webgl", "webgl-classic"):
             resolved_backend = "pythreejs"
 

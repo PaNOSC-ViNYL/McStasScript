@@ -2515,6 +2515,26 @@ class TestMcStas_instr(unittest.TestCase):
         )
 
     @unittest.mock.patch("mcstasscript.geometry_viewer.view")
+    def test_show_instrument_guess_defaults_to_pythreejs(self, mock_view):
+        """Geometry guessing defaults to the Python renderer."""
+        instr = setup_populated_instr_with_dummy_path()
+
+        with unittest.mock.patch(
+            "mcstasscript.geometry_viewer.api._missing_pythreejs_dependencies",
+            return_value=[],
+        ):
+            instr.show_instrument(guess=True)
+
+        mock_view.assert_called_once_with(
+            instr,
+            backend="pythreejs",
+            width=800,
+            height=450,
+            guess=True,
+            verbose=False,
+        )
+
+    @unittest.mock.patch("mcstasscript.geometry_viewer.view")
     def test_show_instrument_forwards_verbose(self, mock_view):
         """show_instrument exposes the geometry-guess verbosity control."""
         instr = setup_populated_instr_with_dummy_path()
