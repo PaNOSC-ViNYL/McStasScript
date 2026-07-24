@@ -291,6 +291,7 @@ def view_with_guess(instrument_object, backend: str = "pythreejs",
 
     instrument_model = InstrumentModel()
     skipped_components = 0
+    failed_components = []
     model_indices = []
     for index, component in enumerate(instrument_object.component_list[:index_max]):
         try:
@@ -303,6 +304,7 @@ def view_with_guess(instrument_object, backend: str = "pythreejs",
             model_indices.append(index)
         except Exception as exc:
             skipped_components += 1
+            failed_components.append(f"'{component.name}': {exc}")
             if verbose:
                 print(f"Skipping component '{component.name}': geometry guess failed ({exc})")
             continue
@@ -312,7 +314,7 @@ def view_with_guess(instrument_object, backend: str = "pythreejs",
         component_word = "component" if skipped_components == 1 else "components"
         print(
             f"Geometry guess could not recognize {skipped_components} {component_word}. "
-            "Use verbose=True for details."
+            f"Failed: {'; '.join(failed_components)}. Use verbose=True for details."
         )
     kwargs.setdefault("num_components", num_components)
     intensity_map = kwargs.get("intensity_map")
@@ -556,12 +558,12 @@ def view(instrument_object, backend: str = "pythreejs",
                                     component_opacity=component_opacity,
                                     index_min=index_min, index_max=index_max,
                                     verbose=verbose, cmap=cmap, **kwargs)
-        except Exception:
+        except Exception as exc:
             if guess:
                 warnings.warn(
                     "Geometry guess failed, falling back to mcdisplay JSON. "
                     "This may occur if component parameters cannot be resolved "
-                    "to geometry shapes.",
+                    f"to geometry shapes: {exc}",
                     UserWarning,
                     stacklevel=2,
                 )

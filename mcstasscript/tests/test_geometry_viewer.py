@@ -2545,6 +2545,16 @@ class TestApiComponentColors(unittest.TestCase):
             cmap="plasma",
         )
 
+    @patch("mcstasscript.geometry_viewer.api.view_with_json")
+    @patch(
+        "mcstasscript.geometry_viewer.api.view_with_guess",
+        side_effect=ValueError("Cannot evaluate component 'bad_comp'"),
+    )
+    def test_view_guess_warning_includes_failure(self, mock_view_with_guess, mock_view_with_json):
+        """Guess fallback warnings retain the failed component information."""
+        with self.assertWarnsRegex(UserWarning, "bad_comp"):
+            view(MagicMock(), backend="matplotlib", guess=True, json_dict={})
+
     def test_get_renderer_pythreejs_passes_component_colors(self):
         """_get_renderer passes component_colors to PyThreejsRenderer."""
         renderer = _get_renderer("pythreejs", component_colors={"a": "#ff0000"})
@@ -4277,6 +4287,37 @@ class TestGeometryGuessFailureSkip(unittest.TestCase):
         self.assertIn("good_box", rendered_names)
         self.assertIn("another_good", rendered_names)
         self.assertNotIn("bad_comp", rendered_names)
+
+    def test_bad_geometry_component_is_reported_when_not_verbose(self):
+        """Quiet geometry guessing still identifies failed components."""
+        bad_comp = self._make_comp(
+            name="bad_comp",
+            parameter_names=["weird_param"],
+            parameter_defaults={"weird_param": None},
+            weird_param=42,
+        )
+        instr = self._make_instr([bad_comp])
+
+        class MockRenderer:
+            def make_scene(self, children, **kwargs):
+                return "scene"
+
+        with unittest.mock.patch(
+            "mcstasscript.geometry_viewer.api._get_renderer",
+            return_value=MockRenderer(),
+        ):
+            import io, sys
+            captured = io.StringIO()
+            old_stdout = sys.stdout
+            sys.stdout = captured
+            try:
+                view_with_guess(instr, backend="matplotlib", verbose=False)
+            finally:
+                sys.stdout = old_stdout
+
+        output = captured.getvalue()
+        self.assertIn("bad_comp", output)
+        self.assertIn("weird_param", output)
 
 
 class TestTransformFailureDiagnostics(unittest.TestCase):
