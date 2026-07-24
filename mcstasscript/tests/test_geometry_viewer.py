@@ -56,7 +56,7 @@ from mcstasscript.geometry_viewer.config import (
     index_to_color,
     intensity_to_color,
 )
-from mcstasscript.geometry_viewer.api import _get_renderer, view_with_guess, view_with_json
+from mcstasscript.geometry_viewer.api import _get_renderer, view, view_with_guess, view_with_json
 from mcstasscript.geometry_viewer.expression import safe_eval, UnsafeExpressionError
 
 
@@ -736,6 +736,33 @@ class TestComponentModel(unittest.TestCase):
         self.assertTrue(model.loaded)
         line_shapes = [s for s in model.shape_list if isinstance(s, LineSegmentsShape)]
         self.assertGreater(len(line_shapes), 0)
+
+    def test_unknown_drawclass_respects_verbose_for_empty_args(self):
+        """Empty unknown drawcalls are quiet unless verbose is enabled."""
+        json_dict = {
+            "m4": np.eye(4).reshape(-1).tolist(),
+            "drawcalls": [{"key": "unknown_type", "args": []}],
+        }
+        model = ComponentModel(make_mock_component())
+        with patch("builtins.print") as mock_print:
+            model.load_geometry_from_mcdisplay_dict(json_dict, verbose=False)
+        mock_print.assert_not_called()
+
+        model = ComponentModel(make_mock_component())
+        with patch("builtins.print") as mock_print:
+            model.load_geometry_from_mcdisplay_dict(json_dict, verbose=True)
+        mock_print.assert_called_once_with("didn't know this drawclass: unknown_type")
+
+    def test_unknown_drawclass_with_args_is_always_reported(self):
+        """Unknown drawcalls with arguments are reported even when quiet."""
+        json_dict = {
+            "m4": np.eye(4).reshape(-1).tolist(),
+            "drawcalls": [{"key": "unknown_type", "args": [1.0]}],
+        }
+        model = ComponentModel(make_mock_component())
+        with patch("builtins.print") as mock_print:
+            model.load_geometry_from_mcdisplay_dict(json_dict, verbose=False)
+        mock_print.assert_called_once_with("didn't know this drawclass: unknown_type")
 
     def test_load_geometry_position_extracted(self):
         """
@@ -2527,6 +2554,36 @@ class TestPyThreejsCustomColors(unittest.TestCase):
 class TestApiComponentColors(unittest.TestCase):
     """Tests for component_colors parameter threading through the API."""
 
+    @patch("mcstasscript.geometry_viewer.api.view_with_guess")
+    def test_view_forwards_cmap_to_geometry_guess(self, mock_view_with_guess):
+        """The colormap reaches the guess renderer path."""
+        instr = MagicMock()
+
+        view(instr, backend="matplotlib", guess=True, cmap="plasma")
+
+        mock_view_with_guess.assert_called_once_with(
+            instr,
+            backend="matplotlib",
+            width=900,
+            height=600,
+            component_colors=None,
+            component_opacity=None,
+            index_min=None,
+            index_max=None,
+            verbose=True,
+            cmap="plasma",
+        )
+
+    @patch("mcstasscript.geometry_viewer.api.view_with_json")
+    @patch(
+        "mcstasscript.geometry_viewer.api.view_with_guess",
+        side_effect=ValueError("Cannot evaluate component 'bad_comp'"),
+    )
+    def test_view_guess_warning_includes_failure(self, mock_view_with_guess, mock_view_with_json):
+        """Guess fallback warnings retain the failed component information."""
+        with self.assertWarnsRegex(UserWarning, "bad_comp"):
+            view(MagicMock(), backend="matplotlib", guess=True, json_dict={})
+
     def test_get_renderer_pythreejs_passes_component_colors(self):
         """_get_renderer passes component_colors to PyThreejsRenderer."""
         renderer = _get_renderer("pythreejs", component_colors={"a": "#ff0000"})
@@ -4259,6 +4316,38 @@ class TestGeometryGuessFailureSkip(unittest.TestCase):
         self.assertIn("good_box", rendered_names)
         self.assertIn("another_good", rendered_names)
         self.assertNotIn("bad_comp", rendered_names)
+
+    def test_bad_geometry_component_is_reported_when_not_verbose(self):
+        """Quiet geometry guessing still identifies failed components."""
+        bad_comp = self._make_comp(
+            name="bad_comp",
+            parameter_names=["weird_param"],
+            parameter_defaults={"weird_param": None},
+            weird_param=42,
+        )
+        instr = self._make_instr([bad_comp])
+
+        class MockRenderer:
+            def make_scene(self, children, **kwargs):
+                return "scene"
+
+        with unittest.mock.patch(
+            "mcstasscript.geometry_viewer.api._get_renderer",
+            return_value=MockRenderer(),
+        ):
+            import io, sys
+            captured = io.StringIO()
+            old_stdout = sys.stdout
+            sys.stdout = captured
+            try:
+                view_with_guess(instr, backend="matplotlib", verbose=False)
+            finally:
+                sys.stdout = old_stdout
+
+        output = captured.getvalue()
+        self.assertIn("bad_comp", output)
+        self.assertNotIn("weird_param", output)
+        self.assertIn("Use verbose=True for details", output)
 
 
 class TestTransformFailureDiagnostics(unittest.TestCase):

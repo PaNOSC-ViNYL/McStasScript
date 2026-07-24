@@ -301,7 +301,7 @@ class ComponentModel:
         self.center = self.bounds.center
         self.bounding_radius = self.bounds.radius
 
-    def load_geometry_from_mcdisplay_dict(self, json_dict):
+    def load_geometry_from_mcdisplay_dict(self, json_dict, verbose=True):
         """
         Takes component dict from mcdisplay-webgl json output.
         Adds shape objects to shape_list.
@@ -328,7 +328,8 @@ class ComponentModel:
 
             parser = DRAWCALL_PARSERS.get(key)
             if parser is None:
-                print(f"didn't know this drawclass: {key}")
+                if drawcall.get("args") or verbose:
+                    print(f"didn't know this drawclass: {key}")
                 continue
 
             if key == "polyhedron":

@@ -2787,6 +2787,9 @@ class McCode_instr(BaseCalculator):
             With the 'pythreejs' backend, adds a "Custom opacity" checkbox to the
             widget that, when checked, overrides the current opacity for the
             specified components. Ignored for other backends.
+        cmap : str, optional
+            Matplotlib colormap used for intensity coloring. Only applies when
+            intensity coloring is enabled with an intensity map.
 
         Returns
         -------

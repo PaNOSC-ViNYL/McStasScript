@@ -3,7 +3,7 @@ from mcstasscript.geometry_viewer.model.bounds import Bounds
 
 
 class InstrumentModel:
-    def __init__(self, instrument_object=None, json_dict=None, index_max=None):
+    def __init__(self, instrument_object=None, json_dict=None, index_max=None, verbose=True):
         self.component_models = []
         self.bounds = Bounds()
 
@@ -15,7 +15,7 @@ class InstrumentModel:
                 name = json_component["name"]
                 component_object = instrument_object.get_component(name)
                 component_model = ComponentModel(component_object)
-                component_model.load_geometry_from_mcdisplay_dict(json_component)
+                component_model.load_geometry_from_mcdisplay_dict(json_component, verbose=verbose)
                 self.add_model(component_model)
 
     def add_model(self, model):
