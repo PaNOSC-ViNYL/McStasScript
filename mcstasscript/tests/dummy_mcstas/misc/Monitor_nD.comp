@@ -1,0 +1,8 @@
+DEFINE COMPONENT Monitor_nD
+SETTING PARAMETERS (xwidth=1, yheight=1, options="", filename="",
+                     user1=NULL, user2=NULL, user3=NULL,
+                     restore_neutron=0)
+TRACE
+%{
+%}
+END

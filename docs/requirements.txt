@@ -1,0 +1,5 @@
+sphinx
+sphinx-book-theme
+myst-nb
+pythreejs
+ipympl

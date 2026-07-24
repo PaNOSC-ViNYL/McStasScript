@@ -1,0 +1,2 @@
+McStas components, library functions and data files placed here can be used in tutorial notebooks.
+This folder will also contain generated instrument files.
