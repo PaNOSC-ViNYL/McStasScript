@@ -2568,6 +2568,8 @@ class TestApiComponentColors(unittest.TestCase):
             height=600,
             component_colors=None,
             component_opacity=None,
+            index_min=None,
+            index_max=None,
             verbose=True,
             cmap="plasma",
         )
