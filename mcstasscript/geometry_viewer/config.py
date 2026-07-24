@@ -17,6 +17,7 @@ DEFAULT_RADIAL_SEGMENTS = 32
 DEFAULT_CIRCLE_SEGMENTS = 64
 
 DEFAULT_NAVIGATOR_DISTANCE = 0.5
+DEFAULT_PICK_TOLERANCE = 0.005
 
 
 def index_to_color(index: int, num_components: int) -> str:

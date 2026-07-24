@@ -2483,6 +2483,26 @@ class TestMcStas_instr(unittest.TestCase):
         instr = setup_populated_instr_with_dummy_path()
 
         with self.assertWarnsRegex(UserWarning, "pythreejs.*ipympl.*webgl-classic"):
+            instr.show_instrument(backend="pythreejs")
+
+        mock_view.assert_called_once_with(
+            instr,
+            backend="webgl-classic",
+            width=800,
+            height=450,
+            guess=False,
+            verbose=False,
+        )
+
+    @unittest.mock.patch("mcstasscript.geometry_viewer.view")
+    def test_show_instrument_defaults_to_webgl_classic(self, mock_view):
+        """The default backend avoids the optional pythreejs widget."""
+        instr = setup_populated_instr_with_dummy_path()
+
+        with unittest.mock.patch(
+            "mcstasscript.geometry_viewer.api._missing_pythreejs_dependencies",
+            return_value=[],
+        ):
             instr.show_instrument()
 
         mock_view.assert_called_once_with(
@@ -2491,6 +2511,26 @@ class TestMcStas_instr(unittest.TestCase):
             width=800,
             height=450,
             guess=False,
+            verbose=False,
+        )
+
+    @unittest.mock.patch("mcstasscript.geometry_viewer.view")
+    def test_show_instrument_guess_defaults_to_pythreejs(self, mock_view):
+        """Geometry guessing defaults to the Python renderer."""
+        instr = setup_populated_instr_with_dummy_path()
+
+        with unittest.mock.patch(
+            "mcstasscript.geometry_viewer.api._missing_pythreejs_dependencies",
+            return_value=[],
+        ):
+            instr.show_instrument(guess=True)
+
+        mock_view.assert_called_once_with(
+            instr,
+            backend="pythreejs",
+            width=800,
+            height=450,
+            guess=True,
             verbose=False,
         )
 
@@ -2508,6 +2548,34 @@ class TestMcStas_instr(unittest.TestCase):
             height=450,
             guess=True,
             verbose=True,
+        )
+
+    @unittest.mock.patch("mcstasscript.geometry_viewer.view")
+    def test_show_instrument_forwards_component_range_and_cmap(self, mock_view):
+        """show_instrument exposes useful JSON-viewer range and color options."""
+        instr = setup_populated_instr_with_dummy_path()
+
+        with unittest.mock.patch(
+            "mcstasscript.geometry_viewer.api._missing_pythreejs_dependencies",
+            return_value=[],
+        ):
+            instr.show_instrument(
+                backend="pythreejs",
+                index_min=2,
+                index_max=7,
+                cmap="viridis",
+            )
+
+        mock_view.assert_called_once_with(
+            instr,
+            backend="pythreejs",
+            width=800,
+            height=450,
+            guess=False,
+            verbose=False,
+            index_min=2,
+            index_max=7,
+            cmap="viridis",
         )
 
     def test_show_dumps_works(self):

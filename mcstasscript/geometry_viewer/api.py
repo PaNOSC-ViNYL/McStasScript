@@ -207,6 +207,7 @@ def view_with_analysis(instrument_object, backend: str = "pythreejs",
 def view_with_guess(instrument_object, backend: str = "pythreejs",
                         component_colors: dict[str, str] | None = None,
                         component_opacity: dict[str, float] | None = None,
+                        index_min: int | None = None, index_max: int | None = None,
                         verbose: bool = True, **kwargs):
     """
     Plots instrument geometry with best guesses of geometry.
@@ -276,9 +277,22 @@ def view_with_guess(instrument_object, backend: str = "pythreejs",
                 print(f"  Dependent components that rely on it: {', '.join(dependents)}")
         raise
 
+    component_count = len(instrument_object.component_list)
+    if index_min is None:
+        index_min = 0
+    else:
+        index_min = max(0, min(index_min, component_count))
+    if index_max is None:
+        index_max = component_count
+    else:
+        index_max = max(0, min(index_max, component_count))
+    if index_min > index_max:
+        raise ValueError("index_min must not be greater than index_max")
+
     instrument_model = InstrumentModel()
     skipped_components = 0
-    for component in instrument_object.component_list:
+    model_indices = []
+    for index, component in enumerate(instrument_object.component_list[:index_max]):
         try:
             component_model = ComponentModel(component)
             component_model.guess_geometry_from_comp_object(
@@ -286,13 +300,14 @@ def view_with_guess(instrument_object, backend: str = "pythreejs",
             )
             component_model.set_global_transform(global_transforms[component.name])
             instrument_model.add_model(component_model)
+            model_indices.append(index)
         except Exception as exc:
             skipped_components += 1
             if verbose:
                 print(f"Skipping component '{component.name}': geometry guess failed ({exc})")
             continue
 
-    num_components = len(instrument_model.component_models)
+    num_components = max(index_max - index_min, 0)
     if skipped_components:
         component_word = "component" if skipped_components == 1 else "components"
         print(
@@ -315,10 +330,13 @@ def view_with_guess(instrument_object, backend: str = "pythreejs",
     is_pythreejs = backend == "pythreejs"
 
     all_children = []
-    for index, component_model in enumerate(instrument_model.component_models):
+    for index, component_model in zip(model_indices, instrument_model.component_models):
+        if not index_min <= index < index_max:
+            continue
+        component_index = index - index_min
         if is_pythreejs:
             renderer.register_component(component_model)
-        all_children.extend(renderer.render_component(component_model, component_index=index))
+        all_children.extend(renderer.render_component(component_model, component_index=component_index))
         renderer.next_component()
 
     scene = renderer.make_scene(all_children, width=width, height=height, **kwargs)
@@ -353,23 +371,36 @@ def view_with_guess(instrument_object, backend: str = "pythreejs",
 
 
 def view_with_json(instrument_object, json_dict, backend: str = "pythreejs",
-                     index_min: int | None = None, index_max: int | None = None,
-                     component_colors: dict[str, str] | None = None,
-                     component_opacity: dict[str, float] | None = None, **kwargs):
+                      index_min: int | None = None, index_max: int | None = None,
+                      component_colors: dict[str, str] | None = None,
+                      component_opacity: dict[str, float] | None = None, **kwargs):
     """
     Plots instrument geometry with json input from mcdisplay-webgl.
     """
     width = kwargs.pop("width", 900)
     height = kwargs.pop("height", 600)
 
-    instrument_model = InstrumentModel(instrument_object=instrument_object, json_dict=json_dict)
-
+    component_count = len(json_dict["components"])
     if index_min is None:
         index_min = 0
+    else:
+        index_min = max(0, min(index_min, component_count))
     if index_max is None:
-        index_max = len(instrument_model.component_models)
+        index_max = component_count
+    else:
+        index_max = max(0, min(index_max, component_count))
+    if index_min > index_max:
+        raise ValueError("index_min must not be greater than index_max")
 
-    num_components = index_max - index_min
+    # Build from the first component so coordinate-system context is retained,
+    # while allowing callers to avoid constructing late components.
+    instrument_model = InstrumentModel(
+        instrument_object=instrument_object,
+        json_dict=json_dict,
+        index_max=index_max,
+    )
+
+    num_components = max(index_max - index_min, 0)
     kwargs.setdefault("num_components", num_components)
 
     intensity_map = kwargs.get("intensity_map")
@@ -461,9 +492,10 @@ def view(instrument_object, backend: str = "pythreejs",
     json_file : str, optional
         Path to instrument.json file (skips mcdisplay generation).
     index_min : int, optional
-        First component index to render (for JSON-based backends).
+        First component index to render (for Python geometry backends).
     index_max : int, optional
-        Last component index to render (for JSON-based backends).
+        Exclusive upper component index to render and build (for Python
+        geometry backends).
     width : int
         Width of output widget/figure.
     height : int
@@ -521,7 +553,9 @@ def view(instrument_object, backend: str = "pythreejs",
         try:
             return view_with_guess(instrument_object, backend=backend, width=width, height=height,
                                     component_colors=component_colors,
-                                    component_opacity=component_opacity, verbose=verbose, **kwargs)
+                                    component_opacity=component_opacity,
+                                    index_min=index_min, index_max=index_max,
+                                    verbose=verbose, **kwargs)
         except Exception:
             if guess:
                 warnings.warn(

@@ -1,7 +1,17 @@
 import os
 import subprocess
 import webbrowser
-import warnings
+
+
+class McdisplayError(RuntimeError):
+    """Raised when mcdisplay cannot produce the requested visualization."""
+
+    def __init__(self, message, returncode=None, stdout="", stderr="", command=None):
+        super().__init__(message)
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+        self.command = command
 
 
 def _extract_params(instrument_object):
@@ -54,6 +64,21 @@ def _create_output_dir(name, input_path):
     return dir_name
 
 
+def _create_output_path(output_path):
+    """Return a fresh output path, incrementing an existing path as needed."""
+    output_path = os.path.abspath(os.fspath(output_path))
+    output_parent = os.path.dirname(output_path)
+    if output_parent:
+        os.makedirs(output_parent, exist_ok=True)
+
+    candidate = output_path
+    index = 0
+    while os.path.exists(candidate):
+        candidate = output_path + "_" + str(index)
+        index += 1
+    return candidate
+
+
 def _is_notebook():
     """Detect whether running inside a Jupyter notebook."""
     try:
@@ -79,7 +104,8 @@ def _get_format_executable(package_name, format):
         )
 
 
-def run_mcdisplay(instrument_object, format="webgl-classic", nobrowse=None):
+def run_mcdisplay(instrument_object, format="webgl-classic", nobrowse=None,
+                  output_path=None):
     """
     Run mcdisplay to generate visualization output.
 
@@ -91,6 +117,10 @@ def run_mcdisplay(instrument_object, format="webgl-classic", nobrowse=None):
         Display format: 'webgl', 'webgl-classic', or 'window'.
     nobrowse : bool or None
         If True, don't open browser. If None, auto-detect notebook.
+    output_path : str, optional
+        Output directory for generated visualization files. If omitted, an
+        explicitly configured instrument output path is used; otherwise the
+        legacy ``<input_path>/<instrument>_mcdisplay`` location is retained.
 
     Returns
     -------
@@ -102,7 +132,21 @@ def run_mcdisplay(instrument_object, format="webgl-classic", nobrowse=None):
         instrument_object.package_name, format
     )
     bin_path = _find_executable(base_executable, instrument_object._run_settings)
-    dir_name = _create_output_dir(instrument_object.name, instrument_object.input_path)
+    configured_output_path = output_path
+    if configured_output_path is None:
+        configured_output_path = getattr(instrument_object, "_run_settings", {}).get("output_path")
+
+    if configured_output_path is None:
+        dir_name = _create_output_dir(instrument_object.name, instrument_object.input_path)
+        dirname_argument = dir_name
+        html_path = os.path.join(instrument_object.input_path, dir_name, "index.html")
+    else:
+        dir_name = _create_output_path(configured_output_path)
+        dirname_argument = os.path.relpath(
+            dir_name,
+            start=os.path.abspath(instrument_object.input_path),
+        )
+        html_path = os.path.join(dir_name, "index.html")
 
     instrument_object.write_full_instrument()
     instr_path = os.path.join(
@@ -117,35 +161,50 @@ def run_mcdisplay(instrument_object, format="webgl-classic", nobrowse=None):
         # itself since it knows the correct URL (http://localhost:5173).
         nobrowse = notebook and format not in ("window", "webgl")
 
-    command = [bin_path, "--dirname", dir_name]
+    command = [bin_path, "--dirname", dirname_argument]
     if nobrowse:
         command.append("--nobrowse")
     command.append(instr_path)
     command.extend(_format_parameter(parameter) for parameter in parameters)
 
-    process = subprocess.run(
-        command, shell=False,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
-        cwd=instrument_object.input_path,
-    )
+    try:
+        process = subprocess.run(
+            command, shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            cwd=instrument_object.input_path,
+        )
+    except OSError as exc:
+        raise McdisplayError(
+            f"Could not start mcdisplay: {exc}", command=command,
+        ) from exc
 
     if format == "window":
-        if process.returncode != 0:
-            print(process.stderr)
+        # Closing the GUI can produce a non-zero Qt exit status and verbose
+        # shutdown output. The process was successfully started, so do not
+        # turn normal window close behavior into a Python error.
         return None
 
-    html_path = os.path.join(
-        instrument_object.input_path, dir_name, "index.html"
-    )
+    if process.returncode != 0:
+        print(process.stderr or "")
+        print(process.stdout or "")
+        raise McdisplayError(
+            f"mcdisplay failed with return code {process.returncode}",
+            returncode=process.returncode,
+            stdout=process.stdout or "",
+            stderr=process.stderr or "",
+            command=command,
+        )
 
-    if process.returncode != 0 or not os.path.exists(html_path):
-        print(process.stderr)
-        print(process.stdout)
-        print("")
-        print("mcdisplay run failed.")
-        return None
+    if not os.path.exists(html_path):
+        raise McdisplayError(
+            f"mcdisplay completed successfully but did not create {html_path}",
+            returncode=process.returncode,
+            stdout=process.stdout or "",
+            stderr=process.stderr or "",
+            command=command,
+        )
 
     return html_path
 
@@ -178,14 +237,22 @@ def display_mcdisplay_html(html_path, width=800, height=450):
     notebook = _is_notebook()
     if notebook:
         from IPython.display import IFrame
-        return IFrame(src=html_path, width=width, height=height)
+        iframe_src = html_path
+        if os.path.isabs(iframe_src):
+            iframe_src = os.path.relpath(iframe_src, start=os.getcwd())
+        iframe_src = iframe_src.replace(os.sep, "/")
+        return IFrame(
+            src=iframe_src,
+            width=width,
+            height=height,
+        )
     else:
         abs_path = os.path.abspath(html_path)
         webbrowser.open("file://" + abs_path)
         return None
 
 
-def generate_json(instrument_object):
+def generate_json(instrument_object, output_path=None):
     """
     Run mcdisplay-webgl to generate instrument.json.
 
@@ -196,7 +263,12 @@ def generate_json(instrument_object):
     dir_name : str or None
         Path to the output directory containing instrument.json.
     """
-    html_path = run_mcdisplay(instrument_object, format="webgl", nobrowse=True)
+    html_path = run_mcdisplay(
+        instrument_object,
+        format="webgl",
+        nobrowse=True,
+        output_path=output_path,
+    )
     if html_path is None:
         return None
     return os.path.dirname(html_path)

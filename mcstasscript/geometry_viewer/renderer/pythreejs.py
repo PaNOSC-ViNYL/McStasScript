@@ -22,6 +22,7 @@ from mcstasscript.geometry_viewer.config import (
     DEFAULT_FOV,
     DEFAULT_NEAR,
     DEFAULT_NAVIGATOR_DISTANCE,
+    DEFAULT_PICK_TOLERANCE,
     DEFAULT_RENDERER_SIZE,
     index_to_color,
     intensity_to_color,
@@ -549,6 +550,10 @@ class PyThreejsRenderer(RendererBackend):
             return
         self._component_details.value = _plain_component_text(component)
 
+    def _component_pick_threshold(self) -> float:
+        """Return the configured world-space picker tolerance."""
+        return DEFAULT_PICK_TOLERANCE
+
     def create_component_details(self, renderer):
         """Create a click picker and read-only widget for component details."""
         import ipywidgets as ipw
@@ -556,9 +561,12 @@ class PyThreejsRenderer(RendererBackend):
         if self._component_group is None:
             raise RuntimeError("make_scene() must be called before creating component details")
 
+        threshold = self._component_pick_threshold()
         self._component_picker = p3.Picker(
             controlling=self._component_group,
             event="click",
+            lineThreshold=threshold,
+            pointThreshold=threshold,
         )
         renderer.controls = list(renderer.controls) + [self._component_picker]
 
