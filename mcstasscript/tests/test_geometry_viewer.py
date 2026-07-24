@@ -56,7 +56,7 @@ from mcstasscript.geometry_viewer.config import (
     index_to_color,
     intensity_to_color,
 )
-from mcstasscript.geometry_viewer.api import _get_renderer, view_with_guess, view_with_json
+from mcstasscript.geometry_viewer.api import _get_renderer, view, view_with_guess, view_with_json
 from mcstasscript.geometry_viewer.expression import safe_eval, UnsafeExpressionError
 
 
@@ -2526,6 +2526,24 @@ class TestPyThreejsCustomColors(unittest.TestCase):
 
 class TestApiComponentColors(unittest.TestCase):
     """Tests for component_colors parameter threading through the API."""
+
+    @patch("mcstasscript.geometry_viewer.api.view_with_guess")
+    def test_view_forwards_cmap_to_geometry_guess(self, mock_view_with_guess):
+        """The colormap reaches the guess renderer path."""
+        instr = MagicMock()
+
+        view(instr, backend="matplotlib", guess=True, cmap="plasma")
+
+        mock_view_with_guess.assert_called_once_with(
+            instr,
+            backend="matplotlib",
+            width=900,
+            height=600,
+            component_colors=None,
+            component_opacity=None,
+            verbose=True,
+            cmap="plasma",
+        )
 
     def test_get_renderer_pythreejs_passes_component_colors(self):
         """_get_renderer passes component_colors to PyThreejsRenderer."""

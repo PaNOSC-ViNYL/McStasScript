@@ -555,7 +555,7 @@ def view(instrument_object, backend: str = "pythreejs",
                                     component_colors=component_colors,
                                     component_opacity=component_opacity,
                                     index_min=index_min, index_max=index_max,
-                                    verbose=verbose, **kwargs)
+                                    verbose=verbose, cmap=cmap, **kwargs)
         except Exception:
             if guess:
                 warnings.warn(
