@@ -20,7 +20,7 @@ mcstasscript/
 ├── interface/               # Core API: McStas_instr builder, data loading, plotting, Configurator
 ├── jb_interface/            # Jupyter widget interface: interactive simulation control and plotting
 ├── tests/                   # Base unit tests with regular dependencies
-├── optional_tests/          # Tests requiring the optional pythreejs dependency
+├── optional_tests/          # Tests requiring the optional anythreejs dependency
 └── tools/                   # Specialized tools: Cryostat builder, instrument checker, NCrystal integration
 ```
 
@@ -43,15 +43,15 @@ python -m unittest mcstasscript.tests.test_instrument_diagnostics -v
 
 ### Optional Tests
 
-The optional suite requires `pythreejs`; `ipympl` is installed with the regular
+The optional suite requires `anythreejs`; `ipympl` is installed with the regular
 package dependencies:
 
 ```bash
-python -m pip install pythreejs
+python -m pip install anythreejs
 python -m pytest mcstasscript/optional_tests/
 ```
 
-The GitHub Actions workflow runs the base tests first without `pythreejs`, then
+The GitHub Actions workflow runs the base tests first without `anythreejs`, then
 installs it and runs the optional suite.
 
 ### Integration Tests

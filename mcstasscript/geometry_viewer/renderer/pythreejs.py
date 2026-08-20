@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any, Hashable
 
 import numpy as np
-import pythreejs as p3
+import anythreejs as p3
 
 from mcstasscript.geometry_viewer.renderer.base import RendererBackend
 from mcstasscript.geometry_viewer.model.shapes import (
