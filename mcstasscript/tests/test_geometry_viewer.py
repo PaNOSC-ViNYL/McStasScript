@@ -1001,7 +1001,7 @@ class TestApi(unittest.TestCase):
         instr.component_list = [make_mock_component("test_comp")]
         instr._simulation_parameters = {}
         instr._declared_variables = {}
-        with patch.dict("sys.modules", {"pythreejs": None}):
+        with patch.dict("sys.modules", {"anythreejs": None}):
             with patch("mcstasscript.geometry_viewer.api.plt.show"):
                 result = view_with_guess(instr, backend="matplotlib")
         self.assertIsNone(result)

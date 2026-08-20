@@ -50,7 +50,7 @@ jobs:
         run: python -m pytest mcstasscript/mcstasscript/tests/
 
       - name: Install optional geometry-viewer dependency
-        run: pip install pythreejs
+        run: pip install anythreejs
 
       - name: Run optional unit tests
         run: python -m pytest mcstasscript/mcstasscript/optional_tests/

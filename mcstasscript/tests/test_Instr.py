@@ -2575,13 +2575,13 @@ class TestMcStas_instr(unittest.TestCase):
             THIS_DIR, "test_instrument_mcdisplay", "index.html")
         mock_webbrowser.assert_called_once_with("file://" + expected_html_path)
 
-    @unittest.mock.patch.dict("sys.modules", {"pythreejs": None, "ipympl": None})
+    @unittest.mock.patch.dict("sys.modules", {"anythreejs": None, "ipympl": None})
     @unittest.mock.patch("mcstasscript.geometry_viewer.view")
     def test_show_instrument_falls_back_when_widget_dependencies_are_missing(self, mock_view):
-        """Missing pythreejs widgets should fall back to the classic HTML viewer."""
+        """Missing anythreejs widgets should fall back to the classic HTML viewer."""
         instr = setup_populated_instr_with_dummy_path()
 
-        with self.assertWarnsRegex(UserWarning, "pythreejs.*ipympl.*webgl-classic"):
+        with self.assertWarnsRegex(UserWarning, "anythreejs.*ipympl.*webgl-classic"):
             instr.show_instrument(backend="pythreejs")
 
         mock_view.assert_called_once_with(

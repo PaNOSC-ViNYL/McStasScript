@@ -34,7 +34,7 @@ setup(
          'h5py',
      ],
      extras_require={
-         "geometry-viewer": ['pythreejs'],
+         "geometry-viewer": ['anythreejs'],
      },
      packages=find_packages(),
      classifiers=[
