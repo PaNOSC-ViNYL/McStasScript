@@ -218,6 +218,38 @@ def _DEFINE_INSTRUMENT(self, *positional, **keyword):
     return self
 
 
+def _COPY(self, name, reference, **kwargs):
+    """Classical COPY(ref); mirrors::
+
+        COMPONENT x = COPY(ref) AT (...) ROTATED (...) ...
+
+    Delegates to :meth:`McCode_instr.copy_component` and returns the
+    component so ``.AT(...).ROTATED(...).WHEN(...)`` chaining still works.
+    """
+    placement = {k: kwargs.pop(k) for k in list(kwargs) if k in _PLACEMENT_KEYS}
+    _normalise_refs(placement)
+    comp = self.copy_component(name, reference, **placement)
+    _component_mixin.install_on(type(comp))
+    if kwargs:
+        comp.set_parameters(**kwargs)
+    return comp
+
+
+def _INHERIT(self, name, reference, **kwargs):
+    """Classical INHERIT: structurally like COPY but tagged for writers
+    that support the McCode 3.x INHERIT keyword (see
+    ADR_20250612_INHERIT_COMP and PR #2062). Today the writer still emits
+    COPY; the ``_mcstas_inherit`` flag lets an upgraded writer emit
+    INHERIT without any user-side change.
+    """
+    comp = _COPY(self, name, reference, **kwargs)
+    try:
+        comp._mcstas_inherit = True  # type: ignore[attr-defined]
+    except AttributeError:
+        pass
+    return comp
+
+
 _INSTALLED_ON: set = set()
 
 
@@ -231,6 +263,8 @@ def install_on(instr_cls):
     instr_cls.INITIALIZE = _INITIALIZE
     instr_cls.FINALLY = _FINALLY
     instr_cls.DEFINE_INSTRUMENT = _DEFINE_INSTRUMENT
+    instr_cls.COPY = _COPY
+    instr_cls.INHERIT = _INHERIT
 
 
 def enable(McCode_instr_cls, McStas_instr_cls=None, McXtrace_instr_cls=None):
