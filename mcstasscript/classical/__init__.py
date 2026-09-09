@@ -8,6 +8,7 @@ package auto-enables it via :func:`enable_classical_api`.
 from __future__ import annotations
 
 from . import _component_mixin, _instrument_mixin
+from ._sentinels import PREVIOUS, ABSOLUTE
 
 
 def enable_classical_api():
@@ -26,4 +27,4 @@ def enable_classical_api():
     _component_mixin.install_on(Component)
 
 
-__all__ = ["enable_classical_api"]
+__all__ = ["enable_classical_api", "PREVIOUS", "ABSOLUTE"]
