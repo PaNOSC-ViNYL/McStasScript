@@ -164,6 +164,60 @@ def _FINALLY(self, block):
     return self
 
 
+_PY2C = {float: "double", int: "int", str: "string", bool: "int"}
+
+
+def _extras_from_tuple(rest):
+    out = {}
+    if len(rest) >= 1:
+        out["value"] = rest[0]
+    if len(rest) >= 2 and rest[1] is not None:
+        out["unit"] = rest[1]
+    if len(rest) >= 3 and rest[2] is not None:
+        out["comment"] = rest[2]
+    return out
+
+
+def _DEFINE_INSTRUMENT(self, *positional, **keyword):
+    """Declare instrument parameters in one call, in the order they should
+    appear in the generated DEFINE INSTRUMENT header.
+
+    Positional form (mirrors the classical .instr signature)::
+
+        ("double", "lambda", 2.0)
+        ("double", "sample_size", 0.01, "m")
+        ("string", "sample", '"V.laz"', None, "sample tabulation file")
+
+    Keyword form (type inferred from the Python value)::
+
+        lambda_=2.0                     # trailing _ stripped to yield 'lambda'
+        sample_size=(0.01, "m")
+        sample=('"V.laz"', None, "sample tabulation file")
+
+    Every call delegates to :meth:`McCode_instr.add_parameter`, which
+    accepts the same ``value=``, ``unit=`` and ``comment=`` keywords.
+    """
+    for item in positional:
+        if not isinstance(item, (list, tuple)):
+            raise TypeError(
+                "DEFINE_INSTRUMENT positional args must be tuples, got "
+                + type(item).__name__
+            )
+        c_type, name = item[0], item[1]
+        self.add_parameter(c_type, name, **_extras_from_tuple(item[2:]))
+    for raw_name, spec in keyword.items():
+        name = raw_name.rstrip("_")  # allow `lambda_=...` for reserved words
+        if isinstance(spec, (list, tuple)):
+            value = spec[0]
+            extras = _extras_from_tuple(spec)
+        else:
+            value = spec
+            extras = {"value": spec}
+        c_type = _PY2C.get(type(value), "double")
+        self.add_parameter(c_type, name, **extras)
+    return self
+
+
 _INSTALLED_ON: set = set()
 
 
@@ -176,6 +230,7 @@ def install_on(instr_cls):
     instr_cls.USERVARS = _USERVARS
     instr_cls.INITIALIZE = _INITIALIZE
     instr_cls.FINALLY = _FINALLY
+    instr_cls.DEFINE_INSTRUMENT = _DEFINE_INSTRUMENT
 
 
 def enable(McCode_instr_cls, McStas_instr_cls=None, McXtrace_instr_cls=None):
