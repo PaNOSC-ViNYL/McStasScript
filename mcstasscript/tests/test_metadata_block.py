@@ -12,6 +12,11 @@ class TestMetadataBlock(unittest.TestCase):
         self.assertEqual(block.name, "mydata")
         self.assertEqual(block.type, "JSON")
         self.assertEqual(block.value, '{"key": "value"}')
+        self.assertEqual(block.source, "instrument")
+
+    def test_component_source(self):
+        block = MetadataBlock("mydata", "JSON", "{}", source="component")
+        self.assertEqual(block.source, "component")
 
     def test_repr(self):
         block = MetadataBlock("mydata", "JSON", '{"key": "value"}')
@@ -19,6 +24,7 @@ class TestMetadataBlock(unittest.TestCase):
         self.assertIn("MetadataBlock", r)
         self.assertIn("mydata", r)
         self.assertIn("JSON", r)
+        self.assertIn("instrument", r)
 
     def test_str(self):
         block = MetadataBlock("mydata", "JSON", '{"key": "value"}')
@@ -46,6 +52,7 @@ class TestComponentMetadata(unittest.TestCase):
         self.assertEqual(block.name, "stored")
         self.assertEqual(block.type, "txt")
         self.assertEqual(block.value, "some text")
+        self.assertEqual(block.source, "instrument")
 
     def test_add_multiple_METADATA(self):
         self.comp.add_METADATA("a", "JSON", '{"x": 1}')
@@ -168,6 +175,17 @@ class TestWriteComponentMetadata(unittest.TestCase):
         self.assertIn("METADATA txt stored %{\n", output)
         self.assertIn("some text\n", output)
         self.assertIn("%}\n", output)
+
+    def test_component_metadata_block_is_not_written(self):
+        comp = self._make_comp()
+        comp.add_METADATA("instrument_data", "txt", "keep this")
+        comp.metadata_list.append(
+            MetadataBlock("component_data", "txt", "do not copy",
+                          source="component"))
+        output = self._write(comp)
+        self.assertIn("METADATA txt instrument_data %{\n", output)
+        self.assertNotIn("component_data", output)
+        self.assertNotIn("do not copy", output)
 
     def test_multiple_metadata_blocks(self):
         comp = self._make_comp()

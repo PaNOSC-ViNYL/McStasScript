@@ -394,16 +394,21 @@ class MetadataBlock:
         Free-form type string (e.g. ``"JSON"``, ``"txt"``).
     value : str
         The metadata body text.
+    source : str, default "instrument"
+        Where the metadata was defined. Use ``"component"`` for metadata
+        read from a component file and ``"instrument"`` for metadata defined
+        on an instrument component instance.
     """
 
-    def __init__(self, name, type, value):
+    def __init__(self, name, type, value, source="instrument"):
         self.name = name
         self.type = type
         self.value = value
+        self.source = source
 
     def __repr__(self):
         return (f"MetadataBlock(name={self.name!r}, type={self.type!r}, "
-                f"value={self.value!r})")
+                f"value={self.value!r}, source={self.source!r})")
 
     def __str__(self):
         return f"METADATA {self.type} {self.name}"
@@ -1099,7 +1104,8 @@ class Component:
                 f"will be written to the .instr file but McStas "
                 f"will not be able to parse it.",
                 stacklevel=2)
-        self.metadata_list.append(MetadataBlock(name, type, value))
+        self.metadata_list.append(MetadataBlock(name, type, value,
+                                                 source="instrument"))
 
     def get_METADATA(self, name):
         """
@@ -1237,6 +1243,10 @@ class Component:
 
         # Write METADATA blocks
         for block in getattr(self, "metadata_list", []):
+            # Metadata inherited from a component definition belongs to the
+            # component file and must not be copied into a generated instrument.
+            if getattr(block, "source", "instrument") == "component":
+                continue
             type_str = _quote_if_needed(block.type)
             name_str = _quote_if_needed(block.name)
             fo.write(f"METADATA {type_str} {name_str} %{{\n")
