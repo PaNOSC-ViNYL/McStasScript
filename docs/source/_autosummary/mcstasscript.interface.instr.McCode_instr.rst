@@ -1,4 +1,4 @@
-﻿mcstasscript.interface.instr.McCode\_instr
+mcstasscript.interface.instr.McCode\_instr
 ==========================================
 
 .. currentmodule:: mcstasscript.interface.instr
@@ -6,14 +6,12 @@
 .. autoclass:: McCode_instr
    :members:
 
-   
    .. automethod:: __init__
 
-   
    .. rubric:: Methods
 
    .. autosummary::
-   
+
       ~McCode_instr.__init__
       ~McCode_instr.add_component
       ~McCode_instr.add_declare_var
@@ -31,15 +29,19 @@
       ~McCode_instr.copy_component
       ~McCode_instr.dump
       ~McCode_instr.get_component
+      ~McCode_instr.get_METADATA
       ~McCode_instr.get_interface_data
       ~McCode_instr.get_last_component
       ~McCode_instr.interface
+      ~McCode_instr.metadata_data
+      ~McCode_instr.metadata_type
       ~McCode_instr.print_component
       ~McCode_instr.print_component_short
       ~McCode_instr.print_components
       ~McCode_instr.run_from_cli
       ~McCode_instr.run_full_instrument
       ~McCode_instr.saveH5
+      ~McCode_instr.show_METADATA
       ~McCode_instr.set_component_AT
       ~McCode_instr.set_component_GROUP
       ~McCode_instr.set_component_JUMP
@@ -61,16 +63,10 @@
       ~McCode_instr.show_variables
       ~McCode_instr.write_c_files
       ~McCode_instr.write_full_instrument
-   
-   
 
-   
-   
    .. rubric:: Attributes
 
    .. autosummary::
-   
+
       ~McCode_instr.data
       ~McCode_instr.parameters
-   
-   

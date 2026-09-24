@@ -1388,6 +1388,22 @@ class TestMcStas_instr(unittest.TestCase):
         self.assertEqual(original.AT_data[2], 2)
         self.assertEqual(original.SPLIT, 0)
 
+    def test_copy_component_does_not_copy_metadata(self):
+        """
+        Checks that a component copy does not inherit METADATA blocks,
+        matching McCode COPY semantics
+        """
+
+        instr = setup_populated_with_some_options_instr()
+        original = instr.get_component("second_component")
+        original.add_METADATA("stored", "txt", "some text")
+
+        comp = instr.copy_component("copy_of_second_comp", "second_component")
+
+        self.assertEqual(comp.metadata_list, [])
+        self.assertEqual(len(original.metadata_list), 1)
+        self.assertEqual(original.metadata_list[0].name, "stored")
+
     def test_remove_component(self):
         """
         Ensure a component can be removed

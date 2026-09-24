@@ -440,8 +440,10 @@ class McCode_instr(BaseCalculator):
         self.component_class_lib = {}
         self.widget_interface = None
 
-        # Holds major version of underlying package
+        # Holds version of underlying package
         self.mccode_version = None
+        self.mccode_minor_version = None
+        self.mccode_patch_version = None
 
         # Overwrite set_parameters to version that can autocomplete
         self.set_parameters = SetParametersCallableInstrument(self)
@@ -1318,6 +1320,8 @@ class McCode_instr(BaseCalculator):
             input_dict["parameter_comments"] = comp_info.parameter_comments
             input_dict["category"] = comp_info.category
             input_dict["line_limit"] = self.line_limit
+            input_dict["mccode_version"] = self.mccode_version
+            input_dict["mccode_minor_version"] = self.mccode_minor_version
 
             dynamic_component_class = type(component_name, (Component,),
                                            input_dict)
@@ -1582,6 +1586,7 @@ class McCode_instr(BaseCalculator):
         new_component.c_code_before = ""
         new_component.c_code_after = ""
         new_component.search_statement_list = SearchStatementList()
+        new_component.metadata_list = []
 
         self._insert_component(new_component, before=before, after=after)
 
@@ -1727,6 +1732,104 @@ class McCode_instr(BaseCalculator):
         """
 
         return self.component_list[-1]
+
+    def show_METADATA(self):
+        """Print all METADATA blocks in a readable format."""
+        metadata = self.get_METADATA()
+        if not metadata:
+            print("No METADATA blocks defined.")
+            return
+
+        for component_name, blocks in metadata.items():
+            print(component_name + ":")
+            for name, block in blocks.items():
+                print(f"  {name} ({block['type']}):")
+                value_lines = block["value"].splitlines() or [""]
+                for line in value_lines:
+                    print("    " + line)
+
+    def get_METADATA(self, component_name=None, metadata_name=None):
+        """
+        Return METADATA information as nested dictionaries.
+
+        Parameters
+        ----------
+        component_name : str, optional
+            If given, restrict the result to this component.
+        metadata_name : str, optional
+            If given, restrict the result to this metadata block. A component
+            name must also be supplied.
+
+        Returns
+        -------
+        dict
+            Mapping of component names to metadata names and dictionaries
+            containing ``type`` and ``value`` fields.
+        """
+        if metadata_name is not None and component_name is None:
+            raise ValueError(
+                "component_name is required when metadata_name is given")
+
+        if component_name is None:
+            components = self.component_list
+        else:
+            components = [self.get_component(component_name)]
+
+        result = {}
+        for component in components:
+            blocks = getattr(component, "metadata_list", [])
+            if metadata_name is not None:
+                block = component.get_METADATA(metadata_name)
+                if block is None:
+                    raise KeyError(
+                        f"No METADATA named {metadata_name!r} on component "
+                        f"{component.name!r}")
+                blocks = [block]
+
+            component_metadata = {
+                block.name: {"type": block.type, "value": block.value}
+                for block in blocks
+            }
+            if component_metadata or component_name is not None:
+                result[component.name] = component_metadata
+
+        return result
+
+    def metadata_type(self, component_name, metadata_name):
+        """
+        Return the type string of a METADATA block.
+
+        Parameters
+        ----------
+        component_name : str
+            Name of the component.
+        metadata_name : str
+            Name of the metadata block.
+
+        Returns
+        -------
+        str
+        """
+        metadata = self.get_METADATA(component_name, metadata_name)
+        return metadata[component_name][metadata_name]["type"]
+
+    def metadata_data(self, component_name, metadata_name):
+        """
+        Return the value string of a METADATA block.
+
+        Parameters
+        ----------
+        component_name : str
+            Name of the component.
+        metadata_name : str
+            Name of the metadata block.
+
+        Returns
+        -------
+        str
+        """
+        metadata = self.get_METADATA(component_name, metadata_name)
+        return metadata[component_name][metadata_name]["value"]
 
     def print_component(self, name):
         """
@@ -3178,7 +3281,10 @@ class McStas_instr(McCode_instr):
         super().__init__(name, executable=executable, **kwargs)
 
         try:
-            self.mccode_version = check_mcstas_major_version(self._run_settings["executable_path"])
+            version = check_mcstas_major_version(self._run_settings["executable_path"])
+            self.mccode_version = version[0]
+            self.mccode_minor_version = version[1]
+            self.mccode_patch_version = version[2]
         except:
             self.mccode_version = "Unknown"
 
@@ -3423,7 +3529,10 @@ class McXtrace_instr(McCode_instr):
         super().__init__(name, executable=executable, **kwargs)
 
         try:
-            self.mccode_version = check_mcxtrace_major_version(self._run_settings["executable_path"])
+            version = check_mcxtrace_major_version(self._run_settings["executable_path"])
+            self.mccode_version = version[0]
+            self.mccode_minor_version = version[1]
+            self.mccode_patch_version = version[2]
         except:
             self.mccode_version = "Unknown"
 

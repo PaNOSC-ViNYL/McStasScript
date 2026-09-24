@@ -1,4 +1,4 @@
-﻿mcstasscript.interface.instr.McXtrace\_instr
+mcstasscript.interface.instr.McXtrace\_instr
 ============================================
 
 .. currentmodule:: mcstasscript.interface.instr
@@ -6,14 +6,12 @@
 .. autoclass:: McXtrace_instr
    :members:
 
-   
    .. automethod:: __init__
 
-   
    .. rubric:: Methods
 
    .. autosummary::
-   
+
       ~McXtrace_instr.__init__
       ~McXtrace_instr.add_component
       ~McXtrace_instr.add_declare_var
@@ -31,15 +29,19 @@
       ~McXtrace_instr.copy_component
       ~McXtrace_instr.dump
       ~McXtrace_instr.get_component
+      ~McXtrace_instr.get_METADATA
       ~McXtrace_instr.get_interface_data
       ~McXtrace_instr.get_last_component
       ~McXtrace_instr.interface
+      ~McXtrace_instr.metadata_data
+      ~McXtrace_instr.metadata_type
       ~McXtrace_instr.print_component
       ~McXtrace_instr.print_component_short
       ~McXtrace_instr.print_components
       ~McXtrace_instr.run_from_cli
       ~McXtrace_instr.run_full_instrument
       ~McXtrace_instr.saveH5
+      ~McXtrace_instr.show_METADATA
       ~McXtrace_instr.set_component_AT
       ~McXtrace_instr.set_component_GROUP
       ~McXtrace_instr.set_component_JUMP
@@ -61,16 +63,10 @@
       ~McXtrace_instr.show_variables
       ~McXtrace_instr.write_c_files
       ~McXtrace_instr.write_full_instrument
-   
-   
 
-   
-   
    .. rubric:: Attributes
 
    .. autosummary::
-   
+
       ~McXtrace_instr.data
       ~McXtrace_instr.parameters
-   
-   
