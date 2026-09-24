@@ -24,7 +24,7 @@ When McStas is installed via conda-forge, McStasScript is included automatically
 
 In most cases, no configuration is needed. If the `MCSTAS` environment variable is set (e.g., after running `eval $(mcstas)`), McStasScript will automatically detect the McStas installation. If `mcrun` is available on the PATH, it will be used directly.
 
-For manual configuration or troubleshooting, see the [online documentation](https://mads-bertelsen.github.io).
+For manual configuration or troubleshooting, see the [online documentation](https://github.com/PaNOSC-ViNYL/McStasScript).
 
 ## Instructions for basic use
 

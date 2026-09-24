@@ -21,3 +21,5 @@ from .tools.cryostat_builder import Cryostat
 from .tools.instrument_checker import has_component, has_parameter, all_parameters_set
 
 from .instrument_diagnostics.beam_diagnostics import BeamDiagnostics as Diagnostics
+
+from .scan import ParameterScan
