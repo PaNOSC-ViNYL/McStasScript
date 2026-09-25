@@ -1,3 +1,4 @@
+import os
 import unittest
 from unittest import mock
 
@@ -39,7 +40,7 @@ class TestParseVersion(unittest.TestCase):
 
         self.assertEqual(version, (3, 7, "14a0"))
         check_output.assert_called_once_with(
-            ["/opt/mcstas/bin/mcstas", "-v"])
+            [os.path.join("/opt/mcstas/bin", "mcstas"), "-v"])
 
     @mock.patch("mcstasscript.helper.check_mccode_version.subprocess.check_output")
     def test_mcxtrace_version_probes_once(self, check_output):
@@ -49,7 +50,7 @@ class TestParseVersion(unittest.TestCase):
 
         self.assertEqual(version, (1, 6, "2"))
         check_output.assert_called_once_with(
-            ["/opt/mcxtrace/bin/mcxtrace", "-v"])
+            [os.path.join("/opt/mcxtrace/bin", "mcxtrace"), "-v"])
 
     def test_mcstas_instrument_stores_version_fields(self):
         def fake_base_init(instrument, name, **kwargs):
