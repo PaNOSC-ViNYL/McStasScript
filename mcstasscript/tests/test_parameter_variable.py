@@ -112,7 +112,7 @@ class Test_ParameterVariable(unittest.TestCase):
         is used. (float value)
         """
 
-        par = provide_parameter("double", "test", value=5.4,
+        par = provide_parameter("double", "test", value=5.4, unit="meV",
                                 comment="test comment")
 
         with mock_f('test.txt', 'w') as m_fo:

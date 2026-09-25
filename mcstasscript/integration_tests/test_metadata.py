@@ -1,5 +1,6 @@
 import io
 import os
+import tempfile
 import unittest
 import unittest.mock
 
@@ -59,16 +60,12 @@ class TestMetadataIntegration(unittest.TestCase):
 
     def setUp(self):
         self.CURRENT_DIR = os.getcwd()
-        self.THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-        os.chdir(self.THIS_DIR)
+        self.WORK_DIR = tempfile.TemporaryDirectory()
+        os.chdir(self.WORK_DIR.name)
 
     def tearDown(self):
         os.chdir(self.CURRENT_DIR)
-        for f in ("integration_test_metadata.instr",
-                  "metadata_output.txt"):
-            path = os.path.join(self.THIS_DIR, f)
-            if os.path.exists(path):
-                os.remove(path)
+        self.WORK_DIR.cleanup()
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_metadata_written_to_instr_file(self, mock_stdout):
@@ -79,7 +76,7 @@ class TestMetadataIntegration(unittest.TestCase):
         Instr.write_full_instrument()
 
         instr_file = os.path.join(
-            self.THIS_DIR, "integration_test_metadata.instr")
+            self.WORK_DIR.name, "integration_test_metadata.instr")
 
         self.assertTrue(os.path.exists(instr_file))
 
@@ -104,7 +101,7 @@ class TestMetadataIntegration(unittest.TestCase):
             ncount=1E6, mpi=1,
             increment_folder_name=True)
 
-        output_file = os.path.join(self.THIS_DIR, "metadata_output.txt")
+        output_file = os.path.join(self.WORK_DIR.name, "metadata_output.txt")
 
         self.assertTrue(os.path.exists(output_file),
                         f"File not found: {output_file}")

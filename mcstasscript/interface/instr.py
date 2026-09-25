@@ -29,8 +29,8 @@ from mcstasscript.helper.formatting import bcolors
 from mcstasscript.helper.unpickler import CustomMcStasUnpickler, CustomMcXtraceUnpickler
 from mcstasscript.helper.exceptions import McStasError
 from mcstasscript.helper.beam_dump_database import BeamDumpDatabase
-from mcstasscript.helper.check_mccode_version import check_mcstas_major_version
-from mcstasscript.helper.check_mccode_version import check_mcxtrace_major_version
+from mcstasscript.helper.check_mccode_version import check_mcstas_version
+from mcstasscript.helper.check_mccode_version import check_mcxtrace_version
 from mcstasscript.helper.name_inspector import find_python_variable_name
 from mcstasscript.helper.search_statement import SearchStatement, SearchStatementList
 from mcstasscript.helper.signature_set_parameters import SetParametersCallableInstrument
@@ -80,6 +80,20 @@ class McCode_instr(BaseCalculator):
 
     executable_path : str
         absolute path of mcrun command, or empty if it is in path
+
+    mccode_version : int or str
+        major version of the underlying McStas or McXtrace package, or
+        ``"Unknown"`` if version detection failed
+
+    mccode_major_version : int or str
+        Alias of ``mccode_version`` retained as an explicit major-version
+        attribute
+
+    mccode_minor_version : int or None
+        minor version of the underlying package
+
+    mccode_patch_version : str or None
+        Raw patch version token, which may contain letters
 
     parameters : ParameterContainer
         contains all input parameters to be written to file
@@ -442,6 +456,7 @@ class McCode_instr(BaseCalculator):
 
         # Holds version of underlying package
         self.mccode_version = None
+        self.mccode_major_version = None
         self.mccode_minor_version = None
         self.mccode_patch_version = None
 
@@ -2941,7 +2956,7 @@ class McCode_instr(BaseCalculator):
             "run_full_instrument will be removed in future version of McStasScript. \n"
             + "Instead supply parameters with set_parameters, set settings with "
             + "settings and use backengine() to run. See examples in package. "
-            + "Documentation now at https://mads-bertelsen.github.io")
+             + "Documentation now at https://github.com/PaNOSC-ViNYL/McStasScript")
 
         if "foldername" in kwargs:
             kwargs["output_path"] = kwargs["foldername"]
@@ -3281,12 +3296,13 @@ class McStas_instr(McCode_instr):
         super().__init__(name, executable=executable, **kwargs)
 
         try:
-            version = check_mcstas_major_version(self._run_settings["executable_path"])
-            self.mccode_version = version[0]
-            self.mccode_minor_version = version[1]
-            self.mccode_patch_version = version[2]
+            (self.mccode_version, self.mccode_minor_version,
+             self.mccode_patch_version) = check_mcstas_version(
+                 self._run_settings["executable_path"])
+            self.mccode_major_version = self.mccode_version
         except:
             self.mccode_version = "Unknown"
+            self.mccode_major_version = self.mccode_version
 
     def _read_calibration(self):
         this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -3529,12 +3545,13 @@ class McXtrace_instr(McCode_instr):
         super().__init__(name, executable=executable, **kwargs)
 
         try:
-            version = check_mcxtrace_major_version(self._run_settings["executable_path"])
-            self.mccode_version = version[0]
-            self.mccode_minor_version = version[1]
-            self.mccode_patch_version = version[2]
+            (self.mccode_version, self.mccode_minor_version,
+             self.mccode_patch_version) = check_mcxtrace_version(
+                 self._run_settings["executable_path"])
+            self.mccode_major_version = self.mccode_version
         except:
             self.mccode_version = "Unknown"
+            self.mccode_major_version = self.mccode_version
 
     def _read_calibration(self):
         this_dir = os.path.dirname(os.path.abspath(__file__))

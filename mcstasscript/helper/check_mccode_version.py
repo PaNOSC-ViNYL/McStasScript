@@ -14,23 +14,37 @@ def _parse_version(output):
 
     major = _int_prefix(parts[0])
     minor = _int_prefix(parts[1]) if len(parts) > 1 else 0
-    patch = _int_prefix(parts[2]) if len(parts) > 2 else 0
+    patch = parts[2] if len(parts) > 2 else "0"
     return major, minor, patch
 
-def check_mcstas_major_version(mcstas_bin_path):
-    """
-    Checks installed McStas version and returns
-    (major, minor, patch) tuple.
-    """
-    mcstas_command = os.path.join(mcstas_bin_path, "mcstas")
-    output = subprocess.check_output([mcstas_command, "-v"])
+
+def _check_version(mcstas_bin_path, executable):
+    command = os.path.join(mcstas_bin_path, executable)
+    output = subprocess.check_output([command, "-v"])
     return _parse_version(output)
 
-def check_mcxtrace_major_version(mcstas_bin_path):
+
+def check_mcstas_version(mcstas_bin_path):
     """
-    Checks installed McXtrace version and returns
-    (major, minor, patch) tuple.
+    Check the installed McStas version.
+
+    Returns
+    -------
+    tuple
+        Major and minor versions as integers, followed by the raw patch
+        version string.
     """
-    mcstas_command = os.path.join(mcstas_bin_path, "mcxtrace")
-    output = subprocess.check_output([mcstas_command, "-v"])
-    return _parse_version(output)
+    return _check_version(mcstas_bin_path, "mcstas")
+
+
+def check_mcxtrace_version(mcstas_bin_path):
+    """
+    Check the installed McXtrace version.
+
+    Returns
+    -------
+    tuple
+        Major and minor versions as integers, followed by the raw patch
+        version string.
+    """
+    return _check_version(mcstas_bin_path, "mcxtrace")
