@@ -24,7 +24,7 @@ from mcstasscript.geometry_viewer.expression import safe_eval
 def _missing_pythreejs_dependencies():
     """Return optional modules required by the pythreejs backend that are missing."""
     missing = []
-    for module_name in ("pythreejs", "ipympl"):
+    for module_name in ("anythreejs", "ipympl"):
         try:
             __import__(module_name)
         except ImportError:
