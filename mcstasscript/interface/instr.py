@@ -857,6 +857,11 @@ class McCode_instr(BaseCalculator):
     @staticmethod
     def _format_example_value(value):
         if isinstance(value, str):
+            # String parameter values are usually given as C string literals
+            # (e.g. '"S"'), but the %Example line needs the plain value, like
+            # on the command line of the instrument:
+            if len(value) >= 2 and value[0] == value[-1] == '"':
+                value = value[1:-1]
             # mctest inserts parameter values into a shell command.
             return shlex.quote(value)
         return str(value)

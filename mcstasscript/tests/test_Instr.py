@@ -369,6 +369,21 @@ class TestMcStas_instr(unittest.TestCase):
             shlex.split(line.split(": ", 1)[1].split(" Detector:", 1)[0]),
             ['label=a $HOME "quoted"'])
 
+    def test_add_test_string_parameter_c_literal(self):
+        """Tests that the double quotes of C string literals are not part
+        of the value in the %Example line."""
+        instr = setup_populated_instr()
+        instr.add_parameter("string", "sector", value='"S"')
+        instr.add_parameter("string", "label", value='"a b"')
+
+        instr.add_test("second_component", intensity=12.3,
+                       included_pars=["sector", "label"])
+
+        self.assertEqual(
+            instr._format_test(instr._test_list[0]),
+            "%Example: sector=S label='a b' Detector: "
+            "second_component_I=12.3")
+
     def test_write_test_before_parameters_section(self):
         """Tests that %Example lines are written before %Parameters."""
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
