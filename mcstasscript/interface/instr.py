@@ -9,6 +9,7 @@ import copy
 import warnings
 import re
 import math
+import pathlib
 import shlex
 
 from libpyvinyl.BaseCalculator import BaseCalculator
@@ -171,6 +172,9 @@ class McCode_instr(BaseCalculator):
 
     add_dependency(string)
         Appends to the DEPENDENCY line of the instrument
+
+    add_include_dir(path)
+        Adds a directory to the search path for C include files
 
     append_trace(string)
         Obsolete method, add components instead (used in write_c_files)
@@ -2579,6 +2583,32 @@ class McCode_instr(BaseCalculator):
             string = current
         self.set_dependency(string)
 
+    def add_include_dir(self, path):
+        """
+        Adds a directory to the search path for C include files
+
+        Allows code in the instrument (e.g. in the declare section) to use
+        #include "file.h" for files in the given directory, wherever the
+        instrument is written and compiled. The directory is added to the
+        DEPENDENCY line as a -I compiler flag (see add_dependency), with an
+        absolute path using forward slashes, which also works on Windows.
+
+        Parameters
+        ----------
+            path : str or pathlib.Path
+                The directory. A relative path is interpreted relative to the
+                current working directory. It must not contain whitespace,
+                since the DEPENDENCY line is split at whitespace.
+        """
+        path = pathlib.Path(path).resolve()
+        if not path.is_dir():
+            raise ValueError("Include directory does not exist: " + str(path))
+        path = path.as_posix()
+        if any(c.isspace() for c in path):
+            raise ValueError("The path of an include directory can not "
+                             "contain whitespace: " + path)
+        self.add_dependency("-I" + path)
+
     def add_search(self, statement, SHELL=False, help_name=""):
         """
         Adds a search statement to the instrument
@@ -3252,6 +3282,9 @@ class McStas_instr(McCode_instr):
     add_dependency(string)
         Appends to the DEPENDENCY line of the instrument
 
+    add_include_dir(path)
+        Adds a directory to the search path for C include files
+
     append_trace(string)
         Obsolete method, add components instead (used in write_c_files)
 
@@ -3509,6 +3542,9 @@ class McXtrace_instr(McCode_instr):
 
     add_dependency(string)
         Appends to the DEPENDENCY line of the instrument
+
+    add_include_dir(path)
+        Adds a directory to the search path for C include files
 
     append_trace(string)
         Obsolete method, add components instead (used in write_c_files)
