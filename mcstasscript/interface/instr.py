@@ -9,6 +9,7 @@ import copy
 import warnings
 import re
 import math
+import pathlib
 import shlex
 
 from libpyvinyl.BaseCalculator import BaseCalculator
@@ -163,6 +164,18 @@ class McCode_instr(BaseCalculator):
 
     append_finally_no_new_line(string)
         Appends a string to finally section
+
+    set_dependency(string)
+        Sets the DEPENDENCY line of the instrument
+
+    get_dependency()
+        Returns the DEPENDENCY line of the instrument
+
+    add_dependency(string)
+        Appends to the DEPENDENCY line of the instrument
+
+    add_include_dir(path)
+        Adds a directory to the search path for C include files
 
     append_trace(string)
         Obsolete method, add components instead (used in write_c_files)
@@ -2575,6 +2588,65 @@ class McCode_instr(BaseCalculator):
 
         self.dependency_statement = string
 
+    def get_dependency(self):
+        """
+        Returns the DEPENDENCY line of the instrument
+
+        The double quotes added by set_dependency are not included. An empty
+        string is returned if no DEPENDENCY line is set.
+        """
+        string = self.dependency_statement
+        if len(string) >= 2 and string[0] == '"' and string[-1] == '"':
+            string = string[1:-1]
+        return string
+
+    def add_dependency(self, string):
+        """
+        Appends to the DEPENDENCY line of the instrument
+
+        The string is appended to the current DEPENDENCY line (see
+        set_dependency), separated by a space. This can e.g. be used to add
+        a search path for included files without removing the flags already
+        needed by the instrument.
+
+        Parameters
+        ----------
+            string : str
+                The string to append to the dependency line
+        """
+        current = self.get_dependency()
+        if current and string:
+            string = current + " " + string
+        elif current:
+            string = current
+        self.set_dependency(string)
+
+    def add_include_dir(self, path):
+        """
+        Adds a directory to the search path for C include files
+
+        Allows code in the instrument (e.g. in the declare section) to use
+        #include "file.h" for files in the given directory, wherever the
+        instrument is written and compiled. The directory is added to the
+        DEPENDENCY line as a -I compiler flag (see add_dependency), with an
+        absolute path using forward slashes, which also works on Windows.
+
+        Parameters
+        ----------
+            path : str or pathlib.Path
+                The directory. A relative path is interpreted relative to the
+                current working directory. It must not contain whitespace,
+                since the DEPENDENCY line is split at whitespace.
+        """
+        path = pathlib.Path(path).resolve()
+        if not path.is_dir():
+            raise ValueError("Include directory does not exist: " + str(path))
+        path = path.as_posix()
+        if any(c.isspace() for c in path):
+            raise ValueError("The path of an include directory can not "
+                             "contain whitespace: " + path)
+        self.add_dependency("-I" + path)
+
     def add_search(self, statement, SHELL=False, help_name=""):
         """
         Adds a search statement to the instrument
@@ -3239,6 +3311,18 @@ class McStas_instr(McCode_instr):
     append_finally_no_new_line(string)
         Appends a string to finally section
 
+    set_dependency(string)
+        Sets the DEPENDENCY line of the instrument
+
+    get_dependency()
+        Returns the DEPENDENCY line of the instrument
+
+    add_dependency(string)
+        Appends to the DEPENDENCY line of the instrument
+
+    add_include_dir(path)
+        Adds a directory to the search path for C include files
+
     append_trace(string)
         Obsolete method, add components instead (used in write_c_files)
 
@@ -3487,6 +3571,18 @@ class McXtrace_instr(McCode_instr):
 
     append_finally_no_new_line(string)
         Appends a string to finally section
+
+    set_dependency(string)
+        Sets the DEPENDENCY line of the instrument
+
+    get_dependency()
+        Returns the DEPENDENCY line of the instrument
+
+    add_dependency(string)
+        Appends to the DEPENDENCY line of the instrument
+
+    add_include_dir(path)
+        Adds a directory to the search path for C include files
 
     append_trace(string)
         Obsolete method, add components instead (used in write_c_files)

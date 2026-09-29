@@ -8,6 +8,7 @@ import datetime
 import shutil
 import tempfile
 import shlex
+import pathlib
 
 from libpyvinyl.Parameters.Collections import CalculatorParameters
 
@@ -1975,6 +1976,72 @@ class TestMcStas_instr(unittest.TestCase):
         mock_f.assert_called_with(expected_path, "w")
         handle = mock_f()
         handle.write.assert_has_calls(wrts, any_order=False)
+
+    def test_get_dependency(self):
+        """
+        Tests get_dependency returns the DEPENDENCY line without the double
+        quotes added by set_dependency.
+        """
+        instr = setup_populated_instr()
+        self.assertEqual(instr.get_dependency(), "")
+        instr.set_dependency("-DMCPLPATH=GETPATH(data)")
+        self.assertEqual(instr.get_dependency(), "-DMCPLPATH=GETPATH(data)")
+        self.assertEqual(instr.dependency_statement,
+                         '"-DMCPLPATH=GETPATH(data)"')
+        instr.set_dependency("")
+        self.assertEqual(instr.get_dependency(), "")
+
+    def test_add_dependency(self):
+        """
+        Tests add_dependency appends to the DEPENDENCY line.
+        """
+        instr = setup_populated_instr()
+        instr.add_dependency("-I/some/path")
+        self.assertEqual(instr.get_dependency(), "-I/some/path")
+        instr.add_dependency("-DFOO")
+        self.assertEqual(instr.get_dependency(), "-I/some/path -DFOO")
+        self.assertEqual(instr.dependency_statement, '"-I/some/path -DFOO"')
+        instr.add_dependency("")
+        self.assertEqual(instr.get_dependency(), "-I/some/path -DFOO")
+
+    def test_add_include_dir(self):
+        """
+        Tests add_include_dir adds an absolute path with forward slashes as
+        -I flag to the DEPENDENCY line, keeping existing flags.
+        """
+        instr = setup_populated_instr()
+        instr.set_dependency("-DFOO")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            inc_dir = pathlib.Path(temp_dir) / "includes"
+            inc_dir.mkdir()
+            expected = "-I" + inc_dir.resolve().as_posix()
+            instr.add_include_dir(inc_dir)
+            self.assertEqual(instr.get_dependency(), "-DFOO " + expected)
+
+            # Relative paths are relative to the working directory:
+            instr.set_dependency("")
+            current_work_dir = os.getcwd()
+            os.chdir(temp_dir)
+            try:
+                instr.add_include_dir("includes")
+            finally:
+                os.chdir(current_work_dir)
+            self.assertEqual(instr.get_dependency(), expected)
+
+    def test_add_include_dir_errors(self):
+        """
+        Tests add_include_dir rejects missing directories and paths with
+        whitespace.
+        """
+        instr = setup_populated_instr()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with self.assertRaises(ValueError):
+                instr.add_include_dir(os.path.join(temp_dir, "nosuchdir"))
+            dir_with_space = os.path.join(temp_dir, "a b")
+            os.mkdir(dir_with_space)
+            with self.assertRaises(ValueError):
+                instr.add_include_dir(dir_with_space)
+        self.assertEqual(instr.get_dependency(), "")
 
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
