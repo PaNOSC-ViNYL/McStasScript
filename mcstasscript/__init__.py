@@ -21,3 +21,7 @@ from .tools.cryostat_builder import Cryostat
 from .tools.instrument_checker import has_component, has_parameter, all_parameters_set
 
 from .instrument_diagnostics.beam_diagnostics import BeamDiagnostics as Diagnostics
+
+# --- classical .instr-style syntax (opt-in via import) ---
+from .classical import enable_classical_api, PREVIOUS, ABSOLUTE
+enable_classical_api()
