@@ -100,3 +100,42 @@ class TestAddTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, msg=result.stdout)
         self.assertIn("SUCCESS", result.stdout)
         self.assertIn("[val:", result.stdout, msg=result.stdout)
+
+    def test_add_test_string_parameter_with_mctest(self):
+        """Tests that string parameter values reach the instrument
+        unmodified when mctest runs the %Example test."""
+        if shutil.which("mctest") is None:
+            self.skipTest("mctest is not available")
+
+        instrument_name = "integration_test_add_test_string_par"
+        expected_intensity = 6.283e8
+
+        with tempfile.TemporaryDirectory() as instrument_dir, \
+                tempfile.TemporaryDirectory() as test_output:
+            instrument = make_test_instrument(instrument_name, instrument_dir)
+            instrument.add_parameter("string", "mode", value='"off"')
+            instrument.append_initialize(
+                'if (strcmp(mode, "on")) {\n'
+                '  fprintf(stderr, "Unexpected mode: \\"%s\\"\\n", mode);\n'
+                '  exit(1);\n'
+                '}\n')
+
+            instrument.add_test("monitor", intensity=expected_intensity,
+                                parameters={"mode": '"on"'})
+            self.assertEqual(instrument.parameters["mode"].value, '"off"')
+            instrument.write_full_instrument()
+
+            result = subprocess.run(
+                ["mctest", "--local", instrument_dir,
+                 "--testdir", test_output,
+                 "--instr", instrument_name,
+                 "--ncount", "100000", "--skipnontest"],
+                cwd=instrument_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                universal_newlines=True,
+            )
+
+        self.assertEqual(result.returncode, 0, msg=result.stdout)
+        self.assertIn("SUCCESS", result.stdout)
+        self.assertIn("[val:", result.stdout, msg=result.stdout)

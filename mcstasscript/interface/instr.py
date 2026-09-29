@@ -136,7 +136,8 @@ class McCode_instr(BaseCalculator):
     add_parameter(*args, **kwargs)
         Adds input parameter to the define section
 
-    add_test(Name_of_monitor, intensity=None, included_pars=None)
+    add_test(Name_of_monitor, intensity=None, included_pars=None,
+             parameters=None)
         Adds a McStas %Example test to the instrument header
 
     show_tests()
@@ -785,7 +786,8 @@ class McCode_instr(BaseCalculator):
     def get_parameter_names(self):
         return [parameter.name for parameter in self.parameters.parameters.values()]
 
-    def add_test(self, Name_of_monitor, intensity=None, included_pars=None):
+    def add_test(self, Name_of_monitor, intensity=None, included_pars=None,
+                 parameters=None):
         """
         Add a McStas ``%Example`` test to the instrument header.
 
@@ -795,16 +797,33 @@ class McCode_instr(BaseCalculator):
             Name of the monitor component used by the test.
 
         intensity : float, optional
-            Expected total intensity. If omitted, the current instrument is
-            run and the monitor's total intensity is used.
+            Expected total intensity. If omitted, the instrument is run (with
+            the parameter values of the test) and the monitor's total
+            intensity is used.
 
         included_pars : iterable of str, optional
-            Parameter names to include in the ``%Example`` line. By default,
-            all instrument parameters are included.
+            Parameter names to include in the ``%Example`` line, using the
+            current parameter values. By default, all instrument parameters
+            are included. Can not be combined with ``parameters``.
+
+        parameters : dict, optional
+            Parameter names and values to include in the ``%Example`` line.
+            This allows adding tests with parameter values different from
+            the current ones, without changing the instrument parameters.
+            Values are given as for ``set_parameters`` (i.e. string values as
+            C string literals like ``'"S"'``). Can not be combined with
+            ``included_pars``.
         """
         self.get_component(Name_of_monitor)
 
-        if included_pars is None:
+        if parameters is not None and included_pars is not None:
+            raise ValueError("The included_pars and parameters arguments can"
+                             " not be combined.")
+
+        if parameters is not None:
+            parameters = dict(parameters)
+            included_pars = list(parameters)
+        elif included_pars is None:
             included_pars = self.get_parameter_names()
         else:
             included_pars = list(included_pars)
@@ -815,14 +834,28 @@ class McCode_instr(BaseCalculator):
 
         test_parameters = []
         for name in included_pars:
-            value = self.parameters[name].value
+            if parameters is not None:
+                value = parameters[name]
+            else:
+                value = self.parameters[name].value
             if value is None:
                 raise RuntimeError("Parameter value not set for parameter: '"
                                    + name + "'. Set it before adding a test.")
             test_parameters.append((name, value))
 
         if intensity is None:
-            simulation_data = self.backengine()
+            if parameters is not None:
+                # Run with the parameter values of the test, and restore
+                # the instrument parameters afterwards:
+                previous_values = {name: self.parameters[name].value
+                                   for name in parameters}
+                self.set_parameters(parameters)
+                try:
+                    simulation_data = self.backengine()
+                finally:
+                    self.set_parameters(previous_values)
+            else:
+                simulation_data = self.backengine()
             monitor_data = None
             for data in simulation_data or []:
                 if data.name == Name_of_monitor:
@@ -857,6 +890,11 @@ class McCode_instr(BaseCalculator):
     @staticmethod
     def _format_example_value(value):
         if isinstance(value, str):
+            # String parameter values are usually given as C string literals
+            # (e.g. '"S"'), but the %Example line needs the plain value, like
+            # on the command line of the instrument:
+            if len(value) >= 2 and value[0] == value[-1] == '"':
+                value = value[1:-1]
             # mctest inserts parameter values into a shell command.
             return shlex.quote(value)
         return str(value)
