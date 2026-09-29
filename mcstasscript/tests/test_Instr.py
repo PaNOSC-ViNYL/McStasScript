@@ -1903,6 +1903,33 @@ class TestMcStas_instr(unittest.TestCase):
         handle = mock_f()
         handle.write.assert_has_calls(wrts, any_order=False)
 
+    def test_get_dependency(self):
+        """
+        Tests get_dependency returns the DEPENDENCY line without the double
+        quotes added by set_dependency.
+        """
+        instr = setup_populated_instr()
+        self.assertEqual(instr.get_dependency(), "")
+        instr.set_dependency("-DMCPLPATH=GETPATH(data)")
+        self.assertEqual(instr.get_dependency(), "-DMCPLPATH=GETPATH(data)")
+        self.assertEqual(instr.dependency_statement,
+                         '"-DMCPLPATH=GETPATH(data)"')
+        instr.set_dependency("")
+        self.assertEqual(instr.get_dependency(), "")
+
+    def test_add_dependency(self):
+        """
+        Tests add_dependency appends to the DEPENDENCY line.
+        """
+        instr = setup_populated_instr()
+        instr.add_dependency("-I/some/path")
+        self.assertEqual(instr.get_dependency(), "-I/some/path")
+        instr.add_dependency("-DFOO")
+        self.assertEqual(instr.get_dependency(), "-I/some/path -DFOO")
+        self.assertEqual(instr.dependency_statement, '"-I/some/path -DFOO"')
+        instr.add_dependency("")
+        self.assertEqual(instr.get_dependency(), "-I/some/path -DFOO")
+
     @unittest.mock.patch('__main__.__builtins__.open',
                          new_callable=unittest.mock.mock_open)
     @unittest.mock.patch('datetime.datetime')
