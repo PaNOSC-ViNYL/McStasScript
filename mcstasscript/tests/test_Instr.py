@@ -384,6 +384,64 @@ class TestMcStas_instr(unittest.TestCase):
             "%Example: sector=S label='a b' Detector: "
             "second_component_I=12.3")
 
+    def test_add_test_with_parameters(self):
+        """Tests adding tests with explicit parameter values, which do not
+        change the instrument parameters."""
+        instr = setup_populated_instr()
+        instr.add_parameter("string", "sector", value='"S"')
+        instr.set_parameters(theta=1.2)
+
+        instr.add_test("second_component", intensity=12.3,
+                       parameters={"theta": 3.5, "sector": '"N"'})
+        instr.add_test("third_component", intensity=4, parameters={})
+
+        self.assertEqual(
+            instr._format_test(instr._test_list[0]),
+            "%Example: theta=3.5 sector=N Detector: second_component_I=12.3")
+        self.assertEqual(
+            instr._format_test(instr._test_list[1]),
+            "%Example: Detector: third_component_I=4")
+        self.assertEqual(instr.parameters["theta"].value, 1.2)
+        self.assertEqual(instr.parameters["sector"].value, '"S"')
+
+    def test_add_test_with_parameters_errors(self):
+        """Tests invalid use of the parameters argument of add_test."""
+        instr = setup_populated_instr()
+        with self.assertRaises(ValueError):
+            instr.add_test("second_component", intensity=1,
+                           parameters={"theta": 1}, included_pars=["theta"])
+        with self.assertRaises(KeyError):
+            instr.add_test("second_component", intensity=1,
+                           parameters={"nosuchpar": 1})
+        with self.assertRaises(RuntimeError):
+            instr.add_test("second_component", intensity=1,
+                           parameters={"theta": None})
+        self.assertEqual(getattr(instr, "_test_list", []), [])
+
+    def test_add_test_with_parameters_uses_simulation_intensity(self):
+        """Tests that the simulation for the expected intensity uses the
+        parameter values of the test, and restores the parameters."""
+        instr = setup_populated_instr()
+        instr.set_parameters(theta=1.2)
+
+        monitor_data = unittest.mock.Mock()
+        monitor_data.name = "second_component"
+        monitor_data.metadata.total_I = 42.5
+        values_during_run = []
+
+        def fake_backengine():
+            values_during_run.append(instr.parameters["theta"].value)
+            return [monitor_data]
+
+        with unittest.mock.patch.object(instr, "backengine",
+                                        side_effect=fake_backengine):
+            instr.add_test("second_component", parameters={"theta": 7.0})
+
+        self.assertEqual(values_during_run, [7.0])
+        self.assertEqual(instr.parameters["theta"].value, 1.2)
+        self.assertEqual(instr._test_list[0]["intensity"], 42.5)
+        self.assertEqual(instr._test_list[0]["parameters"], [("theta", 7.0)])
+
     def test_write_test_before_parameters_section(self):
         """Tests that %Example lines are written before %Parameters."""
         THIS_DIR = os.path.dirname(os.path.abspath(__file__))
