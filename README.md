@@ -114,6 +114,25 @@ mcstas-pygen my_isntrument.instr
 ```
 This can also be done through mcgui using the Pylab button.
 
+The `.instr` suffix is shared by McStas and McXtrace, so choose the matching
+Python function explicitly. Both return the generated instrument object:
+
+```python
+mcstas_instrument = ms.mcstas_pygen("my_instrument.instr")
+mcxtrace_instrument = ms.mcxtrace_pygen("my_instrument.instr")
+```
+
+Use `destination` to choose the generated Python file (or an existing output
+directory), and `input_path` to set the returned instrument's work directory:
+
+```python
+instrument = ms.mcstas_pygen(
+    "my_instrument.instr",
+    destination="generated/my_instrument.py",
+    input_path="path/to/components",
+)
+```
+
 ## Method overview
 
 ### Instrument (`McStas_instr` / `McXtrace_instr`)
@@ -179,6 +198,8 @@ Placement attributes (`AT`, `ROTATED`, `RELATIVE`, `WHEN`, `EXTEND`, `GROUP`, `J
 ### Package-level functions
 
 ```
+ms.mcstas_pygen(filename, destination=None, input_path=None)
+ms.mcxtrace_pygen(filename, destination=None, input_path=None)
 ms.load_data(folder)            # Load simulation data from a McStas output folder
 ms.load_metadata(folder)        # Load metadata (mccode.sim) from a data folder
 ms.load_monitor(metadata, folder)  # Load single monitor data
