@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from mcstasscript.tools.mcstas_generate import mcstas_pygen, mcxtrace_pygen
+from mcstasscript.tools.py_generate import mcstas_pygen, mcxtrace_pygen
 
 
 GENERATED_MODULE = """\
@@ -33,7 +33,7 @@ class TestPygen(unittest.TestCase):
             input_path.mkdir()
 
             with patch(
-                "mcstasscript.tools.mcstas_generate.subprocess.run",
+                "mcstasscript.tools.py_generate.subprocess.run",
                 side_effect=self._write_generated_file,
             ) as run:
                 instrument = mcstas_pygen(
@@ -57,7 +57,7 @@ class TestPygen(unittest.TestCase):
             destination.mkdir()
 
             with patch(
-                "mcstasscript.tools.mcstas_generate.subprocess.run",
+                "mcstasscript.tools.py_generate.subprocess.run",
                 side_effect=self._write_generated_file,
             ) as run:
                 instrument = mcxtrace_pygen(input_file, destination=destination)
@@ -74,7 +74,7 @@ class TestPygen(unittest.TestCase):
             destination = Path(temp_dir) / "custom.py"
 
             with patch(
-                "mcstasscript.tools.mcstas_generate.subprocess.run",
+                "mcstasscript.tools.py_generate.subprocess.run",
                 side_effect=self._write_generated_file,
             ):
                 mcstas_pygen(input_file, destination=destination)
@@ -111,7 +111,7 @@ class TestPygen(unittest.TestCase):
             )
 
             with patch(
-                "mcstasscript.tools.mcstas_generate.subprocess.run",
+                "mcstasscript.tools.py_generate.subprocess.run",
                 return_value=process,
             ):
                 with self.assertRaisesRegex(RuntimeError, "component compilation failed"):
@@ -122,7 +122,7 @@ class TestPygen(unittest.TestCase):
             input_file = self._input_file(temp_dir)
 
             with patch(
-                "mcstasscript.tools.mcstas_generate.subprocess.run",
+                "mcstasscript.tools.py_generate.subprocess.run",
                 side_effect=FileNotFoundError("mcstas-pygen"),
             ):
                 with self.assertRaisesRegex(RuntimeError, "mcstas-pygen"):
@@ -134,7 +134,7 @@ class TestPygen(unittest.TestCase):
             process = subprocess.CompletedProcess([], 0, stdout="no output")
 
             with patch(
-                "mcstasscript.tools.mcstas_generate.subprocess.run",
+                "mcstasscript.tools.py_generate.subprocess.run",
                 return_value=process,
             ):
                 with self.assertRaisesRegex(FileNotFoundError, "did not create"):
@@ -149,7 +149,7 @@ class TestPygen(unittest.TestCase):
                 return subprocess.CompletedProcess(command, 0, stdout="generated")
 
             with patch(
-                "mcstasscript.tools.mcstas_generate.subprocess.run",
+                "mcstasscript.tools.py_generate.subprocess.run",
                 side_effect=write_invalid_module,
             ):
                 with self.assertRaisesRegex(AttributeError, "does not define a make"):

@@ -19,6 +19,6 @@ from .interface.reader import McStas_file
 
 from .tools.cryostat_builder import Cryostat
 from .tools.instrument_checker import has_component, has_parameter, all_parameters_set
-from .tools.mcstas_generate import mcstas_pygen, mcxtrace_pygen
+from .tools.py_generate import mcstas_pygen, mcxtrace_pygen
 
 from .instrument_diagnostics.beam_diagnostics import BeamDiagnostics as Diagnostics
