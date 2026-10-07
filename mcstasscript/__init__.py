@@ -22,3 +22,7 @@ from .tools.instrument_checker import has_component, has_parameter, all_paramete
 from .tools.py_generate import mcstas_pygen, mcxtrace_pygen
 
 from .instrument_diagnostics.beam_diagnostics import BeamDiagnostics as Diagnostics
+
+# --- classical .instr-style syntax (opt-in via import) ---
+from .classical import enable_classical_api, PREVIOUS, ABSOLUTE
+enable_classical_api()
