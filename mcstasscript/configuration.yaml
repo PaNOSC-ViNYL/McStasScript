@@ -1,0 +1,7 @@
+other:
+  characters_per_line: 85
+paths:
+  mcrun_path: /Applications/McStas-2.7.1.app/Contents/Resources/mcstas/2.7.1/bin/
+  mcstas_path: /Applications/McStas-2.7.1.app/Contents/Resources/mcstas/2.7.1/
+  mcxtrace_path: /Applications/McXtrace-1.5.app/Contents/Resources/mcxtrace/1.5/
+  mxrun_path: /Applications/McXtrace-1.5.app/Contents/Resources/mcxtrace/1.5/bin/

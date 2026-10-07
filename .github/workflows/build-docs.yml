@@ -1,0 +1,56 @@
+name: Build Documentation
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: docs/environment.yml
+          condarc: |
+            channels:
+              - conda-forge
+            channel_priority: strict
+
+      - name: Install package
+        shell: bash -el {0}
+        run: pip install -e .
+
+      - name: Build documentation (with notebook execution)
+        shell: bash -el {0}
+        run: |
+          cd docs
+          python -m sphinx \
+            -b html \
+            -D nb_execution_mode=force \
+            -D nb_execution_timeout=300 \
+            source build/html || \
+          python -m sphinx \
+            -b html \
+            -D nb_execution_mode=force \
+            -D nb_execution_timeout=300 \
+            source build/html
+
+      - name: Upload documentation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: docs/build/html
+          retention-days: 30
+
+      - name: Deploy to GitHub Pages
+        if: github.event_name == 'push' && github.repository == 'PaNOSC-ViNYL/McStasScript'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/build/html
+          force_orphan: true
