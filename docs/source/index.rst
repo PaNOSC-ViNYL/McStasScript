@@ -27,6 +27,7 @@ Documentation
    user_guide/plotting
    user_guide/functions
    user_guide/widgets
+   user_guide/mcstas_pygen
    user_guide/instrument_reader
 
 .. toctree::
