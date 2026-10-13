@@ -1,7 +1,8 @@
-numpy
-matplotlib
-PyYAML
-ipywidgets
-libpyvinyl
-ipympl
-h5py
+numpy>=1.21.2
+matplotlib>=3.5
+PyYAML>=5.4
+ipywidgets>=7.6
+ipython>=7.16
+libpyvinyl>=1.1.2
+ipympl>=0.8
+h5py>=3.8

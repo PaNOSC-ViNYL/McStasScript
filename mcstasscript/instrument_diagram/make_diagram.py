@@ -8,7 +8,6 @@ from mcstasscript.instrument_diagram.generate_target_index import generate_targe
 from mcstasscript.instrument_diagram.generate_GROUP import generate_GROUP_arrows
 from mcstasscript.instrument_diagram.generate_Union import generate_Union_arrows
 from mcstasscript.instrument_diagram.canvas import DiagramCanvas
-from mcstasscript.instrument_diagnostics.intensity_diagnostics import IntensityDiagnostics
 
 
 def instrument_diagram(instrument, analysis=False, variable=None, limits=None):
@@ -80,6 +79,8 @@ def instrument_diagram(instrument, analysis=False, variable=None, limits=None):
 
     intensity_diagnostics=None
     if analysis or variable is not None:
+        from mcstasscript.instrument_diagnostics.intensity_diagnostics import IntensityDiagnostics
+
         intensity_diagnostics = IntensityDiagnostics(instrument)
         intensity_diagnostics.settings(suppress_output=True)
 

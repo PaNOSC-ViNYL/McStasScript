@@ -3,7 +3,6 @@ import numpy as np
 import subprocess
 import mmap
 import warnings
-import h5py
 import re
 
 from mcstasscript.helper.formatting import bcolors
@@ -392,6 +391,8 @@ def load_results(data_folder_name):
         raise NameError("No mccode.sim or mccode.h5 in data folder.")
 
     if NeXus:
+        import h5py
+
         # Open mccode to read metadata for all datasets written to disk
         with h5py.File(os.path.join(data_folder_name, "mccode.h5"), "r", swmr=True) as f:
 
@@ -440,6 +441,8 @@ def load_metadata(data_folder_name):
     if "mccode.sim" in files_in_folder:
         return load_metadata_text(data_folder_name)
     elif "mccode.h5" in files_in_folder:
+        import h5py
+
         with h5py.File(os.path.join(data_folder_name, "mccode.h5"), "r", swmr=True) as f:
             return load_metadata_nexus(f)
     else:
@@ -618,6 +621,8 @@ def load_monitor(metadata, data_folder_name):
     """
 
     if "NeXus_field" in metadata.info:
+        import h5py
+
         with h5py.File(os.path.join(data_folder_name, "mccode.h5"), "r", swmr=True) as f:
             return load_monitor_nexus(metadata, f)
     else:

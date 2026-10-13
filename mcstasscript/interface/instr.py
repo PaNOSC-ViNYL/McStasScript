@@ -35,8 +35,6 @@ from mcstasscript.helper.check_mccode_version import check_mcxtrace_version
 from mcstasscript.helper.name_inspector import find_python_variable_name
 from mcstasscript.helper.search_statement import SearchStatement, SearchStatementList
 from mcstasscript.helper.signature_set_parameters import SetParametersCallableInstrument
-from mcstasscript.instrument_diagram.make_diagram import instrument_diagram
-from mcstasscript.instrument_diagnostics.intensity_diagnostics import IntensityDiagnostics
 
 
 class McCode_instr(BaseCalculator):
@@ -3209,12 +3207,16 @@ class McCode_instr(BaseCalculator):
         if variable is not None:
             analysis = True
 
+        from mcstasscript.instrument_diagram.make_diagram import instrument_diagram
+
         instrument_diagram(self, analysis=analysis, variable=variable, limits=limits)
 
         if self._run_settings["checks"]:
             self.check_for_errors()
 
     def show_analysis(self, variable=None):
+        from mcstasscript.instrument_diagnostics.intensity_diagnostics import IntensityDiagnostics
+
         beam_diag = IntensityDiagnostics(self)
         beam_diag.run_general(variable=variable)
         beam_diag.plot()

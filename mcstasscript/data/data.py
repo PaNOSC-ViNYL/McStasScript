@@ -1,4 +1,3 @@
-import matplotlib.pyplot
 import numpy as np
 import copy
 import re
@@ -350,6 +349,8 @@ class McStasPlotOptions:
                                  + str(self.orders_of_mag))
 
         if "colormap" in kwargs:
+            import matplotlib.pyplot
+
             all_colormaps = matplotlib.pyplot.colormaps()
             self.colormap = kwargs["colormap"]
             if self.colormap not in all_colormaps:
@@ -1026,4 +1027,3 @@ class ComponentData:
         self.data = components
 
         return components
-
