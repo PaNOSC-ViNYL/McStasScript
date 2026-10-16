@@ -18,6 +18,13 @@ conda install -c conda-forge mcstasscript
 pip install McStasScript --upgrade
 ```
 
+For IPython-backed notebook display, including iframe output, install the
+optional dependency:
+
+```bash
+pip install "McStasScript[jupyter]"
+```
+
 When McStas is installed via conda-forge, McStasScript is included automatically.
 
 ## Configuration
