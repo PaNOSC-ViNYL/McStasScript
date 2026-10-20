@@ -1220,6 +1220,22 @@ class TestMatplotlibLineSegments(unittest.TestCase):
         self.assertEqual(ax.get_aspect(), "auto")
         plt.close(figure)
 
+    def test_2d_component_opacity_applies_to_rendered_shapes(self):
+        """Component opacity should override shape opacity in matplotlib_2d."""
+        from mcstasscript.geometry_viewer.renderer.matplotlib import MatplotlibRenderer
+
+        component = make_mock_component("transparent_component")
+        model = ComponentModel(component)
+        model.shape_list = [BoxShape(width=1, height=1, depth=1)]
+        renderer = MatplotlibRenderer(
+            mode="2d",
+            component_opacity={"transparent_component": 0.35},
+        )
+
+        children = renderer.render_component(model, component_index=0)
+
+        self.assertAlmostEqual(children[0].get_alpha(), 0.35)
+
 class TestIntensityToColor(unittest.TestCase):
     """Tests for intensity_to_color: maps intensity values to hex colors."""
 
@@ -1647,10 +1663,10 @@ class TestNcountPreservesExistingBehavior(unittest.TestCase):
         self.assertAlmostEqual(_aggregate_intensity(data, "average"), 3.0)
 
 class TestApiComponentOpacities(unittest.TestCase):
-    def test_get_renderer_matplotlib_ignores_component_opacity(self):
-        """_get_renderer strips component_opacity for matplotlib backend."""
-        renderer = _get_renderer("matplotlib", component_opacity={"a": 0.5})
-        self.assertFalse(hasattr(renderer, 'component_opacity_map'))
+    def test_get_renderer_matplotlib_preserves_component_opacity(self):
+        """_get_renderer passes component_opacity to matplotlib backends."""
+        renderer = _get_renderer("matplotlib_2d", component_opacity={"a": 0.5})
+        self.assertEqual(renderer.component_opacity_map, {"a": 0.5})
 
 class TestGeometryRule(unittest.TestCase):
     """Tests for GeometryRule and GeometryRuleRegistry."""

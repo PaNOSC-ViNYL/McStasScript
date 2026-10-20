@@ -52,7 +52,6 @@ def _get_renderer(backend: str = "pythreejs", **kwargs):
     else:
         kwargs.pop("instrument_object", None)
         kwargs.pop("component_colors", None)
-        kwargs.pop("component_opacity", None)
         if backend in ("matplotlib", "matplotlib_3d"):
             return MatplotlibRenderer(mode="3d", **kwargs)
         elif backend == "matplotlib_2d":
@@ -524,7 +523,8 @@ def view(instrument_object, backend: str = "pythreejs",
         Mapping of component name to opacity value (float in [0.0, 1.0]).
         When provided with the 'pythreejs' backend, adds a "Custom opacity"
         checkbox to the widget that, when checked, overrides the current
-        opacity for the specified components. Ignored for other backends.
+        opacity for the specified components. Matplotlib backends apply the
+        mapping directly to the rendered components.
     verbose : bool
         If True, print diagnostics from the geometry-guess branch. Default True
         for backwards compatibility; ``show_instrument`` defaults to False.

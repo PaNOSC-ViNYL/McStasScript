@@ -3142,7 +3142,8 @@ class McCode_instr(BaseCalculator):
             Mapping of component name to opacity value (float in [0.0, 1.0]).
             With the 'pythreejs' backend, adds a "Custom opacity" checkbox to the
             widget that, when checked, overrides the current opacity for the
-            specified components. Ignored for other backends.
+            specified components. Matplotlib backends apply the mapping directly
+            to the rendered components.
         cmap : str, optional
             Matplotlib colormap used for intensity coloring. Only applies when
             intensity coloring is enabled with an intensity map.

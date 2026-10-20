@@ -31,7 +31,8 @@ class MatplotlibRenderer(RendererBackend):
     def __init__(self, mode: str = "3d", colors: list[str] | None = None, projection: str = "zx",
                  colormode: str = "default", num_components: int = 0,
                  intensity_map: dict | None = None, cmap: str = "inferno", log_scale: bool = True,
-                 colorbar_label: str | None = None):
+                 colorbar_label: str | None = None,
+                 component_opacity: dict[str, float] | None = None):
         self.mode = mode
         self.colors = colors or DEFAULT_COLORS
         self._color_index = 0
@@ -46,6 +47,18 @@ class MatplotlibRenderer(RendererBackend):
         self._validate_projection()
         self.component_children: dict[int, list] = {}
         self.component_colors: dict[int, str] = {}
+        self.component_opacity_map = dict(component_opacity or {})
+        for name, value in self.component_opacity_map.items():
+            if not isinstance(value, (int, float)):
+                raise TypeError(
+                    f"component_opacity values must be numeric, got {type(value).__name__} for {name!r}"
+                )
+            if not 0.0 <= value <= 1.0:
+                raise ValueError(
+                    f"component_opacity values must be in [0.0, 1.0], got {value} for {name!r}"
+                )
+            self.component_opacity_map[name] = float(value)
+        self._component_opacity = None
         self._temp_color = None
         if intensity_map and intensity_map.values():
             self._min_I = min(intensity_map.values())
@@ -109,7 +122,11 @@ class MatplotlibRenderer(RendererBackend):
         else:
             self._temp_color = None
         color = self.current_color
-        children = super().render_component(component, component_index)
+        self._component_opacity = self.component_opacity_map.get(component.comp.name)
+        try:
+            children = super().render_component(component, component_index)
+        finally:
+            self._component_opacity = None
         self.component_children[component_index] = children
         self.component_colors[component_index] = color
         return children
@@ -146,7 +163,10 @@ class MatplotlibRenderer(RendererBackend):
             color = self.current_color
         if color is None and shape.style is not None:
             color = shape.style.color
-        return self.create_material(shape.style, color or self.current_color)
+        props = self.create_material(shape.style, color or self.current_color)
+        if self._component_opacity is not None:
+            props["alpha"] = self._component_opacity
+        return props
 
     def render_shape(self, shape: Shape) -> Any:
         if isinstance(shape, BoxShape):
