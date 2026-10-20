@@ -1206,6 +1206,20 @@ class TestMatplotlibLineSegments(unittest.TestCase):
         self.assertLess(figure.axes[0].get_xlim()[1] - figure.axes[0].get_xlim()[0], 1.0)
         plt.close(figure)
 
+    def test_2d_limits_override_auto_bounds_and_aspect_is_unlocked(self):
+        """Explicit limits override autoscaling without forcing equal aspect."""
+        from matplotlib import pyplot as plt
+        from mcstasscript.geometry_viewer.renderer.matplotlib import MatplotlibRenderer
+
+        renderer = MatplotlibRenderer(mode="2d")
+        figure = renderer.make_scene([], limits=[-2, 4, -3, 5])
+
+        ax = figure.axes[0]
+        self.assertEqual(ax.get_xlim(), (-2.0, 4.0))
+        self.assertEqual(ax.get_ylim(), (-3.0, 5.0))
+        self.assertEqual(ax.get_aspect(), "auto")
+        plt.close(figure)
+
 class TestIntensityToColor(unittest.TestCase):
     """Tests for intensity_to_color: maps intensity values to hex colors."""
 

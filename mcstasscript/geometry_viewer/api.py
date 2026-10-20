@@ -40,6 +40,9 @@ def _pythreejs_dependency_message(missing):
 
 
 def _get_renderer(backend: str = "pythreejs", **kwargs):
+    # Figure limits are consumed by the matplotlib 2D scene builder,
+    # rather than by a renderer constructor.
+    kwargs.pop("limits", None)
     if backend == "pythreejs":
         missing = _missing_pythreejs_dependencies()
         if missing:
@@ -528,6 +531,9 @@ def view(instrument_object, backend: str = "pythreejs",
     projection : str
         Axis projection for matplotlib_2d backend. One of 'xy', 'zx', 'zy'.
         Default 'zx' (matches McStas beam-layout convention). Ignored for 3D backends.
+    limits : sequence, optional
+        Axis limits for the matplotlib_2d backend as [xmin, xmax, ymin, ymax].
+        Ignored for other backends.
     colormode : str
         Color assignment mode. Options:
         - 'default' (default): cycle through a fixed palette of colors

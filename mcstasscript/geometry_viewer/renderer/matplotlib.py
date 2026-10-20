@@ -397,6 +397,24 @@ class MatplotlibRenderer(RendererBackend):
         cbar.ax.tick_params(labelsize=10)
         cbar.ax.set_ylabel(label, fontsize=10, rotation=90, labelpad=10)
 
+    @staticmethod
+    def _set_2d_limits(ax, limits) -> None:
+        """Apply explicit x/y limits in flat or nested sequence form."""
+        values = np.asarray(limits, dtype=float)
+        if values.shape == (4,):
+            x_limits = values[:2]
+            y_limits = values[2:]
+        elif values.shape == (2, 2):
+            x_limits = values[0]
+            y_limits = values[1]
+        else:
+            raise ValueError(
+                "limits must be [xmin, xmax, ymin, ymax] or "
+                "[[xmin, xmax], [ymin, ymax]]"
+            )
+        ax.set_xlim(x_limits)
+        ax.set_ylim(y_limits)
+
     def make_scene(self, children: list[Any], show_axes: bool = True,
                    width: int = 900, height: int = 600, **kwargs) -> plt.Figure:
         if self.mode == "3d":
@@ -449,7 +467,7 @@ class MatplotlibRenderer(RendererBackend):
         self._add_colorbar(fig)
         return fig
 
-    def _make_2d_scene(self, children, show_axes, width, height, **kwargs):
+    def _make_2d_scene(self, children, show_axes, width, height, limits=None, **kwargs):
         fig = plt.figure(figsize=(width / 100, height / 100))
         ax = fig.add_subplot(111)
 
@@ -500,6 +518,8 @@ class MatplotlibRenderer(RendererBackend):
             ax.set_xlim(-5, 5)
             ax.set_ylim(-5, 5)
 
-        ax.set_aspect("equal")
+        if limits is not None:
+            self._set_2d_limits(ax, limits)
+
         self._add_colorbar(fig)
         return fig

@@ -2833,6 +2833,28 @@ class TestMcStas_instr(unittest.TestCase):
             cmap="viridis",
         )
 
+    @unittest.mock.patch("mcstasscript.geometry_viewer.view")
+    def test_show_instrument_forwards_matplotlib_2d_options(self, mock_view):
+        """show_instrument forwards projection and figure limits."""
+        instr = setup_populated_instr_with_dummy_path()
+
+        instr.show_instrument(
+            backend="matplotlib_2d",
+            projection="zy",
+            limits=[-1, 2, -3, 4],
+        )
+
+        mock_view.assert_called_once_with(
+            instr,
+            backend="matplotlib_2d",
+            width=800,
+            height=450,
+            guess=False,
+            verbose=False,
+            projection="zy",
+            limits=[-1, 2, -3, 4],
+        )
+
     def test_show_dumps_works(self):
         """
         Ensures show_dumps runs
