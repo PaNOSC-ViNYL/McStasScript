@@ -14,6 +14,32 @@ class McdisplayError(RuntimeError):
         self.command = command
 
 
+_NO_DEFAULT_CURRENT_DIRECTORY = "NoDefaultCurrentDirectoryInExePath"
+
+
+def _get_mcdisplay_environment(run_path):
+    """Prepare the child environment for Windows McCode trace runs.
+
+    The McCode version used by mcdisplay launches the generated instrument
+    binary by bare filename through ``cmd.exe``.  If Windows defines
+    ``NoDefaultCurrentDirectoryInExePath``, explicitly adding the run
+    directory to PATH keeps that hardening setting while allowing the trace
+    process to find its generated binary.
+    """
+    if os.name != "nt" or _NO_DEFAULT_CURRENT_DIRECTORY not in os.environ:
+        return None
+
+    environment = os.environ.copy()
+    run_path = os.path.abspath(os.fspath(run_path))
+    path = environment.get("PATH", "")
+    path_entries = path.split(os.pathsep) if path else []
+
+    if run_path not in path_entries:
+        environment["PATH"] = os.pathsep.join([run_path] + path_entries)
+
+    return environment
+
+
 def _extract_params(instrument_object):
     """Validate and collect instrument parameters."""
     parameters = []
@@ -167,14 +193,19 @@ def run_mcdisplay(instrument_object, format="webgl-classic", nobrowse=None,
     command.append(instr_path)
     command.extend(_format_parameter(parameter) for parameter in parameters)
 
+    run_kwargs = {
+        "shell": False,
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.PIPE,
+        "universal_newlines": True,
+        "cwd": instrument_object.input_path,
+    }
+    environment = _get_mcdisplay_environment(instrument_object.input_path)
+    if environment is not None:
+        run_kwargs["env"] = environment
+
     try:
-        process = subprocess.run(
-            command, shell=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True,
-            cwd=instrument_object.input_path,
-        )
+        process = subprocess.run(command, **run_kwargs)
     except OSError as exc:
         raise McdisplayError(
             f"Could not start mcdisplay: {exc}", command=command,

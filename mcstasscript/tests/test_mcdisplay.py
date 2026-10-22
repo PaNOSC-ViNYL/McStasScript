@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 
 from mcstasscript.geometry_viewer.mcdisplay import (
     McdisplayError,
+    _get_mcdisplay_environment,
     _format_parameter,
     display_mcdisplay_html,
     run_mcdisplay,
@@ -86,6 +87,37 @@ class TestMcdisplay(unittest.TestCase):
             )
             self.assertEqual(run.call_args_list[0].kwargs["cwd"], input_path)
             self.assertEqual(run.call_args_list[1].kwargs["cwd"], input_path)
+
+    def test_windows_hardening_environment_is_forwarded_to_mcdisplay(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = os.path.join(temp_dir, "input")
+            output_path = os.path.join(temp_dir, "results")
+            os.mkdir(input_path)
+            instrument = self._instrument(input_path, output_path)
+
+            def run_command(command, **kwargs):
+                output_dir = command[2]
+                if not os.path.isabs(output_dir):
+                    output_dir = os.path.join(kwargs["cwd"], output_dir)
+                os.mkdir(output_dir)
+                with open(os.path.join(output_dir, "index.html"), "w") as handle:
+                    handle.write("<html></html>")
+                return Mock(returncode=0, stdout="", stderr="")
+
+            with patch.dict(
+                os.environ,
+                {
+                    "PATH": "existing-path",
+                    "NoDefaultCurrentDirectoryInExePath": "1",
+                },
+                clear=True,
+            ), patch("mcstasscript.geometry_viewer.mcdisplay.os.name", "nt"), \
+                    patch("mcstasscript.geometry_viewer.mcdisplay._find_executable", return_value="mcdisplay"), \
+                    patch("mcstasscript.geometry_viewer.mcdisplay.subprocess.run", side_effect=run_command) as run:
+                expected_environment = _get_mcdisplay_environment(input_path)
+                run_mcdisplay(instrument)
+
+            self.assertEqual(run.call_args.kwargs["env"], expected_environment)
 
     def test_window_backend_ignores_close_return_code(self):
         with tempfile.TemporaryDirectory() as temp_dir:
