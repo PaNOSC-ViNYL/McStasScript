@@ -3125,6 +3125,14 @@ class McCode_instr(BaseCalculator):
         cmap : str
             Matplotlib colormap used for intensity coloring. Default
             ``"inferno"``.
+        projection : str, optional
+            Axis projection for the ``matplotlib_2d`` backend. Use
+            ``projection="zx"`` for the Z/X view or ``projection="zy"`` for
+            the Z/Y view. The default is ``"zx"``.
+        limits : sequence, optional
+            Axis limits for the ``matplotlib_2d`` backend as
+            ``[xmin, xmax, ymin, ymax]``. The equivalent nested form
+            ``[[xmin, xmax], [ymin, ymax]]`` is also accepted.
         component_colors : dict, optional
             Mapping of component name to hex color string (e.g. {"guide1": "#ff0000"}).
             With the 'pythreejs' backend, adds a "Custom colors" checkbox to the
@@ -3134,7 +3142,8 @@ class McCode_instr(BaseCalculator):
             Mapping of component name to opacity value (float in [0.0, 1.0]).
             With the 'pythreejs' backend, adds a "Custom opacity" checkbox to the
             widget that, when checked, overrides the current opacity for the
-            specified components. Ignored for other backends.
+            specified components. Matplotlib backends apply the mapping directly
+            to the rendered components.
         cmap : str, optional
             Matplotlib colormap used for intensity coloring. Only applies when
             intensity coloring is enabled with an intensity map.
