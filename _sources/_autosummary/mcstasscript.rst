@@ -1,0 +1,23 @@
+﻿mcstasscript
+============
+
+.. automodule:: mcstasscript
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
