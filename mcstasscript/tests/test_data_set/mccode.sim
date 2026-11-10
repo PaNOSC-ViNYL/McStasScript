@@ -1,0 +1,112 @@
+McStas simulation description file for jupyter_demo.
+Date:    Wed May 15 08:19:52 2019
+Program: McStas 2.5 - Dec. 12, 2018
+
+begin instrument: jupyter_demo
+  File: jupyter_demo3/mccode
+  Source: jupyter_demo.instr
+  Parameters:  wavelength(double)
+  Trace_enabled: yes
+  Default_main: yes
+  Embedded_runtime: yes
+end instrument
+
+begin simulation: jupyter_demo3
+  Format: McCode with text headers
+  URL: http://www.mccode.org
+  Creator: McStas 2.5 - Dec. 12, 2018
+  Instrument: jupyter_demo.instr
+  Ncount: 20000000
+  Trace: no
+  Gravitation: no
+  Seed: 1557975068
+  Directory: jupyter_demo3
+  Nodes: 4
+  Param: wavelength=1
+end simulation
+
+begin data
+  Date: Wed May 15 08:19:54 2019 (1557901194)
+  type: array_2d(300, 300)
+  Source: jupyter_demo (jupyter_demo.instr)
+  component: PSD_4PI
+  position: 0 0 11
+  title: 4PI PSD monitor
+  Ncount: 20000000
+  filename: PSD_4PI.dat
+  statistics: X0=-0.142189; dX=140.285; Y0=0.299127; dY=15.4061;
+  signal: Min=0; Max=1.99345e-05; Mean=5.17405e-09;
+  values: 0.000465664 4.478e-07 4.36906e+06
+  xvar: Lo
+  yvar: La
+  xlabel: Longitude [deg]
+  ylabel: Latitude [deg]
+  zvar: I
+  zlabel: Signal per bin
+  xylimits: -180 180 -90 90
+  variables: I I_err N
+end data
+
+begin data
+  Date: Wed May 15 08:19:54 2019 (1557901194)
+  type: array_2d(200, 200)
+  Source: jupyter_demo (jupyter_demo.instr)
+  component: PSD
+  position: 0 0 12
+  title: PSD monitor
+  Ncount: 20000000
+  filename: PSD.dat
+  statistics: X0=0.000283843; dX=1.8828; Y0=-0.00309525; dY=1.71996;
+  signal: Min=0; Max=5.86601e-08; Mean=9.69694e-09;
+  values: 0.000387878 4.37886e-07 2.23517e+06
+  xvar: X 
+  yvar: Y 
+  xlabel: X position [cm]
+  ylabel: Y position [cm]
+  zvar: I
+  zlabel: Signal per bin
+  xylimits: -5 5 -5 5
+  variables: I I_err N
+end data
+
+begin data
+  Date: Wed May 15 08:19:54 2019 (1557901194)
+  type: array_1d(150)
+  Source: jupyter_demo (jupyter_demo.instr)
+  component: L_mon
+  position: 0 0 12
+  title: Wavelength monitor
+  Ncount: 20000000
+  filename: L_mon.dat
+  statistics: X0=1.00415; dX=0.0576164;
+  signal: Min=0; Max=8.72065e-06; Mean=2.58585e-06;
+  values: 0.000387878 4.37886e-07 2.23517e+06
+  xvar: L
+  yvar: (I,I_err)
+  xlabel: Wavelength [AA]
+  ylabel: Intensity
+  xlimits: 0.7 1.3
+  variables: L I I_err N
+end data
+
+begin data
+  Date: Fri Aug 27 12:51:34 2021 (1630061494)
+  type: array_2d(8, 12000)
+  Source: event_test (event_test.instr)
+  component: monitor
+  position: 0 0 2
+  title:  Intensity Position Position Position Velocity Velocity Velocity Time_Of_Flight Monitor (Square)
+  Ncount: 12000
+  filename: event_dat_list.p.x.y.z.vx.vy.vz.t
+  statistics: X0=0; dX=0; Y0=0; dY=0;
+  signal: Min=2.49999e-06; Max=2.49999e-06; Mean=0;
+  values: 0 0 0
+  xvar: List
+  yvar: p
+  xlabel: List of neutron events
+  ylabel: p x y z vx vy vz t
+  zvar: I
+  zlabel: Signal per bin
+  xylimits: 1 12000 1 8
+  variables: p x y z vx vy vz t
+end data

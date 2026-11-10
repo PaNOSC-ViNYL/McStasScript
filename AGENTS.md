@@ -1,0 +1,139 @@
+# McStasScript — Project Notes
+
+## Project Overview
+
+McStasScript is a Python API for creating, running, and analyzing McStas/McXtrace neutron and X-ray instrument simulations. It provides a programmatic interface to build instruments, execute simulations via `mcrun`/`mxrun`, and plot results — usable from scripts, terminals, or Jupyter notebooks.
+
+### Package Structure
+
+```
+mcstasscript/
+├── __init__.py              # Public API: McStas_instr, load_data, Configurator, plotter, etc.
+├── _version.py              # Package version
+├── configuration.yaml       # Default paths to McStas/McXtrace executables
+├── data/                    # Data model: McStasData, McStasMetaData, McStasPlotOptions, MCPL adapters
+├── helper/                  # Internal utilities: Component objects, mcrun wrapper, formatting, plotting helpers
+├── instr_reader/            # .instr file parser: reads McStas instrument files into Python objects
+├── instrument_diagnostics/  # Beam and intensity diagnostics: inserts monitors, collects event data
+├── instrument_diagram/      # Visual instrument layout diagrams via matplotlib
+├── integration_tests/       # End-to-end tests that run actual McStas simulations
+├── interface/               # Core API: McStas_instr builder, data loading, plotting, Configurator
+├── jb_interface/            # Jupyter widget interface: interactive simulation control and plotting
+├── tests/                   # Base unit tests with regular dependencies
+├── optional_tests/          # Tests requiring the optional pythreejs dependency
+└── tools/                   # Specialized tools: Cryostat builder, instrument checker, NCrystal integration
+```
+
+### Supporting Directories
+
+- **examples/** — Demo notebooks and scripts (cryostat, libpyvinyl, calibration)
+- **tutorial/** — Step-by-step notebooks covering basics, SPLIT, EXTEND/WHEN, JUMP, and Union components
+- **docs/** — Sphinx documentation source with autosummary-generated API docs
+- **test_instr_db/** — Instrument database fixtures for reader tests
+
+## Running Tests
+
+### Unit Tests
+
+Run with `python -m unittest`. For example:
+
+```bash
+python -m unittest mcstasscript.tests.test_instrument_diagnostics -v
+```
+
+### Optional Tests
+
+The optional suite requires `pythreejs`; `ipympl` is installed with the regular
+package dependencies:
+
+```bash
+python -m pip install pythreejs
+python -m pytest mcstasscript/optional_tests/
+```
+
+The GitHub Actions workflow runs the base tests first without `pythreejs`, then
+installs it and runs the optional suite.
+
+### Integration Tests
+
+Integration tests require a McStas installation. Run with:
+
+```bash
+python -m unittest discover -s mcstasscript/integration_tests -v
+```
+
+### Test Dependencies
+
+The repository has three test tiers, documented by the README in each folder:
+`tests/` uses the regular package dependencies including `ipympl`,
+`optional_tests/` additionally uses `pythreejs`, and `integration_tests/`
+requires an installed McStas/McXtrace toolchain.
+
+### Package Data And Publishing
+
+McStasScript is published to PyPI. The conda-forge feedstock automatically
+picks up new PyPI releases; it is maintained at
+https://github.com/conda-forge/mcstasscript-feedstock.
+
+When adding non-Python files needed by tests or runtime code, add them to
+`MANIFEST.in` so they are included in source distributions and available to
+the feedstock build. Use an explicit `include` for individual files and
+`graft` for directories of package data. Test fixtures such as `.instr`,
+`.comp`, `.json`, and simulation data must not rely on being present only in a
+working checkout.
+
+## GitHub PR Review Comments (via gh CLI)
+
+### Replying to a review comment
+
+Use `in_reply_to` with the comment ID — **must be done before pushing a new commit**, otherwise the comment becomes "outdated" and the API returns 404:
+
+```bash
+gh api repos/<owner>/<repo>/pulls/comments -X POST --input - <<'EOF'
+{
+  "body": "Your reply text here.",
+  "in_reply_to": <comment_id>
+}
+EOF
+```
+
+### Creating an inline comment on the current commit
+
+```bash
+gh api repos/<owner>/<repo>/pulls/1/comments -X POST --input - <<'EOF'
+{
+  "body": "Comment text.",
+  "path": "path/to/file.py",
+  "commit_id": "<current_commit_sha>",
+  "position": <line_number_in_diff>
+}
+EOF
+```
+
+### Creating a review with multiple inline comments
+
+```bash
+gh api repos/<owner>/<repo>/pulls/1/reviews -X POST --input - <<'EOF'
+{
+  "commit_id": "<commit_sha>",
+  "body": "Review summary",
+  "event": "COMMENT",
+  "comments": [
+    {
+      "path": "path/to/file.py",
+      "line": 8,
+      "body": "Comment on line 8."
+    },
+    {
+      "path": "path/to/file.py",
+      "line": 100,
+      "body": "Comment on line 100."
+    }
+  ]
+}
+EOF
+```
+
+### Important: Reply before pushing
+
+Once you push a new commit, the reviewer's comments become "outdated" and can no longer be replied to via the API. Always reply to review comments **before** pushing your fix commit.
