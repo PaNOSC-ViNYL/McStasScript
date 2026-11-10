@@ -312,12 +312,35 @@ class ComponentReader:
                 absolute_file_path = os.path.join(absolute_path, file)
                 self._find_components(absolute_file_path)
 
-    def read_component_file(self, absolute_path):
+    def read_component_file(self, absolute_path, _inheritance_chain=()):
         """
         Reads a component file and expands component_info_dict
 
         The information is stored as ComponentClass instances.
         """
+
+        absolute_path = os.path.abspath(absolute_path)
+        if absolute_path in _inheritance_chain:
+            chain = _inheritance_chain + (absolute_path,)
+            raise ValueError("Component inheritance cycle: " + " -> ".join(
+                os.path.basename(path) for path in chain))
+
+        # Only the DEFINE COMPONENT inheritance affects parameters. Section-level
+        # INHERIT statements copy code, not the component's parameter lists.
+        with open(absolute_path, "r") as component_file:
+            header = remove_c_comments(component_file.read()).split("%{")[0]
+        declaration = re.search(
+            r'\bDEFINE\s+COMPONENT\s+\w+\s+INHERIT\s+(\w+)',
+            header)
+        parent = None
+        if declaration:
+            parent_name = declaration.group(1)
+            if parent_name not in self.component_path:
+                raise NameError("Cannot resolve inherited component "
+                                + parent_name + " for " + absolute_path)
+            parent = self.read_component_file(
+                self.component_path[parent_name],
+                _inheritance_chain + (absolute_path,))
 
         result = ComponentInfo()
 
@@ -476,6 +499,14 @@ class ComponentReader:
                 break
 
         file_o.close()
+
+        if parent is not None:
+            result.parameter_names = parent.parameter_names + result.parameter_names
+            for attribute in ("parameter_defaults", "parameter_types",
+                              "parameter_comments", "parameter_units"):
+                inherited = getattr(parent, attribute).copy()
+                inherited.update(getattr(result, attribute))
+                setattr(result, attribute, inherited)
 
         result.name = os.path.split(absolute_path)[1].split(".")[-2]
 
